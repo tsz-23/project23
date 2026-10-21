@@ -1,0 +1,12 @@
+{
+  "name": "Project 23",
+  "short_name": "Project 23",
+  "description": "Calendar, to-do list and focus flights.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#05030f",
+  "theme_color": "#05030f",
+  "icons": []
+}

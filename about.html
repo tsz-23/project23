@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project 23 | About</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;600&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="site-config.js"></script>
+<script src="core.js"></script>
+</head>
+<body data-page="about" data-public="1">
+<header id="topbar"></header>
+<main>
+  <section class="panel">
+    <div class="about-hero">
+      <div><h1 style="margin:0;font-size:clamp(2.4rem,8vw,3.6rem)" id="aboutH">Project 23</h1><p class="muted" style="margin:.3rem 0 0">Your calendar, reminders and focus sessions, together in one place.</p></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Website information</h2>
+    <dl class="kv" id="kv"></dl>
+  </section>
+
+  <section class="panel">
+    <h2>What's inside</h2>
+    <div class="credit"><span class="ci" id="i1"></span><div><b>Calendar</b><span class="muted">Import your iPhone calendar, then edit, colour and organise every event.</span></div></div>
+    <div class="credit"><span class="ci" id="i2"></span><div><b>To-do list</b><span class="muted">Bring in your iPhone Reminders and manage them with dates, categories and tags.</span></div></div>
+    <div class="credit"><span class="ci" id="i3"></span><div><b>Focus</b><span class="muted">Pick a destination and a seat, then stay focused until you land.</span></div></div>
+    <div class="credit"><span class="ci" id="i4"></span><div><b>Notes</b><span class="muted">Write and format notes with headings, lists, links and highlights.</span></div></div>
+    <div class="credit"><span class="ci" id="i5"></span><div><b>Time Until</b><span class="muted">Count down to the dates that matter, including calendar events.</span></div></div>
+    <div class="credit"><span class="ci" id="i6"></span><div><b>Weather</b><span class="muted">Forecasts, air quality, sun and moon for your places.</span></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Credits</h2>
+    <div id="credits"></div>
+  </section>
+</main>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+  const C=DB.cfg, $=id=>document.getElementById(id);
+  $("aboutH").innerHTML=DB.wordmark();
+  $("i1").innerHTML=DB.icon("cal"); $("i2").innerHTML=DB.icon("todo"); $("i3").innerHTML=DB.icon("plane"); $("i4").innerHTML=DB.icon("note"); $("i5").innerHTML=DB.icon("timer"); $("i6").innerHTML=DB.icon("cloud");
+  const rows=[["Project name",C.name],["Project code",C.code],["Version",C.version],["Type","Web app. Can be added to an iPhone Home Screen."],["Sign-in and storage","Google account sign-in, data saved with Firebase"]];
+  if(C.creator) rows.splice(1,0,["Created by",C.creator]);
+  $("kv").innerHTML=rows.map(([k,v])=>`<dt>${DB.esc(k)}</dt><dd>${DB.esc(v)}</dd>`).join("");
+  const credits=[
+    {i:"sparkle",n:"Claude, by Anthropic",r:"AI assistant that helped design and write the code for this website."},
+    {i:"db",n:"Google Firebase",r:"Provides Google sign-in and securely stores each person's data."},
+    {i:"cloud",n:"Open-Meteo",r:"Free weather, air quality and place-search data."},
+    {i:"type",n:"Google Fonts",r:"Bricolage Grotesque, Outfit and the other typefaces used across the site."}
+  ].concat((C.credits||[]).map(c=>({i:"user",n:c.name,r:c.role||""})));
+  $("credits").innerHTML=credits.map(c=>`<div class="credit"><span class="ci">${DB.icon(c.i==="user"?"check":c.i)}</span><div><b>${DB.esc(c.n)}</b><span class="muted">${DB.esc(c.r)}</span></div></div>`).join("");
+});
+</script>
+</body>
+</html>
