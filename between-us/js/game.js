@@ -137,13 +137,16 @@
         return prof;
     }
 
-    async function initFirebaseAndAuth() {
+    async function initFirebase() {
         if (state.db && auth) return true;
         const rawConfig = config.config || rootFirebaseConfig;
         if (!rawConfig || !rawConfig.apiKey || String(rawConfig.apiKey).includes('YOUR_API_KEY')) return false;
-        if (!window.firebase) { toast('Firebase SDK could not load.'); return false; }
+        if (!window.firebase) { toast('Firebase SDK could not load. Check your internet connection.'); return false; }
         try {
-            if (!firebase.apps.length) firebase.initializeApp(rawConfig);
+            const options = { ...rawConfig };
+            if (!options.databaseURL && options.projectId) options.databaseURL = `https://${options.projectId}-default-rtdb.firebaseio.com`;
+            if (!firebase.apps.length) firebase.initializeApp(options);
+            
             auth = firebase.auth();
             await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
             rtdb = firebase.database();
@@ -170,15 +173,17 @@
             });
 
             return true;
-        } catch (e) {
-            console.error('Firebase init failed:', e);
-            return false;
+        } catch (e) { 
+            console.error('Between Us Firebase init failed:', e); 
+            state.db = null; 
+            setConnection(false, 'Preview'); 
+            return false; 
         }
     }
 
     function requireAuthModal() {
         return new Promise(async resolve => {
-            if (!auth) await initFirebaseAndAuth();
+            if (!auth) await initFirebase();
             if (auth.currentUser) {
                 baseRef = firestoreDb.collection("users").doc(auth.currentUser.uid);
                 try {
@@ -448,32 +453,6 @@
         $('#backModes').onclick = home; $('#createRoom').onclick = createRoom; $('#joinRoom').onclick = joinRoom; $('#soloDemo').onclick = () => startLocalDemo(); $('#joinCode').addEventListener('input', e => e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6));
     }
 
-    async function initFirebase() {
-        if (state.db) return true;
-        const rawConfig = config.config || rootFirebaseConfig;
-        if (!rawConfig || !rawConfig.apiKey || String(rawConfig.apiKey).includes('YOUR_API_KEY')) return false;
-        if (!window.firebase) { toast('Firebase SDK could not load. Check your internet connection.'); return false }
-        try {
-            const options = { ...rawConfig };
-            if (!options.databaseURL && options.projectId) options.databaseURL = `https://${options.projectId}-default-rtdb.firebaseio.com`;
-            if (!firebase.apps.length) firebase.initializeApp(options);
-            state.auth = firebase.auth();
-            state.db = firebase.database();
-            
-            if (!state.auth.currentUser) {
-                if (window.DB && typeof window.DB.requireAuth === 'function') {
-                    const authed = await window.DB.requireAuth();
-                    if (!authed || !state.auth.currentUser) return false;
-                } else {
-                    toast('Please sign in with Google to play online.');
-                    return false;
-                }
-            }
-
-            state.online = true; setConnection(true, 'Connected'); return true;
-        } catch (e) { console.error('Between Us Firebase init failed:', e); state.db = null; setConnection(false, 'Preview'); toast('Firebase connection failed. Verify Realtime Database URL and database rules.'); return false }
-    }
-
     function attachRoomListener(ref) {
         if (state.roomRef && state.roomUnsub) state.roomUnsub();
         state.roomRef = ref;
@@ -531,7 +510,9 @@
     async function joinRoom() {
         const button = $('#joinRoom');
         const roomCode = ($('#joinCode')?.value || '').trim().toUpperCase();
-        if (roomCode.length !== 6) { toast('Enter the six-character room code.'); return; }
+        const name = 'Player Two';
+        
+        if (roomCode.length !== 6) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('Enter the six-character room code.'); return; }
 
         if (button) { button.disabled = true; button.innerHTML = 'Signing in…'; }
 
@@ -543,14 +524,15 @@
 
         if (button) { button.innerHTML = 'Joining…'; }
         const uid = state.auth.currentUser.uid;
+        const ref = state.db.ref('rooms/' + roomCode);
 
         try {
             const snap = await ref.child('public').once('value');
-            if (!snap.exists()) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('Room not found. Check the code with your friend.'); return }
+            if (!snap.exists()) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('Room not found. Check the code with your friend.'); return; }
             const initial = snap.val();
-            if (initial.hostUid === uid) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('You are already the host of this room.'); return }
-            if (initial.guestUid && initial.guestUid !== uid) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('This room already has a second player.'); return }
-            if (initial.status !== 'waiting' && initial.guestUid !== uid) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('This room has already started.'); return }
+            if (initial.hostUid === uid) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('You are already the host of this room.'); return; }
+            if (initial.guestUid && initial.guestUid !== uid) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('This room already has a second player.'); return; }
+            if (initial.status !== 'waiting' && initial.guestUid !== uid) { if (button) { button.disabled = false; button.innerHTML = 'Join <span>→</span>'; } toast('This room has already started.'); return; }
             const claim = await ref.child('public/guestUid').transaction(current => {
                 if (current === uid) return current;
                 if (current === null || current === '') return uid;
