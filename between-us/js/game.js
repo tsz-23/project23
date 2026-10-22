@@ -872,7 +872,8 @@
     function handleRoomRemoved() {
         if (state.roomUnsub) state.roomUnsub();
         state.roomRef = null; state.roomData = null; state.roomCode = null; state.playerSlot = null; state.playerId = null; state.roomUnsub = null; state.disconnectHandler = null;
-        state.online = false; setConnection(false, 'Preview');
+        setConnection(true, 'Connected'); 
+        
         clearLocalProgress();
         toast('The other player left and this room was closed.');
         home();
