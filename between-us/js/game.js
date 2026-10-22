@@ -725,6 +725,9 @@
             if (!created) throw new Error('Could not allocate a unique room code. Please retry.');
             state.roomCode = roomCode; state.playerId = uid; state.playerSlot = 'host'; state.mode = state.mode || state.roomData?.public?.mode;
             saveLocalProgress();
+
+            roomRef.child('public').onDisconnect().update({ status: 'closed', closed: true });
+
             attachRoomListener(roomRef);
             state.roomData = (await roomRef.once('value')).val(); state.screen = 'waiting'; renderWaiting();
         } catch (e) { console.error('Create room failed:', e); if (button) { button.disabled = false; button.innerHTML = 'Create room <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:2px;"> <line x1="7" y1="17" x2="17" y2="7"></line> <polyline points="7 7 17 7 17 17"></polyline> </svg></span>'; } toast(e.message?.includes('permission') ? 'Firebase denied room creation. Update the Realtime Database rules.' : 'Could not create room.') }
@@ -804,11 +807,37 @@
         try {
             if (ref && wasOnline) {
                 try { await ref.onDisconnect().cancel() } catch (e) { }
-                await ref.remove();
+                
+                // 1. Mark the room as closed so the other player is immediately kicked out
+                try {
+                    await ref.child('public').update({
+                        status: 'closed',
+                        closed: true,
+                        updatedAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } catch (err) {
+                    console.warn("Could not update room status to closed:", err);
+                }
+
+                // 2. Attempt to remove the room from the database
+                try {
+                    await ref.remove();
+                } catch (err) {
+                    console.warn("Room removal restricted by database rules, cleaning up locally:", err);
+                }
             }
-        } catch (e) { console.error('Leave room cleanup failed:', e); } finally {
+        } catch (e) { 
+            console.error('Leave room cleanup failed:', e); 
+        } finally {
             if (state.roomUnsub) state.roomUnsub();
-            state.roomRef = null; state.roomData = null; state.roomCode = null; state.playerSlot = null; state.playerId = null; state.roomUnsub = null; state.disconnectHandler = null; state.leavingRoom = false;
+            state.roomRef = null; 
+            state.roomData = null; 
+            state.roomCode = null; 
+            state.playerSlot = null; 
+            state.playerId = null; 
+            state.roomUnsub = null; 
+            state.disconnectHandler = null; 
+            state.leavingRoom = false;
             home();
         }
     }
@@ -820,6 +849,36 @@
         clearLocalProgress();
         toast('The other player left and this room was closed.');
         home();
+    }
+
+    function attachRoomListener(ref) {
+        if (state.roomRef && state.roomUnsub) state.roomUnsub();
+        state.roomRef = ref;
+        const handler = snap => {
+            if (!snap.exists()) {
+                if (state.online && state.roomCode && !state.leavingRoom) handleRoomRemoved();
+                return;
+            }
+            const next = snap.val();
+            if (!next?.public) return;
+
+            if (next.public.status === 'closed' || next.public.closed) {
+                if (state.online && state.roomCode && !state.leavingRoom) handleRoomRemoved();
+                return;
+            }
+
+            const previous = state.roomData?.public?.status;
+            state.roomData = next;
+            if (state.screen === 'waiting') {
+                if (next.public.status === 'playing' && previous !== 'playing') launchFromRoom();
+                else renderWaiting();
+            } else if (state.screen === 'story') renderStory();
+            else if (state.screen === 'ending') { const votes = next.public.replayVotes || {}; const done = next.public.completed || {}; if (state.replayWaiting && !votes.host && !votes.guest && done.host !== true && done.guest !== true && !state.replayResetting) { state.replayWaiting = false; startStory() } else if (votes.host === true && votes.guest === true && state.playerSlot === 'host' && !state.replayResetting) { resetReplaySession() } else renderEnding(); }
+            else if (state.screen === 'detective') renderDetective();
+        };
+        state.disconnectHandler = handler;
+        ref.on('value', handler, error => { console.error('Room listener failed:', error); toast('Lost access to this room. Check the Firebase rules.') });
+        state.roomUnsub = () => ref.off('value', handler);
     }
 
     function startLocalDemo() { state.online = false; state.roomCode = 'LOCAL'; state.playerId = 'local-player'; state.playerSlot = 'host'; state.roomData = { public: { mode: state.mode || 'main', hostName: 'You', guestName: 'Demo Partner', guestUid: 'demo', status: 'playing', chapter: 0, sceneId: '', choices: {}, shared: {}, ready: { host: true, guest: true } } }; setConnection(false, 'Preview'); preloadStoryAssets(); if (state.mode === 'detective') startDetective(); else startStory() }
