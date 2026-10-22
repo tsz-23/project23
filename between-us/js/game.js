@@ -726,8 +726,6 @@
             state.roomCode = roomCode; state.playerId = uid; state.playerSlot = 'host'; state.mode = state.mode || state.roomData?.public?.mode;
             saveLocalProgress();
 
-            roomRef.child('public').onDisconnect().update({ status: 'closed', closed: true });
-
             attachRoomListener(roomRef);
             state.roomData = (await roomRef.once('value')).val(); state.screen = 'waiting'; renderWaiting();
         } catch (e) { console.error('Create room failed:', e); if (button) { button.disabled = false; button.innerHTML = 'Create room <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:2px;"> <line x1="7" y1="17" x2="17" y2="7"></line> <polyline points="7 7 17 7 17 17"></polyline> </svg></span>'; } toast(e.message?.includes('permission') ? 'Firebase denied room creation. Update the Realtime Database rules.' : 'Could not create room.') }
