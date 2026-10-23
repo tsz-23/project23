@@ -1,0 +1,23 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      "$roomCode": {
+        ".read": "auth != null && (auth.uid === data.child('public/hostUid').val() || auth.uid === data.child('public/guestUid').val())",
+        ".write": "auth != null && (auth.uid === data.child('public/hostUid').val() || auth.uid === data.child('public/guestUid').val() || auth.uid === newData.child('public/hostUid').val() || auth.uid === newData.child('public/guestUid').val())",
+        "public": {
+          ".read": "auth != null",
+          ".write": "auth != null && (!data.exists() && newData.child('hostUid').val() === auth.uid || data.child('hostUid').val() === auth.uid || data.child('guestUid').val() === auth.uid || ((!data.child('guestUid').exists() || data.child('guestUid').val() === '') && newData.child('guestUid').val() === auth.uid && data.child('status').val() === 'waiting'))",
+          ".validate": "newData.hasChildren(['code','mode','status','hostUid','guestUid','hostName','guestName'])",
+          "code": { ".validate": "newData.isString() && newData.val() === $roomCode" },
+          "mode": { ".validate": "newData.val() === 'main' || newData.val() === 'detective'" },
+          "hostUid": { ".validate": "newData.isString()" },
+          "guestUid": { ".validate": "newData.isString()" },
+          "status": { ".validate": "newData.val() === 'waiting' || newData.val() === 'playing' || newData.val() === 'ended'" },
+          "$other": { ".validate": true }
+        }
+      }
+    }
+  }
+}
