@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;600&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="site-config.js"></script>
+<script src="core.js"></script>
+<script src="widgets.js"></script>
+<style>
+  .homebar{display:flex;gap:.5rem;justify-content:flex-end;flex-wrap:wrap;margin:.6rem 0 .6rem;min-height:2.4rem}
+  .blocks{--row:112px;--gap:16px;position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:var(--row);gap:var(--gap)}
+  .cells{position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:var(--row);gap:var(--gap);pointer-events:none;z-index:0}
+  .cells i{border:1.5px dashed color-mix(in srgb,var(--accent) 30%,transparent);border-radius:16px}
+  .blk{position:relative;z-index:1;min-width:0;min-height:0;grid-column:calc(var(--x) + 1) / span var(--w);grid-row:calc(var(--y) + 1) / span var(--h);animation:rise .45s both;animation-delay:calc(var(--k,0)*50ms)}
+  .blk-body{height:100%;overflow:auto;padding:1.1rem 1.2rem;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);min-width:0;scrollbar-width:thin}
+  .blk-body h3{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.88rem;font-weight:600;font-family:var(--body);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.7rem}
+  .blk[data-type="title"] .blk-body{background:none;border:0;box-shadow:none;padding:.4rem 0;overflow:visible}
+  .hero h1{font-size:clamp(2.6rem,9vw,5.2rem);margin:0;line-height:1}
+  .blk[data-s="s"] .hero h1{font-size:clamp(1.9rem,5vw,2.9rem)}.blk[data-s="l"] .hero h1{font-size:clamp(3rem,10vw,6.4rem)}
+  .hero p{max-width:34rem;font-size:1.1rem;color:var(--muted);margin:.6rem 0 0}
+  .blk[data-s="s"] .hero p{font-size:.95rem}
+  .blk-body.link{padding:0}
+  a.tile{display:block;height:100%;padding:1.1rem 1.2rem;text-decoration:none;color:inherit;position:relative;transition:transform .25s cubic-bezier(.2,1.2,.3,1)}
+  .blk-body.link{transition:border-color .25s,transform .25s}.blk-body.link:hover{transform:translateY(-4px);border-color:var(--accent)}
+  .tile .ico{width:2.8rem;height:2.8rem;border-radius:14px;display:grid;place-items:center;background:var(--card-2);color:var(--accent);margin-bottom:.7rem;transition:transform .3s cubic-bezier(.3,1.6,.4,1),background .25s,color .25s}
+  .tile .ico svg{width:1.4rem;height:1.4rem}
+  .blk-body.link:hover .ico{transform:scale(1.1) rotate(-6deg);background:var(--accent);color:var(--on-accent)}
+  .tile h2{margin:0 0 .2rem;font-size:1.4rem}.tile p{margin:0;color:var(--muted);font-size:.92rem}
+  .blk[data-type="page"][data-s="m"] .tile{display:grid;grid-template-columns:auto 1fr;gap:0 1rem;align-content:center}
+  .blk[data-type="page"][data-s="m"] .ico{grid-row:span 2;margin:0;width:3.4rem;height:3.4rem}
+  .tile .go{position:absolute;right:1rem;top:1.1rem;color:var(--muted);transition:transform .25s,color .25s}
+  .blk-body.link:hover .go{transform:translateX(4px);color:var(--accent)}
+  .li{display:flex;gap:.7rem;align-items:center;padding:.45rem 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+  .li:last-child{border-bottom:0}
+  .li .bar{width:.3rem;align-self:stretch;border-radius:3px;background:var(--c,var(--accent));flex:none}
+  .li .t{flex:1;min-width:0}.li .t b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.li .t small{color:var(--muted);display:block}
+  .li .t .snip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .blk[data-s="l"] .li .t b{white-space:normal}
+  .li .ck{appearance:none;-webkit-appearance:none;width:1.3rem;height:1.3rem;border-radius:50%;border:2px solid var(--c,var(--accent));background:transparent;cursor:pointer;flex:none;margin:0;display:grid;place-items:center}
+  .li .ck:checked{background:var(--c,var(--accent))}.li .ck:checked::after{content:"✓";color:#fff;font-size:.8rem;font-weight:800}
+  .chip2{display:inline-block;font-size:.72rem;padding:.04rem .5rem;border-radius:999px;background:var(--c,var(--accent));color:#fff;margin-right:.25rem}
+  .soft{color:var(--muted);font-size:.95rem}
+  .more{display:inline-block;margin-top:.5rem;color:var(--accent);font-weight:600;text-decoration:none;font-size:.9rem}
+  .bigtime{font-family:var(--display);font-size:clamp(2rem,6vw,3.2rem);font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .blk[data-type="clock"][data-s="s"] .bigtime{font-size:2rem}
+  .meter2{height:.5rem;border-radius:99px;background:var(--card-2);overflow:hidden;margin:.6rem 0}.meter2 i{display:block;height:100%;background:var(--accent);border-radius:99px}
+  .wxm{display:flex;align-items:center;gap:.8rem;text-decoration:none;color:inherit}.wxm .wxi{width:3.6rem;height:3.6rem;flex:none}.wxm .tt{font-family:var(--display);font-size:2.4rem;font-weight:800;line-height:1}
+  .wxrow{display:flex;gap:1rem;flex-wrap:wrap;margin:.7rem 0}.wxrow div{font-size:.88rem;color:var(--muted)}.wxrow b{display:block;color:var(--text);font-size:1rem}
+  .wxh{display:flex;gap:.4rem;overflow-x:auto;margin:.5rem 0;scrollbar-width:thin}.wxh div{flex:none;text-align:center;font-size:.78rem;color:var(--muted);background:var(--card-2);border-radius:12px;padding:.35rem .45rem;min-width:3.2rem}.wxh .wxi{width:1.7rem;height:1.7rem;display:block;margin:.1rem auto}.wxh b{display:block;color:var(--text)}
+  .wxd{display:grid;grid-template-columns:3rem 1.8rem 1fr auto;gap:.5rem;align-items:center;font-size:.9rem;padding:.2rem 0}.wxd .wxi{width:1.6rem;height:1.6rem}
+  .qt{font-family:var(--display);font-weight:600;line-height:1.35;font-size:1.15rem}
+  .blk[data-s="l"] .qt{font-size:1.6rem}.blk[data-s="s"] .qt{font-size:.98rem}
+  .word b.w{font-family:var(--display);font-size:1.7rem}.blk[data-s="s"] .word b.w{font-size:1.3rem}.blk[data-s="l"] .word b.w{font-size:2.3rem}
+  .timerb{display:flex;gap:1rem;align-items:center;text-decoration:none;color:inherit}
+  .trow{display:flex;gap:1rem;flex-wrap:wrap}.trow a{display:flex;flex-direction:column;align-items:center;text-align:center;gap:.3rem;text-decoration:none;color:inherit;flex:1;min-width:7rem}
+  .linkchips{display:flex;flex-wrap:wrap;gap:.5rem}
+  .linkchips a{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .9rem;border-radius:999px;background:var(--card-2);border:1px solid var(--line);text-decoration:none;color:var(--text);transition:border-color .2s,transform .2s}
+  .linkchips a:hover{border-color:var(--accent);transform:translateY(-2px)}.linkchips svg{width:1rem;height:1rem;color:var(--accent)}
+  .linkchips small{color:var(--muted)}
+  .refr{float:right}
+  /* edit mode */
+  .editing .blk>.blk-body{outline:2px dashed var(--accent);outline-offset:3px;pointer-events:none}
+  .editing .blk.dragging{z-index:60;opacity:.92;transition:none;animation:none}
+  .editing .blk.dragging>.blk-body{box-shadow:0 24px 50px rgba(0,0,0,.45)}
+  .ph-slot{grid-column:calc(var(--x) + 1) / span var(--w);grid-row:calc(var(--y) + 1) / span var(--h);border-radius:20px;background:color-mix(in srgb,var(--accent) 22%,transparent);border:2px solid var(--accent);z-index:0}
+  .tools{display:none;position:absolute;right:.5rem;top:.5rem;z-index:6;gap:.2rem;padding:.25rem;border-radius:12px;background:var(--card-solid);border:1px solid var(--line);box-shadow:var(--shadow)}
+  .editing .tools{display:flex}
+  .tools button{width:2rem;height:2rem;padding:0;display:grid;place-items:center;border-radius:8px;background:transparent;border:0;font-size:.78rem;font-weight:700}
+  .tools button:hover{background:var(--card-2);transform:none}.tools svg{width:1rem;height:1rem}.tools .rm{color:var(--bad)}
+  .tools .grip{cursor:grab;touch-action:none}.tools .grip:active{cursor:grabbing}
+  .tools .mv{display:none}
+  .empty{grid-column:1/-1;grid-row:1/span 3;display:grid;place-content:center;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:20px;padding:2rem}
+  .picker h3{margin:1rem 0 .5rem;color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;font-family:var(--body)}
+  .picker .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}
+  .picker .opts button{display:flex;gap:.5rem;align-items:center;text-align:left;padding:.6rem .8rem;border-radius:12px}
+  .picker .opts svg{width:1.1rem;height:1.1rem;color:var(--accent);flex:none}
+  .lrow{display:grid;grid-template-columns:1fr 1.4fr auto;gap:.4rem;margin-bottom:.4rem}
+  @media (max-width:700px){
+    .blocks{grid-template-columns:1fr;grid-auto-rows:auto}.cells{display:none}
+    .blk{grid-column:1;grid-row:auto;order:var(--o);min-height:calc(var(--h)*66px)}
+    .tools .grip{display:none}.tools .mv{display:grid}
+    .ph-slot{display:none}
+  }
+</style>
+</head>
+<body data-page="home">
+<header id="topbar"></header>
+<main>
+  <div class="homebar" id="homebar"></div>
+  <div class="blocks" id="blocks"></div>
+</main>
+<script>
+DB.whenReady(()=>{
+const $=id=>document.getElementById(id), W=P23W, CD=P23CD, KEY="p23.home", GKEY="p23.homeGuest";
+const COLS=6, ROW=112, GAP=16;
+/* each block type can be shown at the sizes listed here: [columns, rows]. Page tiles only have S and M. */
+const SIZES={ title:{s:[3,2],m:[6,2],l:[6,3]}, page:{s:[2,2],m:[3,2]}, events:{s:[2,2],m:[3,3],l:[4,4]}, tasks:{s:[2,2],m:[3,3],l:[4,4]}, focus:{s:[2,2],m:[3,2],l:[3,3]},
+  notes:{s:[2,2],m:[3,3],l:[4,4]}, timer:{s:[2,2],m:[3,2],l:[4,3]}, links:{s:[2,2],m:[3,2],l:[4,3]}, weather:{s:[2,2],m:[3,3],l:[4,4]}, clock:{s:[2,1],m:[3,2],l:[4,2]},
+  quote:{s:[2,2],m:[3,2],l:[4,2]}, word:{s:[2,2],m:[3,2],l:[4,3]} };
+const DEF_SIZE={title:"m",page:"s",events:"m",tasks:"m",focus:"s",notes:"m",timer:"s",links:"m",weather:"m",clock:"s",quote:"m",word:"m"};
+const META={ title:["Title / text","sparkle"], events:["Upcoming events","cal"], tasks:["Reminders","todo"], focus:["Focus status","plane"], notes:["Recent notes","note"], timer:["Time until","timer"],
+  links:["Links","link"], weather:["Weather","cloud"], clock:["Clock","clock"], quote:["Quote of the day","quote"], word:["Word of the day","book"] };
+const CONFIGURABLE=new Set(["title","tasks","timer","links","clock"]);
+const uid=()=>DB.uid();
+const dims=b=>{ const d=(SIZES[b.type]||SIZES.page)[b.s]||(SIZES[b.type]||SIZES.page)[DEF_SIZE[b.type]||"s"]; return {w:d[0],h:d[1]}; };
+const hit=(a,b)=>{ const A=dims(a),B=dims(b); return a.x<b.x+B.w && b.x<a.x+A.w && a.y<b.y+B.h && b.y<a.y+A.h; };
+
+/* ---------- layout maths ---------- */
+let home=null;
+function firstFit(w,h,skip){ for(let y=0;y<400;y++) for(let x=0;x<=COLS-w;x++){ const t={x,y,type:"_",s:"_"}; const A={w,h}; if(!home.blocks.some(o=>o.id!==skip && x<o.x+dims(o).w && o.x<x+A.w && y<o.y+dims(o).h && o.y<y+A.h)) return {x,y}; } return {x:0,y:0}; }
+function resolve(id){            // anything the moved block lands on is pushed down, nothing else moves
+  const list=home.blocks, queue=[list.find(x=>x.id===id)]; let guard=0;
+  while(queue.length && guard++<800){ const m=queue.shift(); if(!m) break; for(const o of list){ if(o===m||!hit(m,o)) continue; o.y=m.y+dims(m).h; queue.push(o); } }
+}
+const mk=(type,x,y,s,cfg)=>({id:uid(),type,s:s||DEF_SIZE[type],x,y,cfg:cfg||{}});
+function DEFAULT(){
+  const b=[mk("title",0,0,"m",{title:"Project 23",subtitle:"Your schedule, your tasks, and a reason to stay in your seat. Pick where to start."})];
+  DB.pages.forEach((p,i)=>b.push(mk("page",(i%3)*2,2+Math.floor(i/3)*2,"s",{page:p.id})));
+  return {blocks:b};
+}
+function normalize(h){      // accepts layouts saved by older versions
+  h.blocks=(h.blocks||[]).filter(b=>b&&SIZES[b.type]);
+  const seen=new Set();   // layouts saved by the earlier buggy build can contain blocks that share an id: give each its own
+  h.blocks.forEach(b=>{ if(!b.id||b.id==="null"||seen.has(b.id)) b.id=uid(); seen.add(b.id); });
+  h.blocks.forEach(b=>{ b.cfg=b.cfg||{}; const key=b.s||b.size; b.s=SIZES[b.type][key]?key:DEF_SIZE[b.type]; delete b.size; });
+  home=h; const need=h.blocks.filter(b=>!Number.isInteger(b.x)||!Number.isInteger(b.y));
+  need.forEach(b=>{ b.x=-99; b.y=-99; });
+  need.forEach(b=>{ const d=dims(b), p=firstFit(d.w,d.h,b.id); b.x=p.x; b.y=p.y; });
+  h.blocks.forEach(b=>{ b.x=Math.max(0,Math.min(COLS-dims(b).w,b.x)); b.y=Math.max(0,b.y); });
+  return h;
+}
+function loadHome(){ let h=null; if(DB.isGuest()){ try{ h=JSON.parse(localStorage.getItem(GKEY)); }catch{} } else h=DB.get(KEY,null); return normalize(h&&h.blocks?h:DEFAULT()); }
+function saveHome(){ if(DB.isGuest()) localStorage.setItem(GKEY,JSON.stringify(home)); else DB.set(KEY,home); }
+home=loadHome();
+let editing=false, lives=[];
+
+/* ---------- data helpers ---------- */
+const events=()=>DB.loadEvents(), todos=()=>DB.get("p23.todos",[]), notes=()=>DB.get("p23.notes",[]), cds=()=>DB.get("p23.countdowns",[]), flights=()=>DB.get("p23.flightLog",[]), wx=()=>DB.get("p23.weather",null);
+const signPrompt=what=>`<p class="soft">Sign in to see ${what}.</p><button class="primary" data-sign>Sign in</button>`;
+const wireSign=el=>el.querySelectorAll("[data-sign]").forEach(x=>x.onclick=()=>DB.requireAuth());
+const when=ms=>{ const d=new Date(ms), t=new Date(), tm=new Date(Date.now()+86400000); const day=d.toDateString()===t.toDateString()?"Today":d.toDateString()===tm.toDateString()?"Tomorrow":d.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"}); return day+", "+DB.fmtTime(ms); };
+const rel=ms=>{ const m=Math.round((ms-Date.now())/60000); if(m<=0) return "now"; if(m<60) return "in "+m+" min"; const h=Math.round(m/60); if(h<24) return "in "+h+" h"; const d=Math.round(h/24); return "in "+d+" day"+(d===1?"":"s"); };
+const ext=u=>/^https?:/i.test(u);
+const N={s:{events:2,tasks:3,notes:2},m:{events:5,tasks:6,notes:4},l:{events:9,tasks:10,notes:8}};
+
+/* ---------- block renderers: the bigger the block, the more it shows ---------- */
+const R={
+  title(el,b){ const t=b.cfg.title||"", wm=t.trim()==="Project 23"; el.innerHTML=`<div class="hero"><h1>${wm?DB.wordmark():DB.esc(t)}</h1>${b.cfg.subtitle?`<p>${DB.esc(b.cfg.subtitle)}</p>`:""}</div>`; },
+  page(el,b){ const p=DB.pages.find(x=>x.id===b.cfg.page); if(!p){ el.textContent=""; return; }
+    el.classList.add("link"); el.innerHTML=`<a class="tile" href="${DB.esc(p.href)}"><span class="ico">${DB.icon(p.icon)}</span><span class="go">${DB.icon("left").replace("<svg","<svg style='transform:rotate(180deg)'")}</span><h2>${DB.esc(p.name)}</h2><p>${DB.esc(p.desc||"")}</p></a>`; },
+  events(el,b){ el.innerHTML=`<h3>${DB.icon("cal")}Upcoming events</h3><div id="c"></div>`; const c=el.querySelector("#c");
+    if(DB.isGuest()){ c.innerHTML=signPrompt("your upcoming events"); wireSign(c); return; }
+    const now=Date.now(), list=[]; events().forEach(ev=>DB.occurrences(ev,new Date(now-3600000),new Date(now+60*86400000)).forEach(o=>{ if(o.end>=now||o.start>=now) list.push(o); }));
+    list.sort((a,z)=>a.start-z.start);
+    c.innerHTML=list.length?list.slice(0,N[b.s].events).map(o=>`<a class="li" href="calendar.html" style="--c:${o.ev.color||"var(--accent)"}"><i class="bar"></i><span class="t"><b>${DB.esc(o.ev.title)}</b><small>${o.ev.allDay?new Date(o.start).toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"})+" · all day":when(o.start)}${b.s==="l"&&!o.ev.allDay?" · "+rel(o.start):""}</small>${b.s!=="s"&&o.ev.location?`<small>${DB.icon("pin")} ${DB.esc(o.ev.location)}</small>`:""}${b.s==="l"&&o.ev.notes?`<small class="snip">${DB.esc(o.ev.notes.slice(0,90))}</small>`:""}</span></a>`).join(""):'<p class="soft">Nothing coming up.</p>'; },
+  tasks(el,b){ el.innerHTML=`<h3>${DB.icon("todo")}${DB.esc(b.cfg.list||"Reminders")}</h3><div id="c"></div>`; const c=el.querySelector("#c");
+    if(DB.isGuest()){ c.innerHTML=signPrompt("your reminders"); wireSign(c); return; }
+    const all=todos(), list=all.filter(t=>!t.done&&(!b.cfg.list||t.category===b.cfg.list)).sort((x,y)=>((x.due?x.due+(x.time||"23:59"):"9999")>(y.due?y.due+(y.time||"23:59"):"9999")?1:-1)).slice(0,N[b.s].tasks);
+    c.innerHTML=list.length?"":'<p class="soft">All caught up.</p>';
+    list.forEach(t=>{ const r=document.createElement("div"); r.className="li"; r.style.setProperty("--c",t.color||"var(--accent)");
+      const due=t.due?new Date(t.due+"T00:00").toLocaleDateString([],{month:"short",day:"numeric"})+(t.time?" · "+DB.fmtTime(DB.fromInputs(t.due,t.time)):""):"No date";
+      r.innerHTML=`<input type="checkbox" class="ck" aria-label="Mark done: ${DB.esc(t.title)}"><a class="t" href="todo.html" style="text-decoration:none;color:inherit"><b>${DB.esc(t.title)}</b><small>${due}${b.s!=="s"&&t.category?` · <span class="chip2">${DB.esc(t.category)}</span>`:""}${b.s==="l"&&t.tags&&t.tags.length?" "+t.tags.map(x=>"#"+DB.esc(x)).join(" "):""}</small>${b.s==="l"&&t.notes?`<small class="snip">${DB.esc(t.notes.slice(0,100))}</small>`:""}</a>`;
+      r.querySelector(".ck").onchange=e=>{ t.done=e.target.checked; DB.set("p23.todos",all); setTimeout(()=>renderAll(),250); }; c.appendChild(r); }); },
+  focus(el,b){ el.innerHTML=`<h3>${DB.icon("plane")}Focus</h3><div id="c"></div>`; const c=el.querySelector("#c"), f=DB.get("p23.activeFlight",null);
+    if(f){ const left=()=>{ const now=Date.now(), paused=f.pauses.reduce((a,p)=>a+((p.e??now)-p.s),0); return Math.max(0,f.mins*60000-(now-f.startedAt-paused)); };
+      const draw=()=>{ const r=left(), m=Math.ceil(r/60000); c.innerHTML=`<a class="li" href="focus.html" style="text-decoration:none"><span class="t"><b>${DB.esc(f.from[1])} to ${DB.esc(f.to[1])}</b><small>${r<=0?"Landing now":m>=60?Math.floor(m/60)+"h "+(m%60)+"m left":m+" min left"}${b.s!=="s"?" · seat "+DB.esc(f.seat||""):""}</small></span></a>`; };
+      draw(); lives.push({every:30000,fn:draw}); return; }
+    const log=flights(), mins=log.reduce((a,l)=>a+l.mins,0);
+    if(!log.length){ c.innerHTML=`<p class="soft">${DB.isGuest()?"Sign in to start a focus flight.":"No flights yet. Ready for boarding?"}</p><a class="more" href="focus.html">Open Focus</a>`; return; }
+    c.innerHTML=`<div class="bigtime">${Math.floor(mins/60)}h ${String(mins%60).padStart(2,"0")}m</div><p class="soft" style="margin:.3rem 0 0">focused over ${log.length} flight${log.length===1?"":"s"}</p>`+
+      (b.s==="s"?"":`<p class="soft" style="margin:.4rem 0 0">Last: ${DB.esc(log[0].from)} to ${DB.esc(log[0].to)}</p>`)+
+      (b.s==="l"?log.slice(0,5).map(l=>`<div class="li"><span class="t"><b>${DB.esc(l.from)} to ${DB.esc(l.to)}</b><small>${Math.floor(l.mins/60)}h ${l.mins%60}m${l.pauses?" · "+l.pauses+" pause"+(l.pauses===1?"":"s"):""} · ${new Date(l.date).toLocaleDateString([],{month:"short",day:"numeric"})}</small></span></div>`).join(""):"")+
+      `<a class="more" href="focus.html">Start another flight</a>`; },
+  notes(el,b){ el.innerHTML=`<h3>${DB.icon("note")}Recent notes</h3><div id="c"></div>`; const c=el.querySelector("#c");
+    if(DB.isGuest()){ c.innerHTML=signPrompt("your notes"); wireSign(c); return; }
+    const l=[...notes()].sort((a,z)=>(z.pinned?1:0)-(a.pinned?1:0)||z.updated-a.updated).slice(0,N[b.s].notes), len=b.s==="l"?150:b.s==="m"?70:0;
+    c.innerHTML=l.length?l.map(n=>`<a class="li" href="notes.html#${n.id}"><span class="t"><b>${DB.esc(n.title||"Untitled note")}</b>${len?`<small class="${b.s==="l"?"":"snip"}">${DB.esc((n.preview||"No additional text").slice(0,len))}</small>`:""}</span></a>`).join(""):'<p class="soft">No notes yet.</p><a class="more" href="notes.html">Write one</a>'; },
+  timer(el,b){ el.innerHTML=`<h3>${DB.icon("timer")}Time until</h3><div id="c"></div>`; const c=el.querySelector("#c");
+    if(DB.isGuest()){ c.innerHTML=signPrompt("your countdowns"); wireSign(c); return; }
+    const all=cds(), n0=Date.now(); let up=all.filter(x=>x.target>n0).sort((a,z)=>a.target-z.target);
+    const pick=b.cfg.id?all.find(x=>x.id===b.cfg.id):null; if(pick) up=[pick,...up.filter(x=>x.id!==pick.id)];
+    if(!up.length){ c.innerHTML='<p class="soft">No countdown to show.</p><a class="more" href="countdown.html">Add one</a>'; return; }
+    const show=b.s==="l"?up.slice(0,3):[up[0]], size=b.s==="s"?84:b.s==="m"?110:96;
+    if(b.s==="l"){ c.innerHTML='<div class="trow">'+show.map(x=>`<a href="countdown.html" data-i="${x.id}">${CD.ring(x,size)}<b>${DB.esc(x.title)}</b><span class="soft line"></span></a>`).join("")+"</div>"; }
+    else c.innerHTML=`<a class="timerb" href="countdown.html" data-i="${show[0].id}">${CD.ring(show[0],size)}<span>${b.s==="s"?"":`<b style="font-family:var(--display);font-size:1.2rem;display:block">${DB.esc(show[0].title)}</b><span class="soft line"></span>`}</span></a>`;
+    const upd=()=>{ const n=Date.now(); c.querySelectorAll("[data-i]").forEach(a=>{ const x=all.find(y=>y.id===a.dataset.i); if(!x) return; CD.tick(a,x,n); const l=a.querySelector(".line"); if(l){ const t=CD.line(x,n); if(l.textContent!==t) l.textContent=t; } }); }; upd(); lives.push({every:1000,fn:upd}); },
+  links(el,b){ el.innerHTML=`<h3>${DB.icon("link")}${DB.esc(b.cfg.title||"Links")}</h3><div class="linkchips" id="c"></div>`; const c=el.querySelector("#c"), ls=b.cfg.links||[];
+    c.innerHTML=ls.length?ls.map(l=>{ let host=""; try{ host=new URL(l.url,location.href).hostname; }catch{} return `<a href="${DB.esc(l.url)}" ${ext(l.url)?'target="_blank" rel="noopener noreferrer"':""}>${DB.icon("link")}${DB.esc(l.label||l.url)}${b.s==="l"&&host?` <small>${DB.esc(host)}</small>`:""}</a>`; }).join(""):'<span class="soft">No links yet. Use the settings button to add some.</span>'; },
+  weather(el,b){ el.innerHTML=`<h3>${DB.icon("cloud")}Weather</h3><div id="c"><p class="soft">Loading…</p></div>`; const c=el.querySelector("#c"), s=wx(), loc=s&&s.locations&&s.locations.find(l=>l.id===s.active);
+    if(!loc){ c.innerHTML='<p class="soft">Choose a location to see the weather here.</p><a class="more" href="weather.html">Set a location</a>'; return; }
+    const go=()=>W.forecast(loc.lat,loc.lon,s.units).then(d=>{ const cur=d.current, i=W.info(cur.weather_code), u=W.units(s.units), hi=Math.max(0,W.hourIndex(d)), D=d.daily;
+      let h=`<a href="weather.html" class="wxm">${W.icon(i.kind,cur.is_day)}<span><span class="tt">${Math.round(cur.temperature_2m)}°</span><br><span class="soft">${i.text} · ${DB.esc(loc.name)}</span></span></a>`;
+      if(b.s!=="s") h+=`<div class="wxrow"><div>High<b>${Math.round(D.temperature_2m_max[0])}°</b></div><div>Low<b>${Math.round(D.temperature_2m_min[0])}°</b></div><div>Feels<b>${Math.round(cur.apparent_temperature)}°</b></div><div>Humidity<b>${Math.round(cur.relative_humidity_2m)}%</b></div><div>Wind<b>${Math.round(cur.wind_speed_10m)} ${u.w}</b></div></div>`;
+      if(b.s!=="s") h+='<div class="wxh">'+d.hourly.time.slice(hi,hi+(b.s==="l"?12:7)).map((t,k)=>{ const j=hi+k, ic=W.info(d.hourly.weather_code[j]); return `<div>${k===0?"Now":W.hour12(t)}${W.icon(ic.kind,d.hourly.is_day[j])}<b>${Math.round(d.hourly.temperature_2m[j])}°</b></div>`; }).join("")+"</div>";
+      if(b.s==="l"){ h+=D.time.slice(1,6).map((t,k)=>`<div class="wxd"><b>${new Date(t+"T12:00").toLocaleDateString([],{weekday:"short"})}</b>${W.icon(W.info(D.weather_code[k+1]).kind,1)}<span class="soft">${W.info(D.weather_code[k+1]).text}</span><span>${Math.round(D.temperature_2m_min[k+1])}° / ${Math.round(D.temperature_2m_max[k+1])}°</span></div>`).join("");
+        h+=`<div class="wxrow"><div>Sunrise<b>${W.hm(D.sunrise[0])}</b></div><div>Sunset<b>${W.hm(D.sunset[0])}</b></div><div>UV<b>${Math.round(d.hourly.uv_index[hi]||0)}</b></div><div>Rain chance<b>${d.hourly.precipitation_probability[hi]||0}%</b></div></div>`; }
+      c.innerHTML=h; }).catch(()=>{ c.innerHTML='<p class="soft">Weather isn\'t available right now.</p>'; });
+    go(); lives.push({every:600000,fn:go}); },
+  clock(el,b){ el.innerHTML=`<h3>${DB.icon("clock")}${b.cfg.tz?DB.esc(b.cfg.tz.split("/").pop().replace(/_/g," ")):"Local time"}</h3><div class="bigtime" id="t"></div><div class="soft" id="d" style="margin-top:.4rem"></div><div id="x"></div>`; const t=el.querySelector("#t"), d=el.querySelector("#d"), x=el.querySelector("#x");
+    const upd=()=>{ const o={hour:"numeric",minute:"2-digit",hour12:!b.cfg.h24}; if(b.s==="l") o.second="2-digit"; if(b.cfg.tz) o.timeZone=b.cfg.tz; let a,dd=""; const now=new Date();
+      try{ a=new Intl.DateTimeFormat([],o).format(now); if(b.s!=="s") dd=new Intl.DateTimeFormat([],{weekday:"long",month:"long",day:"numeric",...(b.cfg.tz?{timeZone:b.cfg.tz}:{})}).format(now); }catch{ a=now.toLocaleTimeString(); }
+      if(t.textContent!==a) t.textContent=a; if(d.textContent!==dd) d.textContent=dd;
+      if(b.s==="l"){ const day=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000), pct=Math.round((now.getHours()*60+now.getMinutes())/14.4); x.innerHTML=`<div class="meter2"><i style="width:${pct}%"></i></div><div class="soft">${pct}% of today gone · day ${day} of the year</div>`; } };
+    upd(); lives.push({every:1000,fn:upd}); },
+  quote(el,b){ const o=b.cfg.off||0, q=W.QUOTES[(W.QUOTES.indexOf(W.daily(W.QUOTES))+o)%W.QUOTES.length];
+    el.innerHTML=`<h3>${DB.icon("quote")}Quote<button class="ghost refr" aria-label="Another quote" title="Another quote">${DB.icon("refresh")}</button></h3><p class="qt">“${DB.esc(q)}”</p>`; el.querySelector(".refr").onclick=()=>{ b.cfg.off=(o+1)%W.QUOTES.length; saveHome(); R.quote(el,b); }; },
+  word(el,b){ const o=b.cfg.off||0, w=W.WORDS[(W.WORDS.indexOf(W.daily(W.WORDS))+o)%W.WORDS.length];
+    el.innerHTML=`<h3>${DB.icon("book")}Word of the day<button class="ghost refr" aria-label="Another word" title="Another word">${DB.icon("refresh")}</button></h3><div class="word"><b class="w">${DB.esc(w[0])}</b> <span class="soft"><i>${DB.esc(w[1])}</i></span><p style="margin:.4rem 0">${DB.esc(w[2])}</p>${b.s!=="s"?`<p class="soft" style="margin:0">“${DB.esc(w[3])}”</p>`:""}</div>`; el.querySelector(".refr").onclick=()=>{ b.cfg.off=(o+1)%W.WORDS.length; saveHome(); R.word(el,b); }; }
+};
+
+/* ---------- render ---------- */
+function renderAll(){
+  lives=[]; const root=$("blocks"); root.innerHTML=""; root.classList.toggle("editing",editing);
+  const rows=Math.max(3,...home.blocks.map(b=>b.y+dims(b).h))+(editing?2:0);
+  if(editing){ const cells=document.createElement("div"); cells.className="cells"; cells.style.gridTemplateRows=`repeat(${rows},var(--row))`; cells.innerHTML="<i></i>".repeat(rows*COLS); root.appendChild(cells); }
+  if(!home.blocks.length){ const e=document.createElement("div"); e.className="empty"; e.innerHTML=`<div>Your home page is empty.<br><br>${editing?'<button class="primary" id="emptyAdd">Add a block</button>':'<button class="primary" id="emptyEdit">Customize</button>'}</div>`; root.appendChild(e); const a=e.querySelector("#emptyAdd"); if(a) a.onclick=addPicker; const c=e.querySelector("#emptyEdit"); if(c) c.onclick=()=>{ editing=true; renderAll(); }; }
+  const order=[...home.blocks].sort((a,z)=>a.y-z.y||a.x-z.x).map(b=>b.id);
+  home.blocks.forEach((b,k)=>{
+    const d=dims(b), w=document.createElement("div"); w.className="blk"; w.dataset.id=b.id; w.dataset.type=b.type; w.dataset.s=b.s;
+    w.style.cssText=`--x:${b.x};--y:${b.y};--w:${d.w};--h:${d.h};--o:${order.indexOf(b.id)};--k:${Math.min(k,8)}`;
+    const body=document.createElement("div"); body.className="blk-body"; w.appendChild(body); (R[b.type]||(()=>{}))(body,b);
+    if(editing){
+      const sizeKeys=Object.keys(SIZES[b.type]), t=document.createElement("div"); t.className="tools";
+      t.innerHTML=`<button class="grip" aria-label="Drag to move (or use the arrow keys)" title="Drag to move">${DB.icon("grip")}</button><button class="mv" data-a="up" aria-label="Move earlier" title="Move earlier">${DB.icon("up")}</button><button class="mv" data-a="down" aria-label="Move later" title="Move later">${DB.icon("down")}</button>${sizeKeys.length>1?`<button data-a="size" aria-label="Change size" title="Change size (${sizeKeys.map(x=>x.toUpperCase()).join(" / ")})">${b.s.toUpperCase()}</button>`:""}${CONFIGURABLE.has(b.type)?`<button data-a="cfg" aria-label="Block settings" title="Settings">${DB.icon("gear")}</button>`:""}<button data-a="rm" class="rm" aria-label="Remove block" title="Remove">${DB.icon("trash")}</button>`;
+      t.addEventListener("click",e=>{ const btn=e.target.closest("button[data-a]"); if(btn) act(b.id,btn.dataset.a); });
+      const grip=t.querySelector(".grip"); grip.addEventListener("pointerdown",e=>startDrag(e,b.id,w,grip)); grip.addEventListener("keydown",e=>keyMove(e,b.id));
+      w.appendChild(t);
+    }
+    root.appendChild(w);
+  });
+  root.style.gridTemplateRows=`repeat(${rows},var(--row))`;
+  bar();
+}
+function bar(){
+  const h=$("homebar");
+  if(!editing){ h.innerHTML=`<button id="bEdit">${DB.icon("edit")} Customize</button>`; $("bEdit").onclick=()=>{ editing=true; renderAll(); }; return; }
+  h.innerHTML=`<button id="bAdd" class="primary">${DB.icon("plus")} Add block</button><button id="bReset">Reset to default</button><button id="bDone">${DB.icon("check")} Done</button>`;
+  $("bAdd").onclick=addPicker; $("bDone").onclick=()=>{ editing=false; renderAll(); };
+  $("bReset").onclick=()=>{ const n=document.createElement("div"); n.innerHTML='<h2>Reset your home page?</h2><p>This puts back the default layout and removes your changes.</p><div class="actions"><button id="rNo">Cancel</button><button class="danger" id="rYes">Reset</button></div>'; const close=DB.modal(n); n.querySelector("#rNo").onclick=close; n.querySelector("#rYes").onclick=()=>{ home=normalize(DEFAULT()); saveHome(); close(); renderAll(); }; };
+}
+
+/* ---------- editing actions (always found by id, never by position) ---------- */
+function act(id,a){
+  const b=home.blocks.find(x=>x.id===id); if(!b) return;
+  if(a==="rm"){ home.blocks=home.blocks.filter(x=>x.id!==id); }
+  else if(a==="size"){ const keys=Object.keys(SIZES[b.type]); b.s=keys[(keys.indexOf(b.s)+1)%keys.length]; b.x=Math.min(b.x,COLS-dims(b).w); resolve(id); }
+  else if(a==="cfg"){ return configure(b); }
+  else if(a==="up"||a==="down"){            // phones: move one place earlier or later in the list
+    const sorted=[...home.blocks].sort((p,q)=>p.y-q.y||p.x-q.x), i=sorted.findIndex(x=>x.id===id), o=sorted[i+(a==="up"?-1:1)];
+    if(o){ [b.x,o.x]=[o.x,b.x]; [b.y,o.y]=[o.y,b.y]; b.x=Math.min(b.x,COLS-dims(b).w); o.x=Math.min(o.x,COLS-dims(o).w); resolve(b.id); resolve(o.id); }
+  }
+  saveHome(); renderAll();
+}
+function keyMove(e,id){
+  const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!d) return;
+  e.preventDefault(); const b=home.blocks.find(x=>x.id===id); b.x=Math.max(0,Math.min(COLS-dims(b).w,b.x+d[0])); b.y=Math.max(0,b.y+d[1]); resolve(id); saveHome(); renderAll();
+  const g=document.querySelector(`.blk[data-id="${id}"] .grip`); if(g) g.focus();
+}
+function startDrag(e,id,el,grip){
+  if(e.button>0) return; e.preventDefault(); const b=home.blocks.find(x=>x.id===id), d=dims(b), root=$("blocks"), gr=root.getBoundingClientRect();
+  const cw=(gr.width-GAP*(COLS-1))/COLS, stepX=cw+GAP, stepY=ROW+GAP, sx=e.clientX, sy=e.clientY, sScroll=scrollY;
+  try{ grip.setPointerCapture(e.pointerId); }catch{}
+  el.classList.add("dragging");
+  const ph=document.createElement("div"); ph.className="ph-slot"; ph.style.cssText=`--x:${b.x};--y:${b.y};--w:${d.w};--h:${d.h}`; root.appendChild(ph);
+  let tx=b.x, ty=b.y, lastY=e.clientY, raf=0;
+  const update=()=>{ const dx=lastX-sx, dy=lastY-sy+(scrollY-sScroll); el.style.transform=`translate(${dx}px,${dy}px)`;
+    tx=Math.max(0,Math.min(COLS-d.w,b.x+Math.round(dx/stepX))); ty=Math.max(0,b.y+Math.round(dy/stepY)); ph.style.setProperty("--x",tx); ph.style.setProperty("--y",ty); };
+  let lastX=e.clientX;
+  const move=ev=>{ lastX=ev.clientX; lastY=ev.clientY; update(); const edge=70; if(ev.clientY>innerHeight-edge) scrollBy(0,18); else if(ev.clientY<edge+70) scrollBy(0,-18); };
+  const done=commit=>{ grip.removeEventListener("pointermove",move); grip.removeEventListener("pointerup",up); grip.removeEventListener("pointercancel",cancel); cancelAnimationFrame(raf);
+    if(commit){ b.x=tx; b.y=ty; resolve(id); saveHome(); } renderAll(); };
+  const up=()=>done(true), cancel=()=>done(false);
+  grip.addEventListener("pointermove",move); grip.addEventListener("pointerup",up); grip.addEventListener("pointercancel",cancel);
+}
+
+/* ---------- add a block ---------- */
+function addPicker(){
+  const n=document.createElement("div"); n.className="picker";
+  const opt=(label,icon,make)=>({label,icon,make});
+  const groups=[
+    ["Pages",DB.pages.map(p=>opt(p.name,p.icon,()=>mk("page",0,0,"s",{page:p.id})))],
+    ["Your things",["events","tasks","focus","notes","timer"].map(t=>opt(META[t][0],META[t][1],()=>mk(t,0,0,null,t==="tasks"?{list:""}:{})))],
+    ["Widgets",["weather","clock","quote","word"].map(t=>opt(META[t][0],META[t][1],()=>mk(t,0,0,null,{})))],
+    ["Other",[opt("Links","link",()=>mk("links",0,0,null,{title:"Quick links",links:[]})),opt("Title or text","sparkle",()=>mk("title",0,0,"m",{title:"My page",subtitle:""}))]]
+  ];
+  n.innerHTML="<h2>Add a block</h2>"+groups.map(([g],gi)=>`<h3>${g}</h3><div class="opts" data-g="${gi}"></div>`).join("")+'<div class="actions"><button id="pClose">Close</button></div>';
+  const close=DB.modal(n); n.querySelector("#pClose").onclick=close;
+  groups.forEach(([,items],gi)=>{ const box=n.querySelector(`[data-g="${gi}"]`); items.forEach(it=>{ const bt=document.createElement("button"); bt.innerHTML=DB.icon(it.icon)+"<span>"+DB.esc(it.label)+"</span>";
+    bt.onclick=()=>{ const blk=it.make(), d=dims(blk), p=firstFit(d.w,d.h); blk.x=p.x; blk.y=p.y; home.blocks.push(blk); saveHome(); close(); renderAll(); setTimeout(()=>{ const el=document.querySelector(`[data-id="${blk.id}"]`); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },60); }; box.appendChild(bt); }); });
+}
+
+/* ---------- block settings ---------- */
+function configure(b){
+  const n=document.createElement("div"), c=b.cfg; let body="";
+  if(b.type==="title") body=`<div class="field"><label for="k1">Title</label><input id="k1" style="width:100%" value="${DB.esc(c.title||"")}"></div><div class="field"><label for="k2">Subtitle</label><textarea id="k2">${DB.esc(c.subtitle||"")}</textarea></div>`;
+  if(b.type==="tasks"){ const cats=[...new Set(todos().map(t=>t.category).filter(Boolean))]; body=`<div class="field"><label for="k1">Reminder list</label><select id="k1"><option value="">All reminders</option>${cats.map(x=>`<option ${x===c.list?"selected":""}>${DB.esc(x)}</option>`).join("")}</select></div>`; }
+  if(b.type==="timer") body=`<div class="field"><label for="k1">Which countdown first</label><select id="k1"><option value="">Next one coming up</option>${cds().map(x=>`<option value="${x.id}" ${x.id===c.id?"selected":""}>${DB.esc(x.title)}</option>`).join("")}</select></div>`;
+  if(b.type==="clock") body=`<div class="field"><label for="k1">Time zone</label><select id="k1">${[["","My local time"],["UTC","UTC"],["America/New_York","New York"],["America/Chicago","Chicago"],["America/Los_Angeles","Los Angeles"],["Europe/London","London"],["Europe/Paris","Paris"],["Asia/Dubai","Dubai"],["Asia/Kolkata","India"],["Asia/Tokyo","Tokyo"],["Australia/Sydney","Sydney"]].map(([v,l])=>`<option value="${v}" ${v===(c.tz||"")?"selected":""}>${l}</option>`).join("")}</select></div><div class="field"><label class="tglrow" for="k2"><span>24-hour clock</span><input type="checkbox" class="tgl" id="k2" ${c.h24?"checked":""}></label></div>`;
+  if(b.type==="links") body=`<div class="field"><label for="k1">Block title</label><input id="k1" style="width:100%" value="${DB.esc(c.title||"")}"></div><label>Links</label><div id="lr"></div><button id="addL" style="margin-top:.3rem">${DB.icon("plus")} Add a link</button><p class="muted" style="margin:.6rem 0 0">Use a full address like https://example.com, or a page of this site like notes.html.</p>`;
+  n.innerHTML=`<h2>Block settings</h2>${body}<div class="actions"><button id="kNo">Cancel</button><button class="primary" id="kOk">Save</button></div>`;
+  const close=DB.modal(n), q=id=>n.querySelector("#"+id);
+  n.querySelectorAll("select").forEach(s=>DB.enhanceSelect(s));
+  const rows=[...(c.links||[]).map(r=>({...r}))]; const drawRows=()=>{ const box=q("lr"); if(!box) return; box.innerHTML=""; rows.forEach((r,i)=>{ const d=document.createElement("div"); d.className="lrow"; d.innerHTML=`<input placeholder="Label" value="${DB.esc(r.label||"")}" aria-label="Link label"><input placeholder="https://…" value="${DB.esc(r.url||"")}" aria-label="Link address"><button class="ghost" aria-label="Remove link">${DB.icon("x")}</button>`; const [l,u,x]=d.children; l.oninput=()=>r.label=l.value; u.oninput=()=>r.url=u.value; x.onclick=()=>{ rows.splice(i,1); drawRows(); }; box.appendChild(d); }); };
+  if(b.type==="links"){ drawRows(); q("addL").onclick=()=>{ rows.push({label:"",url:""}); drawRows(); }; }
+  q("kNo").onclick=close;
+  q("kOk").onclick=()=>{
+    if(b.type==="title"){ c.title=q("k1").value; c.subtitle=q("k2").value; }
+    if(b.type==="tasks") c.list=q("k1").value;
+    if(b.type==="timer") c.id=q("k1").value;
+    if(b.type==="clock"){ c.tz=q("k1").value; c.h24=q("k2").checked; }
+    if(b.type==="links"){ c.title=q("k1").value; c.links=rows.filter(r=>r.url.trim()).map(r=>{ let u=r.url.trim(); if(!/^(https?:|mailto:|tel:)/i.test(u) && !/\.html?(#.*)?$/i.test(u)) u="https://"+u; return {label:r.label.trim(),url:u}; }); }
+    saveHome(); close(); renderAll();
+  };
+}
+
+/* ---------- live updates: one timer, skipped while the tab is hidden ---------- */
+let tickN=0;
+setInterval(()=>{ if(document.hidden) return; tickN+=1000; lives.forEach(l=>{ if(tickN%l.every<1000) l.fn(); }); },1000);
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) lives.forEach(l=>{ try{ l.fn(); }catch{} }); });
+DB.onLogin(()=>{ home=loadHome(); renderAll(); });
+renderAll();
+});
+</script>
+</body>
+</html>
