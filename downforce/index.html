@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Downforce</title>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="icon" type="image/png" href="downforce.png">
 <style>
 *{box-sizing:border-box}[hidden]{display:none!important}
@@ -1349,32 +1349,33 @@ body.in-game,body.in-game *,#stage,#stage *,#mctrl,#mctrl *,.mc-btn,.mc-pill,.pa
 }
 
 
-/* ===== v22 Fixes: iOS Home Screen Shift, Equal Standings Width, Larger Mobile Mini-Map & Top Buttons ===== */
+/* ===== v22/v23 Fixes: Full-Bleed iOS Home Screen Viewport, Dynamic Island Safe Insets, Equal Standings Width, Larger Mobile Mini-Map & Top Buttons ===== */
 
 :root{
-  --ios-shift-y:0px;
-  --ios-shift-x:0px;
+  --full-w:100vw;
+  --full-h:100dvh;
   --di-top:0px;
   --di-left:0px;
+  --di-game-left:0px;
 }
 
-/* Allow #menu and #stage to shift down/right into the bottom/right gap when iOS shifts the standalone WebView */
+/* Keep html, body, #menu, and #stage anchored at (0,0) and sized to the full physical screen (--full-w x --full-h) so there is never a top/left black bar or bottom/right cutoff */
 html,body{
   position:fixed!important;
   top:0!important;left:0!important;
-  width:100vw!important;
-  height:100vh!important;
-  height:100lvh!important;
-  overflow:visible!important;
+  width:var(--full-w,100vw)!important;
+  height:var(--full-h,100dvh)!important;
+  overflow:hidden!important;
   background:#060914!important;
 }
 #menu{
   position:fixed!important;
-  top:var(--ios-shift-y,0px)!important;
-  left:var(--ios-shift-x,0px)!important;
-  width:100vw!important;
-  height:100vh!important;
-  height:100dvh!important;
+  top:0!important;
+  left:0!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:var(--full-w,100vw)!important;
+  height:var(--full-h,100dvh)!important;
 }
 #menu .bg{
   position:fixed!important;
@@ -1382,39 +1383,47 @@ html,body{
 }
 #menu .wrap{
   padding-top:calc(max(16px,env(safe-area-inset-top,0px),var(--di-top,0px)) + 10px)!important;
-  padding-bottom:calc(max(28px,env(safe-area-inset-bottom,0px)) + 20px)!important;
+  padding-bottom:calc(max(28px,env(safe-area-inset-bottom,0px)) + 24px)!important;
   padding-left:calc(max(16px,env(safe-area-inset-left,0px),var(--di-left,0px)) + 6px)!important;
   padding-right:calc(max(16px,env(safe-area-inset-right,0px)) + 6px)!important;
 }
-@media (orientation:landscape){
-  body.ios-standalone #menu .wrap{
-    padding-top:20px!important;
-    padding-left:calc(max(54px,env(safe-area-inset-left,54px)) + 10px)!important;
-    padding-right:calc(max(24px,env(safe-area-inset-right,24px)) + 10px)!important;
-  }
-}
 
-/* Offset #stage by the exact iOS standalone shift so neither portrait-rotated nor native landscape is pushed under the Dynamic Island */
+/* Anchor #stage across the exact full physical screen so neither top/left nor bottom/right is ever cut off */
 #stage{
-  top:var(--ios-shift-y,0px)!important;
-  left:var(--ios-shift-x,0px)!important;
+  top:0!important;
+  left:0!important;
+  right:auto!important;
+  bottom:auto!important;
+  width:var(--full-w,100vw)!important;
+  height:var(--full-h,100dvh)!important;
 }
 @media (max-width:1024px) and (orientation:portrait){
   body.in-game #stage{
-    top:calc(50% + var(--ios-shift-y,0px))!important;
-    left:calc(50% + var(--ios-shift-x,0px))!important;
+    width:var(--full-h,100dvh)!important;
+    height:var(--full-w,100dvw)!important;
+    top:calc(var(--full-h,100dvh) * 0.5)!important;
+    left:calc(var(--full-w,100dvw) * 0.5)!important;
+    right:auto!important;
+    bottom:auto!important;
+    transform:translate(-50%,-50%) rotate(90deg)!important;
   }
 }
 
-/* When in iOS standalone mode with 100lvh full coverage (diTop/diLeft > 0), keep left-side HUD elements clear of the Dynamic Island */
+/* Inset only the left/right HUD elements in iOS standalone mode so the 3D canvas is edge-to-edge while controls clear the Dynamic Island & rounded corners */
 body.ios-standalone #standings{
-  left:max(12px,env(safe-area-inset-left,0px),var(--di-top,0px),var(--di-left,0px))!important;
+  left:max(12px,env(safe-area-inset-left,0px),var(--di-game-left,0px))!important;
 }
 body.ios-standalone .mc-steer,body.ios-standalone .mc-tilt-hud{
-  left:max(14px,env(safe-area-inset-left,0px),var(--di-top,0px),var(--di-left,0px))!important;
+  left:max(14px,env(safe-area-inset-left,0px),var(--di-game-left,0px))!important;
+}
+body.ios-standalone .mc-pedals{
+  right:max(14px,env(safe-area-inset-right,0px))!important;
+}
+body.ios-standalone #mapwrap{
+  right:max(12px,env(safe-area-inset-right,0px))!important;
 }
 body.ios-standalone .intro-bar{
-  padding-left:max(0px,var(--di-top,0px),var(--di-left,0px))!important;
+  padding-left:max(0px,var(--di-game-left,0px))!important;
 }
 
 /* Ensure top mobile buttons receive all touch/pointer events cleanly */
@@ -4053,34 +4062,47 @@ function isSmallDevice(){
 function isPortraitForced(){
   return document.body.classList.contains('in-game')&&isSmallDevice()&&innerHeight>innerWidth;
 }
-function stageDims(){
-  return isPortraitForced()?{w:innerHeight,h:innerWidth}:{w:innerWidth,h:innerHeight};
-}
-function syncStandaloneViewport(){
+function getFullViewport(){
   const isSA=!!((window.navigator&&window.navigator.standalone)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));
-  document.body.classList.toggle('ios-standalone',isSA);
-  const root=document.documentElement;
-  let shiftY=0,shiftX=0,diTop=0,diLeft=0;
+  let w=innerWidth,h=innerHeight;
   if(isSA&&window.screen){
     const sLong=Math.max(screen.width||0,screen.height||0),sShort=Math.min(screen.width||0,screen.height||0);
-    if(innerHeight>=innerWidth){
-      // Portrait standalone: if iOS shifted the WebView up to y=0 under the Dynamic Island while sizing innerHeight to (sLong - statusBar),
-      // shiftY = sLong - innerHeight (~54-59px) pushes the page down out of the Dynamic Island and fills the bottom blank area!
-      const gapY=sLong-innerHeight;
-      if(gapY>=18&&gapY<=120){shiftY=gapY;}
-      else{diTop=54;}
+    if(h>=w){
+      if(sShort>0&&Math.abs(sShort-w)<=80)w=Math.max(w,sShort);
+      if(sLong>0&&sLong-h>=0&&sLong-h<=120)h=Math.max(h,sLong);
     }else{
-      // Landscape standalone: if iOS shifted the WebView left to x=0 under the Dynamic Island while sizing innerWidth to (sLong - statusBar),
-      // shiftX = sLong - innerWidth (~54-59px) pushes the page right out of the Dynamic Island and fills the right blank area!
-      const gapX=sLong-innerWidth;
-      if(gapX>=18&&gapX<=120){shiftX=gapX;}
-      else{diLeft=54;}
+      if(sLong>0&&sLong-w>=0&&sLong-w<=120)w=Math.max(w,sLong);
+      if(sShort>0&&Math.abs(sShort-h)<=80)h=Math.max(h,sShort);
     }
   }
-  root.style.setProperty('--ios-shift-y',shiftY+'px');
-  root.style.setProperty('--ios-shift-x',shiftX+'px');
+  return {w,h,isSA};
+}
+function stageDims(){
+  const vp=getFullViewport();
+  return isPortraitForced()?{w:vp.h,h:vp.w}:{w:vp.w,h:vp.h};
+}
+function syncStandaloneViewport(){
+  const vp=getFullViewport();
+  document.body.classList.toggle('ios-standalone',vp.isSA);
+  const root=document.documentElement;
+  root.style.setProperty('--full-w',vp.w+'px');
+  root.style.setProperty('--full-h',vp.h+'px');
+  let diTop=0,diLeft=0,diGameLeft=0;
+  if(vp.isSA){
+    if(vp.h>=vp.w){
+      diTop=52;
+      diGameLeft=52;
+    }else{
+      diLeft=52;
+      diGameLeft=52;
+    }
+  }
   root.style.setProperty('--di-top',diTop+'px');
   root.style.setProperty('--di-left',diLeft+'px');
+  root.style.setProperty('--di-game-left',diGameLeft+'px');
+  if(window.scrollTo&&(window.scrollX!==0||window.scrollY!==0)){
+    try{window.scrollTo(0,0);}catch(e){}
+  }
 }
 function syncStageSize(){
   syncStandaloneViewport();
