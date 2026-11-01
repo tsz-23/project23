@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Apex Online - Driving Prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#9fc3dd;color:#f2f2f2;
+    font-family:Bahnschrift,"DIN Alternate","Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+  canvas{display:block}
+  .panel{position:fixed;background:rgba(14,16,22,.74);border-radius:10px;padding:12px 16px}
+  #hud{left:50%;bottom:22px;transform:translateX(-50%);text-align:center;min-width:250px}
+  #lights{display:flex;gap:5px;justify-content:center;margin-bottom:8px}
+  #lights i{width:14px;height:14px;border-radius:50%;background:#2a2d36}
+  #row{display:flex;align-items:baseline;justify-content:center;gap:18px}
+  #speed{font-size:60px;font-weight:700;line-height:1}
+  #unit{font-size:14px;opacity:.65;margin-left:-10px}
+  #gear{font-size:40px;font-weight:700;color:#ffb020;min-width:30px}
+  #times{left:20px;top:20px;font-size:15px;line-height:1.6;min-width:210px}
+  #times b{font-weight:600;display:inline-block;min-width:70px;opacity:.7}
+  #warn{color:#ff7a2f;height:20px;font-weight:600}
+  #help{right:20px;top:20px;font-size:13px;line-height:1.6;opacity:.85}
+</style>
+</head>
+<body>
+<div id="times" class="panel">
+  <div><b>Lap</b><span id="lapNo">1</span></div>
+  <div><b>Current</b><span id="cur">-</span></div>
+  <div><b>Last</b><span id="last">-</span></div>
+  <div><b>Best</b><span id="best">-</span></div>
+  <div><b>Sectors</b><span id="sec">-</span></div>
+  <div id="warn"></div>
+  <div id="fps" style="opacity:.6;font-size:12px"></div>
+</div>
+<div id="help" class="panel">W / Up: throttle<br>S / Down: reverse<br>B: brake<br>A D / Left Right: steer<br>R: back on track<br>Drag mouse: look around</div>
+<div id="hud" class="panel">
+  <div id="lights"></div>
+  <div id="row"><div id="speed">0</div><div id="unit">km/h</div><div id="gear">N</div></div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RGBELoader} from 'three/addons/loaders/RGBELoader.js';
+import {EXRLoader} from 'three/addons/loaders/EXRLoader.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+
+// ---------- QUALITY: lower these if the game is slow, raise them if it runs smoothly ----------
+const QUALITY={
+  pixelRatio:1,       // 1 = normal sharpness. 0.75 is faster. 1.5-2 looks sharper but is MUCH slower on retina screens
+  adaptive:true,      // lowers the resolution by itself when the game is slow, and raises it again when it is fast
+  shadows:true,
+  shadowMapSize:1024,
+  post:false,         // true = stronger colours + vignette (heavier)
+  bloom:false,        // true = glow on lights (much heavier)
+  exposure:0.8        // brightness: lower = darker (it was 1.15)
+};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------- Scene ---------- */
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0xc4d9ec,300,1900);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+let curRatio=Math.min(devicePixelRatio,QUALITY.pixelRatio);renderer.setPixelRatio(curRatio);
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=QUALITY.shadows;renderer.shadowMap.type=THREE.PCFShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=QUALITY.exposure;
+document.body.appendChild(renderer.domElement);
+scene.environment=new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(),0.04).texture; // realistic reflections
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,0.5,3500);
+scene.add(new THREE.HemisphereLight(0xcfe4ff,0x5a7a43,0.4));
+const sun=new THREE.DirectionalLight(0xfff1d6,1.6);
+sun.castShadow=QUALITY.shadows;sun.shadow.mapSize.set(QUALITY.shadowMapSize,QUALITY.shadowMapSize);sun.shadow.bias=-0.0004;
+const sc=sun.shadow.camera;sc.left=sc.bottom=-50;sc.right=sc.top=50;sc.near=10;sc.far=400;
+const sunDir=new THREE.Vector3(0.5,0.8,0.35).normalize();
+scene.add(sun,sun.target);
+const sky=new THREE.Mesh(new THREE.SphereGeometry(3000,32,16),new THREE.ShaderMaterial({
+  side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{sd:{value:sunDir}},
+  vertexShader:'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'varying vec3 p;uniform vec3 sd;void main(){float h=clamp(p.y,0.,1.);vec3 c=mix(vec3(.77,.85,.93),vec3(.16,.40,.78),pow(h,.55));float s=max(dot(p,sd),0.);c+=vec3(1.,.85,.6)*(pow(s,600.)*2.+pow(s,12.)*.18);gl_FragColor=vec4(c,1.);}'
+}));
+scene.add(sky);
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);if(composer)composer.setSize(innerWidth,innerHeight);
+});
+
+function noiseTex(r,g,b,amp,rep,blots){
+  const cv=document.createElement('canvas');cv.width=cv.height=256;const x=cv.getContext('2d');
+  const id=x.createImageData(256,256);
+  for(let i=0;i<id.data.length;i+=4){const n=(Math.random()-.5)*amp;id.data[i]=r+n;id.data[i+1]=g+n;id.data[i+2]=b+n;id.data[i+3]=255;}
+  x.putImageData(id,0,0);
+  for(let i=0;i<blots;i++){x.fillStyle='rgba('+(Math.random()<.5?'0,0,0':'255,255,200')+',0.06)';x.beginPath();x.arc(Math.random()*256,Math.random()*256,10+Math.random()*30,0,7);x.fill();}
+  const t=new THREE.CanvasTexture(cv);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rep,rep);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t;
+}
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(7000,7000),new THREE.MeshStandardMaterial({map:noiseTex(176,170,158,34,600,50),roughness:1}));
+ground.rotation.x=-Math.PI/2;ground.position.y=-0.05;ground.receiveShadow=true;
+scene.add(ground);
+
+/* ---------- Track (original fictional circuit) ---------- */
+// Yas Marina (Abu Dhabi) layout, traced from the circuit map. Points are pixels of the map image;
+// the whole shape is then scaled so one lap is the real length. Point 0 is the start/finish line.
+const W=15, N=1800, LAP_LENGTH=5281;
+const ctrl=[[867,410],[865,500],[862,600],[860,700],[860,790],[868,835],[895,857],[945,857],[1000,852],[1080,846],
+[1115,838],[1145,810],[1165,760],[1190,712],[1225,680],[1275,665],[1320,670],[1370,690],[1430,717],[1500,738],
+[1580,746],[1680,750],[1780,753],[1822,748],[1840,725],[1835,695],[1805,672],[1745,648],[1650,600],[1540,545],
+[1430,490],[1320,435],[1210,380],[1100,322],[1000,272],[900,222],[840,190],[805,168],[778,142],[756,140],[742,160],[742,192],[735,218],[700,226],[640,235],[585,255],[520,290],[460,340],[390,405],[320,468],[255,535],[190,615],
+[130,700],[75,775],[40,820],[30,855],[50,885],[95,903],[145,897],[185,865],[208,815],[225,745],[245,675],
+[268,615],[300,572],[335,530],[375,503],[430,495],[480,492],[500,505],[502,545],[508,590],[540,620],[590,635],
+[620,622],[632,580],[636,520],[638,430],[645,360],[665,320],[710,300],[780,275],[840,268],[868,285],[870,340]];
+let curve=new THREE.CatmullRomCurve3(ctrl.map(p=>new THREE.Vector3(p[0],0,p[1])),true,'centripetal');
+let MAPK=1;                      // metres per map pixel (set below)
+const groups={};                 // built-in placeholders, so your own models can replace them
+{const k=LAP_LENGTH/curve.getLength();MAPK=k;
+ curve=new THREE.CatmullRomCurve3(ctrl.map(p=>new THREE.Vector3(p[0]*k,0,p[1]*k)),true,'centripetal');}
+const C=[],T=[],Nn=[];
+for(let i=0;i<N;i++){
+  const t=i/N,p=curve.getPointAt(t),tg=curve.getTangentAt(t);
+  C.push(p);T.push(tg);Nn.push(new THREE.Vector3(tg.z,0,-tg.x)); // left normal
+}
+const DS=LAP_LENGTH/N,idxAt=m=>((Math.round(m/DS)%N)+N)%N;
+const isCorner=new Array(N).fill(false);          // red/white kerbs and walls only at the turns
+{
+  const raw=[];
+  for(let i=0;i<N;i++){const a=T[(i+N-4)%N],b=T[(i+4)%N];raw.push(Math.abs(Math.atan2(a.x*b.z-a.z*b.x,a.x*b.x+a.z*b.z))/(8*DS)>1/150);}
+  for(let i=0;i<N;i++)for(let j=-5;j<=5;j++)if(raw[(i+j+N)%N]){isCorner[i]=true;break;}
+}
+const Rl=new Array(N).fill(1e9),Rr=new Array(N).fill(1e9);   // corner radius on the left / right side (for fold checks)
+for(let i=0;i<N;i++){
+  const a=T[(i+N-3)%N],b=T[(i+3)%N],cr=a.x*b.z-a.z*b.x,ang=Math.abs(Math.asin(clamp(cr,-1,1)));
+  const R=ang>1e-5?6*DS/ang:1e9;if(cr<0)Rl[i]=R;else Rr[i]=R;
+}
+const PIT0=idxAt(-110),PIT_LEN=Math.round(470/DS),PIT_GAP=Math.round(70/DS);   // pit lane: 110 m before the line to 360 m after
+const inPit=i=>((i-PIT0+N)%N)<PIT_LEN;
+const pit={until:0,cool:0},PITBOX_M=98,PIT_LAT=W/2+8.5,OFFW=W/2+9;
+const standSpans=[];let bridgeK=-1e6;
+function strip(o1,o2,y,colorFn,tex){
+  const pos=[],col=[],uv=[],idx=[],ds=curve.getLength()/N;
+  for(let i=0;i<N;i++){                       // every segment has its own 4 vertices, so each stripe is one flat colour
+    const c=colorFn(i);if(!c)continue;const k=i,k2=(i+1)%N,w=Math.abs(o1-o2)/12,a=pos.length/3;
+    for(const [kq,o,u,vq] of [[k,o1,0,i],[k,o2,w,i],[k2,o1,0,i+1],[k2,o2,w,i+1]]){
+      pos.push(C[kq].x+Nn[kq].x*o,y,C[kq].z+Nn[kq].z*o);col.push(c.r,c.g,c.b);uv.push(u,vq*ds/12);
+    }
+    idx.push(a,a+1,a+2,a+1,a+3,a+2);
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  g.setIndex(idx);g.computeVertexNormals();
+  const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,map:tex||null,roughness:.9,side:THREE.DoubleSide}));
+  mesh.receiveShadow=true;scene.add(mesh);return mesh;
+}
+const asphalt=[new THREE.Color(0x55575f),new THREE.Color(0x4a4c53)];
+const road=strip(W/2,-W/2,0.02,i=>asphalt[Math.floor(i/6)%2],noiseTex(200,200,206,70,1,40));
+
+// ---- YOUR ASSET FILES: put them in an "assets" folder next to index.html ----
+const ASSETS={
+  grass:null,  /* set to 'assets/grass.jpg' to turn the 3D grass back on */         // a SHEET of grass blades on black: used to make 3D grass tufts (see GRASS_SPRITES)
+  asphalt:'assets/asphalt.jpg', useAsphalt:false, asphaltTile:12, // set useAsphalt:true ONLY for a seamless asphalt photo
+  colormap:'assets/colormap.png',   // colour palette that belongs to car.glb
+  sky:'assets/sky.exr',             // sky picture: .hdr, .exr, .jpg or .png (equirectangular / 360 degree)
+  car:'assets/car.glb', carLength:5.5,
+  wheelAxis:'x', wheelSign:1,       // axis the car model's wheels spin around (x, y or z) and direction (1 or -1)
+  carRotY:0                         // use Math.PI if the car model drives backwards
+};
+// Pixel boxes [left, top, right, bottom] of each plant on the 1024x1024 grass sheet, and its height in metres
+const GRASS_SPRITES=[
+  [[45,425,195,560],0.42],[[285,410,475,555],0.46],[[548,365,738,565],0.52],[[795,325,962,565],0.55],
+  [[45,695,178,1012],0.6],[[712,680,890,1012],0.6]
+];
+if(ASSETS.useAsphalt){
+  new THREE.TextureLoader().load(ASSETS.asphalt,t=>{
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(12/ASSETS.asphaltTile,12/ASSETS.asphaltTile);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;
+    road.material.map=t;road.material.vertexColors=false;road.material.color.set(0xdddddd);road.material.needsUpdate=true;
+  },undefined,()=>console.warn('Missing '+ASSETS.asphalt));
+}
+let updateGrass=null;
+const grassImg=new Image();
+grassImg.onload=()=>buildGrass(grassImg);
+grassImg.onerror=()=>console.warn('Missing '+ASSETS.grass+' - no 3D grass.');
+if(ASSETS.grass)grassImg.src=ASSETS.grass;
+{
+  const ext=ASSETS.sky.split('.').pop().toLowerCase();
+  const loader=ext==='hdr'?new RGBELoader():ext==='exr'?new EXRLoader():new THREE.TextureLoader();
+  loader.load(ASSETS.sky,t=>{
+    if(ext!=='hdr'&&ext!=='exr')t.colorSpace=THREE.SRGBColorSpace;
+    t.mapping=THREE.EquirectangularReflectionMapping;
+    scene.background=t;scene.backgroundBlurriness=0.03;sky.visible=false;
+    scene.environment=new THREE.PMREMGenerator(renderer).fromEquirectangular(t).texture;  // sky also lights/reflects on the car
+  },undefined,()=>console.warn('No sky at '+ASSETS.sky+' - using the built-in sky.'));
+}
+
+function buildGrass(img){
+  const IW=img.width,IH=img.height,cv=document.createElement('canvas');cv.width=IW;cv.height=IH;
+  const cx=cv.getContext('2d');cx.drawImage(img,0,0);
+  const d=cx.getImageData(0,0,IW,IH);
+  for(let i=0;i<d.data.length;i+=4){                     // black background -> transparent
+    d.data[i+3]=clamp((Math.max(d.data[i],d.data[i+1],d.data[i+2])-14)*12,0,255);
+  }
+  cx.putImageData(d,0,0);
+  const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=8;
+  const mat=new THREE.MeshStandardMaterial({map:tex,alphaTest:0.45,side:THREE.DoubleSide,roughness:1,metalness:0});
+  // one tuft = two crossed upright planes showing one plant from the sheet
+  const tuftGeo=([x0,y0,x1,y1],h)=>{
+    const w=h*(x1-x0)/(y1-y0),u0=x0/IW,u1=x1/IW,v0=1-y1/IH,v1=1-y0/IH,pos=[],uv=[],idx=[];
+    [0,Math.PI/2].forEach((a,k)=>{
+      const px=Math.cos(a)*w/2,pz=Math.sin(a)*w/2;
+      pos.push(-px,0,-pz, px,0,pz, px,h,pz, -px,h,-pz);
+      uv.push(u0,v0,u1,v0,u1,v1,u0,v1);
+      idx.push(k*4,k*4+1,k*4+2,k*4,k*4+2,k*4+3);
+    });
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    g.setAttribute('normal',new THREE.Float32BufferAttribute(Array.from({length:24},(_,i)=>i%3===1?1:0),3)); // light from above
+    g.setIndex(idx);return g;
+  };
+  // Grass everywhere, but only near the car. Each 20 m square of ground is generated once and cached, then copied
+// into the instance buffers. Outer rings are thinned out so the grass fades away instead of ending at an edge.
+  const GCELL=20,GRAD=7,GDENS=1100,CAP=24000,CS=4;   // GDENS = tufts per square: lower it if your computer struggles
+  const FADE=[1,1,1,0.7,0.5,0.35,0.25,0.18];         // density of ring 0,1,2... around the car
+  const roadCells=new Set(),RR=Math.ceil((W/2+6.5)/CS),kk=(p,q)=>p*100003+q;
+  for(let i=0;i<N;i++){
+    const p=Math.floor(C[i].x/CS),q=Math.floor(C[i].z/CS);
+    for(let u=-RR;u<=RR;u++)for(let w=-RR;w<=RR;w++)roadCells.add(kk(p+u,q+w));   // no grass on track or run-off
+  }
+  const meshes=GRASS_SPRITES.map(([rect,h])=>{
+    const m=new THREE.InstancedMesh(tuftGeo(rect,h),mat,CAP);m.frustumCulled=false;m.count=0;
+    m.setColorAt(0,new THREE.Color(1,1,1));scene.add(m);return m;
+  });
+  const pal=Array.from({length:12},(_,i)=>new THREE.Color().setHSL(0.22+(i%4)*0.025,0.25,0.72+(i%3)*0.12));
+  const m4=new THREE.Matrix4(),q4=new THREE.Quaternion(),yA=new THREE.Vector3(0,1,0),pv=new THREE.Vector3(),sv=new THREE.Vector3();
+  const SM=meshes.map(()=>new Float32Array(GDENS*16)),SC=meshes.map(()=>new Float32Array(GDENS*3)),cache=new Map();
+  function cellData(a,b){
+    const id=kk(a,b);let d=cache.get(id);if(d)return d;
+    let sd=(a*374761393+b*668265263)>>>0;                 // same cell -> same grass every time
+    const rnd=()=>{sd=(sd+0x6D2B79F5)>>>0;let t=sd;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+    const sn=meshes.map(()=>0);
+    for(let n=0;n<GDENS;n++){
+      const px=(a+rnd())*GCELL,pz=(b+rnd())*GCELL,k=Math.floor(rnd()*meshes.length);
+      const sc=0.7+rnd()*0.7,rot=rnd()*6.28,col=pal[Math.floor(rnd()*pal.length)];
+      if(roadCells.has(kk(Math.floor(px/CS),Math.floor(pz/CS))))continue;
+      q4.setFromAxisAngle(yA,rot);m4.compose(pv.set(px,0,pz),q4,sv.set(sc,sc,sc));
+      SM[k].set(m4.elements,sn[k]*16);SC[k].set([col.r,col.g,col.b],sn[k]*3);sn[k]++;
+    }
+    d=meshes.map((_,k)=>({n:sn[k],m:SM[k].slice(0,sn[k]*16),c:SC[k].slice(0,sn[k]*3)}));
+    d.a=a;d.b=b;cache.set(id,d);return d;
+  }
+  let gx=1e9,gz=1e9;
+  updateGrass=(x,z)=>{
+    const cx=Math.floor(x/GCELL),cz=Math.floor(z/GCELL);
+    if(cx===gx&&cz===gz)return;
+    gx=cx;gz=cz;
+    const cnt=meshes.map(()=>0);
+    for(let a=cx-GRAD;a<=cx+GRAD;a++)for(let b=cz-GRAD;b<=cz+GRAD;b++){
+      const f=FADE[Math.max(Math.abs(a-cx),Math.abs(b-cz))],d=cellData(a,b);
+      d.forEach((e,k)=>{
+        const n=Math.min(Math.floor(e.n*f),CAP-cnt[k]);if(n<=0)return;
+        meshes[k].instanceMatrix.array.set(e.m.subarray(0,n*16),cnt[k]*16);
+        meshes[k].instanceColor.array.set(e.c.subarray(0,n*3),cnt[k]*3);cnt[k]+=n;
+      });
+    }
+    meshes.forEach((m,k)=>{m.count=cnt[k];m.instanceMatrix.needsUpdate=true;m.instanceColor.needsUpdate=true;});
+    for(const [id,d] of cache)if(Math.abs(d.a-cx)>GRAD+3||Math.abs(d.b-cz)>GRAD+3)cache.delete(id);
+  };
+}
+const red=new THREE.Color(0xd8281e),wht=new THREE.Color(0xf2f2f2),line=new THREE.Color(0xffffff);
+const roadGrey=new THREE.Color(0x4d4f57);
+const kerbCol=i=>isCorner[i%N]?(i%2?red:wht):roadGrey;
+strip(W/2+1.2,W/2,0.03,i=>Rl[i%N]<9.5?null:kerbCol(i));
+strip(-W/2,-W/2-1.2,0.03,i=>Rr[i%N]<9.5?null:kerbCol(i));
+const teal=new THREE.Color(0x14aab8),navy=new THREE.Color(0x10222e);
+strip(W/2+6,W/2+1.2,0.015,i=>Rl[i%N]<14.5?null:(Math.floor(i/10)%2?teal:navy));
+strip(-W/2-1.2,-W/2-6,0.015,i=>Rr[i%N]<14.5?null:(Math.floor(i/10)%2?teal:navy));
+strip(W/2-0.2,W/2-0.45,0.035,()=>line);
+strip(-W/2+0.45,-W/2+0.2,0.035,()=>line);
+const startLine=new THREE.Mesh(new THREE.BoxGeometry(W,0.04,1.6),new THREE.MeshStandardMaterial({color:0xffffff}));
+startLine.position.set(C[0].x,0.04,C[0].z);startLine.rotation.y=Math.atan2(T[0].x,T[0].z);
+scene.add(startLine);
+{
+  const gm=new THREE.MeshStandardMaterial({color:0x22252b}),g=new THREE.Group();
+  for(const s of [1,-1]){const p=new THREE.Mesh(new THREE.BoxGeometry(0.6,7,0.6),gm);p.position.set(s*(W/2+1.5),3.5,0);p.castShadow=true;g.add(p);}
+  const beam=new THREE.Mesh(new THREE.BoxGeometry(W+3.6,1.4,0.8),new THREE.MeshStandardMaterial({color:0x1b4fd8}));
+  beam.position.set(0,7,0);beam.castShadow=true;g.add(beam);
+  g.position.set(C[0].x,0,C[0].z);g.rotation.y=Math.atan2(T[0].x,T[0].z);scene.add(g);
+}
+{
+  const conc2=[new THREE.Color(0xd6d4ce),new THREE.Color(0xc9c7c1)];
+  function sweep(side,wid,hgt,filter,colorFn){        // continuous wall along the track: inner face at OFFW, one flat colour per segment
+    const pos=[],col=[],idx=[];let v=0;
+    const Pt=(k,o,y)=>[C[k].x+Nn[k].x*side*o,y,C[k].z+Nn[k].z*side*o];
+    for(let k=0;k<N;k++){
+      if(!filter(k)||(side>0&&inPit(k)))continue;
+      const k2=(k+1)%N,c=colorFn(k);
+      const quad=(p1,p2,p3,p4,sh)=>{pos.push(...p1,...p2,...p3,...p4);for(let q=0;q<4;q++)col.push(c.r*sh,c.g*sh,c.b*sh);idx.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;};
+      quad(Pt(k,OFFW,0),Pt(k,OFFW,hgt),Pt(k2,OFFW,0),Pt(k2,OFFW,hgt),1);
+      quad(Pt(k,OFFW,hgt),Pt(k,OFFW+wid,hgt),Pt(k2,OFFW,hgt),Pt(k2,OFFW+wid,hgt),1.12);
+      quad(Pt(k,OFFW+wid,0),Pt(k,OFFW+wid,hgt),Pt(k2,OFFW+wid,0),Pt(k2,OFFW+wid,hgt),0.8);
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+    const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.7,side:THREE.DoubleSide}));
+    m.castShadow=true;m.receiveShadow=true;scene.add(m);
+  }
+  for(const side of [1,-1]){
+    sweep(side,0.6,1.2,k=>!isCorner[k],k=>conc2[Math.floor(k/2)%2]);   // (a) concrete wall under the fence
+    sweep(side,1.1,1.05,k=>isCorner[k],k=>(k%2?red:wht));              // (c) thick plastic barriers in the turns
+  }
+  // catch fence with X-pattern mesh, same line as the concrete wall
+  const fenceTex=(()=>{
+    const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
+    x.strokeStyle='#fff';x.lineWidth=6;x.beginPath();x.moveTo(2,2);x.lineTo(62,62);x.moveTo(62,2);x.lineTo(2,62);x.stroke();
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=8;return t;
+  })();
+  const fenceMat=new THREE.MeshBasicMaterial({map:fenceTex,color:0x2c2f36,alphaTest:0.35,side:THREE.DoubleSide});
+  function fence(side){
+    const pos=[],uv=[],idx=[];let v=0;
+    for(let k=0;k<N;k++){
+      if(side>0&&inPit(k))continue;
+      const k2=(k+1)%N,o=side*(OFFW+0.3);
+      for(const [kq,u] of [[k,k*DS/0.5],[k2,(k+1)*DS/0.5]]){
+        pos.push(C[kq].x+Nn[kq].x*o,1.2,C[kq].z+Nn[kq].z*o);uv.push(u,0);
+        pos.push(C[kq].x+Nn[kq].x*o,4.8,C[kq].z+Nn[kq].z*o);uv.push(u,7.2);
+      }
+      idx.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
+    scene.add(new THREE.Mesh(g,fenceMat));
+  }
+  fence(1);fence(-1);
+  const posts=new THREE.InstancedMesh(new THREE.CylinderGeometry(0.08,0.08,4.8,6),new THREE.MeshStandardMaterial({color:0x8a8d94,metalness:.5,roughness:.5}),N);
+  {const mp4=new THREE.Matrix4();let pn=0;
+   for(let i=0;i<N;i+=3)for(const side of [1,-1]){
+     if(side>0&&inPit(i))continue;
+     const o=side*(OFFW+0.3);mp4.makeTranslation(C[i].x+Nn[i].x*o,2.4,C[i].z+Nn[i].z*o);posts.setMatrixAt(pn++,mp4);
+   }
+   posts.count=pn;scene.add(posts);}
+  // (b) advertising strip along the wall near the start/finish line
+  const adTex=(()=>{
+    const c=document.createElement('canvas');c.width=2048;c.height=128;const x=c.getContext('2d');
+    const list=[['APEX','#e63946'],['NOVA','#1b6ef3'],['VELOCE','#f4a300'],['AETHER','#2a9d8f'],['ORBIT','#7b2cbf'],['KINETIC','#ffffff'],['SOLARA','#ff6b35'],['DRIVE+','#14aab8']];
+    list.forEach(([t,col],i)=>{
+      x.fillStyle=col;x.fillRect(i*256,0,256,128);x.fillStyle=col==='#ffffff'?'#111':'#fff';
+      x.font='bold 56px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(t,i*256+128,66);
+      x.fillStyle='rgba(0,0,0,0.3)';x.fillRect(i*256+251,0,5,128);
+    });
+    const t=new THREE.CanvasTexture(c);t.wrapS=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t;
+  })();
+  function adStrip(side,m0,m1){
+    const i0=idxAt(m0),cnt=Math.round((m1-m0)/DS),pos=[],uv=[],idx=[];let v=0;const sg=side>0?1:-1;   // right wall is read the other way round
+    for(let j=0;j<cnt;j++){
+      const k=(i0+j)%N,k2=(k+1)%N;
+      if((side>0&&inPit(k))||isCorner[k])continue;
+      const o=side*(OFFW-0.03);
+      for(const [kq,u] of [[k,sg*j*DS/64],[k2,sg*(j+1)*DS/64]]){
+        pos.push(C[kq].x+Nn[kq].x*o,0.12,C[kq].z+Nn[kq].z*o);uv.push(u,0);
+        pos.push(C[kq].x+Nn[kq].x*o,1.12,C[kq].z+Nn[kq].z*o);uv.push(u,1);
+      }
+      idx.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
+    scene.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:adTex,side:THREE.DoubleSide})));
+  }
+  adStrip(1,-300,300);adStrip(-1,-300,300);
+}
+{ // five grandstands that follow the curve of the track
+  const crowdTex=(()=>{
+    const c=document.createElement('canvas');c.width=256;c.height=64;const x=c.getContext('2d');
+    x.fillStyle='#22406b';x.fillRect(0,0,256,64);
+    const cols=['#f2f2f2','#e63946','#2a9d8f','#f4a300','#ffffff','#7b2cbf','#1b6ef3'];
+    for(let i=0;i<260;i++){x.fillStyle=cols[i%cols.length];x.fillRect(Math.random()*252,Math.random()*60,4,5);}
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t;
+  })();
+  const seatM=new THREE.MeshStandardMaterial({map:crowdTex,roughness:.85,side:THREE.DoubleSide});
+  const concM=new THREE.MeshStandardMaterial({color:0xb9b7b0,roughness:.9,side:THREE.DoubleSide});
+  const roofM=new THREE.MeshStandardMaterial({color:0xf6f6f2,roughness:.5,side:THREE.DoubleSide});
+  const ledM=new THREE.MeshBasicMaterial({color:0x1b8fff,side:THREE.DoubleSide});
+  function curvedStand(k0,len,side,off){
+    const g=new THREE.Group(),n=Math.round(len/DS),i0=k0-Math.round(n/2),TIERS=12,TW=1.15;standSpans.push([((i0%N)+N)%N,n]);
+    const Pt=(k,o,y)=>{const q=((k%N)+N)%N;return [C[q].x+Nn[q].x*side*o,y,C[q].z+Nn[q].z*side*o];};
+    const B=()=>({p:[],u:[],i:[],v:0});
+    const quad=(b,a1,a2,a3,a4,u1,u2,u3,u4)=>{b.p.push(...a1,...a2,...a3,...a4);b.u.push(...u1,...u2,...u3,...u4);b.i.push(b.v,b.v+1,b.v+2,b.v+1,b.v+3,b.v+2);b.v+=4;};
+    const mesh=(b,mat)=>{const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(b.p,3));
+      gg.setAttribute('uv',new THREE.Float32BufferAttribute(b.u,2));gg.setIndex(b.i);gg.computeVertexNormals();
+      const m=new THREE.Mesh(gg,mat);m.castShadow=true;m.receiveShadow=true;g.add(m);};
+    const top=B(),rise=B(),wall=B(),roof=B(),led=B(),z0=[0,0],cols=[];
+    for(let j=0;j<n;j++){
+      const k=i0+j,k2=k+1,ua=j*DS/8,ub=(j+1)*DS/8;
+      for(let t=0;t<TIERS;t++){
+        const o0=off+TW*t,o1=o0+TW,h=0.55*(t+1)+0.3,hp=t?0.55*t+0.3:0;
+        quad(top,Pt(k,o0,h),Pt(k,o1,h),Pt(k2,o0,h),Pt(k2,o1,h),[ua,0],[ua,1],[ub,0],[ub,1]);
+        quad(rise,Pt(k,o0,hp),Pt(k,o0,h),Pt(k2,o0,hp),Pt(k2,o0,h),[ua,0],[ua,1],[ub,0],[ub,1]);
+      }
+      const oB=off+TW*TIERS;
+      quad(wall,Pt(k,oB,0),Pt(k,oB,0.55*TIERS+9),Pt(k2,oB,0),Pt(k2,oB,0.55*TIERS+9),z0,z0,z0,z0);
+      quad(roof,Pt(k,off-1,11.2),Pt(k,off+17,12.6),Pt(k2,off-1,11.2),Pt(k2,off+17,12.6),z0,z0,z0,z0);
+      quad(led,Pt(k,off-1,10.2),Pt(k,off-1,11.3),Pt(k2,off-1,10.2),Pt(k2,off-1,11.3),z0,z0,z0,z0);
+      if(j%5===0)cols.push(Pt(k,off+TIERS*TW+0.6,5.8));
+    }
+    for(const kE of [i0,i0+n]){                              // close both ends so the stand is not hollow from the side
+      for(let t=0;t<TIERS;t++){const o0=off+TW*t,o1=o0+TW,h=0.55*(t+1)+0.3;quad(wall,Pt(kE,o0,0),Pt(kE,o0,h),Pt(kE,o1,0),Pt(kE,o1,h),z0,z0,z0,z0);}
+      const oB=off+TW*TIERS;quad(wall,Pt(kE,oB,0),Pt(kE,oB,0.55*TIERS+9),Pt(kE,oB+0.4,0),Pt(kE,oB+0.4,0.55*TIERS+9),z0,z0,z0,z0);
+      quad(wall,Pt(kE,oB,0.55*TIERS+0.3),Pt(kE,oB,0.55*TIERS+9),Pt(kE,off+TIERS*TW*0.5,0.55*TIERS+0.3),Pt(kE,off+TIERS*TW*0.5,0.55*TIERS+0.3),z0,z0,z0,z0);
+    }
+    mesh(top,seatM);mesh(rise,seatM);mesh(wall,concM);mesh(roof,roofM);mesh(led,ledM);
+    {const ci=new THREE.InstancedMesh(new THREE.BoxGeometry(0.6,11.6,0.6),roofM,cols.length),mm=new THREE.Matrix4();cols.forEach((q,i)=>{mm.makeTranslation(q[0],q[1],q[2]);ci.setMatrixAt(i,mm);});ci.frustumCulled=false;g.add(ci);}
+    return g;
+  }
+  const standsGroup=new THREE.Group();scene.add(standsGroup);groups.stands=standsGroup;
+  for(const st of [
+    {px:[130,700],len:140},    // before turn 9
+    {px:[400,385],len:140},    // after turn 8
+    {px:[762,165],len:170},    // turns 6 and 7
+    {px:[867,410],len:200},    // start/finish area
+    {px:[1840,725],len:130}    // corner 5
+  ])standsGroup.add(curvedStand(nearestPx(st.px[0],st.px[1]),st.len,-1,26));
+}
+
+// ---------- pit lane, garages, starting grid ----------
+function ribbon(i0,count,o1,o2,y,col){                 // flat road-like strip along part of the track (o1 > o2)
+  const pos=[],cl=[],idx=[];
+  for(let j=0;j<=count;j++){
+    const k=(i0+j)%N;
+    for(const o of [o1,o2]){pos.push(C[k].x+Nn[k].x*o,y,C[k].z+Nn[k].z*o);cl.push(col.r,col.g,col.b);}
+    if(j<count){const a=j*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(cl,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,side:THREE.DoubleSide}));
+  m.receiveShadow=true;scene.add(m);return m;
+}
+const paintMat=new THREE.MeshStandardMaterial({color:0xf2f2f2,roughness:.7});
+function paintRoad(m,lat,w,l){                            // white road paint at m metres from the line, lat metres to the left
+  const u=(((m/LAP_LENGTH)%1)+1)%1,p=curve.getPointAt(u),tg=curve.getTangentAt(u);
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,0.03,l),paintMat);
+  b.position.set(p.x+tg.z*lat,0.055,p.z-tg.x*lat);b.rotation.y=Math.atan2(tg.x,tg.z);scene.add(b);
+}
+{ const pc=new THREE.Color(0x44464d);
+  ribbon(PIT0,PIT_GAP,W/2+14,W/2,0.045,pc);                                  // entry: lane flush with the track
+  ribbon(PIT0+PIT_GAP,PIT_LEN-2*PIT_GAP,W/2+14,W/2+3,0.045,pc);              // middle: behind the pit wall
+  ribbon(PIT0+PIT_LEN-PIT_GAP,PIT_GAP,W/2+14,W/2,0.045,pc);                  // exit: flush with the track again
+  for(const [i0,from,to] of [[PIT0-10,W/2+0.5,W/2+14],[PIT0+PIT_LEN,W/2+14,W/2+0.5]]){   // tapered ends so there is no brown gap
+    const pos=[],idx=[];
+    for(let j=0;j<=10;j++){const k=(i0+j)%N,o=from+(to-from)*j/10;pos.push(C[k].x+Nn[k].x*W/2,0.045,C[k].z+Nn[k].z*W/2,C[k].x+Nn[k].x*o,0.045,C[k].z+Nn[k].z*o);if(j<10){const a=j*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+    scene.add(new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:pc,roughness:.9,side:THREE.DoubleSide})));
+  }
+}          // pit lane
+ribbon(PIT0+PIT_GAP,PIT_LEN-2*PIT_GAP,W/2+3.7,W/2+3.4,0.05,new THREE.Color(0xf2f2f2));        // white line next to the pit wall
+ribbon(PIT0,PIT_LEN,W/2+8.2,W/2+7.9,0.05,new THREE.Color(0xf2c200));        // fast-lane line
+{
+  const pw=new THREE.InstancedMesh(new THREE.BoxGeometry(0.5,1,DS*1.05),new THREE.MeshStandardMaterial({color:0xcfcdc7}),PIT_LEN);
+  const m2=new THREE.Matrix4(),q2=new THREE.Quaternion(),y2=new THREE.Vector3(0,1,0),one2=new THREE.Vector3(1,1,1);let c2=0;
+  for(let j=PIT_GAP;j<PIT_LEN-PIT_GAP;j++){                                  // open ends = pit entry and exit
+    const k=(PIT0+j)%N;q2.setFromAxisAngle(y2,Math.atan2(T[k].x,T[k].z));
+    m2.compose(new THREE.Vector3(C[k].x+Nn[k].x*(W/2+2.3),0.5,C[k].z+Nn[k].z*(W/2+2.3)),q2,one2);pw.setMatrixAt(c2++,m2);
+  }
+  pw.count=c2;pw.castShadow=true;scene.add(pw);
+  const teams=[0xd62828,0x1b6ef3,0xf4a300,0x2a9d8f,0xe9e9e9,0x7b2cbf,0x00b4d8,0xff6b35,0x2b2d42,0x55a630];
+  const pits=new THREE.Group();scene.add(pits);groups.pits=pits;
+  teams.forEach((col,j)=>{                                                   // 10 fictional team garages
+    const k=idxAt(-78+44*j),gg=new THREE.Group();
+    const body=new THREE.Mesh(new THREE.BoxGeometry(16,4.2,38),new THREE.MeshStandardMaterial({color:0xe6e6e2,roughness:.7}));body.position.set(0,2.1,0);
+    const door=new THREE.Mesh(new THREE.BoxGeometry(0.3,3,30),new THREE.MeshStandardMaterial({color:0x1d2026}));door.position.set(-8.1,1.7,0);
+    const stripe=new THREE.Mesh(new THREE.BoxGeometry(0.35,1,38),new THREE.MeshStandardMaterial({color:col}));stripe.position.set(-8.15,3.7,0);
+    gg.add(body,door,stripe);
+    gg.position.set(C[k].x+Nn[k].x*(W/2+22),0,C[k].z+Nn[k].z*(W/2+22));gg.rotation.y=Math.atan2(T[k].x,T[k].z);
+    gg.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});pits.add(gg);
+  });
+  paintRoad(PITBOX_M-6,PIT_LAT,10,0.3);paintRoad(PITBOX_M+6,PIT_LAT,10,0.3);         // your pit box (stop here to change tyres)
+  for(let r=0;r<10;r++)for(let col=0;col<2;col++){                           // starting grid: 20 slots behind the line
+    const m=-(8+r*8+col*4),lat=col?-3.2:3.2;
+    paintRoad(m,lat,2.6,0.25);paintRoad(m-2.7,lat-1.3,0.2,5.4);paintRoad(m-2.7,lat+1.3,0.2,5.4);
+  }
+}
+
+// ---------- pit lane extras: speed-limit paint, exit lights, pit-wall posts, team boxes ----------
+{
+  const sc=document.createElement('canvas');sc.width=256;sc.height=128;const sx=sc.getContext('2d');
+  sx.fillStyle='#f2f2f2';sx.font='bold 54px sans-serif';sx.textAlign='center';sx.fillText('PIT',128,52);sx.fillText('80',128,112);
+  const stx=new THREE.CanvasTexture(sc);stx.colorSpace=THREE.SRGBColorSpace;
+  const at=m=>{const u=(((m/LAP_LENGTH)%1)+1)%1;return [curve.getPointAt(u),curve.getTangentAt(u)];};
+  for(const m of [-95,60,230]){
+    const [p,tg]=at(m),sign=new THREE.Mesh(new THREE.PlaneGeometry(9,4.5).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:stx,transparent:true}));
+    sign.position.set(p.x+tg.z*PIT_LAT,0.06,p.z-tg.x*PIT_LAT);sign.rotation.y=Math.atan2(tg.x,tg.z)+Math.PI;scene.add(sign);
+  }
+  const darkM=new THREE.MeshStandardMaterial({color:0x2a2d33,roughness:.6,metalness:.4}),whiteM=new THREE.MeshStandardMaterial({color:0xf4f4f0,roughness:.5});
+  {                                                       // pit exit light gantry (red / green)
+    const [p,tg]=at(352),g=new THREE.Group();
+    for(const lat of [W/2+3.6,W/2+13.4]){const pl=new THREE.Mesh(new THREE.BoxGeometry(0.4,6,0.4),darkM);pl.position.set(lat,3,0);g.add(pl);}
+    const beam=new THREE.Mesh(new THREE.BoxGeometry(10.2,0.6,0.6),darkM);beam.position.set(W/2+8.5,6,0);g.add(beam);
+    const red=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,10),new THREE.MeshBasicMaterial({color:0xff2a2a})),grn=new THREE.Mesh(new THREE.SphereGeometry(0.4,12,10),new THREE.MeshBasicMaterial({color:0x2aff5a}));
+    red.position.set(W/2+7.4,5.2,0);grn.position.set(W/2+9.6,5.2,0);g.add(red,grn);
+    g.position.set(p.x,0,p.z);g.rotation.y=Math.atan2(tg.x,tg.z);scene.add(g);
+  }
+  for(let j=0;j<10;j++){                                  // team boxes painted on the lane, command posts on the pit wall
+    const m=-78+44*j;
+    if(j!==Math.round((PITBOX_M+78)/44)){paintRoad(m-6,PIT_LAT,10,0.2);paintRoad(m+6,PIT_LAT,10,0.2);}
+    if(m>-35&&m<285){
+      const [p,tg]=at(m),g=new THREE.Group();
+      const desk=new THREE.Mesh(new THREE.BoxGeometry(2.4,1.2,0.9),darkM);desk.position.set(W/2+2.3,1.6,0);
+      const scr=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.7,0.05),new THREE.MeshBasicMaterial({color:0x2ad4ff}));scr.position.set(W/2+2.0,2.0,0);scr.rotation.y=-Math.PI/2;
+      const roofP=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.12,3.2),whiteM);roofP.position.set(W/2+2.3,3.4,0);
+      g.add(desk,scr,roofP);g.position.set(p.x,0,p.z);g.rotation.y=Math.atan2(tg.x,tg.z);
+      g.traverse(o=>{if(o.isMesh)o.castShadow=true;});scene.add(g);
+    }
+  }
+}
+
+// ---------- helpers for the surroundings ----------
+function nearestPx(px,py){let best=1e18,bi=0;for(let i=0;i<N;i++){const dx=C[i].x-px*MAPK,dz=C[i].z-py*MAPK,d=dx*dx+dz*dz;if(d<best){best=d;bi=i;}}return bi;}
+function inPoly(x,z,poly){let r=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])r=!r;}return r;}
+function distSeg(x,z,a,b){const dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz),0,1);return Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz);}
+function distPoly(x,z,poly){let m=1e9;for(let i=0;i<poly.length;i++)m=Math.min(m,distSeg(x,z,poly[i],poly[(i+1)%poly.length]));return m;}
+function curveRibbon(cv,n,o1,o2,y,mat){                 // flat strip along any curve; offsets are measured to the right of travel
+  const pos=[],idx=[];
+  for(let i=0;i<=n;i++){
+    const p=cv.getPointAt(i/n),t=cv.getTangentAt(i/n),rx=-t.z,rz=t.x;
+    pos.push(p.x+rx*o1,y,p.z+rz*o1,p.x+rx*o2,y,p.z+rz*o2);
+    if(i<n){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.Mesh(g,mat);m.receiveShadow=true;scene.add(m);return m;
+}
+function curveDashes(cv,off,step,len,y,mat){
+  const L=cv.getLength(),cnt=Math.floor(L/step),mesh=new THREE.InstancedMesh(new THREE.PlaneGeometry(0.3,1).rotateX(-Math.PI/2),mat,cnt);
+  const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),ya=new THREE.Vector3(0,1,0),pv=new THREE.Vector3(),sv=new THREE.Vector3(1,1,len);
+  for(let i=0;i<cnt;i++){
+    const u=(i+0.5)/cnt,p=cv.getPointAt(u),t=cv.getTangentAt(u);
+    q.setFromAxisAngle(ya,Math.atan2(t.x,t.z));m4.compose(pv.set(p.x-t.z*off,y,p.z+t.x*off),q,sv);mesh.setMatrixAt(i,m4);
+  }
+  mesh.frustumCulled=false;scene.add(mesh);return mesh;
+}
+const treeList=[];
+const poles=[],palms=[],cars=[],tents=[],stalls=[],flags=[],ponds=[],roadPts=[];   // decorations, built as instanced meshes at the end
+const STAD=[2180*MAPK,760*MAPK],FERRIS=[1150*MAPK,560*MAPK];
+let parkU=[0,0],ferris=null;
+const CP=[];for(let i=0;i<N;i+=3)CP.push(i);
+function trackNear(x,z){
+  let bd=1e18,bi=0;
+  for(const i of CP){const dx=x-C[i].x,dz=z-C[i].z,d=dx*dx+dz*dz;if(d<bd){bd=d;bi=i;}}
+  return {d:Math.sqrt(bd),i:bi};
+}
+const loopPoly=CP.map(i=>[C[i].x,C[i].z]);
+const insideLoop=(x,z)=>inPoly(x,z,loopPoly);
+const inSpan=(i,spans)=>spans.some(([s0,len])=>((i-s0)%N+N)%N<=len);                                      // [x,z,scale] - one instanced mesh is built at the end
+const roadM=new THREE.MeshStandardMaterial({color:0x2b2d31,roughness:.95}),walkM=new THREE.MeshStandardMaterial({color:0xbdbab2,roughness:.95}),dashM=new THREE.MeshBasicMaterial({color:0xe8e8e0});
+
+// ---------- the lake: everything outside the track from turn 10 round to turn 4 ----------
+const seaPx=[[276,800],[285,700],[300,642],[352,572],[465,568],[476,612],[512,660],[560,688],[600,700],[650,695],[700,610],[805,605],
+  [805,700],[805,800],[800,890],[900,915],[1000,912],[1100,905],[1170,885],[1215,825],[1262,745],[1320,728],[1380,765],[1445,792],[1500,810],
+  [1500,1450],[276,1450]];
+const sea=seaPx.map(p=>[p[0]*MAPK,p[1]*MAPK]);
+const SHORE=24;                                         // the first 24 edges are shore; the last 3 are just the far boundary
+const HOTEL=[572*MAPK,525*MAPK];
+let waterNormal=null;
+const waterMat=new THREE.MeshStandardMaterial({color:0x0b5d73,roughness:0.12,metalness:0.35});
+{
+  const S=256,cv=document.createElement('canvas');cv.width=cv.height=S;const cx=cv.getContext('2d'),id=cx.createImageData(S,S),T2=Math.PI*2;
+  for(let j=0;j<S;j++)for(let i=0;i<S;i++){                 // tileable ripple normal map from a few sine waves
+    const u=i/S,v=j/S;let gx=0,gy=0;
+    for(const [fu,fv,ph,amp] of [[3,2,0,1],[5,-4,1.3,0.7],[9,7,2.1,0.4],[13,-11,0.4,0.25]]){
+      const c=Math.cos(T2*(fu*u+fv*v)+ph)*T2*amp;gx+=c*fu;gy+=c*fv;
+    }
+    let nx=-gx*0.025,ny=-gy*0.025,nz=1;const l=Math.hypot(nx,ny,nz);nx/=l;ny/=l;nz/=l;
+    const o=(j*S+i)*4;id.data[o]=(nx*0.5+0.5)*255;id.data[o+1]=(ny*0.5+0.5)*255;id.data[o+2]=(nz*0.5+0.5)*255;id.data[o+3]=255;
+  }
+  cx.putImageData(id,0,0);
+  waterNormal=new THREE.CanvasTexture(cv);waterNormal.wrapS=waterNormal.wrapT=THREE.RepeatWrapping;waterNormal.repeat.set(1/16,1/16);
+  waterMat.normalMap=waterNormal;waterMat.normalScale=new THREE.Vector2(0.4,0.4);
+  const wg=new THREE.ShapeGeometry(new THREE.Shape(sea.map(p=>new THREE.Vector2(p[0],-p[1]))));wg.rotateX(-Math.PI/2);
+  const water=new THREE.Mesh(wg,waterMat);water.position.y=0.02;scene.add(water);
+  // small beach along the shore and a few wooden piers
+  const sandM=new THREE.MeshStandardMaterial({color:0xe3d3a5,roughness:1}),woodM=new THREE.MeshStandardMaterial({color:0x8a6a4a,roughness:.9});
+  for(let i=0;i<SHORE;i++){
+    const a=sea[i],b=sea[i+1],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz),mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
+    let nx=-dz/L,nz=dx/L;if(!inPoly(mx+nx*3,mz+nz*3,sea)){nx=-nx;nz=-nz;}       // normal pointing into the water
+    const beach=new THREE.Mesh(new THREE.PlaneGeometry(L,12).rotateX(-Math.PI/2),sandM);
+    beach.position.set(mx-nx*4,0.035,mz-nz*4);beach.rotation.y=Math.atan2(-dz,dx);beach.receiveShadow=true;scene.add(beach);
+    if(i===3||i===8||i===16||i===21){
+      const pier=new THREE.Mesh(new THREE.BoxGeometry(3.2,0.5,46),woodM);
+      pier.position.set(mx+nx*17,0.4,mz+nz*17);pier.rotation.y=Math.atan2(nx,nz);pier.castShadow=true;scene.add(pier);
+    }
+  }
+  // flat land on the far side of the lake, with trees
+  const x0=-500*MAPK,x1=2100*MAPK,zS=1450*MAPK,fsT=noiseTex(70,120,50,40,1,40);fsT.repeat.set((x1-x0)/12,420/12);
+  const fs=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,420).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({map:fsT,roughness:1}));
+  fs.position.set((x0+x1)/2,0.03,zS+210);fs.receiveShadow=true;scene.add(fs);
+  for(let i=0;i<500;i++)treeList.push([x0+Math.random()*(x1-x0),zS+10+Math.random()*400,0.9+Math.random()*0.9]);
+}
+// moorings round the sheltered part of the lake (turns 10-13): boats point away from the quay
+const seaSlots=[];
+{
+  let n=0;
+  for(let i=0;i<12;i++){
+    const a=sea[i],b=sea[i+1],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz),mx=(a[0]+b[0])/2,mz=(a[1]+b[1])/2;
+    let nx=-dz/L,nz=dx/L;if(!inPoly(mx+nx*3,mz+nz*3,sea)){nx=-nx;nz=-nz;}
+    const cnt=Math.floor(L/40);
+    for(let j=0;j<cnt;j++){const t=(j+0.5)/cnt;seaSlots.push({x:a[0]+dx*t+nx*18,z:a[1]+dz*t+nz*18,rot:Math.atan2(-nz,nx),n:n++});}
+  }
+}
+function makeYacht(len,hue){
+  const g=new THREE.Group(),w=len*0.24,sh=new THREE.Shape();
+  sh.moveTo(-len/2,-w/2);sh.lineTo(len*0.18,-w/2);sh.quadraticCurveTo(len*0.46,-w*0.3,len/2,0);
+  sh.quadraticCurveTo(len*0.46,w*0.3,len*0.18,w/2);sh.lineTo(-len/2,w/2);sh.closePath();
+  const hullG=new THREE.ExtrudeGeometry(sh,{depth:2.4,bevelEnabled:false});hullG.rotateX(-Math.PI/2);
+  const white=new THREE.MeshStandardMaterial({color:0xf3f3f0,roughness:.35}),navy=new THREE.MeshStandardMaterial({color:hue,roughness:.4});
+  const glass=new THREE.MeshStandardMaterial({color:0x14212b,roughness:.08,metalness:.6});
+  g.add(new THREE.Mesh(hullG,navy));
+  const add=(geo,mat,x,y)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,0);g.add(m);};
+  add(new THREE.BoxGeometry(len*0.55,1.8,w*0.8),white,-len*0.08,3.3);
+  add(new THREE.BoxGeometry(len*0.5,0.7,w*0.82),glass,-len*0.08,3.4);
+  add(new THREE.BoxGeometry(len*0.3,1.5,w*0.6),white,-len*0.12,5.0);
+  add(new THREE.CylinderGeometry(0.1,0.1,5,6),white,-len*0.12,8.2);
+  g.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  return g;
+}
+const groups_yachts=new THREE.Group();groups.yachts=groups_yachts;scene.add(groups_yachts);
+{
+  const hues=[0x16325c,0x2b2d42,0x0f4c5c,0x6b1f2a,0x1f3d2b];
+  for(const sl of seaSlots){
+    const y=makeYacht(18+((sl.n*37)%20),hues[sl.n%hues.length]);
+    y.position.set(sl.x,-0.85,sl.z);y.rotation.y=sl.rot;groups_yachts.add(y);          // hull sits below the water line
+  }
+}
+
+// ---------- big hotel between turns 8, 11, 14 and 15 (each part is only placed where it clearly fits) ----------
+{
+  let best=null;
+  for(let x=371*MAPK;x<692*MAPK;x+=8)for(let z=305*MAPK;z<670*MAPK;z+=8){
+    if(!insideLoop(x,z)||inPoly(x,z,sea))continue;
+    const d=trackNear(x,z).d;if(!best||d>best.d)best={x,z,d};
+  }
+  const ax=best.x,az=best.z;HOTEL[0]=ax;HOTEL[1]=az;
+  const free=(x,z,r)=>{for(let a2=0;a2<10;a2++){const px=x+Math.cos(a2*0.628)*r,pz=z+Math.sin(a2*0.628)*r;if(trackNear(px,pz).d<46||!insideLoop(px,pz))return false;}return trackNear(x,z).d>=46;};
+  const hg=new THREE.Group();groups.hotel=hg;scene.add(hg);
+  const fc=document.createElement('canvas');fc.width=fc.height=128;const fx=fc.getContext('2d');
+  fx.fillStyle='#26384a';fx.fillRect(0,0,128,128);
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){fx.fillStyle=((r*7+c*3)%5===0)?'#ffe3a0':'#86adc7';fx.fillRect(c*32+4,r*32+6,24,20);}
+  fx.fillStyle='#e8e6e0';fx.fillRect(0,0,128,3);fx.fillRect(0,64,128,2);
+  const fbase=new THREE.CanvasTexture(fc);fbase.wrapS=fbase.wrapT=THREE.RepeatWrapping;fbase.colorSpace=THREE.SRGBColorSpace;fbase.anisotropy=8;
+  const facade=(rx,ry,dbl)=>{const t=fbase.clone();t.repeat.set(rx,ry);t.needsUpdate=true;return new THREE.MeshStandardMaterial({map:t,roughness:.25,metalness:.4,side:dbl?THREE.DoubleSide:THREE.FrontSide});};
+  const stone=new THREE.MeshStandardMaterial({color:0xd8d4ca,roughness:.8}),roofGrey=new THREE.MeshStandardMaterial({color:0x8d9096,roughness:.9});
+  const glowM=new THREE.MeshBasicMaterial({color:0x2ad4ff});
+  const addBox=(x,z,sx,sy,sz,y0)=>{                       // building block with window facade on its four sides
+    const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),[facade(sz/16,sy/14),facade(sz/16,sy/14),roofGrey,roofGrey,facade(sx/16,sy/14),facade(sx/16,sy/14)]);
+    m.position.set(x,y0+sy/2,z);hg.add(m);return m;
+  };
+  const placeAt=(x,z,r,fn)=>{let sc=1;for(let t=0;t<4;t++){if(free(ax+x,az+z,r*sc)){fn(ax+x,az+z,sc);return true;}sc*=0.8;}return false;};
+  placeAt(0,0,48,(x,z,sc)=>{                               // podium with a glass lobby
+    addBox(x,z,84*sc,7,56*sc,0);
+    const lobby=new THREE.Mesh(new THREE.BoxGeometry(30*sc,5,0.4),new THREE.MeshStandardMaterial({color:0x7fd6e6,emissive:0x1a8aa0,emissiveIntensity:0.6,roughness:.1,metalness:.5}));
+    lobby.position.set(x,3.5,z+28*sc+0.3);hg.add(lobby);
+    const canopy=new THREE.Mesh(new THREE.BoxGeometry(36*sc,0.5,9),stone);canopy.position.set(x,5.6,z+28*sc+4.5);hg.add(canopy);
+    const helipad=new THREE.Mesh(new THREE.CircleGeometry(7,32).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:0x35383d}));helipad.position.set(x-26*sc,7.1,z-12*sc);hg.add(helipad);
+  });
+  placeAt(12,-10,32,(x,z,sc)=>{                           // main curved tower
+    const r=26*sc,h=86*sc,t=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,48,1,true,-Math.PI*0.2,Math.PI*1.4),facade(r*Math.PI*1.4/16,h/14,true));
+    t.position.set(x,h/2,z);hg.add(t);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(r+0.3,r+0.3,1.2,48,1,false,-Math.PI*0.2,Math.PI*1.4),stone);cap.position.set(x,h,z);hg.add(cap);
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(r+0.4,r+0.4,1.4,48,1,true,-Math.PI*0.2,Math.PI*1.4),glowM);band.position.set(x,h-3,z);hg.add(band);
+    const ant=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.2,18,6),roofGrey);ant.position.set(x,h+9,z);hg.add(ant);
+  });
+  placeAt(-24,14,24,(x,z,sc)=>{                           // second curved tower
+    const r=19*sc,h=66*sc,t=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,48,1,true,Math.PI*0.8,Math.PI*1.3),facade(r*Math.PI*1.3/16,h/14,true));
+    t.position.set(x,h/2,z);hg.add(t);
+    const cap=new THREE.Mesh(new THREE.CylinderGeometry(r+0.3,r+0.3,1.2,48,1,false,Math.PI*0.8,Math.PI*1.3),stone);cap.position.set(x,h,z);hg.add(cap);
+  });
+  placeAt(-30,-30,24,(x,z,sc)=>{addBox(x,z,40*sc,16,20*sc,7);});                         // low wing
+  placeAt(30,26,22,(x,z,sc)=>{addBox(x,z,30*sc,14,18*sc,7);});                            // low wing
+  placeAt(-6,30,18,(x,z,sc)=>{                                                          // pool courtyard
+    const deck=new THREE.Mesh(new THREE.BoxGeometry(34*sc,0.3,16*sc),stone);deck.position.set(x,7.2,z);hg.add(deck);
+    const pool=new THREE.Mesh(new THREE.PlaneGeometry(24*sc,8*sc).rotateX(-Math.PI/2),waterMat);pool.position.set(x,7.4,z);hg.add(pool);
+    for(let i=0;i<6;i++){const bed=new THREE.Mesh(new THREE.BoxGeometry(0.8,0.35,2),new THREE.MeshStandardMaterial({color:0xf2f2ee}));bed.position.set(x-12*sc+i*4.5*sc,7.5,z+7*sc);hg.add(bed);}
+  });
+  for(let n=0;n<40;n++){                                    // palms and garden round the hotel
+    const a3=Math.random()*6.28,rr=25+Math.random()*60,x=ax+Math.cos(a3)*rr,z=az+Math.sin(a3)*rr;
+    if(trackNear(x,z).d>=46&&insideLoop(x,z))palms.push([x,z,1+Math.random()*0.5]);
+  }
+  hg.traverse(o=>{if(o.isMesh)o.receiveShadow=false;});
+}
+
+// ---------- the bridge at turn 8: road from outside to the hotel, like the real covered bridge ----------
+let bridgeInside=null,bridgeOutside=null;
+{
+  const k=nearestPx(552,272),b=new THREE.Group();bridgeK=k;
+  const white=new THREE.MeshStandardMaterial({color:0xf6f6f2,roughness:.3,metalness:.1}),dark=new THREE.MeshStandardMaterial({color:0x2b2d31,roughness:.9});
+  const conc=new THREE.MeshStandardMaterial({color:0xcfcdc7,roughness:.85}),ledM=new THREE.MeshBasicMaterial({color:0x2ad4ff});
+  const half=OFFW+14,wd=2*half+16,DECK=6.2;
+  const glassTex=(()=>{                                   // teal glass with steel truss and lettering
+    const c=document.createElement('canvas');c.width=2048;c.height=256;const x=c.getContext('2d');
+    const gr=x.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#17b8c6');gr.addColorStop(1,'#0b6f86');x.fillStyle=gr;x.fillRect(0,0,2048,256);
+    x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=7;
+    for(let i=-4;i<30;i++){x.beginPath();x.moveTo(i*80,0);x.lineTo(i*80+128,256);x.moveTo(i*80+128,0);x.lineTo(i*80,256);x.stroke();}
+    x.fillStyle='#f6f6f2';x.font='italic bold 130px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('MARINA CIRCUIT',1024,140);
+    const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t;
+  })();
+  const glassM=new THREE.MeshStandardMaterial({map:glassTex,roughness:.15,metalness:.4,emissive:0x0a6a7a,emissiveIntensity:0.5});
+  const add=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);b.add(m);return m;};
+  add(new THREE.BoxGeometry(wd-6,0.7,11),dark,0,DECK,0);                                    // road deck
+  add(new THREE.BoxGeometry(wd-6,1.1,0.5),white,0,DECK+0.9,5.6);add(new THREE.BoxGeometry(wd-6,1.1,0.5),white,0,DECK+0.9,-5.6);
+  add(new THREE.BoxGeometry(wd-4,0.9,13.4),white,0,DECK+9.4,0);                              // roof
+  add(new THREE.BoxGeometry(wd-6,0.15,0.15),ledM,0,DECK+8.8,5.4);add(new THREE.BoxGeometry(wd-6,0.15,0.15),ledM,0,DECK+8.8,-5.4);
+  // white fascia: a long rounded shape with a window cut out, on both sides
+  const sh=new THREE.Shape(),r=4.5,hd=9.4;
+  sh.moveTo(-wd/2+r,0);sh.lineTo(wd/2-r,0);sh.absarc(wd/2-r,r,r,-Math.PI/2,Math.PI/2,false);sh.lineTo(-wd/2+r,hd);sh.absarc(-wd/2+r,r,r,Math.PI/2,Math.PI*1.5,false);
+  const hole=new THREE.Path(),hw=wd/2-9,hh=2.6,y0=2.2;
+  hole.moveTo(-hw,y0);hole.lineTo(hw,y0);hole.lineTo(hw,y0+2*hh);hole.lineTo(-hw,y0+2*hh);hole.closePath();sh.holes.push(hole);
+  const fasG=new THREE.ExtrudeGeometry(sh,{depth:0.8,bevelEnabled:false});
+  for(const z of [-6.6,6.6]){const f=new THREE.Mesh(fasG,white);f.position.set(0,DECK+0.4,z-0.4);b.add(f);
+    const gp=new THREE.Mesh(new THREE.PlaneGeometry(2*hw,2*hh),glassM);gp.position.set(0,DECK+0.4+y0+hh,z);gp.rotation.y=z>0?0:Math.PI;b.add(gp);}
+  // piers and ramps down to the ground on both sides
+  for(const sx of [-1,1]){
+    const pier=new THREE.Mesh(new THREE.CylinderGeometry(3.2,3.2,DECK,20),white);pier.scale.z=1.5;pier.position.set(sx*(OFFW+9),DECK/2,0);b.add(pier);
+    const len=sx>0?45:40,wsh=new THREE.Shape();wsh.moveTo(0,0);wsh.lineTo(len,0);wsh.lineTo(0,DECK);wsh.closePath();
+    const ramp=new THREE.Mesh(new THREE.ExtrudeGeometry(wsh,{depth:11,bevelEnabled:false}),conc);
+    ramp.position.set(sx*(wd/2-3),0,-5.5);ramp.scale.x=sx;b.add(ramp);
+    const surf=new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(len,DECK),0.15,10.4),dark);
+    surf.position.set(sx*(wd/2-3+len/2),DECK/2+0.1,0);surf.rotation.z=-sx*Math.atan2(DECK,len);b.add(surf);
+  }
+  b.position.set(C[k].x,0,C[k].z);b.rotation.y=Math.atan2(T[k].x,T[k].z);
+  b.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});scene.add(b);
+  const yaw=Math.atan2(T[k].x,T[k].z),lx=Math.cos(yaw),lz=-Math.sin(yaw);   // left (inside) direction
+  bridgeInside=[C[k].x+lx*(wd/2-3+45),C[k].z+lz*(wd/2-3+45)];
+  bridgeOutside=[C[k].x-lx*(wd/2-3+40),C[k].z-lz*(wd/2-3+40)];
+}
+
+// ---------- stadium outside corner 5 ----------
+{
+  const g=new THREE.Group();g.position.set(STAD[0],0,STAD[1]);g.rotation.y=-0.15;
+  const seatA=new THREE.MeshStandardMaterial({color:0xd8322e,side:THREE.DoubleSide,roughness:.8}),seatB=new THREE.MeshStandardMaterial({color:0xf2f2f0,side:THREE.DoubleSide,roughness:.8});
+  const wallM=new THREE.MeshStandardMaterial({color:0xe9e7e1,side:THREE.DoubleSide,roughness:.7});
+  for(let t=0;t<3;t++){const c=new THREE.Mesh(new THREE.CylinderGeometry(56+t*9,48+t*9,7,48,1,true),t%2?seatB:seatA);c.position.y=3.5+t*7;g.add(c);}
+  const outer=new THREE.Mesh(new THREE.CylinderGeometry(76,76,24,48,1,true),wallM);outer.position.y=12;g.add(outer);
+  const roof=new THREE.Mesh(new THREE.RingGeometry(46,78,48).rotateX(-Math.PI/2),wallM);roof.position.y=24;g.add(roof);
+  const field=new THREE.Mesh(new THREE.CircleGeometry(40,48).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:0x3f9a3a,roughness:1}));field.position.y=0.2;g.add(field);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(14,15,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffffff}));ring.position.y=0.25;g.add(ring);
+  for(const [tx,tz] of [[60,50],[-60,50],[60,-50],[-60,-50]]){
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.9,42,8),wallM);pole.position.set(tx,21,tz);g.add(pole);
+    const head=new THREE.Mesh(new THREE.BoxGeometry(8,2.5,1.2),new THREE.MeshBasicMaterial({color:0xfff4d0}));head.position.set(tx,43,tz);head.lookAt(0,10,0);g.add(head);
+  }
+  g.scale.set(1.3,1,1);g.traverse(o=>{if(o.isMesh)o.castShadow=true;});scene.add(g);
+  const plaza=new THREE.Mesh(new THREE.CircleGeometry(142,64).rotateX(-Math.PI/2),walkM);plaza.position.set(STAD[0],0.05,STAD[1]);scene.add(plaza);
+  const sring=new THREE.Mesh(new THREE.RingGeometry(150,166,64).rotateX(-Math.PI/2),roadM);sring.position.set(STAD[0],0.06,STAD[1]);scene.add(sring);
+  for(let i=0;i<48;i++){const a4=i/48*6.283;roadPts.push([STAD[0]+Math.cos(a4)*158,STAD[1]+Math.sin(a4)*158]);}
+  for(let i=0;i<24;i++){const a4=i/24*6.283;poles.push([STAD[0]+Math.cos(a4)*148,STAD[1]+Math.sin(a4)*148,10]);palms.push([STAD[0]+Math.cos(a4+0.13)*170,STAD[1]+Math.sin(a4+0.13)*170,1.2]);}
+  {                                                       // Ferris wheel in the infield
+    const fw=new THREE.Group(),wheel=new THREE.Group(),steel=new THREE.MeshStandardMaterial({color:0xf0f0ee,roughness:.4,metalness:.3});
+    wheel.add(new THREE.Mesh(new THREE.TorusGeometry(26,0.5,8,56),steel),new THREE.Mesh(new THREE.TorusGeometry(15,0.3,8,40),steel));
+    for(let i=0;i<8;i++){const sp=new THREE.Mesh(new THREE.BoxGeometry(0.25,52,0.25),steel);sp.rotation.z=i*Math.PI/8;wheel.add(sp);}
+    const gc=[0xd62828,0x1b6ef3,0xf4a300,0x2a9d8f,0x7b2cbf];
+    for(let i=0;i<20;i++){const a5=i/20*6.283,gd=new THREE.Mesh(new THREE.BoxGeometry(3,2.4,3),new THREE.MeshStandardMaterial({color:gc[i%5],roughness:.5}));gd.position.set(Math.cos(a5)*26,Math.sin(a5)*26-1.2,0);wheel.add(gd);}
+    wheel.position.y=32;fw.add(wheel);ferris=wheel;
+    for(const sz of [-3,3]){const leg=new THREE.Mesh(new THREE.BoxGeometry(1.2,36,1.2),steel);leg.position.set(0,16,sz*1.6);leg.rotation.x=sz*0.09;fw.add(leg);}
+    fw.position.set(FERRIS[0],0,FERRIS[1]);fw.rotation.y=0.6;scene.add(fw);
+    const fpl=new THREE.Mesh(new THREE.CircleGeometry(40,40).rotateX(-Math.PI/2),walkM);fpl.position.set(FERRIS[0],0.05,FERRIS[1]);scene.add(fpl);
+  }
+}
+
+// ---------- ring road from turn 5 round to turn 9, with a park (ponds and trees) on its outer side ----------
+const ringPx=[[1990,720],[1975,670],[1925,640],[1880,621],[1783,573],[1688,525],[1578,470],[1468,415],[1358,360],[1248,305],[1138,247],[1038,197],[938,147],
+  [868,110],[820,62],[750,40],[690,60],[660,110],[611,156],[556,176],[491,211],[430,261],[360,326],[290,389],[225,456],[124,562],[61,651],
+  [7,725],[-26,769],[-60,850],[-40,940],[40,1000],[150,1015]];
+const ringCurve=new THREE.CatmullRomCurve3(ringPx.map(q=>new THREE.Vector3(q[0]*MAPK,0,q[1]*MAPK)),false,'centripetal');
+const ringPts=[];for(let i=0;i<=400;i++)ringPts.push(ringCurve.getPointAt(i/400));
+ringPts.forEach((q,i)=>{if(i%3===0)roadPts.push([q.x,q.z]);});
+{
+  curveRibbon(ringCurve,400,-12.5,12.5,0.04,walkM);curveRibbon(ringCurve,400,-9,9,0.06,roadM);
+  curveDashes(ringCurve,0,14,5,0.075,dashM);
+  const near=q=>{let bi=0,bd=1e18;ringPts.forEach((p,i)=>{const d=Math.hypot(p.x-q[0]*MAPK,p.z-q[1]*MAPK);if(d<bd){bd=d;bi=i;}});return bi/400;};
+  const u0=near([1783,573]),u1=near([61,651]);parkU=[u0,u1];                          // park runs along the outer side from here to here
+  const grassM=new THREE.MeshStandardMaterial({map:noiseTex(58,112,44,40,1,60),roughness:1});grassM.map.repeat.set(1/6,1/6);
+  const sub=(cv,a,c)=>{const pts=[];for(let i=0;i<=200;i++)pts.push(cv.getPointAt(a+(c-a)*i/200));return new THREE.CatmullRomCurve3(pts,false,'centripetal');};
+  const parkCurve=sub(ringCurve,u0,u1);
+  const pg=curveRibbon(parkCurve,200,14,300,0.03,grassM);
+  const uv=[];const pos=pg.geometry.attributes.position;for(let i=0;i<pos.count;i++)uv.push(pos.getX(i),pos.getZ(i));pg.geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  const rightPt=(u,o)=>{const p=parkCurve.getPointAt(u),t=parkCurve.getTangentAt(u);return [p.x-t.z*o,p.z+t.x*o,t];};
+  for(const u of [0.2,0.5,0.8]){                                         // ponds
+    const [x,z,t]=rightPt(u,150),pond=new THREE.Mesh(new THREE.CircleGeometry(1,40).rotateX(-Math.PI/2),waterMat);
+    pond.scale.set(70,1,38);pond.position.set(x,0.05,z);pond.rotation.y=Math.atan2(-t.z,t.x)+Math.PI/2*0;scene.add(pond);
+  }
+  for(let i=0;i<500;i++){
+    const u=Math.random(),o=24+Math.random()*260,[x,z]=rightPt(u,o);
+    const nearPond=[0.2,0.5,0.8].some(pu=>{const [px,pz]=rightPt(pu,150);return Math.hypot(x-px,z-pz)<75;});
+    if(!nearPond)treeList.push([x,z,1+Math.random()*0.9]);
+  }
+}
+// lamps along the ring road, and a road from the ring road to the car parks and the stadium
+{
+  for(let i=4;i<400;i+=8){const q=ringPts[i],q2=ringPts[i+1],tx=q2.x-q.x,tz=q2.z-q.z,L=Math.hypot(tx,tz)||1;
+    for(const sd of [-1,1])poles.push([q.x+(-tz/L)*sd*14,q.z+(tx/L)*sd*14,9]);}
+  const cp=new THREE.CatmullRomCurve3([[1990,720],[2030,830],[1990,930],[1870,990],[1740,1030]].map(q=>new THREE.Vector3(q[0]*MAPK,0,q[1]*MAPK)),false,'centripetal');
+  curveRibbon(cp,120,-12.5,12.5,0.04,walkM);curveRibbon(cp,120,-9,9,0.06,roadM);curveDashes(cp,0,14,5,0.075,dashM);
+  for(let i=0;i<=40;i++){const q=cp.getPointAt(i/40);roadPts.push([q.x,q.z]);}
+}
+// roads and highways around the circuit
+{
+  const hx0=-700,hx1=2500,hz0=-650,hz1=1500;                              // rectangle ring road well outside the circuit
+  const pts=[[hx0,hz0],[(hx0+hx1)/2,hz0],[hx1,hz0],[hx1,(hz0+hz1)/2],[hx1,hz1],[(hx0+hx1)/2,hz1],[hx0,hz1],[hx0,(hz0+hz1)/2]].map(q=>new THREE.Vector3(q[0],0,q[1]));
+  const hw=new THREE.CatmullRomCurve3(pts,true,'catmullrom',0.05);
+  curveRibbon(hw,600,-19,19,0.05,roadM);curveRibbon(hw,600,-1,1,0.07,walkM);
+  curveDashes(hw,9.5,16,6,0.08,dashM);curveDashes(hw,-9.5,16,6,0.08,dashM);
+}
+
+// access roads of the turn-8 bridge: ramp end (outside) -> ring road, ramp end (inside) -> hotel
+{
+  const nr=ringPts.reduce((b,p)=>Math.hypot(p.x-bridgeOutside[0],p.z-bridgeOutside[1])<Math.hypot(b.x-bridgeOutside[0],b.z-bridgeOutside[1])?p:b);
+  const outC=new THREE.CatmullRomCurve3([new THREE.Vector3(bridgeOutside[0],0,bridgeOutside[1]),new THREE.Vector3((bridgeOutside[0]+nr.x)/2,0,(bridgeOutside[1]+nr.z)/2),new THREE.Vector3(nr.x,0,nr.z)],false,'centripetal');
+  const inC=new THREE.CatmullRomCurve3([new THREE.Vector3(bridgeInside[0],0,bridgeInside[1]),new THREE.Vector3((bridgeInside[0]+HOTEL[0])/2,0,(bridgeInside[1]+HOTEL[1])/2),new THREE.Vector3(HOTEL[0],0,HOTEL[1]-42)],false,'centripetal');
+  for(const cv of [outC,inC]){curveRibbon(cv,60,-9,9,0.06,roadM);curveDashes(cv,0,12,4,0.075,dashM);for(let i=0;i<=20;i++){const q=cv.getPointAt(i/20);roadPts.push([q.x,q.z]);}}
+}
+
+// ---------- your own scenery models ----------
+// fillSea:true = one boat on every mooring; or at:[[x,y],...] = pixel positions on the map image.
+// size = longest side in metres; rot = turn in degrees; sink = how deep it sits in the water (0.2 = a fifth of its height)
+const SCENERY=[
+  {file:'assets/yacht.glb',fillSea:true,size:30,vary:0.3,rot:0,sink:0.2,tint:'yacht',replaces:'yachts'},
+];
+function paintWith(root,url){
+  new THREE.TextureLoader().load(url,cm=>{
+    cm.flipY=false;cm.colorSpace=THREE.SRGBColorSpace;cm.magFilter=cm.minFilter=THREE.NearestFilter;cm.generateMipmaps=false;
+    root.traverse(o=>{if(o.isMesh)for(const mt of [].concat(o.material)){mt.map=cm;mt.color.set(0xffffff);mt.needsUpdate=true;}});
+  },undefined,()=>console.warn('Missing '+url));
+}
+function tintYacht(root){            // a yacht model without its palette: colour the parts by their names (white by default)
+  root.traverse(o=>{
+    if(!o.isMesh)return;
+    const arr=[].concat(o.material).map(mt=>{
+      const nm=((o.name||'')+' '+(mt.name||'')).toLowerCase();
+      const m=new THREE.MeshStandardMaterial({color:0xf3f3f0,roughness:0.35,metalness:0.1});
+      if(/glass|window|wind|cockpit|screen/.test(nm)){m.color.set(0x14212b);m.roughness=0.08;m.metalness=0.6;}
+      else if(/wood|deck|teak|floor/.test(nm))m.color.set(0x8b6b4a);
+      else if(/black|rubber|tyre|tire|dark|engine/.test(nm))m.color.set(0x25272b);
+      else if(/metal|chrome|rail|steel|silver|mast/.test(nm)){m.color.set(0xc4c8cf);m.metalness=0.8;m.roughness=0.25;}
+      else if(/blue|hull/.test(nm))m.color.set(0x1b3f7a);
+      return m;
+    });
+    o.material=arr.length>1?arr:arr[0];
+  });
+}
+for(const e of SCENERY){
+  new GLTFLoader().load(e.file,gltf=>{
+    if(e.tint==='yacht')tintYacht(gltf.scene);
+    const list=e.fillSea?seaSlots:(e.at||[[e.x,e.y]]).map((q,n)=>({x:q[0]*MAPK,z:q[1]*MAPK,rot:0,n}));
+    for(const sl of list){
+      const m=gltf.scene.clone(true),w=new THREE.Group();w.add(m);
+      const sz=new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
+      const vary=e.fillSea?(1-(e.vary||0)/2+(e.vary||0)*(((sl.n*37)%10)/10)):1;
+      m.scale.setScalar((e.size||20)*vary/Math.max(sz.x,sz.y,sz.z));
+      const b2=new THREE.Box3().setFromObject(m),c2=b2.getCenter(new THREE.Vector3());
+      m.position.set(-c2.x,-b2.min.y-(e.sink||0)*(b2.max.y-b2.min.y),-c2.z);
+      w.rotation.y=sl.rot+THREE.MathUtils.degToRad(e.rot||0);w.position.set(sl.x,e.fillSea?0.02:0,sl.z);
+      w.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
+      if(e.colormap)paintWith(w,e.colormap);
+      scene.add(w);
+    }
+    if(e.replaces&&groups[e.replaces])groups[e.replaces].visible=false;
+  },undefined,()=>console.warn('Scenery file missing: '+e.file));
+}
+
+// ---------- Kenney pit garage and tent (.glb files in assets/) ----------
+const KEN={garage:'assets/pitsGarage.glb',tent:'assets/tent.glb',colormap:'assets/colormap.png',   // the kit's palette picture (same one the car uses)
+  garageSize:22,garageRot:-90,    // size in metres; garageRot turns the garage (try -90, 90, 0 or 180 until the doors face the pit lane)
+  tentSize:14,tentRot:0,maxHeight:5.5};   // maxHeight: models are squashed to be no taller than this (metres)
+(async()=>{
+  const loader=new GLTFLoader();
+  const cm=await new Promise(res=>new THREE.TextureLoader().load(KEN.colormap,t=>{
+    t.flipY=false;t.colorSpace=THREE.SRGBColorSpace;t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;res(t);
+  },undefined,()=>res(null)));
+  const prep=g=>{if(cm)g.scene.traverse(o=>{if(o.isMesh)for(const mt of [].concat(o.material)){mt.map=cm;mt.color.set(0xffffff);mt.needsUpdate=true;}});return g;};
+  const put=(gltf,size,k,off,rot)=>{
+    const m=gltf.scene.clone(true),w=new THREE.Group();w.add(m);
+    const sz=new THREE.Box3().setFromObject(m).getSize(new THREE.Vector3());
+    {const sc=size/Math.max(sz.x,sz.z);m.scale.set(sc,Math.min(sc,KEN.maxHeight/sz.y),sc);}
+    const b2=new THREE.Box3().setFromObject(m),c2=b2.getCenter(new THREE.Vector3());
+    m.position.set(-c2.x,-b2.min.y,-c2.z);
+    w.position.set(C[k].x+Nn[k].x*off,0,C[k].z+Nn[k].z*off);
+    w.rotation.y=Math.atan2(T[k].x,T[k].z)+THREE.MathUtils.degToRad(rot);
+    scene.add(w);
+  };
+  try{
+    const garage=prep(await loader.loadAsync(KEN.garage));
+    for(let j=0;j<10;j++)for(const u of [-KEN.garageSize/2,KEN.garageSize/2])
+      put(garage,KEN.garageSize,idxAt(-78+44*j+u),W/2+14+KEN.garageSize/2+0.5,KEN.garageRot);
+    groups.pits.visible=false;                                           // hide the plain built-in garages
+  }catch(err){console.warn('Pit garage model not loaded ('+KEN.garage+') - using the built-in garages.',err);}
+  try{
+    const tent=prep(await loader.loadAsync(KEN.tent));
+    for(let j=0;j<10;j++)put(tent,KEN.tentSize,idxAt(-78+44*j),W/2+14+KEN.garageSize+KEN.tentSize/2+6,KEN.tentRot);
+  }catch(err){console.warn('Tent model not loaded ('+KEN.tent+').',err);}
+})();
+
+// ---------- grass, generated: inside turn 9 and inside turns 3-5, hugging the track ----------
+function edgePoly(a,b,side,off){const pts=[];for(let i=a;i<=b;i+=4)pts.push([C[i].x+Nn[i].x*side*off,C[i].z+Nn[i].z*side*off]);return pts;}
+const gOff=W/2+9.8;                                                      // starts just behind the outer wall
+const grassW=[edgePoly(nearestPx(1275,665),nearestPx(1210,380),1,gOff),edgePoly(nearestPx(75,775),nearestPx(268,615),1,gOff)];
+{
+  const gtex=noiseTex(58,112,44,40,1,60);gtex.repeat.set(1/6,1/6);
+  for(const poly of grassW){
+    const gg=new THREE.ShapeGeometry(new THREE.Shape(poly.map(q=>new THREE.Vector2(q[0],-q[1]))));gg.rotateX(-Math.PI/2);
+    const m=new THREE.Mesh(gg,new THREE.MeshStandardMaterial({map:gtex,roughness:1}));m.position.y=0.02;m.receiveShadow=true;scene.add(m);
+  }
+  function tuftGeo(blades,h,seed){
+    const pos=[],col=[];let sd=seed;const r=()=>{sd=(sd*16807)%2147483647;return sd/2147483647;};
+    for(let b=0;b<blades;b++){
+      const a=r()*6.28,rad=r()*0.12,x=Math.cos(a)*rad,z=Math.sin(a)*rad,lean=(r()-.5)*0.25,hh=h*(0.6+r()*0.6),w=0.035;
+      const tx=Math.cos(a+1.57)*w,tz=Math.sin(a+1.57)*w,ux=Math.cos(a)*lean*hh,uz=Math.sin(a)*lean*hh;
+      pos.push(x-tx,0,z-tz,x+tx,0,z+tz,x+ux,hh,z+uz);
+      col.push(0.12,0.26,0.07,0.12,0.26,0.07,0.5,0.68,0.26);
+    }
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+    g.setAttribute('normal',new THREE.Float32BufferAttribute(Array.from({length:pos.length},(_,i)=>i%3===1?1:0),3));
+    return g;
+  }
+  const kinds=[tuftGeo(7,0.30,11),tuftGeo(9,0.38,23),tuftGeo(6,0.25,37)];
+  const gmat=new THREE.MeshStandardMaterial({vertexColors:true,side:THREE.DoubleSide,roughness:1});
+  const GCELL=20,GRAD=3,GDENS=1500,CAPG=12000,FADEG=[1,1,0.7,0.4];     // GDENS: tufts per 20 m square (lower = lighter)
+  const gm=kinds.map(g=>{const m=new THREE.InstancedMesh(g,gmat,CAPG);m.frustumCulled=false;m.count=0;scene.add(m);return m;});
+  const SMg=gm.map(()=>new Float32Array(GDENS*16)),cacheG=new Map();
+  const mg=new THREE.Matrix4(),qg=new THREE.Quaternion(),yg=new THREE.Vector3(0,1,0),pg=new THREE.Vector3(),sg=new THREE.Vector3();
+  const inG=(x,z)=>grassW.some(pl=>inPoly(x,z,pl));
+  const polyBB=grassW.map(pl=>[Math.min(...pl.map(q=>q[0])),Math.min(...pl.map(q=>q[1])),Math.max(...pl.map(q=>q[0])),Math.max(...pl.map(q=>q[1]))]);
+  function cellG(a,b){
+    const id=a*100003+b;let d=cacheG.get(id);if(d)return d;
+    const cx0=a*GCELL,cz0=b*GCELL;                      // squares that do not touch any grass area are skipped at once
+    if(!polyBB.some(bb=>cx0<bb[2]&&cx0+GCELL>bb[0]&&cz0<bb[3]&&cz0+GCELL>bb[1])){d=gm.map(()=>({n:0,m:new Float32Array(0)}));d.a=a;d.b=b;cacheG.set(id,d);return d;}
+    let sd=(a*374761393+b*668265263)>>>0;
+    const rnd=()=>{sd=(sd+0x6D2B79F5)>>>0;let t=sd;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};
+    const sn=gm.map(()=>0);
+    for(let n=0;n<GDENS;n++){
+      const px=(a+rnd())*GCELL,pz=(b+rnd())*GCELL,k=Math.floor(rnd()*gm.length),sc=0.7+rnd()*0.8,rot=rnd()*6.28;
+      if(!inG(px,pz))continue;
+      qg.setFromAxisAngle(yg,rot);mg.compose(pg.set(px,0.02,pz),qg,sg.set(sc,sc,sc));
+      SMg[k].set(mg.elements,sn[k]*16);sn[k]++;
+    }
+    d=gm.map((_,k)=>({n:sn[k],m:SMg[k].slice(0,sn[k]*16)}));d.a=a;d.b=b;cacheG.set(id,d);return d;
+  }
+  let gcx=1e9,gcz=1e9;
+  updateGrass=(x,z)=>{
+    const cx=Math.floor(x/GCELL),cz=Math.floor(z/GCELL);
+    if(cx===gcx&&cz===gcz)return;
+    gcx=cx;gcz=cz;
+    const cnt=gm.map(()=>0);
+    for(let a=cx-GRAD;a<=cx+GRAD;a++)for(let b=cz-GRAD;b<=cz+GRAD;b++){
+      const f=FADEG[Math.max(Math.abs(a-cx),Math.abs(b-cz))],d=cellG(a,b);
+      d.forEach((e,k)=>{
+        const n=Math.min(Math.floor(e.n*f),CAPG-cnt[k]);if(n<=0)return;
+        gm[k].instanceMatrix.array.set(e.m.subarray(0,n*16),cnt[k]*16);cnt[k]+=n;
+      });
+    }
+    gm.forEach((m,k)=>{m.count=cnt[k];m.instanceMatrix.needsUpdate=true;});
+    for(const [id,d] of cacheG)if(Math.abs(d.a-cx)>GRAD+3||Math.abs(d.b-cz)>GRAD+3)cacheG.delete(id);
+  };
+}
+
+// ---------- the city: roads and car parks near the circuit, skyscrapers far away ----------
+{
+  const cityG=new THREE.Group();groups.buildings=cityG;scene.add(cityG);
+  const PB=150,RW=18,HALF=(PB-RW)/2,CSZ=40;
+  let minX=1e9,maxX=-1e9,minZ=1e9,maxZ=-1e9;
+  for(const q of C){minX=Math.min(minX,q.x);maxX=Math.max(maxX,q.x);minZ=Math.min(minZ,q.z);maxZ=Math.max(maxZ,q.z);}
+  const x0=minX-1300,z0=minZ-1200,nxB=Math.ceil((maxX-minX+2600)/PB),nzB=Math.ceil((maxZ-minZ+2500)/PB);
+  const nearT=new Set(),key=(a,b)=>a*100003+b;
+  for(let i=0;i<N;i+=2){const a=Math.floor(C[i].x/CSZ),b=Math.floor(C[i].z/CSZ);for(let u=-7;u<=7;u++)for(let w=-7;w<=7;w++)if(u*u+w*w<=49)nearT.add(key(a+u,b+w));}
+  const farZ=1450*MAPK;
+  const blocked=(x,z)=>nearT.has(key(Math.floor(x/CSZ),Math.floor(z/CSZ)))||inPoly(x,z,sea)||distPoly(x,z,sea)<50||z>farZ-60&&z<farZ+440&&x>-500*MAPK&&x<2100*MAPK||
+    Math.hypot(x-HOTEL[0],z-HOTEL[1])<140||grassW.some(pl=>inPoly(x,z,pl))||ringPts.some((p,i)=>i%4===0&&Math.hypot(x-p.x,z-p.z)<300)||
+    Math.hypot(x-STAD[0],z-STAD[1])<470||(x>1430*MAPK&&x<2650*MAPK&&z>690*MAPK&&z<1520*MAPK);
+  let sd0=987654;const R=()=>{sd0=(Math.imul(sd0,1664525)+1013904223)>>>0;return sd0/4294967296;};
+  const pal=[0xe8e3d8,0xd9d6cf,0xb7c4cf,0x8fa3b0,0xf1f1ee,0xc9b79c,0xa9b4bd],glass=[0x9fb6c6,0x7f9db2,0xb6c8d4,0x6f8ea5];
+  const blds=[],slabs=[],roads=[],dashes=[];
+  const add=(x,y0,z,sx,sy,sz,col)=>blds.push([x,y0+sy/2+0.3,z,sx,sy,sz,col]);
+  const probe=[[0,0],[-HALF,-HALF],[HALF,-HALF],[-HALF,HALF],[HALF,HALF],[0,-HALF],[0,HALF],[-HALF,0],[HALF,0]];
+  for(let gx=0;gx<nxB;gx++)for(let gz=0;gz<nzB;gz++){
+    const cx=x0+gx*PB+PB/2,cz=z0+gz*PB+PB/2;
+    if(probe.some(([dx,dz])=>blocked(cx+dx,cz+dz)))continue;
+    roads.push([cx,cz-PB/2,PB,RW]);roads.push([cx-PB/2,cz,RW,PB]);
+    for(let d=-PB/2+6;d<PB/2;d+=20){dashes.push([cx+d,cz-PB/2,5,0.3]);dashes.push([cx-PB/2,cz+d,0.3,5]);}
+    let dT=1e9;for(let i=0;i<N;i+=12)dT=Math.min(dT,Math.hypot(cx-C[i].x,cz-C[i].z));
+    for(let d=-HALF+6;d<=HALF-6;d+=44)for(const [tx,tz] of [[cx+d,cz-HALF+3],[cx+d,cz+HALF-3],[cx-HALF+3,cz+d],[cx+HALF-3,cz+d]])if(dT<800)treeList.push([tx,tz,0.8+R()*0.5]);
+    if(dT<700){                                           // near the circuit: roads, car parks, a few low buildings - no towers
+      const park=R()<0.4;slabs.push([cx,cz,HALF*2,park?0x5c5e63:0xcbc8c0]);
+      if(!park&&R()<0.45)for(const [lx,lz] of [[-1,-1],[1,1]])add(cx+lx*30,0,cz+lz*30,30+R()*20,6+R()*8,30+R()*20,pal[Math.floor(R()*pal.length)]);
+      continue;
+    }
+    const isPark=R()<0.1;slabs.push([cx,cz,HALF*2,isPark?0x547f3d:0xcbc8c0]);
+    if(isPark){for(let n=0;n<14;n++)treeList.push([cx+(R()-.5)*100,cz+(R()-.5)*100,0.9+R()*0.7]);continue;}
+    for(const [lx,lz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
+      const bx=cx+lx*33,bz=cz+lz*33,w=26+R()*22,d=26+R()*22;
+      const far=dT>1000,h=far?60+Math.pow(R(),1.3)*130:12+R()*30,col=far?glass[Math.floor(R()*glass.length)]:pal[Math.floor(R()*pal.length)];
+      let y=0;
+      if(h>28){add(bx,0,bz,w+6,5.5,d+6,0x9a9a96);y=5.5;}
+      const tiers=1+Math.floor(R()*2.3)+(h>60?1:0);let ww=w,dd=d,rem=h-y;
+      for(let t=0;t<tiers;t++){const th=t===tiers-1?rem:rem*0.5;add(bx,y,bz,ww,th,dd,col);y+=th;rem-=th;ww*=0.78;dd*=0.78;}
+      const nu=1+Math.floor(R()*3);
+      for(let u=0;u<nu;u++)add(bx+(R()-.5)*ww*0.6,y,bz+(R()-.5)*dd*0.6,4+R()*5,2.5+R()*2,4+R()*5,0x777a80);
+    }
+  }
+  // ---------- fill the land near the circuit (infield, apron, round the stadium, car parks) ----------
+  {
+    const LOT=52,RD=12,P2=LOT+RD,bx0=minX-500,bz0=minZ-500,nx2=Math.ceil((maxX-minX+1900)/P2),nz2=Math.ceil((maxZ-minZ+1700)/P2);
+    const SEr=(x,z)=>x>1450*MAPK&&x<2600*MAPK&&z>700*MAPK&&z<1500*MAPK;
+    const ringOuter=(x,z)=>{                                  // the park beyond the ring road
+      let bi=0,bd=1e18;for(let i=0;i<ringPts.length;i+=2){const dx=x-ringPts[i].x,dz=z-ringPts[i].z,d=dx*dx+dz*dz;if(d<bd){bd=d;bi=i;}}
+      const u=bi/400;if(u<parkU[0]||u>parkU[1]||bd>310*310)return false;
+      const a=ringPts[Math.max(bi-1,0)],b=ringPts[Math.min(bi+1,400)],tx=b.x-a.x,tz=b.z-a.z,L=Math.hypot(tx,tz)||1;
+      return ((x-ringPts[bi].x)*(-tz/L)+(z-ringPts[bi].z)*(tx/L))>0;
+    };
+    const lotOK=(x,z)=>{
+      const tn=trackNear(x,z);if(tn.d<44)return false;
+      const ins=insideLoop(x,z),ds=Math.hypot(x-STAD[0],z-STAD[1]),se=SEr(x,z);
+      if(!ins&&tn.d>260&&ds>430&&!se)return false;
+      if(ds<175)return false;
+      if(!ins&&inSpan(tn.i,standSpans)&&tn.d<72)return false;
+      if(ins&&((tn.i-PIT0+N)%N)<PIT_LEN+10&&tn.d<82)return false;
+      if(Math.min(Math.abs(tn.i-bridgeK),N-Math.abs(tn.i-bridgeK))<16&&tn.d<135)return false;
+      if(inPoly(x,z,sea)||distPoly(x,z,sea)<28)return false;
+      if(grassW.some(pl=>inPoly(x,z,pl)||distPoly(x,z,pl)<10))return false;
+      if(Math.hypot(x-HOTEL[0],z-HOTEL[1])<105||Math.hypot(x-FERRIS[0],z-FERRIS[1])<60)return false;
+      if(roadPts.some(q=>Math.hypot(x-q[0],z-q[1])<26))return false;
+      return !ringOuter(x,z);
+    };
+    const carCols=[0xd8d8d8,0x202226,0xb82a2a,0x2a56b8,0xe8c33a,0x8a8d94,0xf2f2f2],tentCols=[0xd62828,0xf2f2f2,0x2a9d8f,0xf4a300];
+    for(let gx=0;gx<nx2;gx++)for(let gz=0;gz<nz2;gz++){
+      const cx=bx0+gx*P2+P2/2,cz=bz0+gz*P2+P2/2,h2=LOT/2;
+      if(!(lotOK(cx,cz)&&lotOK(cx-h2,cz-h2)&&lotOK(cx+h2,cz-h2)&&lotOK(cx-h2,cz+h2)&&lotOK(cx+h2,cz+h2)))continue;
+      const tn=trackNear(cx,cz),ds=Math.hypot(cx-STAD[0],cz-STAD[1]),big=SEr(cx,cz)||ds<330,near=tn.d<140;
+      roads.push([cx,cz-P2/2,P2,RD]);roads.push([cx-P2/2,cz,RD,P2]);
+      for(const [lx,lz] of [[-1,-1],[1,-1]])if(near)poles.push([cx+lx*(h2+3),cz+lz*(h2+3),8]);
+      const r=R();
+      if(r<(big?0.6:0.26)){                                   // car park
+        slabs.push([cx,cz,LOT,0x55575c]);
+        for(const rz of [-12,12])for(let c=0;c<10;c++)if(R()<0.8)cars.push([cx-h2+4+c*4.9,cz+rz,R()<0.5?0:Math.PI,carCols[Math.floor(R()*carCols.length)]]);
+        for(const [lx,lz] of [[-1,-1],[1,1]])treeList.push([cx+lx*(h2-3),cz+lz*(h2-3),0.9]);
+      }else if(r<(big?0.72:0.5)){                             // plaza with tents, stalls and flags
+        slabs.push([cx,cz,LOT,0xd9d6cf]);
+        for(let n=0;n<5+(near?3:0);n++)tents.push([cx+(R()-.5)*38,cz+(R()-.5)*38,tentCols[Math.floor(R()*4)]]);
+        for(let n=0;n<4;n++)stalls.push([cx+(R()-.5)*40,cz+(R()-.5)*40,tentCols[Math.floor(R()*4)]]);
+        for(const [lx,lz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){flags.push([cx+lx*(h2-4),cz+lz*(h2-4),9,Math.floor(R()*5)]);palms.push([cx+lx*(h2-9),cz+lz*(h2-9),1]);}
+      }else if(r<(big?0.8:0.74)){                             // garden with pond, palms and trees
+        slabs.push([cx,cz,LOT,0x547f3d]);
+        if(R()<0.4)ponds.push([cx+(R()-.5)*14,cz+(R()-.5)*14,6+R()*6]);
+        for(let n=0;n<8+(near?4:0);n++){const x=cx+(R()-.5)*(LOT-8),z=cz+(R()-.5)*(LOT-8);if(R()<0.5)palms.push([x,z,0.9+R()*0.5]);else treeList.push([x,z,0.9+R()*0.7]);}
+      }else{                                                  // pavilion / hospitality building
+        slabs.push([cx,cz,LOT,0xcbc8c0]);
+        const w=26+R()*14,d=22+R()*12,hh=near?8+R()*8:9+R()*14;
+        add(cx,0,cz,w,hh,d,pal[Math.floor(R()*pal.length)]);add(cx+(R()-.5)*w*0.4,hh,cz,6+R()*5,2.5,6+R()*4,0x777a80);
+        for(const [lx,lz] of [[-1,1],[1,1]])palms.push([cx+lx*(h2-6),cz+lz*(h2-5),1]);
+      }
+    }
+    // dressing along the track in the space between the track and the roads
+    const dok=(x,z,off,tn)=>tn.d>off-4&&!inPoly(x,z,sea)&&distPoly(x,z,sea)>14&&!grassW.some(pl=>inPoly(x,z,pl))&&
+      Math.hypot(x-HOTEL[0],z-HOTEL[1])>70&&Math.hypot(x-STAD[0],z-STAD[1])>180&&!roadPts.some(q=>Math.hypot(x-q[0],z-q[1])<14);
+    for(let i=0;i<N;i+=5){
+      if(Math.min(Math.abs(i-bridgeK),N-Math.abs(i-bridgeK))<14)continue;
+      const inStand=inSpan(i,standSpans);
+      for(const side of [-1,1]){
+        if(side>0&&inPit(i))continue;
+        for(const [off,kind] of [[22,0],[36,1],[47,2]]){
+          if(side<0&&inStand&&off>24)continue;                 // stands occupy 26-56 m
+          const x=C[i].x+Nn[i].x*side*off,z=C[i].z+Nn[i].z*side*off;
+          if(!dok(x,z,off,trackNear(x,z)))continue;
+          if(kind===0){poles.push([x,z,9]);if(side<0&&inStand&&(i/5)%2===0)flags.push([x,z,9,(i/5)%5]);}
+          else if(kind===1){if((i/5)%2===0)palms.push([x,z,1+R()*0.4]);else treeList.push([x,z,0.9+R()*0.5]);}
+          else if((i/5)%3===0)treeList.push([x,z,1+R()*0.5]);
+        }
+      }
+    }
+  }
+  const unit=new THREE.BoxGeometry(1,1,1),flat=new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2),m4=new THREE.Matrix4(),q0=new THREE.Quaternion(),v3=new THREE.Vector3(),sc3=new THREE.Vector3(),cc=new THREE.Color();
+  const bm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.6,metalness:.1});
+  bm.onBeforeCompile=sh=>{                                // windows, shop fronts and glass are drawn in the shader, only close to the camera
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>','#include <common>\nvarying vec3 vWP;\nvarying vec3 vWN;')
+      .replace('#include <begin_vertex>','#include <begin_vertex>\n vec4 wp4=vec4(transformed,1.0);\n#ifdef USE_INSTANCING\n wp4=instanceMatrix*wp4;\n#endif\n wp4=modelMatrix*wp4; vWP=wp4.xyz; vWN=normalize((modelMatrix*vec4(objectNormal,0.0)).xyz);');
+    sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>','#include <common>\nvarying vec3 vWP;\nvarying vec3 vWN;')
+      .replace('#include <color_fragment>',`#include <color_fragment>
+        float roofM=step(0.5,abs(vWN.y));
+        vec2 fc=vec2((abs(vWN.x)>0.5?vWP.z:vWP.x)/3.6,vWP.y/3.4);
+        vec2 ff=fract(fc);
+        float winM=step(0.16,ff.x)*step(ff.x,0.84)*step(0.22,ff.y)*step(ff.y,0.78)*(1.0-roofM)*step(5.0,vWP.y);
+        float hh=fract(sin(dot(floor(fc),vec2(12.9898,78.233)))*43758.5453);
+        float nr=1.0-smoothstep(120.0,420.0,length(vWP-cameraPosition));
+        vec3 glassC=mix(vec3(0.05,0.08,0.12),vec3(0.5,0.62,0.72),hh*hh);
+        diffuseColor.rgb=mix(diffuseColor.rgb,glassC,winM*nr);
+        float shop=(1.0-roofM)*step(vWP.y,5.0)*nr;
+        diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*0.45,shop);`)
+      .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor=mix(roughnessFactor,0.12,winM*nr);');
+  };
+  const bi=new THREE.InstancedMesh(unit,bm,blds.length);
+  blds.forEach((b,i)=>{m4.compose(v3.set(b[0],b[1],b[2]),q0,sc3.set(b[3],b[4],b[5]));bi.setMatrixAt(i,m4);bi.setColorAt(i,cc.set(b[6]));});
+  bi.frustumCulled=false;cityG.add(bi);
+  const si=new THREE.InstancedMesh(unit,new THREE.MeshStandardMaterial({color:0xffffff,roughness:.95}),slabs.length);
+  slabs.forEach((b,i)=>{m4.compose(v3.set(b[0],0.15,b[1]),q0,sc3.set(b[2],0.3,b[2]));si.setMatrixAt(i,m4);si.setColorAt(i,cc.set(b[3]));});
+  si.frustumCulled=false;cityG.add(si);
+  const ri=new THREE.InstancedMesh(flat,roadM,roads.length);
+  roads.forEach((b,i)=>{m4.compose(v3.set(b[0],0.03,b[1]),q0,sc3.set(b[2],1,b[3]));ri.setMatrixAt(i,m4);});
+  ri.frustumCulled=false;cityG.add(ri);
+  const di=new THREE.InstancedMesh(flat,dashM,dashes.length);
+  dashes.forEach((b,i)=>{m4.compose(v3.set(b[0],0.045,b[1]),q0,sc3.set(b[2],1,b[3]));di.setMatrixAt(i,m4);});
+  di.frustumCulled=false;cityG.add(di);
+  // all trees (city, park, far shore): one instanced mesh each for trunks and crowns
+  const ti=new THREE.InstancedMesh(new THREE.CylinderGeometry(0.18,0.25,3,6),new THREE.MeshStandardMaterial({color:0x5b4636}),treeList.length);
+  const ci=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.3,0),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,flatShading:true}),treeList.length);
+  treeList.forEach((t,i)=>{
+    m4.compose(v3.set(t[0],0.3+1.5*t[2],t[1]),q0,sc3.set(t[2],t[2],t[2]));ti.setMatrixAt(i,m4);
+    m4.compose(v3.set(t[0],0.3+4.6*t[2],t[1]),q0,sc3.set(t[2],t[2]*0.9,t[2]));ci.setMatrixAt(i,m4);
+    ci.setColorAt(i,cc.setHSL(0.22+R()*0.1,0.5,0.18+R()*0.12));
+  });
+  ti.frustumCulled=ci.frustumCulled=false;cityG.add(ti,ci);
+  const qq=new THREE.Quaternion(),yUp=new THREE.Vector3(0,1,0);
+  const mkI=(geo,mat,list,fn)=>{const m=new THREE.InstancedMesh(geo,mat,Math.max(1,list.length));list.forEach((it,i)=>fn(m,it,i));m.count=list.length;m.frustumCulled=false;cityG.add(m);return m;};
+  const flagCols=[0xd62828,0x1b6ef3,0xf4a300,0xf2f2f2,0x2a9d8f],greyM=new THREE.MeshStandardMaterial({color:0x7d8087,roughness:.6,metalness:.4});
+  mkI(new THREE.BoxGeometry(1.9,1.4,4.4),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.35,metalness:.5}),cars,(m,c,i)=>{
+    qq.setFromAxisAngle(yUp,c[2]);m4.compose(v3.set(c[0],1.0,c[1]),qq,sc3.set(1,1,1));m.setMatrixAt(i,m4);m.setColorAt(i,cc.set(c[3]));});
+  mkI(new THREE.ConeGeometry(3.4,3,4).rotateY(Math.PI/4),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.8}),tents,(m,c,i)=>{
+    m4.compose(v3.set(c[0],0.3+3.4,c[1]),q0,sc3.set(1,1,1));m.setMatrixAt(i,m4);m.setColorAt(i,cc.set(c[2]));});
+  mkI(new THREE.BoxGeometry(3,2.4,2),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.7}),stalls,(m,c,i)=>{
+    m4.compose(v3.set(c[0],0.3+1.2,c[1]),q0,sc3.set(1,1,1));m.setMatrixAt(i,m4);m.setColorAt(i,cc.set(c[2]));});
+  mkI(new THREE.CylinderGeometry(0.12,0.16,1,6),greyM,poles,(m,c,i)=>{m4.compose(v3.set(c[0],0.3+c[2]/2,c[1]),q0,sc3.set(1,c[2],1));m.setMatrixAt(i,m4);});
+  mkI(new THREE.BoxGeometry(1.6,0.3,0.7),greyM,poles,(m,c,i)=>{m4.compose(v3.set(c[0]+0.6,0.3+c[2],c[1]),q0,sc3.set(1,1,1));m.setMatrixAt(i,m4);});
+  mkI(new THREE.CylinderGeometry(0.1,0.12,1,6),greyM,flags,(m,c,i)=>{m4.compose(v3.set(c[0],0.3+c[2]/2,c[1]),q0,sc3.set(1,c[2],1));m.setMatrixAt(i,m4);});
+  mkI(new THREE.PlaneGeometry(2.4,1.4),new THREE.MeshStandardMaterial({color:0xffffff,side:THREE.DoubleSide,roughness:.8}),flags,(m,c,i)=>{
+    m4.compose(v3.set(c[0]+1.3,0.3+c[2]-1,c[1]),q0,sc3.set(1,1,1));m.setMatrixAt(i,m4);m.setColorAt(i,cc.set(flagCols[c[3]%5]));});
+  mkI(new THREE.CylinderGeometry(0.22,0.34,7,6),new THREE.MeshStandardMaterial({color:0x7a5c3a}),palms,(m,c,i)=>{
+    m4.compose(v3.set(c[0],0.3+3.5*c[2],c[1]),q0,sc3.set(c[2],c[2],c[2]));m.setMatrixAt(i,m4);});
+  mkI(new THREE.IcosahedronGeometry(2.8,0),new THREE.MeshStandardMaterial({color:0x3f8a3a,roughness:.9,flatShading:true}),palms,(m,c,i)=>{
+    m4.compose(v3.set(c[0],0.3+7.4*c[2],c[1]),q0,sc3.set(1.4*c[2],0.5*c[2],1.4*c[2]));m.setMatrixAt(i,m4);});
+  mkI(new THREE.CircleGeometry(1,32).rotateX(-Math.PI/2),waterMat,ponds,(m,c,i)=>{m4.compose(v3.set(c[0],0.34,c[1]),q0,sc3.set(c[2],1,c[2]));m.setMatrixAt(i,m4);});
+}
+
+// scenery for a sense of speed
+{
+  const trees=new THREE.InstancedMesh(new THREE.ConeGeometry(4,14,6),
+    new THREE.MeshStandardMaterial({color:0xffffff,flatShading:true}),450);trees.castShadow=true;
+  const m4=new THREE.Matrix4();let n=0,tries=0;
+  while(n<0&&tries<6000){
+    tries++;
+    const x=400+(Math.random()-.5)*2600,z=330+(Math.random()-.5)*2600;
+    let ok=true;
+    for(let i=0;i<N;i+=3){const dx=x-C[i].x,dz=z-C[i].z;if(dx*dx+dz*dz<1600){ok=false;break;}}
+    if(!ok)continue;
+    const sz=0.7+Math.random()*1.1;m4.compose(new THREE.Vector3(x,7*sz,z),new THREE.Quaternion(),new THREE.Vector3(sz,sz,sz));
+    trees.setMatrixAt(n,m4);trees.setColorAt(n++,new THREE.Color().setHSL(0.27+Math.random()*0.06,0.45,0.2+Math.random()*0.12));
+  }
+  trees.count=n;scene.add(trees);
+}
+
+let hint=0;
+function nearest(x,z,full){
+  let best=1e18,bi=hint;
+  const from=full?0:-25,to=full?N-1:25;
+  for(let j=from;j<=to;j++){
+    const k=full?j:(hint+j+N)%N,dx=x-C[k].x,dz=z-C[k].z,d=dx*dx+dz*dz;
+    if(d<best){best=d;bi=k;}
+  }
+  hint=bi;return bi;
+}
+
+/* ---------- Car model (fictional livery) ---------- */
+const carMesh=new THREE.Group();
+const paint=new THREE.MeshPhysicalMaterial({color:0x1b4fd8,metalness:.6,roughness:.28,clearcoat:1,clearcoatRoughness:.05});
+const accent=new THREE.MeshStandardMaterial({color:0xff7a1a});
+const dark=new THREE.MeshStandardMaterial({color:0x15161a});
+const box=(w,h,d,m,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);carMesh.add(o);return o;};
+box(0.7,0.4,3.6,paint,0,0.5,0.3);
+box(1.5,0.32,1.5,paint,0,0.42,-0.1);
+box(2.0,0.07,0.5,accent,0,0.2,2.7);
+box(1.1,0.55,0.12,accent,0,0.95,-2.1);
+box(0.1,0.45,0.1,dark,0,0.72,-2.0);
+const helmet=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10),new THREE.MeshStandardMaterial({color:0xffd23a}));
+helmet.position.set(0,0.82,0.1);carMesh.add(helmet);
+const wheels=[];
+const wGeo=new THREE.CylinderGeometry(0.36,0.36,0.4,18);wGeo.rotateZ(Math.PI/2);
+for(const [x,z,front] of [[-0.85,1.98,1],[0.85,1.98,1],[-0.85,-1.62,0],[0.85,-1.62,0]]){
+  const pivot=new THREE.Group();pivot.position.set(x,0.36,z);
+  const w=new THREE.Mesh(wGeo,dark);pivot.add(w);carMesh.add(pivot);
+  wheels.push({pivot,w,front});
+}
+{
+  const nose=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.3,1.8,14).rotateX(Math.PI/2),paint);
+  nose.position.set(0,0.38,2.3);carMesh.add(nose);
+  box(0.35,0.4,0.8,paint,0,0.85,-0.7);
+  box(1.6,0.05,3.8,dark,0,0.12,-0.1);
+  box(1.52,0.05,1.0,accent,0,0.6,-0.1);
+  box(0.04,0.3,0.04,dark,0,0.85,0.6);
+  for(const s of [1,-1]){
+    box(0.04,0.04,0.7,dark,s*0.22,0.98,0.25);
+    box(0.05,0.25,0.5,accent,s*1.0,0.3,2.7);
+    box(0.05,0.6,0.5,accent,s*0.58,0.95,-2.1);
+  }
+  for(const w of wheels){
+    const rim=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.42,12),new THREE.MeshStandardMaterial({color:0xb8bcc4,metalness:.8,roughness:.3}));
+    rim.rotation.z=Math.PI/2;w.w.add(rim);
+    w.w.add(new THREE.Mesh(new THREE.BoxGeometry(0.44,0.05,0.34),accent));
+  }
+  carMesh.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+}
+scene.add(carMesh);
+const carWheels=[];
+new GLTFLoader().load(ASSETS.car,gltf=>{
+  const m=gltf.scene,w=new THREE.Group();w.add(m);m.rotation.y=ASSETS.carRotY;
+  let b=new THREE.Box3().setFromObject(w);const sz=b.getSize(new THREE.Vector3());
+  m.scale.setScalar(ASSETS.carLength/Math.max(sz.x,sz.y,sz.z));          // fit to the real car length
+  b=new THREE.Box3().setFromObject(w);const ctr=b.getCenter(new THREE.Vector3());
+  m.position.set(-ctr.x,-b.min.y,-ctr.z);                                // centre it, wheels on the ground
+  w.traverse(o=>{if(o.isMesh)o.castShadow=true;});
+  m.traverse(o=>{if(/wheel/i.test(o.name)&&!(o.parent&&/wheel/i.test(o.parent.name)))carWheels.push({o,base:o.quaternion.clone(),front:/front/i.test(o.name)});});
+  carMesh.children.forEach(o=>o.visible=false);carMesh.add(w);
+  new THREE.TextureLoader().load(ASSETS.colormap,cm=>{          // paint the car with its colour palette
+    cm.flipY=false;cm.colorSpace=THREE.SRGBColorSpace;          // glTF models expect an un-flipped texture
+    cm.magFilter=cm.minFilter=THREE.NearestFilter;cm.generateMipmaps=false; // keep the palette squares crisp
+    w.traverse(o=>{if(o.isMesh){const arr=[].concat(o.material).map(()=>new THREE.MeshPhysicalMaterial({map:cm,color:0xffffff,metalness:0.35,roughness:0.28,clearcoat:1,clearcoatRoughness:0.06,envMapIntensity:0.8}));o.material=arr.length>1?arr:arr[0];}});
+  },undefined,()=>console.warn('Missing '+ASSETS.colormap));           // hide the built-in car
+},undefined,()=>console.warn('No car model at '+ASSETS.car+' - using the built-in car.'));
+
+/* ---------- Physics ---------- */
+const G=9.81,M=800,A=1.98,B=1.62,L=A+B,IZ=1500;
+// STEERING TUNING - change these numbers to taste
+const TUNE={
+  lockBase:0.115, lockLow:0.34, falloff:18, // wheel angle: lockBase at top speed, plus lockLow when slow (halves at 'falloff' m/s)
+  rate:4.5,        // how fast a key press turns the wheel; bigger = quicker
+  slipAllow:0.17,  // extra wheel angle (rad) the tyres may use beyond the "no-slip" angle; bigger = sharper but slides more
+  yawAssist:8      // how hard the car is nudged to rotate at the rate you asked for; 0 = off, bigger = snappier, harder to spin
+};
+const steerMax=v=>TUNE.lockBase+TUNE.lockLow/(1+(v/TUNE.falloff)**2);   // CG sits 45% from the front axle
+const GR=[0,3.0,2.45,2.05,1.75,1.5,1.3,1.13,1.0],FD=5.74,RW=0.36,ETA=0.92,IDLE=4500,MAXRPM=15000;
+const torque=r=>620*Math.max(0.3,1-((r-11500)/7500)**2);   // ~780 kW peak
+const car={x:0,z:0,psi:0,vx:0,vy:0,r:0,steer:0,thr:0,brk:0,gear:1,rpm:IDLE,shift:0,mu:2,grass:false,d:0,idx:0};
+const keys={};
+addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
+  if(e.code==='KeyR')resetCar(true);
+});
+addEventListener('keyup',e=>keys[e.code]=false);
+
+function resetCar(invalidate){
+  const k=invalidate?nearest(car.x,car.z,true):idxAt(-8);               // pole position, 8 m behind the line
+  const lat=invalidate?0:3.2;car.x=C[k].x+Nn[k].x*lat;car.z=C[k].z+Nn[k].z*lat;car.psi=Math.atan2(T[k].x,T[k].z);
+  car.vx=car.vy=car.r=0;car.gear=1;car.thr=car.brk=car.steer=0;
+  if(invalidate&&lapStart!==null)lapValid=false;
+}
+
+function step(dt){
+  const c=car,v=Math.hypot(c.vx,c.vy);
+  const up=keys.KeyW||keys.ArrowUp,rv=keys.KeyS||keys.ArrowDown,bk=keys.KeyB;
+  const lf=keys.KeyA||keys.ArrowLeft,rt=keys.KeyD||keys.ArrowRight;
+
+  // driver inputs (keyboard smoothing)
+  c.thr+=((up?1:0)-c.thr)*Math.min(1,dt*10);
+  c.brk+=((bk?1:0)-c.brk)*Math.min(1,dt*14);
+  c.rev=(c.rev||0)+((rv?1:0)-(c.rev||0))*Math.min(1,dt*10);
+  const tgt=(lf?1:0)-(rt?1:0);
+  const rate=(tgt===0||Math.sign(tgt)!==Math.sign(c.steer))?7:TUNE.rate/(1+v/150);
+  c.steer+=clamp(tgt-c.steer,-rate*dt,rate*dt);
+  const ayMax=c.mu*(M*G+2.3*v*v)/M,dg=L*ayMax/Math.max(v*v,25)+TUNE.slipAllow;
+  const dl=c.dl=clamp(c.steer*steerMax(v),-dg,dg);            // less lock at speed
+
+  // engine + automatic gearbox
+  const rpmAt=()=>Math.max(IDLE,Math.max(c.vx,0)/RW*GR[c.gear]*FD*9.5493);
+  let rpm=rpmAt();
+  if(c.shift>0)c.shift-=dt;
+  else if(rpm>14300&&c.gear<8){c.gear++;c.shift=0.06;}
+  else if(rpm<7800&&c.gear>1){c.gear--;c.shift=0.06;}
+  rpm=c.rpm=rpmAt();
+  const drive=(c.shift>0||rpm>=MAXRPM)?0:c.thr*(1-c.brk)*torque(rpm)*GR[c.gear]*FD*ETA/RW;
+
+  // vertical loads: weight + aero downforce (grows with v^2)
+  const down=2.3*v*v,mg=M*G;
+  const Fzf=mg*B/L+0.45*down,Fzr=mg*A/L+0.55*down;
+  const limF=c.mu*Fzf,limR=c.mu*Fzr;
+
+  // tyre slip angles and lateral forces
+  // slip angles measured against the direction the tyre is rolling, so they also work when reversing
+  const vxs=Math.max(Math.abs(c.vx),1),ca=Math.cos(dl),sa=Math.sin(dl);
+  const vf=c.vy+A*c.r,vlat=vf*ca-c.vx*sa,vlong=Math.abs(c.vx*ca+vf*sa);
+  const af=-Math.atan2(vlat,Math.max(vlong,1)),ar=-Math.atan2(c.vy-B*c.r,vxs);
+  const lowF=clamp((Math.abs(c.vx)-1)/5,0,1);
+  let Fyf=limF*Math.sin(1.4*Math.atan(11*af))*lowF;
+  let Fyr=limR*1.25*Math.sin(1.4*Math.atan(11*ar))*lowF;
+
+  // longitudinal forces: 58/42 brake bias, rear drive, friction circle per axle
+  const moving=c.vx>0.3?1:c.vx<-0.3?-1:0;
+  const Fb=c.brk*moving*42000;
+  let Fxf=clamp(-Fb*0.58,-limF,limF),Fxr=clamp(drive-(c.vx>-14?c.rev*(1-c.brk)*6500:0)-Fb*0.42,-0.7*limR,0.55*limR);
+  Fyf*=Math.sqrt(Math.max(0,1-(Fxf/limF)**2));
+  Fyr*=Math.sqrt(Math.max(0,1-(Fxr/limR)**2));
+
+  // drag, rolling resistance, grass
+  const gr=c.grass?0.35*M:0;
+  const Fdx=-0.95*v*c.vx-120*moving-gr*c.vx;
+  const Fdy=-0.95*v*c.vy-gr*c.vy;
+
+  c.slip=Math.max(clamp((Math.abs(ar)-0.08)*8,0,1),Math.abs(c.vx)>8?clamp((Math.abs(Fxf)/limF-0.92)*10,0,1):0); // how much the tyres are sliding
+  const cs=Math.cos(dl),sn=Math.sin(dl);
+  const Fx=Fxr+Fxf*cs-Fyf*sn+Fdx;
+  const Fy=Fyr+Fyf*cs+Fxf*sn+Fdy;
+  c.vx+=(Fx/M+c.r*c.vy)*dt;
+  c.vy+=(Fy/M-c.r*c.vx)*dt;
+  const aw=clamp((Math.abs(c.vx)-2)/4,0,1),rMax=0.95*ayMax/Math.max(Math.abs(c.vx),5),rT=clamp(c.vx*Math.tan(dl)/L,-rMax,rMax);
+  c.r+=((A*(Fyf*cs+Fxf*sn)-B*Fyr)/IZ+TUNE.yawAssist*(rT-c.r)*aw)*dt;
+  if(c.brk>0.1&&Math.abs(c.vx)<1.2){            // brake holds the car at a full stop
+    const k=1-Math.min(1,dt*15);c.vx*=k;c.vy*=k;c.r*=k;if(Math.abs(c.vx)<0.08)c.vx=0;
+  }else if(Math.abs(c.vx)<0.5&&c.thr<0.05&&c.rev<0.05)c.vx*=1-dt*3;
+  c.psi+=c.r*dt;
+  const sp=Math.sin(c.psi),co=Math.cos(c.psi);
+  c.x+=(c.vx*sp+c.vy*co)*dt;
+  c.z+=(c.vx*co-c.vy*sp)*dt;
+}
+
+/* ---------- Timing ---------- */
+let lapStart=null,lapValid=true,lapNo=1,best=null,lastLap=null,prevIdx=0,curSec=0,secStart=null;
+const secT=[null,null,null];
+const fmt=ms=>ms==null?'-':`${Math.floor(ms/60000)}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}.${String(Math.floor(ms%1000)).padStart(3,'0')}`;
+
+function updateTrackState(now){
+  const c=car,k=nearest(c.x,c.z);
+  c.idx=k;
+  c.d=(c.x-C[k].x)*Nn[k].x+(c.z-C[k].z)*Nn[k].z;
+  const out=Math.abs(c.d)>W/2+1.2;
+  const rel=(k-PIT0+N)%N,pitZone=rel<PIT_LEN;
+  const inGap=rel<PIT_GAP||rel>=PIT_LEN-PIT_GAP;
+  const lane=pitZone&&c.d<W/2+14.5&&(inGap?c.d>W/2+0.8:c.d>W/2+2.3);c.inPitLane=lane;   // entry/exit are part of the lane (no track-limits penalty)
+  const gr=Math.abs(c.d)>W/2+6&&!lane;c.grass=gr;c.mu=lane?1.8:gr?0.7:out?1.5:2.0;
+  // the WHOLE car has to stay inside: how far it sticks out sideways depends on how it is angled to the track
+  let dpsi=c.psi-Math.atan2(T[k].x,T[k].z);dpsi=Math.atan2(Math.sin(dpsi),Math.cos(dpsi));
+  const ext=1.0*Math.abs(Math.cos(dpsi))+2.75*Math.abs(Math.sin(dpsi));
+  const lim=(c.d>0&&pitZone)?W/2+13.7:OFFW-0.05,hit=Math.abs(c.d)+ext-lim;
+  if(hit>0){                                   // barrier contact
+    const sg=Math.sign(c.d);c.x-=Nn[k].x*sg*hit;c.z-=Nn[k].z*sg*hit;
+    c.vx*=0.85;c.vy*=0.85;c.r*=0.85;if(lapStart!==null)lapValid=false;
+  }
+  if(rel>PIT_GAP&&rel<PIT_LEN-PIT_GAP&&c.d>W/2+1.0&&c.d<W/2+4.5){   // pit wall (solid except at entry and exit)
+    const nd=c.d<W/2+2.3?Math.min(c.d,W/2+2.05-ext):Math.max(c.d,W/2+2.55+ext);
+    if(nd!==c.d){const sh=c.d-nd;c.x-=Nn[k].x*sh;c.z-=Nn[k].z*sh;c.vx*=0.85;c.vy*=0.85;c.r*=0.85;}
+  }
+  const sRel=((k*DS+LAP_LENGTH/2)%LAP_LENGTH)-LAP_LENGTH/2;           // metres from the start line
+  if(lane&&now>pit.cool&&Math.abs(sRel-PITBOX_M)<5&&Math.abs(c.d-PIT_LAT)<5&&Math.abs(c.vx)<1){pit.until=now+2500;pit.cool=now+9000;}
+  if(out&&!lane&&lapStart!==null)lapValid=false;
+  if(lapStart===null){                                  // lap 1 starts when you first cross the line
+    if(prevIdx>N*0.8&&k<N*0.2){lapStart=secStart=now;curSec=0;lapValid=true;}
+    prevIdx=k;return;
+  }
+  if(prevIdx>N*0.8&&k<N*0.2){                    // crossed the line
+    secT[2]=now-secStart;secStart=now;curSec=0;
+    if(lapValid){lastLap=now-lapStart;if(best===null||lastLap<best)best=lastLap;}
+    lapNo++;lapStart=now;lapValid=true;
+  }
+  const sec=Math.floor(k/(N/3));
+  if(sec!==curSec){if(sec===curSec+1){secT[curSec]=now-secStart;secStart=now;}curSec=sec;}
+  prevIdx=k;
+}
+
+/* ---------- HUD ---------- */
+const lightsEl=document.getElementById('lights'),lights=[];
+for(let i=0;i<15;i++){lights.push(lightsEl.appendChild(document.createElement('i')));}
+const lightCol=i=>i<5?'#34d27b':i<10?'#ff3b30':'#3aa0ff';
+const $=id=>document.getElementById(id);
+function updateHud(now){
+  $('speed').textContent=Math.abs(car.vx)<0.3?0:Math.round(Math.abs(car.vx)*3.6);
+  $('gear').textContent=car.vx<-1?'R':car.vx<1?'N':car.gear;
+  const lit=clamp(Math.floor((car.rpm-9000)/6000*15),0,15);
+  lights.forEach((l,i)=>l.style.background=i<lit?lightCol(i):'#2a2d36');
+  $('lapNo').textContent=lapNo;
+  $('cur').textContent=lapStart===null?'Cross the line to start':fmt(now-lapStart);
+  $('last').textContent=fmt(lastLap);$('best').textContent=fmt(best);
+  $('sec').textContent=secT.map(fmt).join('  ');
+  $('warn').textContent=now<pit.until?'PIT STOP  '+((pit.until-now)/1000).toFixed(1)+' s':(car.inPitLane&&Math.abs(car.vx)>22.2)?'Pit lane speed limit: 80 km/h':!lapValid?'Track limits - lap deleted':'';
+}
+
+/* ---------- Visuals + loop ---------- */
+let camPsi=0,wheelSpin=0,orbYaw=0,orbPitch=0,orbZoom=1,tYaw=0,tPitch=0,tZoom=1,dragging=false,lastDrag=0;
+const cvs=renderer.domElement;cvs.style.touchAction='none';
+cvs.style.cursor='grab';
+cvs.addEventListener('pointerdown',e=>{dragging=true;cvs.style.cursor='grabbing';cvs.setPointerCapture(e.pointerId);});
+cvs.addEventListener('dblclick',()=>{tYaw=tPitch=0;tZoom=1;});   // double-click: reset the view
+cvs.addEventListener('pointerup',()=>{dragging=false;cvs.style.cursor='grab';lastDrag=performance.now();});
+cvs.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  tYaw-=e.movementX*0.005;tPitch=clamp(tPitch+e.movementY*0.004,-0.12,1.1);lastDrag=performance.now();
+});
+cvs.addEventListener('wheel',e=>{tZoom=clamp(tZoom*(1+e.deltaY*0.001),0.5,3);e.preventDefault();},{passive:false});
+function updateVisuals(dt){
+  carMesh.position.set(car.x,0,car.z);
+  carMesh.rotation.y=car.psi;
+  const v=Math.hypot(car.vx,car.vy);
+  wheelSpin+=car.vx*dt/RW;
+  const dl=car.dl||0;
+  for(const w of wheels){w.w.rotation.x=wheelSpin;if(w.front)w.pivot.rotation.y=dl;}
+  for(const cw of carWheels){                                    // wheels of your car.glb: spin + steer
+    qS.setFromAxisAngle(AX[ASSETS.wheelAxis],wheelSpin*ASSETS.wheelSign);
+    cw.o.quaternion.copy(cw.base);
+    if(cw.front){qT.setFromAxisAngle(AX.y,dl);cw.o.quaternion.multiply(qT);}
+    cw.o.quaternion.multiply(qS);
+  }
+  let da=car.psi-camPsi;da=Math.atan2(Math.sin(da),Math.cos(da));
+  camPsi+=da*Math.min(1,dt*6);
+  if(!dragging&&performance.now()-lastDrag>3000){          // glide back behind the car after 3 s
+    const k=Math.min(1,dt*1.5);tYaw*=1-k;tPitch*=1-k;tZoom+=(1-tZoom)*k;
+  }
+  const sm=Math.min(1,dt*12);                                  // smooth the mouse so the view eases instead of jerking
+  orbYaw+=(tYaw-orbYaw)*sm;orbPitch+=(tPitch-orbPitch)*sm;orbZoom+=(tZoom-orbZoom)*sm;
+  const yaw=camPsi+orbYaw,dx=Math.sin(yaw),dz=Math.cos(yaw);
+  const ahead=4*Math.max(0,1-Math.abs(orbYaw));                // look slightly ahead only when not orbiting
+  const px=car.x+Math.sin(camPsi)*ahead,pz=car.z+Math.cos(camPsi)*ahead;
+  const R=(13+v*0.04)*orbZoom,el=0.22+orbPitch;               // orbit around the car: distance R, elevation el
+  camera.position.set(px-dx*R*Math.cos(el),Math.max(0.7,1.2+R*Math.sin(el)+v*0.01),pz-dz*R*Math.cos(el));
+  camera.lookAt(px,1.2,pz);
+  camera.fov=74+v*0.12;camera.updateProjectionMatrix();
+  sky.position.copy(camera.position);
+  if(waterNormal){waterNormal.offset.x+=dt*0.006;waterNormal.offset.y+=dt*0.003;}
+  if(ferris)ferris.rotation.z+=dt*0.07;
+  sun.position.set(car.x+sunDir.x*150,sunDir.y*150,car.z+sunDir.z*150);
+  sun.target.position.set(car.x,0,car.z);
+}
+
+// ---------- tyre effects: skid marks and smoke ----------
+const AX={x:new THREE.Vector3(1,0,0),y:new THREE.Vector3(0,1,0),z:new THREE.Vector3(0,0,1)},qS=new THREE.Quaternion(),qT=new THREE.Quaternion();
+const SKID_MAX=1200;
+const skid=new THREE.InstancedMesh(new THREE.PlaneGeometry(0.32,1).rotateX(-Math.PI/2),
+  new THREE.MeshBasicMaterial({color:0x0b0b0d,transparent:true,opacity:0.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}),SKID_MAX);
+skid.frustumCulled=false;skid.count=0;scene.add(skid);
+let skidN=0,skidFilled=0,puffI=0;
+const smokeTex=(()=>{
+  const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,2,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,0.9)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(c);
+})();
+const puffs=Array.from({length:90},()=>{
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:smokeTex,color:0xe8e8e8,transparent:true,opacity:0,depthWrite:false}));
+  sp.visible=false;sp.userData={life:0,max:1,vx:0,vz:0};scene.add(sp);return sp;
+});
+const skm=new THREE.Matrix4(),skq=new THREE.Quaternion(),skp=new THREE.Vector3(),sks=new THREE.Vector3();
+function updateTireFx(dt){
+  const sp=Math.hypot(car.vx,car.vy),f=Math.sin(car.psi),g=Math.cos(car.psi),lx=g,lz=-f;
+  const wvx=car.vx*f+car.vy*g,wvz=car.vx*g-car.vy*f;
+  if(car.slip>0.25&&sp>3){                                  // sliding: leave rubber on the road and make smoke
+    const yaw=Math.atan2(wvx,wvz),len=Math.max(0.3,sp*dt*1.3);
+    for(const sx of [-0.85,0.85]){
+      const px=car.x-f*1.62+lx*sx,pz=car.z-g*1.62+lz*sx;
+      skq.setFromAxisAngle(AX.y,yaw);skm.compose(skp.set(px,0.05,pz),skq,sks.set(1,1,len));
+      skid.setMatrixAt(skidN,skm);skidN=(skidN+1)%SKID_MAX;skidFilled=Math.min(SKID_MAX,skidFilled+1);
+      if(car.slip<0.4||Math.random()<0.5)continue;
+      const sm=puffs[puffI=(puffI+1)%puffs.length];
+      sm.visible=true;sm.position.set(px,0.3,pz);sm.scale.setScalar(0.8);
+      sm.userData={life:0,max:0.9+Math.random()*0.5,vx:wvx*0.2+(Math.random()-.5)*1.5,vz:wvz*0.2+(Math.random()-.5)*1.5};
+    }
+    skid.count=skidFilled;skid.instanceMatrix.needsUpdate=true;
+  }
+  for(const sm of puffs){
+    if(!sm.visible)continue;
+    const u=sm.userData;u.life+=dt;
+    if(u.life>=u.max){sm.visible=false;continue;}
+    const t=u.life/u.max;
+    sm.position.x+=u.vx*dt;sm.position.z+=u.vz*dt;sm.position.y+=0.9*dt;
+    sm.scale.setScalar(0.6+t*2.2);sm.material.opacity=0.32*(1-t);
+  }
+}
+// ---------- optional picture effects (off by default because they are heavy) ----------
+let composer=null;
+if(QUALITY.post){
+  composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(innerWidth*curRatio,innerHeight*curRatio,{samples:4,type:THREE.HalfFloatType}));
+  composer.addPass(new RenderPass(scene,camera));
+  if(QUALITY.bloom)composer.addPass(new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.22,0.6,0.92));
+  composer.addPass(new ShaderPass({
+    uniforms:{tDiffuse:{value:null},sat:{value:1.3},con:{value:1.1},vig:{value:0.35}},
+    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader:'uniform sampler2D tDiffuse;uniform float sat,con,vig;varying vec2 vUv;void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));vec3 col=mix(vec3(l),c.rgb,sat);col=(col-0.18)*con+0.18;col*=1.0-vig*smoothstep(.35,.9,distance(vUv,vec2(.5)));gl_FragColor=vec4(max(col,0.),c.a);}'
+  }));
+  composer.addPass(new OutputPass());
+}
+carMesh.traverse(o=>{o.userData.keepShadow=true;});
+scene.traverse(o=>{if(o.isMesh&&!o.userData.keepShadow)o.castShadow=false;});     // shadows only from the car (much faster)
+{const seen=new Set();                                                           // dim the brightest white materials a little
+ scene.traverse(o=>{if(!o.isMesh)return;for(const m of [].concat(o.material)){
+   if(seen.has(m)||!m.color||m.isMeshBasicMaterial)continue;seen.add(m);
+   const c=m.color,l=c.r*0.2126+c.g*0.7152+c.b*0.0722;if(l>0.6)c.multiplyScalar(0.8);}});}
+resetCar(false);camPsi=car.psi;
+let prev=performance.now(),acc=0,frames=0,msAcc=0,lastHud=0;const fpsEl=document.getElementById('fps');
+function frame(t){
+  const dt=Math.min(0.05,(t-prev)/1000);prev=t;acc+=dt;
+  frames++;msAcc+=dt*1000;
+  if(frames===45){
+    const ms=msAcc/45;frames=0;msAcc=0;fpsEl.textContent=Math.round(1000/ms)+' fps  (resolution x'+curRatio.toFixed(2)+')';
+    if(QUALITY.adaptive&&!composer){
+      if(ms>24&&curRatio>0.55){curRatio=Math.max(0.55,curRatio-0.15);renderer.setPixelRatio(curRatio);renderer.setSize(innerWidth,innerHeight);}
+      else if(ms<13&&curRatio<QUALITY.pixelRatio){curRatio=Math.min(QUALITY.pixelRatio,curRatio+0.1);renderer.setPixelRatio(curRatio);renderer.setSize(innerWidth,innerHeight);}
+    }
+  }
+  updateTrackState(t);
+  if(t<pit.until){car.vx=car.vy=car.r=0;car.thr=0;}                  // pit stop: car is held for 2.5 s
+  while(acc>=1/240){step(1/240);acc-=1/240;}
+  updateVisuals(dt);updateTireFx(dt);if(updateGrass)updateGrass(car.x,car.z);if(t-lastHud>66){lastHud=t;updateHud(t);}
+  if(composer)composer.render();else renderer.render(scene,camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
+
+<!-- Please apply the following improvements:
+1. The trees are a bit unrealistic, please make them better.
+2. The whole race track is now surrounded with trees, which is a bit boring. Instead of all being trees, maybe you can switch some out for something else. Maybe some little bushes and low buildings. I don't want to see any empty land or any sand/light brown areas near the truck. It should all be covered with elements. Please make sure everything that is close to the track is as realistic and detailed as possible.
+3. The pitstop could be better. There isn't really a track leading into and out of the pitlane from the race track. And maybe when the player enters the pitlane, a green 3D rectangular box will light up, indicating that is where the player has to park the car for the pitstop. As long as any part of the car is in the box would be fine. Then after a few seconds, the player can continue.
+4. When I'm in the pitlane and press R, i should respawn inside pitlane, not outisde.
+5. There are still so much space around the map. I want the map to be filled, very densely. I don't need the further areas from the track to be filled that densely, but for the places next to the track, there should not be empty land.
+6. Grass and roads kinda come out of nowhere and lead into nowhere inside the track. Currently, there are grasses in one area, then suddenly cut off with empty spaces, followed by a bunch of trees and roads out of nowhere, then cut off again with empty spaces. Areas inside the track should be fully filled with elements connected with one and another.
+7. The ferris wheel structure looks very weird. The base is flipped upside down as a V shape.
+8. Water is a bit too unrealistic. Please design it to look better.
+9. The bridge is so unrealistic. It's basically 2 ramps + a rectangle right now. It should at least look like one whole thing.
+10. The hotel could be larger, it could have multiple surrounding buildings. Also please design them better. Right now it's just a simple cylinder and rectangle boxes. 
+11. Graphics look really plain and bad, it's like a roblox games. I want graphics to better, more realistic, especially the lightings.
+-->
+
+<!-- 
+I would like a huge rework to the game. While the game mechanics is working well right now, I feel like some heavy reworks would make the game much better. The reworks are as following:
+- Starting with modes, the game should have 3 modes.
+  1. Sprint Race: The player would be racing against 21 other bots (1 on the same team). There would be different difficulties, easy, medium, and hard. Easy would have easier bots and hard would have harder bots to pass.
+  2. Friendly Race: The player would create a room with a room ID. Then other player(s) can join using the room ID. And when the host press starts, the players will race against each other. If you want, you can use firebase realtime database as the "database and backend" for online multiplayer. I have already created a firebase-config.js with the followings:
+  window.FIREBASE_CONFIG = { apiKey:, authDomain:, projectId:, storageBucket:, messagingSenderId:, appId: };
+  3. Timed Race: The player will be the only one on the track, and it will be a timed race. If a player's time beats other players', it will be displayed on the leaderboard. So this is kinda like a competitive racing. Same thing, you can use the realtime database for this.
+- Maps: There should be more maps than just Abu Dhabi. But it would take a long time to design and modify each and every map. Do you have any good ideas for what we can do here? I want to include the following maps:
+  -> Abu Dhabi
+  -> Japan
+  -> Singapore
+  -> China
+  -> Qatar
+  -> Mexico
+  -> Spain
+  -> United States
+  -> Italy
+  -> Monaco
+  So far the Abu Dhabi map is not bad, but isn't perfect yet. It took so much time just designing it. I don't want the map to just have a race track or look similar to each other. I have already attached the map of each track.
+- Settings: Player will be able to choose different settings:
+  1. time of day: day, evening, and night,
+  2. maps: all of the ones i mentioned above
+  3. laps: players can select the number of laps they want
+  4. car: they can swap out different cars for different experiences
+  5. pit: players can choose if its required to pit or not. default is set as true.
+- Other user experiences:
+  1. Pitting could be better. There should be a track leading into and out of the pitlane. And if pit is set as true, I will have to pit every few laps. When I enter the pitlane, a green rectangle box should be glowing. Players are required to stop with part of their car inside the box to pit.
+  2. Left side of the screen should show the standings for spritn race and friendly race (showing who is first who is second and the lap time, and lap count) and race details for timed race (current time, best time, etc). Right side of the map should be showing the map, with your current location as well as other players (if there are).
+  3. Graphics look really plain and bad, it's like a roblox games. I want graphics to better, more realistic. Current objects and elements exist individually, one by one, which made it especially fake. They should be connected in one way or another, instead of in the middle of nowhere. The current lightings is also really bad. Please make it look real.
+  4. I like the way how the game experience changes based on the device conditions, as well as the driving mechanics (forwards backwards left right break), those works well. You can keep those. But for everything else, please start from the scratch and rebuild/rework the game.
+-->
