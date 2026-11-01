@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><title>Downforce</title>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="icon" type="image/png" href="downforce.png">
 <style>
 *{box-sizing:border-box}[hidden]{display:none!important}
@@ -1345,6 +1345,120 @@ body.in-game,body.in-game *,#stage,#stage *,#mctrl,#mctrl *,.mc-btn,.mc-pill,.pa
     padding:4px 12px!important;
     font-size:11.5px!important;
     letter-spacing:0.6px!important;
+  }
+}
+
+
+/* ===== v22 Fixes: iOS Home Screen Shift, Equal Standings Width, Larger Mobile Mini-Map & Top Buttons ===== */
+
+:root{
+  --ios-shift-y:0px;
+  --ios-shift-x:0px;
+  --di-top:0px;
+  --di-left:0px;
+}
+
+/* Allow #menu and #stage to shift down/right into the bottom/right gap when iOS shifts the standalone WebView */
+html,body{
+  position:fixed!important;
+  top:0!important;left:0!important;
+  width:100vw!important;
+  height:100vh!important;
+  height:100lvh!important;
+  overflow:visible!important;
+  background:#060914!important;
+}
+#menu{
+  position:fixed!important;
+  top:var(--ios-shift-y,0px)!important;
+  left:var(--ios-shift-x,0px)!important;
+  width:100vw!important;
+  height:100vh!important;
+  height:100dvh!important;
+}
+#menu .bg{
+  position:fixed!important;
+  top:-80px!important;left:-80px!important;right:-80px!important;bottom:-80px!important;
+}
+#menu .wrap{
+  padding-top:calc(max(16px,env(safe-area-inset-top,0px),var(--di-top,0px)) + 10px)!important;
+  padding-bottom:calc(max(28px,env(safe-area-inset-bottom,0px)) + 20px)!important;
+  padding-left:calc(max(16px,env(safe-area-inset-left,0px),var(--di-left,0px)) + 6px)!important;
+  padding-right:calc(max(16px,env(safe-area-inset-right,0px)) + 6px)!important;
+}
+@media (orientation:landscape){
+  body.ios-standalone #menu .wrap{
+    padding-top:20px!important;
+    padding-left:calc(max(54px,env(safe-area-inset-left,54px)) + 10px)!important;
+    padding-right:calc(max(24px,env(safe-area-inset-right,24px)) + 10px)!important;
+  }
+}
+
+/* Offset #stage by the exact iOS standalone shift so neither portrait-rotated nor native landscape is pushed under the Dynamic Island */
+#stage{
+  top:var(--ios-shift-y,0px)!important;
+  left:var(--ios-shift-x,0px)!important;
+}
+@media (max-width:1024px) and (orientation:portrait){
+  body.in-game #stage{
+    top:calc(50% + var(--ios-shift-y,0px))!important;
+    left:calc(50% + var(--ios-shift-x,0px))!important;
+  }
+}
+
+/* When in iOS standalone mode with 100lvh full coverage (diTop/diLeft > 0), keep left-side HUD elements clear of the Dynamic Island */
+body.ios-standalone #standings{
+  left:max(12px,env(safe-area-inset-left,0px),var(--di-top,0px),var(--di-left,0px))!important;
+}
+body.ios-standalone .mc-steer,body.ios-standalone .mc-tilt-hud{
+  left:max(14px,env(safe-area-inset-left,0px),var(--di-top,0px),var(--di-left,0px))!important;
+}
+body.ios-standalone .intro-bar{
+  padding-left:max(0px,var(--di-top,0px),var(--di-left,0px))!important;
+}
+
+/* Ensure top mobile buttons receive all touch/pointer events cleanly */
+.mc-top{
+  z-index:10!important;
+  pointer-events:auto!important;
+}
+.mc-top .mc-pill{
+  pointer-events:auto!important;
+  cursor:pointer!important;
+}
+.mc-top .mc-pill *{
+  pointer-events:none!important;
+}
+
+/* Equal width for collapsed (#standings.col) and expanded (#standings) top-left info card */
+#standings,#standings.col{
+  width:296px!important;
+  min-width:296px!important;
+  max-width:calc(50% - 76px)!important;
+  padding:11px 14px!important;
+}
+@media (max-width:920px),(max-height:600px){
+  #standings,#standings.col{
+    width:214px!important;
+    min-width:214px!important;
+    max-width:calc(50% - 62px)!important;
+    padding:7px 11px!important;
+    border-radius:13px!important;
+  }
+  /* Larger top-right mini-map on mobile (avoid vw which shrinks on portrait-rotated phones) */
+  #mapwrap{
+    right:8px!important;
+    top:8px!important;
+    padding:5px!important;
+    border-radius:13px!important;
+  }
+  #mini{
+    width:142px!important;
+    height:auto!important;
+  }
+  #mapwrap.big #mini{
+    width:245px!important;
+    height:auto!important;
   }
 }
 
@@ -3544,19 +3658,17 @@ addEventListener('deviceorientation',e=>{
     deg=-b;
   }else if(ang===180){
     deg=-g;
+  }else if(typeof isPortraitForced==='function'&&isPortraitForced()){
+    // When #stage is CSS-rotated 90deg into landscape on a portrait phone, beta is the continuous [-90..+90] steering angle
+    // with zero threshold cutoff and zero gamma sign-flip when turning past 45 degrees!
+    deg=b;
   }else{
-    // Portrait orientation (ang === 0): if held sideways in landscape (portrait-lock active), beta is the steering wheel tilt;
-    // if held upright or tested in desktop DevTools Sensors, gamma is the left-right tilt
-    if(Math.abs(g)>36&&Math.abs(b)<38){
-      deg=(g<0?1:-1)*b;
-    }else{
-      deg=g;
-    }
+    deg=g;
   }
   tiltRawDeg=deg;
   tiltActive=true;
   const adj=deg-tiltZeroDeg;
-  const dead=1.6,maxDeg=24;
+  const dead=1.6,maxDeg=28;
   let norm=0;
   if(Math.abs(adj)>dead){
     norm=clamp((Math.abs(adj)-dead)/(maxDeg-dead),0,1)*Math.sign(adj);
@@ -3564,8 +3676,8 @@ addEventListener('deviceorientation',e=>{
   // Smooth low-pass filter on tilt input
   tiltSteer+=(norm-tiltSteer)*0.35;
   const wEl=$('mcTiltWheel'),dEl=$('mcTiltDeg');
-  if(wEl)wEl.style.transform=`rotate(${clamp(adj,-38,38).toFixed(1)}deg)`;
-  if(dEl)dEl.textContent=`${Math.round(clamp(adj,-45,45))}°`;
+  if(wEl)wEl.style.transform=`rotate(${clamp(adj,-65,65).toFixed(1)}deg)`;
+  if(dEl)dEl.textContent=`${Math.round(clamp(adj,-75,75))}°`;
 });
 function nearest(x,z,full){let best=1e18,bi=hint;const a=full?0:-25,b=full?N-1:25;for(let j=a;j<=b;j++){const k=full?j:(hint+j+N)%N,dx=x-C[k].x,dz=z-C[k].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=k;}}hint=bi;return bi;}
 function step(dt){
@@ -3862,7 +3974,8 @@ function drawMini(){
     miniCache={id:MAP.id,canvas:off,sc,ox,oy};
   }
   const {sc,ox,oy}=miniCache,tx=wx=>wx/MAPK*sc+ox,ty=wz=>wz/MAPK*sc+oy;
-  const Z=miniBig?.7:2.3,px=tx(P.x),py=ty(P.z),cx=miniBig?CW/2:px,cy=miniBig?CH/2:py;
+  const smMini=typeof isSmallDevice==='function'&&isSmallDevice();
+  const Z=miniBig?(smMini?0.95:0.72):(smMini?3.45:2.3),px=tx(P.x),py=ty(P.z),cx=miniBig?CW/2:px,cy=miniBig?CH/2:py;
   mini.clearRect(0,0,CW,CH);mini.save();mini.translate(CW/2,CH/2);mini.rotate(P.psi-Math.PI);mini.scale(Z,Z);mini.translate(-cx,-cy);   // map turns so the car always points up
   mini.drawImage(miniCache.canvas,0,0);
   if(!miniCache.pitPath){const pp=new Path2D();let first=true;for(let m=pit.m0-40;m<=pit.m1+40;m+=25){const p=posAt(m,pit.side*(W/2+9));if(first){pp.moveTo(tx(p.x),ty(p.z));first=false;}else pp.lineTo(tx(p.x),ty(p.z));}miniCache.pitPath=pp;}
@@ -3943,7 +4056,34 @@ function isPortraitForced(){
 function stageDims(){
   return isPortraitForced()?{w:innerHeight,h:innerWidth}:{w:innerWidth,h:innerHeight};
 }
+function syncStandaloneViewport(){
+  const isSA=!!((window.navigator&&window.navigator.standalone)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));
+  document.body.classList.toggle('ios-standalone',isSA);
+  const root=document.documentElement;
+  let shiftY=0,shiftX=0,diTop=0,diLeft=0;
+  if(isSA&&window.screen){
+    const sLong=Math.max(screen.width||0,screen.height||0),sShort=Math.min(screen.width||0,screen.height||0);
+    if(innerHeight>=innerWidth){
+      // Portrait standalone: if iOS shifted the WebView up to y=0 under the Dynamic Island while sizing innerHeight to (sLong - statusBar),
+      // shiftY = sLong - innerHeight (~54-59px) pushes the page down out of the Dynamic Island and fills the bottom blank area!
+      const gapY=sLong-innerHeight;
+      if(gapY>=18&&gapY<=120){shiftY=gapY;}
+      else{diTop=54;}
+    }else{
+      // Landscape standalone: if iOS shifted the WebView left to x=0 under the Dynamic Island while sizing innerWidth to (sLong - statusBar),
+      // shiftX = sLong - innerWidth (~54-59px) pushes the page right out of the Dynamic Island and fills the right blank area!
+      const gapX=sLong-innerWidth;
+      if(gapX>=18&&gapX<=120){shiftX=gapX;}
+      else{diLeft=54;}
+    }
+  }
+  root.style.setProperty('--ios-shift-y',shiftY+'px');
+  root.style.setProperty('--ios-shift-x',shiftX+'px');
+  root.style.setProperty('--di-top',diTop+'px');
+  root.style.setProperty('--di-left',diLeft+'px');
+}
 function syncStageSize(){
+  syncStandaloneViewport();
   document.body.classList.toggle('touch-ui',isSmallDevice());
   if(isSmallDevice()&&camMode===2){camMode=0;try{localStorage.setItem('df_cam','0');}catch(e){}}
   const ct=$('btnCamTxt');if(ct)ct.textContent=camMode===1?'Driver':'Chase';
@@ -3970,9 +4110,10 @@ function cycleCamera(){
   flash('CAMERA|'+CAM_NAMES[camMode],performance.now(),'info');
 }
 function triggerResetAction(){
-  if(!race.on||!race.go||race.paused||race.resuming||race.finished)return;
-  if(race.mode==='timed')restartPractice();
-  else{resetCar();if(race.go&&!race.finished){addPen(3,'Reset to track');flash('RETURN TO TRACK|+3 seconds',performance.now(),'pen');}}
+  if(!race.on||race.paused||race.resuming||race.finished)return;
+  if(race.mode==='timed'){restartPractice();return;}
+  if(!race.go)return;
+  resetCar();if(race.go&&!race.finished){addPen(3,'Reset to track');flash('RETURN TO TRACK|+3 seconds',performance.now(),'pen');}
 }
 const cvs=renderer.domElement;cvs.style.touchAction='none';cvs.style.cursor='grab';
 cvs.addEventListener('pointerdown',e=>{dragging=true;cvs.style.cursor='grabbing';try{cvs.setPointerCapture(e.pointerId);}catch(err){}});
@@ -4017,8 +4158,8 @@ addEventListener('keyup',e=>keys[e.code]=false);
   bGas.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();try{bGas.setPointerCapture(e.pointerId);}catch(err){}setGas(true);});
   bGas.addEventListener('pointerup',e=>{e.preventDefault();setGas(false);});
   bGas.addEventListener('pointercancel',()=>setGas(false));
-  // Block iOS long-press text selection, magnifying callout & context menu on touch controls and stage
-  for(const el of [stBox,bL,bR,bBrk,bGas,$('mcTiltHud'),$('btnCam'),$('btnReset'),$('btnPause')]){
+  // Block iOS long-press text selection, magnifying callout & context menu on continuous hold pedals/steering
+  for(const el of [stBox,bL,bR,bBrk,bGas]){
     if(!el)continue;
     el.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
     el.addEventListener('contextmenu',e=>e.preventDefault());
@@ -4026,11 +4167,26 @@ addEventListener('keyup',e=>keys[e.code]=false);
   }
   document.addEventListener('selectstart',e=>{if(document.body.classList.contains('in-game')||e.target.closest('#stage,#mctrl'))e.preventDefault();});
   document.addEventListener('contextmenu',e=>{if(document.body.classList.contains('in-game')||e.target.closest('#stage,#mctrl'))e.preventDefault();});
-  if(window.navigator&&window.navigator.standalone)document.body.classList.add('ios-standalone');
-  $('btnCam').onclick=e=>{e.stopPropagation();if(race.on)cycleCamera();};
-  $('btnReset').onclick=e=>{e.stopPropagation();triggerResetAction();};
-  $('btnPause').onclick=e=>{e.stopPropagation();if(race.on&&!race.finished){if(!$('pause').hidden){if(race.paused)resumeGame();else $('pause').hidden=true;}else openPause();}};
-  const tHud=$('mcTiltHud');if(tHud)tHud.onclick=e=>{e.stopPropagation();calibrateTilt();};
+  syncStandaloneViewport();
+  // Bind top bar buttons and tilt HUD on pointerdown + click with a 280ms dedupe guard so mobile taps work 100% of the time!
+  const bindTap=(el,fn)=>{
+    if(!el)return;
+    let lastFire=0;
+    const fire=e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const now=performance.now();
+      if(now-lastFire<280)return;
+      lastFire=now;
+      fn();
+    };
+    el.addEventListener('pointerdown',fire);
+    el.addEventListener('click',fire);
+  };
+  bindTap($('btnCam'),()=>{if(race.on)cycleCamera();});
+  bindTap($('btnReset'),()=>{triggerResetAction();});
+  bindTap($('btnPause'),()=>{if(race.on&&!race.finished){if(!$('pause').hidden){if(race.paused)resumeGame();else $('pause').hidden=true;}else openPause();}});
+  bindTap($('mcTiltHud'),()=>{calibrateTilt();});
 }
 function canPause(){return race.on&&!race.finished&&race.mode!=='friendly';}
 function openPause(){
@@ -4059,6 +4215,7 @@ function resumeGame(){
     // no countdown is needed! The start lights simply continue where they were paused.
     const d=performance.now()-race.pausedAt;
     race.t0+=d;
+    if(race.cdT0)race.cdT0+=d;
     for(const c of race.cars)c.lapT0+=d;
     if(race.pitUntil)race.pitUntil+=d;
     race.pitCool+=d;
@@ -4721,8 +4878,8 @@ function syncRacingClass(){
 }
 function startCountdown(startAtLocal){
   clearTimeout(race.goTimer);race.on=true;race.go=false;race.startAt=startAtLocal;
-  // Start at 5.0 with Light 1 lit immediately so there is zero dead delay after the intro animation finishes!
-  race.cdRem=5.0;race.cdWarmFrames=0;
+  // Anchor cdT0 on the first rendered countdown frame so every single red light has an exact 0.90s interval!
+  race.cdT0=0;race.cdRem=4.5;
   $('menu').style.display='none';$('results').hidden=true;
   document.body.classList.add('in-game');syncRacingClass();syncStageSize();
   const rt=$('btnResetTxt');if(rt)rt.textContent=race.mode==='timed'?'Restart':'Reset';
@@ -4890,7 +5047,8 @@ function frame(t){
     const ms=msAcc/28;frames=0;msAcc=0;
     const fpsVal=Math.round(1000/Math.max(1,ms));
     $('fps').textContent=fpsVal+' fps ×'+curRatio.toFixed(2)+(perfTier>=2?' · SAVER':perfTier===1?' · ADAPT':'');
-    if(!introActive&&(G.gfxMode||'auto')==='auto'){
+    // Only adjust resolution/tier during active racing (race.go) so the starting lights countdown never stalls on a canvas resize
+    if(!introActive&&race.go&&(G.gfxMode||'auto')==='auto'){
       if(batteryLow){
         if(perfTier<2)applyPerfTier(2);
       }else if(ms>27.5){
@@ -4932,23 +5090,30 @@ function frame(t){
   if(race.on&&world&&!race.paused&&!race.resuming){
     const now=t;
     if(!race.go){
-      let rem;
       if(race.mode==='friendly'){
-        rem=(race.startAt-Date.now())/1000;
+        const rem=(race.startAt-Date.now())/1000;
+        if(rem>0)setLights(clamp(6-Math.ceil(rem),0,5),false);
+        else{
+          race.go=true;race.t0=performance.now();for(const c of race.cars)c.lapT0=race.t0;
+          setLights(5,true);
+          if(perfTier===0&&renderer.shadowMap.enabled)renderer.shadowMap.autoUpdate=true;
+          race.goTimer=setTimeout(()=>{$('sl').classList.add('off');},1600);
+        }
       }else{
-        // Advance using real frame time clamped to 0.14s per frame (~0.85s per light) so lights start immediately
-        // and progress at true speed even at 20-30 FPS, while never skipping a light on a lag spike
-        race.cdRem=Math.max(0,(race.cdRem??5.0)-Math.min(rawDt,0.14)*1.15);
-        rem=race.cdRem;
-        race.startAt=Date.now()+rem*1000;
-      }
-      if(rem>0){
-        setLights(clamp(6-Math.ceil(rem),0,5),false);
-      }else{
-        race.go=true;race.t0=performance.now();for(const c of race.cars)c.lapT0=race.t0;
-        setLights(5,true);
-        if(perfTier===0&&renderer.shadowMap.enabled)renderer.shadowMap.autoUpdate=true;
-        race.goTimer=setTimeout(()=>{$('sl').classList.add('off');},1600);
+        // Anchor cdT0 on the very first rendered frame after the intro so every red light (1..5) lasts an exact 0.90s!
+        const pNow=performance.now();
+        if(!race.cdT0)race.cdT0=pNow;
+        const LIGHT_STEP=0.90;
+        const elapsed=(pNow-race.cdT0)/1000;
+        if(elapsed<LIGHT_STEP*5){
+          const litCount=clamp(Math.floor(elapsed/LIGHT_STEP)+1,1,5);
+          setLights(litCount,false);
+        }else{
+          race.go=true;race.t0=pNow;for(const c of race.cars)c.lapT0=race.t0;
+          setLights(5,true);
+          if(perfTier===0&&renderer.shadowMap.enabled)renderer.shadowMap.autoUpdate=true;
+          race.goTimer=setTimeout(()=>{$('sl').classList.add('off');},1600);
+        }
       }
     }
     if(race.pitUntil&&P.vx!==0){P.vx=P.vy=P.r=0;}
