@@ -3500,7 +3500,7 @@ function buildSettingsStatsHtml(){
   const maps=(st.bestLaps&&Object.keys(st.bestLaps).length)
     ?Object.entries(st.bestLaps).map(([id,t])=>`<div class="setrow"><div><b>${esc((MAPS.find(m=>m.id===id)||{name:id}).name)}</b><div class="muted">Fastest lap</div></div><span class="mono">${lapText(t)}</span></div>`).join('')
     :(AU.stats===null?'<div class="muted">Loading your racing stats…</div>':'<div class="muted">No lap times yet — finish a lap to set one.</div>');
-  return `<div class="sec2"><h3>Racing stats</h3><div class="stats2"><div>RACES<b>${st.races||0}</b></div><div>WINS<b>${st.wins||0}</b></div><div>PODIUMS<b>${st.podiums||0}</b></div><div>FRIENDLY<b>${(st.modes&&st.modes.friendly)||0}</b></div></div>${maps}</div>`;
+  return `<h3>Racing stats</h3><div class="stats2"><div>RACES<b>${st.races||0}</b></div><div>WINS<b>${st.wins||0}</b></div><div>PODIUMS<b>${st.podiums||0}</b></div><div>FRIENDLY<b>${(st.modes&&st.modes.friendly)||0}</b></div></div>${maps}`;
 }
 function bindSettingsAcctEvents(ov){
   if(!ov)return;
@@ -3518,7 +3518,7 @@ function refreshSettingsModal(){
   const ov=document.querySelector('.modalov');
   if(!ov)return;
   const sWrap=ov.querySelector('#setStatsWrap');
-  if(sWrap)sWrap.innerHTML=buildSettingsStatsHtml();
+  if(sWrap){const sh=buildSettingsStatsHtml();sWrap.innerHTML=sh;sWrap.hidden=!sh;}
   const wrap=ov.querySelector('#setAcctWrap');
   if(!wrap)return;
   if(document.activeElement&&document.activeElement.id==='uName')return;
@@ -3564,7 +3564,7 @@ function openSettings(){
      </button>
     </div>
    </div>
-   <div id="setStatsWrap">${buildSettingsStatsHtml()}</div>
+   <div class="sec2" id="setStatsWrap" ${AU.user&&AU.prof?'':'hidden'}>${buildSettingsStatsHtml()}</div>
    <div class="actions"><button class="gb2 primary" id="setDone">Done</button></div></div>`;
   document.body.appendChild(ov);const q=id=>ov.querySelector('#'+id),close=()=>ov.remove();
   ov.addEventListener('mousedown',e=>{if(e.target===ov)close();});ov.addEventListener('keydown',e=>e.stopPropagation());
@@ -3756,7 +3756,7 @@ let lastPush=0;function pushState(now){if(race.mode!=='friendly'||!FB||!room.id|
   FB.D.set(rref('state/'+myUid()),{name:G.name,car:G.car,x:P.x,z:P.z,psi:P.psi,v:me.v,dist:me.dist,laps:me.laps,last:me.last,fin:me.fin||0}).catch(()=>{});}
 function updateRemote(dt){for(const id in race.remote){const r=race.remote[id];if(!r.tgt)continue;const k=Math.min(1,dt*10);r.cur.x+=(r.tgt.x-r.cur.x)*k;r.cur.z+=(r.tgt.z-r.cur.z)*k;let d=r.tgt.psi-r.cur.psi;d=Math.atan2(Math.sin(d),Math.cos(d));r.cur.psi+=d*k;
   r.mesh.position.set(r.cur.x,0,r.cur.z);r.mesh.rotation.y=r.cur.psi;}}
-let lbData=[];
+let lbData=[],lbDocCache={};
 const lbTop5=a=>{
   const byId=new Map();
   for(const e of (a||[])){
@@ -3769,8 +3769,6 @@ const lbTop5=a=>{
   }
   return [...byId.values()].sort((x,y)=>x.time-y.time).slice(0,5);
 };
-const lbDedupe=lbTop5;
-function lbKey(){return `df_lb5_${G.map}`;}
 function lbHtml(){
   const m=MAPS.find(x=>x.id===G.map)||MAPS[0];
   const flagSvg='<svg class="plb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>';
@@ -3871,72 +3869,41 @@ function renderPracticeLb(){
   if(sBtn)sBtn.onclick=()=>requireAuth();
 }
 async function fetchCloudLb(F,mapId){
-  const {Fs,fs,D,db}=F;
-  let fsArr=null,rtArr=[];
-  try{
-    const snap=await Fs.getDoc(Fs.doc(fs,'config','leaderboard'));
-    if(snap.exists()){
-      const data=snap.data()||{};
-      if(Array.isArray(data[mapId]))fsArr=data[mapId];
-    }
-  }catch(e){}
-  try{
-    const s=await D.get(D.ref(db,'downforce-leaderboard/'+mapId));
-    if(s.exists()){
-      const v=s.val();
-      if(Array.isArray(v))rtArr=v;
-      else if(v&&typeof v==='object'){
-        if(Array.isArray(v.top5))rtArr=v.top5;
-        else Object.values(v).forEach(x=>{if(Array.isArray(x))rtArr=rtArr.concat(x);else if(x&&typeof x==='object'&&x.time>0)rtArr.push(x);});
-      }
-    }
-  }catch(e){}
-  if(fsArr!==null)return lbTop5(fsArr.concat(rtArr));
-  return rtArr.length?lbTop5(rtArr):null;
+  const {Fs,fs}=F;
+  const snap=await Fs.getDoc(Fs.doc(fs,'config','leaderboard'));
+  lbDocCache=snap.exists()?(snap.data()||{}):{};
+  return Array.isArray(lbDocCache[mapId])?lbTop5(lbDocCache[mapId]):[];
 }
 async function loadLb(){
   const mapId=G.map;
-  let local=[];
-  try{local=JSON.parse(localStorage.getItem(lbKey())||'[]');if(!Array.isArray(local))local=[];}catch(e){local=[];}
-  lbData=lbTop5(local);
+  lbData=Array.isArray(lbDocCache[mapId])?lbTop5(lbDocCache[mapId]):[];
   renderPracticeLb();refreshResPlb();
   try{
     const F=await fbInit();
     const cloud=await fetchCloudLb(F,mapId);
-    if(cloud&&cloud.length){
-      lbData=lbTop5(cloud);
-      try{localStorage.setItem(lbKey(),JSON.stringify(lbData));}catch(e){}
-    }
-  }catch(e){}
+    if(G.map===mapId)lbData=cloud;
+  }catch(e){
+    console.warn('Firestore config/leaderboard read:',e);
+  }
   renderPracticeLb();refreshResPlb();
 }
 async function submitTime(t){
   if(!(t>0&&t<1e8))return;
+  if(!AU.user)return;
   const mapId=G.map;
   const driverName=(AU.prof&&AU.prof.username)?AU.prof.username:G.name;
   const ts=Date.now();
-  const runId=(race&&race.runId)?`${race.runId}_${Math.round(t*1000)}`:`${AU.user?AU.user.uid:driverName}_${ts}_${Math.round(t*1000)}`;
-  const rec={id:runId,uid:AU.user?AU.user.uid:'',name:driverName,time:+t,car:CARS[G.car].name,ts};
-  let local=[];
-  try{local=JSON.parse(localStorage.getItem(lbKey())||'[]');if(!Array.isArray(local))local=[];}catch(e){local=[];}
-  lbData=lbTop5(lbData.concat(local,[rec]));
-  try{localStorage.setItem(lbKey(),JSON.stringify(lbData));}catch(e){}
-  renderPracticeLb();refreshResPlb();
+  const runId=(race&&race.runId)?`${race.runId}_${Math.round(t*1000)}`:`${AU.user.uid}_${ts}_${Math.round(t*1000)}`;
+  const rec={id:runId,uid:AU.user.uid,name:driverName,time:+t,car:CARS[G.car].name,ts};
   try{
-    const F=await fbInit(),{Fs,fs,D,db}=F;
+    const F=await fbInit(),{Fs,fs}=F;
     const cloud=await fetchCloudLb(F,mapId);
-    const base=cloud&&cloud.length?cloud:lbData;
-    const nextTop5=lbTop5(base.concat([rec]));
-    lbData=nextTop5;
-    try{localStorage.setItem(lbKey(),JSON.stringify(nextTop5));}catch(e){}
+    const nextTop5=lbTop5(cloud.concat([rec]));
+    lbDocCache[mapId]=nextTop5;
+    if(G.map===mapId)lbData=nextTop5;
     renderPracticeLb();refreshResPlb();
-    try{
-      await Fs.setDoc(Fs.doc(fs,'config','leaderboard'),{[mapId]:nextTop5,updatedAt:Fs.serverTimestamp()},{merge:true});
-    }catch(e){console.warn('Firestore config/leaderboard write:',e);}
-    try{
-      await D.set(D.ref(db,'downforce-leaderboard/'+mapId+'/top5'),nextTop5);
-    }catch(e){}
-  }catch(e){}
+    await Fs.setDoc(Fs.doc(fs,'config','leaderboard'),{[mapId]:nextTop5,updatedAt:Fs.serverTimestamp()},{merge:true});
+  }catch(e){console.warn('Firestore config/leaderboard write:',e);}
 }
 let pitPref=true;
 function syncPitOption(){const ok=(parseInt($('slaps').value)||3)>3,sp=$('spit');if(!sp.disabled)pitPref=sp.checked;sp.disabled=!ok;sp.checked=ok?pitPref:false;const sec=sp.closest('.sec');if(sec){sec.style.opacity=ok?'':'.45';sec.title=ok?'':'A mandatory pit stop needs a race of 4 or more laps';}}
