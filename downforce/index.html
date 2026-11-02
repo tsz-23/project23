@@ -2507,7 +2507,7 @@ const TUNE={lockBase:.115,lockLow:.34,falloff:18,rate:4.5,slipAllow:.17,yawAssis
 const steerMax=v=>TUNE.lockBase+TUNE.lockLow/(1+(v/TUNE.falloff)**2);
 const P={x:0,z:0,y:0,psi:0,vx:0,vy:0,r:0,steer:0,thr:0,brk:0,rev:0,gear:1,rpm:IDLE,shift:0,mu:2,slip:0,dl:0,d:0,idx:0,wear:0,stats:CARS[0]};
 const keys={};let hint=0;
-let tiltRawDeg=0,tiltZeroDeg=0,tiltSteer=0,tiltActive=false;
+let tiltRawDeg=0,tiltZeroDeg=0,tiltSteer=0,tiltActive=false,tiltBasis=null,tiltCalibPending=false;
 G.steerMode=(()=>{try{return localStorage.getItem('df_steer')==='tilt'?'tilt':'buttons';}catch(e){return 'buttons';}})();
 function syncSteerModeUI(){
   document.body.classList.toggle('tilt-mode',G.steerMode==='tilt');
@@ -2528,31 +2528,39 @@ function setSteerMode(mode){
   try{localStorage.setItem('df_steer',G.steerMode);}catch(e){}
   if(typeof saveLobbySettings==='function')saveLobbySettings();
   syncSteerModeUI();
-  if(G.steerMode==='tilt')requestTiltPermission();
+  if(G.steerMode==='tilt'){tiltBasis=null;tiltZeroDeg=0;requestTiltPermission();}
 }
 function calibrateTilt(){
+  tiltBasis=null;
+  tiltCalibPending=true;
   tiltZeroDeg=0;
-  flash('ROTATION STEERING|Centered neutral phone angle',performance.now(),'info');
+  flash('ROTATION STEERING|Centered neutral angle to 0°',performance.now(),'info');
 }
+addEventListener('orientationchange',()=>{tiltBasis=null;tiltZeroDeg=0;});
 addEventListener('deviceorientation',e=>{
   if(e.beta===null&&e.gamma===null)return;
   const b=e.beta||0,g=e.gamma||0;
-  const ang=(screen.orientation&&typeof screen.orientation.angle==='number')?screen.orientation.angle:(typeof window.orientation==='number'?window.orientation:0);
-  let deg=0;
-  if(ang===90){
-    deg=b;
-  }else if(ang===-90||ang===270){
-    deg=-b;
-  }else if(ang===180){
-    deg=-g;
-  }else if(typeof isPortraitForced==='function'&&isPortraitForced()){
-    deg=b;
-  }else{
-    deg=g;
+  const br=b*Math.PI/180,gr=g*Math.PI/180;
+  const ux=-Math.cos(br)*Math.sin(gr),uy=-Math.sin(br);
+  const mag=Math.hypot(ux,uy);
+  let deg=tiltRawDeg;
+  if(mag>0.12){
+    if(!tiltBasis||!race.on||(tiltBasis[0]*ux+tiltBasis[1]*uy<-0.35*mag)){
+      tiltBasis=Math.abs(ux)>=Math.abs(uy)?[ux>=0?1:-1,0]:[0,uy>=0?1:-1];
+    }
+    const dx=tiltBasis[0],dy=tiltBasis[1];
+    const cross=dx*uy-dy*ux,dot=dx*ux+dy*uy;
+    deg=-Math.atan2(cross,dot)*180/Math.PI;
+    if(tiltCalibPending){
+      tiltZeroDeg=clamp(deg,-25,25);
+      tiltCalibPending=false;
+    }
   }
   tiltRawDeg=deg;
   tiltActive=true;
-  const adj=deg-tiltZeroDeg;
+  let adj=deg-tiltZeroDeg;
+  if(adj>180)adj-=360;
+  if(adj<-180)adj+=360;
   const dead=1.6,maxDeg=28;
   let norm=0;
   if(Math.abs(adj)>dead){
@@ -2626,7 +2634,7 @@ const meshes=[];let playerMesh=null;
 function clearMeshes(){for(const m of meshes)scene.remove(m);meshes.length=0;}
 function gridSlot(g){const row=Math.floor(g/2),col=g%2;return {m:-(10+row*8+col*4)-3.2,lat:col?-3.2:3.2};}
 function setupRace(opts){
-  clearMeshes();race.mode=opts.mode;race.laps=opts.laps;race.finished=false;race.on=false;race.go=false;race.startAt=Infinity;race.penalty=0;race.pitsDone=0;race.pitUntil=0;race.remote={};race.penaltyS=0;race.penLog=[];race.vFin=0;race.viol=0;race.jump=false;race.jt=0;race.tl=0;race.back=0;race.armed2=true;race.armed=false;race.wt=0;race.wshow=false;race.quit=false;race.paused=false;race.resuming=false;race.tlCool=0;race.lapBad=false;race.msgUntil=0;race.msgText='';
+  clearMeshes();race.runId='run_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);race.mode=opts.mode;race.laps=opts.laps;race.finished=false;race.on=false;race.go=false;race.startAt=Infinity;race.penalty=0;race.pitsDone=0;race.pitUntil=0;race.remote={};race.penaltyS=0;race.penLog=[];race.vFin=0;race.viol=0;race.jump=false;race.jt=0;race.tl=0;race.back=0;race.armed2=true;race.armed=false;race.wt=0;race.wshow=false;race.quit=false;race.paused=false;race.resuming=false;race.tlCool=0;race.lapBad=false;race.msgUntil=0;race.msgText='';
   P.stats=CARS[opts.car];P.wear=0;P.vx=P.vy=P.r=0;P.gear=1;P.steer=0;P.mu=2;P.grass=false;hint=0;
   race.cars=[];const me=newCarState(opts.name,5,true);race.cars.push(me);race.me=me;me.valid=0;me.sum=0;me.lapList=[];
   const pg=opts.mode==='sprint'?11:(opts.slot||0),sl=gridSlot(pg),pp=posAt(sl.m,sl.lat);P.x=pp.x;P.z=pp.z;P.psi=pp.psi;P.y=pp.y;hint=idxAt(sl.m);
@@ -3749,8 +3757,20 @@ let lastPush=0;function pushState(now){if(race.mode!=='friendly'||!FB||!room.id|
 function updateRemote(dt){for(const id in race.remote){const r=race.remote[id];if(!r.tgt)continue;const k=Math.min(1,dt*10);r.cur.x+=(r.tgt.x-r.cur.x)*k;r.cur.z+=(r.tgt.z-r.cur.z)*k;let d=r.tgt.psi-r.cur.psi;d=Math.atan2(Math.sin(d),Math.cos(d));r.cur.psi+=d*k;
   r.mesh.position.set(r.cur.x,0,r.cur.z);r.mesh.rotation.y=r.cur.psi;}}
 let lbData=[];
-const lbDedupe=a=>{const m={};for(const e of a)if(e&&e.time>0&&(!m[e.name]||e.time<m[e.name].time))m[e.name]=e;return Object.values(m).sort((x,y)=>x.time-y.time).slice(0,10);};
-function lbKey(){return `df_lb_${G.map}`;}
+const lbTop5=a=>{
+  const byId=new Map();
+  for(const e of (a||[])){
+    if(!e||!(e.time>0&&e.time<1e8))continue;
+    const key=e.id||`${e.uid||e.name||'Driver'}_${Math.round((+e.time)*1000)}_${e.ts||0}`;
+    const prev=byId.get(key);
+    if(!prev||(!prev.uid&&e.uid)||(e.ts||0)>(prev.ts||0)){
+      byId.set(key,{id:key,uid:e.uid||(prev&&prev.uid)||'',name:e.name||(prev&&prev.name)||'Driver',time:+e.time,car:e.car||(prev&&prev.car)||'Balanced',ts:e.ts||(prev&&prev.ts)||0});
+    }
+  }
+  return [...byId.values()].sort((x,y)=>x.time-y.time).slice(0,5);
+};
+const lbDedupe=lbTop5;
+function lbKey(){return `df_lb5_${G.map}`;}
 function lbHtml(){
   const m=MAPS.find(x=>x.id===G.map)||MAPS[0];
   const flagSvg='<svg class="plb-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>';
@@ -3777,7 +3797,7 @@ function lbHtml(){
     tableHtml=`<div class="plb-empty"><div class="plb-empty-icon"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#ff9f0a"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h4>No Valid Lap Times Recorded</h4><p>Complete a clean lap within track limits to post a time on the ${esc(m.name)} leaderboard.</p></div>`;
   }
   const footHtml=AU.user?'':`<div class="res-plb-foot"><span>Sign in with Google to save your fastest lap to the global leaderboard.</span><button type="button" class="gbtn" id="resPlbSign" style="padding:7px 14px;font-size:12.5px">${GOOGLE_G}Sign in with Google</button></div>`;
-  return `<div class="plb-header"><div class="plb-titles"><span class="plb-kicker">CIRCUIT LEADERBOARD · FASTEST LAPS</span><div class="plb-hmain"><h3>${esc(m.name)} Standings</h3><div class="plb-pills"><span class="plb-pill">${flagSvg} ${m.km.toFixed(3)} km</span><span class="plb-pill">${pinSvg} ${THLABEL[m.th]}</span></div></div></div><div class="plb-summary">${lead?`<div class="plb-stat"><small>TRACK RECORD</small><b class="mono">${lapText(lead.time)}</b></div>`:''}${myEntry?`<div class="plb-stat me"><small>YOUR RANK · P${myIdx+1}</small><b class="mono">${lapText(myEntry.time)}</b></div>`:''}</div></div>${tableHtml}${footHtml}`;
+  return `<div class="plb-header"><div class="plb-titles"><span class="plb-kicker">CIRCUIT LEADERBOARD · TOP 5 FASTEST LAPS</span><div class="plb-hmain"><h3>${esc(m.name)} Standings</h3><div class="plb-pills"><span class="plb-pill">${flagSvg} ${m.km.toFixed(3)} km</span><span class="plb-pill">${pinSvg} ${THLABEL[m.th]}</span></div></div></div><div class="plb-summary">${lead?`<div class="plb-stat"><small>TRACK RECORD</small><b class="mono">${lapText(lead.time)}</b></div>`:''}${myEntry?`<div class="plb-stat me"><small>YOUR RANK · P${myIdx+1}</small><b class="mono">${lapText(myEntry.time)}</b></div>`:''}</div></div>${tableHtml}${footHtml}`;
 }
 function renderPracticeLb(){
   const card=$('practicelb-card');
@@ -3829,7 +3849,7 @@ function renderPracticeLb(){
   card.innerHTML=`
     <div class="plb-header">
       <div class="plb-titles">
-        <span class="plb-kicker">PRACTICE SESSION · FASTEST LAPS</span>
+        <span class="plb-kicker">PRACTICE LEADERBOARD · TOP 5 FASTEST LAPS</span>
         <div class="plb-hmain">
           <h3>${esc(m.name)} Circuit</h3>
           <div class="plb-pills">
@@ -3850,19 +3870,73 @@ function renderPracticeLb(){
   const sBtn=card.querySelector('#plbSign');
   if(sBtn)sBtn.onclick=()=>requireAuth();
 }
+async function fetchCloudLb(F,mapId){
+  const {Fs,fs,D,db}=F;
+  let fsArr=null,rtArr=[];
+  try{
+    const snap=await Fs.getDoc(Fs.doc(fs,'config','leaderboard'));
+    if(snap.exists()){
+      const data=snap.data()||{};
+      if(Array.isArray(data[mapId]))fsArr=data[mapId];
+    }
+  }catch(e){}
+  try{
+    const s=await D.get(D.ref(db,'downforce-leaderboard/'+mapId));
+    if(s.exists()){
+      const v=s.val();
+      if(Array.isArray(v))rtArr=v;
+      else if(v&&typeof v==='object'){
+        if(Array.isArray(v.top5))rtArr=v.top5;
+        else Object.values(v).forEach(x=>{if(Array.isArray(x))rtArr=rtArr.concat(x);else if(x&&typeof x==='object'&&x.time>0)rtArr.push(x);});
+      }
+    }
+  }catch(e){}
+  if(fsArr!==null)return lbTop5(fsArr.concat(rtArr));
+  return rtArr.length?lbTop5(rtArr):null;
+}
 async function loadLb(){
-  const local=JSON.parse(localStorage.getItem(lbKey())||'[]');lbData=lbDedupe(local);
+  const mapId=G.map;
+  let local=[];
+  try{local=JSON.parse(localStorage.getItem(lbKey())||'[]');if(!Array.isArray(local))local=[];}catch(e){local=[];}
+  lbData=lbTop5(local);
   renderPracticeLb();refreshResPlb();
-  try{const F=await fbInit(),{D,db}=F,s=await D.get(D.query(D.ref(db,'downforce-leaderboard/'+G.map),D.orderByChild('time'),D.limitToFirst(40)));const arr=[];s.forEach(c=>arr.push(c.val()));if(arr.length)lbData=lbDedupe(arr.concat(local));}catch(e){}
+  try{
+    const F=await fbInit();
+    const cloud=await fetchCloudLb(F,mapId);
+    if(cloud&&cloud.length){
+      lbData=lbTop5(cloud);
+      try{localStorage.setItem(lbKey(),JSON.stringify(lbData));}catch(e){}
+    }
+  }catch(e){}
   renderPracticeLb();refreshResPlb();
 }
 async function submitTime(t){
-  if(!(t>0&&t<1e8))return;const rec={name:AU.prof?AU.prof.username:G.name,time:t,car:CARS[G.car].name,ts:Date.now()};
-  const local=JSON.parse(localStorage.getItem(lbKey())||'[]');local.push(rec);localStorage.setItem(lbKey(),JSON.stringify(lbDedupe(local)));lbData=lbDedupe(lbData.concat([rec]));
+  if(!(t>0&&t<1e8))return;
+  const mapId=G.map;
+  const driverName=(AU.prof&&AU.prof.username)?AU.prof.username:G.name;
+  const ts=Date.now();
+  const runId=(race&&race.runId)?`${race.runId}_${Math.round(t*1000)}`:`${AU.user?AU.user.uid:driverName}_${ts}_${Math.round(t*1000)}`;
+  const rec={id:runId,uid:AU.user?AU.user.uid:'',name:driverName,time:+t,car:CARS[G.car].name,ts};
+  let local=[];
+  try{local=JSON.parse(localStorage.getItem(lbKey())||'[]');if(!Array.isArray(local))local=[];}catch(e){local=[];}
+  lbData=lbTop5(lbData.concat(local,[rec]));
+  try{localStorage.setItem(lbKey(),JSON.stringify(lbData));}catch(e){}
   renderPracticeLb();refreshResPlb();
-  if(!AU.user||!FB){loadLb();return;}
-  try{const {D,db}=FB,r=D.ref(db,'downforce-leaderboard/'+G.map+'/'+AU.user.uid),s=await D.get(r);if(!s.exists()||s.val().time>t)await D.set(r,rec);}catch(e){}
-  await loadLb();
+  try{
+    const F=await fbInit(),{Fs,fs,D,db}=F;
+    const cloud=await fetchCloudLb(F,mapId);
+    const base=cloud&&cloud.length?cloud:lbData;
+    const nextTop5=lbTop5(base.concat([rec]));
+    lbData=nextTop5;
+    try{localStorage.setItem(lbKey(),JSON.stringify(nextTop5));}catch(e){}
+    renderPracticeLb();refreshResPlb();
+    try{
+      await Fs.setDoc(Fs.doc(fs,'config','leaderboard'),{[mapId]:nextTop5,updatedAt:Fs.serverTimestamp()},{merge:true});
+    }catch(e){console.warn('Firestore config/leaderboard write:',e);}
+    try{
+      await D.set(D.ref(db,'downforce-leaderboard/'+mapId+'/top5'),nextTop5);
+    }catch(e){}
+  }catch(e){}
 }
 let pitPref=true;
 function syncPitOption(){const ok=(parseInt($('slaps').value)||3)>3,sp=$('spit');if(!sp.disabled)pitPref=sp.checked;sp.disabled=!ok;sp.checked=ok?pitPref:false;const sec=sp.closest('.sec');if(sec){sec.style.opacity=ok?'':'.45';sec.title=ok?'':'A mandatory pit stop needs a race of 4 or more laps';}}
@@ -3872,6 +3946,7 @@ function syncRacingClass(){
   if(!race.on||race.paused||race.finished){keys.KeyA=keys.KeyD=keys.KeyW=keys.KeyB=keys.KeyS=keys.ArrowDown=false;document.querySelectorAll('.mc-btn.act').forEach(b=>b.classList.remove('act'));}
 }
 function startCountdown(startAtLocal){
+  tiltBasis=null;tiltZeroDeg=0;
   clearTimeout(race.goTimer);race.on=true;race.go=false;race.startAt=startAtLocal;
   race.cdT0=performance.now();race.cdElapsed=0;race.cdRem=4.5;
   frames=0;msAcc=0;
@@ -4224,7 +4299,7 @@ function setMode(m){
   if(!['sprint','friendly','timed'].includes(m))m='sprint';
   if(room.id&&m!=='friendly')m='friendly';
   G.mode=m;const tabs=[...document.querySelectorAll('#tabs button')];tabs.forEach(b=>b.classList.toggle('on',b.dataset.m===m));
-  updateTabInd(!bootingLobby);
+  updateTabInd(m!=='sprint'||!bootingLobby);
   const isPractice=m==='timed';
   $('timedlb').hidden=true;
   $('practicelb-card').hidden=!isPractice;
@@ -4254,7 +4329,8 @@ function loadLobbySettings(){
   const car=clamp(parseInt(st.car??localStorage.getItem('df_car'))||0,0,CARS.length-1);
   const diff=['easy','medium','hard'].includes(st.diff||localStorage.getItem('df_diff'))?(st.diff||localStorage.getItem('df_diff')):'medium';
   const pitSaved=st.pit!==undefined?!!st.pit:(localStorage.getItem('df_pit')!==null?localStorage.getItem('df_pit')==='1':true);
-  const mode='sprint';
+  const savedMode=st.mode||localStorage.getItem('df_mode');
+  const mode=['sprint','friendly','timed'].includes(savedMode)?savedMode:'sprint';
   $('pname').value=name;
   $('slaps').value=laps;
   pitPref=pitSaved;$('spit').checked=pitSaved;
