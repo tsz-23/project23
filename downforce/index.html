@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href='data:application/manifest+json,{"name":"Downforce","short_name":"Downforce","start_url":".","display":"standalone","background_color":"#05070e","theme_color":"#05070e"}'>
 <link rel="icon" type="image/png" href="downforce.png">
 <style>
 *{box-sizing:border-box}[hidden]{display:none!important}
@@ -1349,81 +1350,74 @@ body.in-game,body.in-game *,#stage,#stage *,#mctrl,#mctrl *,.mc-btn,.mc-pill,.pa
 }
 
 
-/* ===== v22/v23 Fixes: Full-Bleed iOS Home Screen Viewport, Dynamic Island Safe Insets, Equal Standings Width, Larger Mobile Mini-Map & Top Buttons ===== */
+/* ===== v22/v23/v24 Fixes: Full-Bleed iOS Home Screen Viewport, Dynamic Island Safe Insets, Uncropped Right Controls, Equal Standings Width, Larger Mobile Mini-Map & Top Buttons ===== */
 
 :root{
   --full-w:100vw;
-  --full-h:100dvh;
+  --full-h:100lvh;
+  --vis-w:100vw;
+  --vis-h:100dvh;
   --di-top:0px;
   --di-left:0px;
   --di-game-left:0px;
+  --di-game-right:0px;
+  --ios-extra-bottom:0px;
 }
 
-/* Keep html, body, #menu, and #stage anchored at (0,0) and sized to the full physical screen (--full-w x --full-h) so there is never a top/left black bar or bottom/right cutoff */
+/* Use position:static + overflow:visible + 100lvh on html,body so iOS WebKit never clips the bottom 59pt status-bar overhang area */
 html,body{
-  position:fixed!important;
-  top:0!important;left:0!important;
+  position:static!important;
+  margin:0!important;
+  padding:0!important;
   width:var(--full-w,100vw)!important;
-  height:var(--full-h,100dvh)!important;
-  overflow:hidden!important;
-  background:#060914!important;
+  min-height:100vh!important;
+  min-height:100lvh!important;
+  height:var(--full-h,100lvh)!important;
+  overflow:visible!important;
+  background:#05070e!important;
 }
 #menu{
   position:fixed!important;
   top:0!important;
   left:0!important;
-  right:auto!important;
-  bottom:auto!important;
+  right:0!important;
+  bottom:-80px!important;
   width:var(--full-w,100vw)!important;
-  height:var(--full-h,100dvh)!important;
+  height:calc(var(--full-h,100lvh) + 80px)!important;
+  padding-bottom:80px!important;
 }
 #menu .bg{
   position:fixed!important;
-  top:-80px!important;left:-80px!important;right:-80px!important;bottom:-80px!important;
+  top:-100px!important;left:-100px!important;right:-100px!important;bottom:-140px!important;
 }
 #menu .wrap{
   padding-top:calc(max(16px,env(safe-area-inset-top,0px),var(--di-top,0px)) + 10px)!important;
-  padding-bottom:calc(max(28px,env(safe-area-inset-bottom,0px)) + 24px)!important;
+  padding-bottom:calc(max(32px,env(safe-area-inset-bottom,0px)) + var(--ios-extra-bottom,0px) + 36px)!important;
   padding-left:calc(max(16px,env(safe-area-inset-left,0px),var(--di-left,0px)) + 6px)!important;
   padding-right:calc(max(16px,env(safe-area-inset-right,0px)) + 6px)!important;
 }
 
-/* Anchor #stage across the exact full physical screen so neither top/left nor bottom/right is ever cut off */
+/* Anchor #stage across the full physical screen and keep overflow visible so 3D canvas never clips */
 #stage{
   top:0!important;
   left:0!important;
   right:auto!important;
   bottom:auto!important;
   width:var(--full-w,100vw)!important;
-  height:var(--full-h,100dvh)!important;
+  height:var(--full-h,100lvh)!important;
+  overflow:visible!important;
 }
 @media (max-width:1024px) and (orientation:portrait){
   body.in-game #stage{
-    width:var(--full-h,100dvh)!important;
+    width:var(--full-h,100lvh)!important;
     height:var(--full-w,100dvw)!important;
-    top:calc(var(--full-h,100dvh) * 0.5)!important;
+    top:calc(var(--full-h,100lvh) * 0.5)!important;
     left:calc(var(--full-w,100dvw) * 0.5)!important;
     right:auto!important;
     bottom:auto!important;
     transform:translate(-50%,-50%) rotate(90deg)!important;
+    overflow:visible!important;
   }
-}
-
-/* Inset only the left/right HUD elements in iOS standalone mode so the 3D canvas is edge-to-edge while controls clear the Dynamic Island & rounded corners */
-body.ios-standalone #standings{
-  left:max(12px,env(safe-area-inset-left,0px),var(--di-game-left,0px))!important;
-}
-body.ios-standalone .mc-steer,body.ios-standalone .mc-tilt-hud{
-  left:max(14px,env(safe-area-inset-left,0px),var(--di-game-left,0px))!important;
-}
-body.ios-standalone .mc-pedals{
-  right:max(14px,env(safe-area-inset-right,0px))!important;
-}
-body.ios-standalone #mapwrap{
-  right:max(12px,env(safe-area-inset-right,0px))!important;
-}
-body.ios-standalone .intro-bar{
-  padding-left:max(0px,var(--di-game-left,0px))!important;
 }
 
 /* Ensure top mobile buttons receive all touch/pointer events cleanly */
@@ -1469,6 +1463,29 @@ body.ios-standalone .intro-bar{
     width:245px!important;
     height:auto!important;
   }
+}
+
+/* iOS Home Screen Standalone HUD Safe Insets (placed AFTER @media rules so they always win):
+   - Left side (--di-game-left = 70px) clears the Dynamic Island completely.
+   - Right side (--di-game-right = sLong - innerHeight + 10px) keeps the gas pedal and full mini-map 100% inside the visible screen so nothing is cropped. */
+body.ios-standalone #standings,
+body.ios-standalone #standings.col{
+  left:max(14px,env(safe-area-inset-left,0px),var(--di-game-left,0px))!important;
+  max-width:calc(50% - 60px - var(--di-game-left,0px))!important;
+}
+body.ios-standalone .mc-steer,
+body.ios-standalone .mc-tilt-hud{
+  left:max(16px,env(safe-area-inset-left,0px),var(--di-game-left,0px))!important;
+}
+body.ios-standalone .mc-pedals{
+  right:calc(max(12px,env(safe-area-inset-right,0px)) + var(--di-game-right,0px))!important;
+}
+body.ios-standalone #mapwrap{
+  right:calc(max(10px,env(safe-area-inset-right,0px)) + var(--di-game-right,0px))!important;
+}
+body.ios-standalone .intro-bar{
+  padding-left:max(0px,var(--di-game-left,0px))!important;
+  padding-right:max(0px,var(--di-game-right,0px))!important;
 }
 
 </style></head>
@@ -4064,18 +4081,25 @@ function isPortraitForced(){
 }
 function getFullViewport(){
   const isSA=!!((window.navigator&&window.navigator.standalone)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches));
-  let w=innerWidth,h=innerHeight;
+  const visW=innerWidth,visH=innerHeight;
+  let w=visW,h=visH,extraBottom=0,extraRight=0;
   if(isSA&&window.screen){
     const sLong=Math.max(screen.width||0,screen.height||0),sShort=Math.min(screen.width||0,screen.height||0);
-    if(h>=w){
-      if(sShort>0&&Math.abs(sShort-w)<=80)w=Math.max(w,sShort);
-      if(sLong>0&&sLong-h>=0&&sLong-h<=120)h=Math.max(h,sLong);
+    if(visH>=visW){
+      if(sShort>0&&Math.abs(sShort-visW)<=80)w=Math.max(visW,sShort);
+      if(sLong>0&&sLong-visH>=0&&sLong-visH<=120){
+        extraBottom=sLong-visH;
+        h=Math.max(visH,sLong);
+      }
     }else{
-      if(sLong>0&&sLong-w>=0&&sLong-w<=120)w=Math.max(w,sLong);
-      if(sShort>0&&Math.abs(sShort-h)<=80)h=Math.max(h,sShort);
+      if(sLong>0&&sLong-visW>=0&&sLong-visW<=120){
+        extraRight=sLong-visW;
+        w=Math.max(visW,sLong);
+      }
+      if(sShort>0&&Math.abs(sShort-visH)<=80)h=Math.max(visH,sShort);
     }
   }
-  return {w,h,isSA};
+  return {w,h,visW,visH,extraBottom,extraRight,isSA};
 }
 function stageDims(){
   const vp=getFullViewport();
@@ -4087,19 +4111,27 @@ function syncStandaloneViewport(){
   const root=document.documentElement;
   root.style.setProperty('--full-w',vp.w+'px');
   root.style.setProperty('--full-h',vp.h+'px');
-  let diTop=0,diLeft=0,diGameLeft=0;
+  root.style.setProperty('--vis-w',vp.visW+'px');
+  root.style.setProperty('--vis-h',vp.visH+'px');
+  root.style.setProperty('--ios-extra-bottom',vp.extraBottom+'px');
+  let diTop=0,diLeft=0,diGameLeft=0,diGameRight=0;
   if(vp.isSA){
     if(vp.h>=vp.w){
-      diTop=52;
-      diGameLeft=52;
+      diTop=54;
+      // 70px clears the Dynamic Island completely on the left of the rotated horizontal game
+      diGameLeft=70;
+      // Offset right-side controls (gas pedal & mini-map) by the exact standalone bottom overhang so they are never cropped off
+      diGameRight=vp.extraBottom>0?(vp.extraBottom+6):14;
     }else{
-      diLeft=52;
-      diGameLeft=52;
+      diLeft=54;
+      diGameLeft=70;
+      diGameRight=vp.extraRight>0?(vp.extraRight+6):14;
     }
   }
   root.style.setProperty('--di-top',diTop+'px');
   root.style.setProperty('--di-left',diLeft+'px');
   root.style.setProperty('--di-game-left',diGameLeft+'px');
+  root.style.setProperty('--di-game-right',diGameRight+'px');
   if(window.scrollTo&&(window.scrollX!==0||window.scrollY!==0)){
     try{window.scrollTo(0,0);}catch(e){}
   }
