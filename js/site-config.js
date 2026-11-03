@@ -18,6 +18,6 @@ window.P23 = {
     { id: "news", name: "Daily News", short: "News", href: "pages/news.html", icon: "globe", desc: "Global headlines, category feeds, and saved stories from around the world." },
     { id: "so-thats-how", name: "So That's How", short: "Explained", href: "pages/so-thats-how.html", icon: "lightbulb", desc: "Everyday tech and household science explained visually" },
     { id: "between-us", name: "Between Us", href: "../between-us/index.html", icon: "link", desc: "Between Us Dev Build" },
-    { id: "downforce", name: "DOWNFORCE", href: "../downforce/index.html", icon: "link", desc: "Downforce Dev Build" }
+    { id: "downforce", name: "DOWNFORCE", href: "../downforce/index.html", icon: "link", desc: "Downforce Dev Build" } 
   ]
 };
