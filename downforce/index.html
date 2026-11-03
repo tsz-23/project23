@@ -200,7 +200,7 @@ button.sm.pri{background:linear-gradient(135deg,#ff4d2e,#ff9a3d);font-weight:700
 .fsum{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding:11px 13px;border-radius:12px;background:#ff7a3d12;border:1px solid #ff7a3d44}.fsum span{padding:4px 11px;border-radius:999px;background:#0b111e;font-size:13px}
 .fl-lb{margin-top:14px}.fl-lb h4,#rpts h4{margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.6}.muted2{font-size:12.5px;opacity:.6;line-height:1.5}
 #rpts{margin-top:16px}
-.card.guest .hs{display:none}
+.card.guest .hs{opacity:.38!important;filter:grayscale(.8)!important;pointer-events:none!important;user-select:none!important;-webkit-user-select:none!important}
 button.big:disabled{opacity:.45;filter:grayscale(.6);cursor:not-allowed;animation:none;transform:none}button.big.ready{background:linear-gradient(135deg,#19d36b,#7bff6b);color:#062}
 .authgate{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:1.5rem;background:#05070cee;backdrop-filter:blur(6px);transition:opacity .4s,visibility .4s}.authgate.hide{opacity:0;visibility:hidden;pointer-events:none}
 .gate-card{position:relative;width:min(430px,100%);text-align:center;padding:2.4rem 1.7rem 2rem;border-radius:30px;background:#141c2e;border:1px solid #ffffff1c;box-shadow:0 30px 80px #000a,0 0 60px #ff4d2e22;animation:rise .6s cubic-bezier(.2,1.1,.3,1) both}@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.96)}}
@@ -501,7 +501,7 @@ body.ios-standalone .intro-bar{padding-left:max(0px,var(--di-game-left,0px))!imp
    </div>
    <section id="flcard" class="card" style="grid-column: 1 / -1;" hidden><div id="flobby"></div></section>
    <section id="practicelb-card" class="card" style="grid-column: 1 / -1;" hidden><div id="practicelb-body"></div></section>
-   <section class="card">
+   <section id="setcard" class="card">
     <div class="sec"><label>Driver name</label><input id="pname" value="Driver" maxlength="14"></div>
     <div class="sec hs"><label>Circuit</label><div id="mapgrid" class="mapgrid"></div></div>
     <div class="row2 hs">
@@ -3061,7 +3061,7 @@ cvs.addEventListener('pointerup',()=>{dragging=false;cvs.style.cursor='grab';las
 cvs.addEventListener('pointermove',e=>{if(!dragging)return;const mx=isPortraitForced()?e.movementY:e.movementX,my=isPortraitForced()?-e.movementX:e.movementY;tYaw-=mx*.005;tPitch=clamp(tPitch+my*.004,-.12,1.1);lastDrag=performance.now();});
 cvs.addEventListener('wheel',e=>{tZoom=clamp(tZoom*(1+e.deltaY*.001),.5,3);e.preventDefault();},{passive:false});cvs.addEventListener('dblclick',()=>{tYaw=tPitch=0;tZoom=1;});
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
-  if((e.code==='Space'||e.code==='Enter'||e.code==='Escape')&&introActive){e.preventDefault();finishIntroAnimation();return;}
+  if((e.code==='Space'||e.code==='Enter'||e.code==='Escape')&&introActive&&race.mode!=='friendly'){e.preventDefault();finishIntroAnimation();return;}
   if(e.code==='KeyR'&&!e.repeat&&race.on&&race.go&&!race.paused&&!race.resuming&&!race.finished&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.shiftKey&&!['KeyW','KeyA','KeyS','KeyD','KeyB','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].some(c=>keys[c]))triggerResetAction();
   if(e.code==='KeyM'&&race.on)toggleMini();
   if(e.code==='KeyC'&&!e.repeat&&race.on&&!e.ctrlKey&&!e.metaKey&&!e.altKey)cycleCamera();
@@ -3230,7 +3230,11 @@ function updateVisuals(dt){
   if(!playerMesh)return;
   if(introActive){
     const clipDur=INTRO_CLIP_DUR,totalDur=clipDur*4;
-    introElapsed+=Math.min(dt,0.033);
+    if(race.mode==='friendly'&&race.introAtLocal){
+      introElapsed=Math.max(0,(Date.now()-race.introAtLocal)/1000);
+    }else{
+      introElapsed+=Math.min(dt,0.033);
+    }
     const tIntro=introElapsed;
     if(tIntro>=totalDur){finishIntroAnimation();return;}
     const clipIdx=Math.min(3,Math.floor(tIntro/clipDur));
@@ -3368,7 +3372,7 @@ function updateVisuals(dt){
 }
 let FB=null;
 const AU={user:null,prof:null,stats:null};
-const room={id:null,host:false,pub:null,players:{},scores:{},results:{},lastRound:null,started:null,unsub:[],finT:0};
+const room={id:null,host:false,pub:null,players:{},scores:{},results:{},loaded:{},lastRound:null,started:null,startedRound:0,unsub:[],finT:0};
 const GENERIC_ERR="Something went wrong on our end. Please try again later.";
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let authListenerBound=false;
@@ -3460,6 +3464,7 @@ async function handleAuth(user){
     try{
       await loadProfile(user);
       await loadStats();
+      await restoreRoomIfAny();
     }catch(e){
       authBusy=false;authInFlight=null;AU.user=null;AU.prof=null;AU.stats=null;
       if(e&&e.code==='cancelled'){try{await FB.Au.deleteUser(user);}catch{}try{await FB.Au.signOut(FB.auth);}catch{}cancelAuth();uiAuth();refreshSettingsModal();return;}
@@ -3613,63 +3618,144 @@ const rref=p=>FB.D.ref(FB.db,'downforce-rooms/'+room.id+(p?'/'+p:''));
 const myUid=()=>AU.user&&AU.user.uid;
 const sortedPlayers=()=>Object.entries(room.players).sort((a,b)=>(a[1].joined||0)-(b[1].joined||0));
 async function ensureOnline(){if(!await requireAuth())return false;try{await fbInit();return true;}catch(e){setMsg(e.message);return false;}}
+let applyingRoomSettings=false,launchingRound=0;
+function isGuestInRoom(){
+  return !!(G.mode==='friendly'&&room.id&&!room.host);
+}
+function syncGuestLock(){
+  const guest=isGuestInRoom();
+  const sc=$('setcard');
+  if(sc)sc.classList.toggle('guest',guest);
+  for(const id of ['lm','lp','slaps']){const el=$(id);if(el)el.disabled=guest;}
+  document.querySelectorAll('#todseg button').forEach(b=>{b.disabled=guest;});
+  if(guest){const sp=$('spit');if(sp)sp.disabled=true;}
+  else syncPitOption();
+}
 async function createRoom(){
   if(!await ensureOnline())return;const {D}=FB;readSettings();let code=null;
   try{for(let i=0;i<8&&!code;i++){const c=rcode(),s=await D.get(D.ref(FB.db,'downforce-rooms/'+c+'/public'));if(!s.exists())code=c;}
     if(!code)return setMsg('Could not find a free room code. Try again.');
-    room.id=code;
-    await D.set(rref('public'),{code,hostUid:myUid(),hostName:AU.prof.username,status:'lobby',map:G.map,tod:G.tod,laps:G.laps,pit:G.pit,max:10,round:0,created:Date.now()+FB.off});
+    room.id=code;room.host=true;
+    await D.set(rref('public'),{code,hostUid:myUid(),hostName:AU.prof.username,status:'lobby',map:G.map,tod:G.tod,laps:G.laps,pit:G.pit,max:10,round:0,introAt:0,startAt:0,created:Date.now()+FB.off});
     await joinPlayer(true);watchRoom();setMsg('Room '+code+' created. Share the code.');
   }catch(e){console.warn(e);room.id=null;setMsg('Could not create the room. Check the database rules.');}
 }
 async function joinRoom(){
   if(!await ensureOnline())return;const {D}=FB,code=($('fcode').value||'').trim().toUpperCase();if(code.length<5)return setMsg('Enter the 5-character room code.');
   try{const s=await D.get(D.ref(FB.db,'downforce-rooms/'+code));if(!s.exists()||!s.val().public)return setMsg('Room not found.');
-    const v=s.val();if(v.public.status!=='lobby')return setMsg('That race has already started.');
+    const v=s.val();if(v.public.status!=='lobby'&&!(v.players&&v.players[myUid()]))return setMsg('That race has already started.');
     const ps=v.players||{};if(!ps[myUid()]&&Object.keys(ps).length>=10)return setMsg('That room is full.');
-    room.id=code;readSettings();await joinPlayer(false);watchRoom();setMsg('Joined room '+code);
+    room.id=code;room.host=(v.public.hostUid===myUid());readSettings();await joinPlayer(room.host,ps[myUid()]);watchRoom();setMsg('Joined room '+code);
   }catch(e){console.warn(e);room.id=null;setMsg('Could not join the room.');}
 }
-async function joinPlayer(host){
+async function joinPlayer(host,prev){
   const {D}=FB,r=rref('players/'+myUid());
-  await D.set(r,{name:AU.prof.username,car:G.car,ready:!!host,joined:Date.now()+FB.off,photo:AU.prof.photoURL||''});
-  D.onDisconnect(r).remove();D.onDisconnect(rref('state/'+myUid())).remove();
+  try{D.onDisconnect(r).cancel();}catch(e){}
+  D.onDisconnect(rref('state/'+myUid())).remove();
+  await D.set(r,{
+    name:AU.prof.username,
+    car:(prev&&typeof prev.car==='number')?prev.car:G.car,
+    ready:host?true:!!(prev&&prev.ready),
+    joined:(prev&&prev.joined)||(Date.now()+FB.off),
+    photo:AU.prof.photoURL||''
+  });
+  try{localStorage.setItem('df_room_code',room.id);}catch(e){}
+}
+async function restoreRoomIfAny(){
+  if(room.id||!AU.user||!FB)return;
+  let savedCode='';
+  try{savedCode=(localStorage.getItem('df_room_code')||'').trim().toUpperCase();}catch(e){}
+  if(savedCode.length!==5)return;
+  try{
+    const {D}=FB,s=await D.get(D.ref(FB.db,'downforce-rooms/'+savedCode));
+    if(!s.exists()||!s.val().public){
+      try{localStorage.removeItem('df_room_code');}catch(e){}
+      return;
+    }
+    const v=s.val(),pub=v.public,ps=v.players||{};
+    const isHost=pub.hostUid===myUid(),wasIn=!!ps[myUid()];
+    if(!isHost&&!wasIn&&(pub.status!=='lobby'||Object.keys(ps).length>=10)){
+      try{localStorage.removeItem('df_room_code');}catch(e){}
+      return;
+    }
+    room.id=savedCode;room.host=isHost;
+    const prev=ps[myUid()];
+    if(prev&&typeof prev.car==='number')selectCar(prev.car);
+    await joinPlayer(isHost,prev);
+    if(G.mode!=='friendly')setMode('friendly');
+    watchRoom();
+    setMsg('Reconnected to room '+savedCode);
+  }catch(e){console.warn('Room restore:',e);}
 }
 function applyRoomSettings(p){
-  G.map=p.map;G.tod=p.tod;G.laps=p.laps;G.pit=p.pit;
+  applyingRoomSettings=true;
+  G.map=p.map;G.tod=p.tod;G.laps=p.laps;G.pit=!!p.pit;
   if($('smap').value!==p.map)selectMap(p.map);
   $('stod').value=p.tod;document.querySelectorAll('#todseg button').forEach(b=>b.classList.toggle('on',b.dataset.v===p.tod));
-  $('slaps').value=p.laps;$('spit').checked=!!p.pit;syncPitOption();
+  applyTOD(p.tod);
+  $('slaps').value=p.laps;pitPref=!!p.pit;$('spit').checked=!!p.pit;syncPitOption();syncGuestLock();
+  applyingRoomSettings=false;
+}
+function triggerFriendlyLaunch(){
+  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.introAt>0)return;
+  if(launchingRound===room.pub.round)return;
+  launchingRound=room.pub.round;
+  const nowSrv=Date.now()+FB.off;
+  const introAt=nowSrv+500;
+  const introDurMs=Math.round(INTRO_CLIP_DUR*4*1000);
+  const startAt=introAt+introDurMs+4500;
+  FB.D.update(rref('public'),{introAt,startAt}).catch(()=>{launchingRound=0;});
+}
+function checkFriendlySync(){
+  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.introAt>0)return;
+  if(!room.host)return;
+  const racers=room.pub.racers||{};
+  const exp=Object.keys(racers).filter(u=>room.players&&room.players[u]);
+  if(!exp.length)return;
+  const loaded=room.loaded||{};
+  if(exp.every(u=>loaded[u])){
+    triggerFriendlyLaunch();
+  }
 }
 function watchRoom(){
-  const {D}=FB;room.unsub.forEach(f=>f());room.unsub=[];room.players={};room.scores={};room.results={};room.pub=null;room.lastRound=null;room.started=null;
+  const {D}=FB;room.unsub.forEach(f=>f());room.unsub=[];room.players={};room.scores={};room.results={};room.loaded={};room.pub=null;room.lastRound=null;room.started=null;room.startedRound=0;
   const on=(path,fn)=>room.unsub.push(D.onValue(rref(path),s=>fn(s.val())));
   on('public',p=>{
     if(!p){if(room.id){const had=room.pub;leaveLocal();setMsg(had?'The room was closed.':'');}return;}
     room.pub=p;room.host=p.hostUid===myUid();
     if(!room.host)applyRoomSettings(p);
-    if(p.status==='racing'&&!race.on&&p.startAt!==room.started&&p.racers&&p.racers[myUid()]!==undefined){room.started=p.startAt;beginFriendly(p);}
+    else syncGuestLock();
+    if(p.status==='racing'&&!race.on&&p.round&&p.round!==room.startedRound&&p.racers&&p.racers[myUid()]!==undefined){room.startedRound=p.round;beginFriendly(p);}
+    if(p.status==='racing')checkFriendlySync();
     renderFriendly();setMode(G.mode);
   });
   on('players',ps=>{room.players=ps||{};
     if(room.pub&&!room.players[room.pub.hostUid]&&room.players[myUid()]){const first=sortedPlayers()[0];
       if(first&&first[0]===myUid()){D.update(rref('public'),{hostUid:myUid(),hostName:AU.prof.username}).catch(()=>{});D.update(rref('players/'+myUid()),{ready:true}).catch(()=>{});}}
+    if(room.pub&&room.pub.status==='racing')checkFriendlySync();
     renderFriendly();});
+  on('loaded',v=>{room.loaded=v||{};checkFriendlySync();});
   on('scores',v=>{room.scores=v||{};renderFriendly();});
   on('lastRound',v=>{room.lastRound=v;renderRound();});
   on('results',v=>{room.results=v||{};checkRoundDone();});
   on('state',all=>{all=all||{};for(const id in all){if(id===myUid())continue;const st=all[id];let r=race.remote[id];
       if(!r){const car=CARS[st.car||0],mesh=makeCar(car.c1,car.c2,true);scene.add(mesh);meshes.push(mesh);r=race.remote[id]={mesh,cur:{x:st.x,z:st.z,psi:st.psi,y:0},st:newCarState(st.name,0,false)};r.st.color=car.c1;}
       r.tgt=st;r.st.name=st.name;r.st.dist=st.dist;r.st.laps=st.laps;r.st.v=st.v;r.st.last=st.last;r.st.fin=st.fin||0;}
-    for(const id in race.remote)if(!all[id]){scene.remove(race.remote[id].mesh);delete race.remote[id];}});
+    for(const id in race.remote)if(!all[id]&&race.go){scene.remove(race.remote[id].mesh);delete race.remote[id];}});
 }
-function leaveLocal(){room.unsub.forEach(f=>f());room.unsub=[];room.id=null;room.host=false;room.pub=null;room.players={};room.scores={};room.results={};room.lastRound=null;clearTimeout(room.finT);
-  document.querySelector('.main .card').classList.remove('guest');renderFriendly();setMode(G.mode);}
+function leaveLocal(){room.unsub.forEach(f=>f());room.unsub=[];room.id=null;room.host=false;room.pub=null;room.players={};room.scores={};room.results={};room.loaded={};room.lastRound=null;room.startedRound=0;clearTimeout(room.finT);
+  try{localStorage.removeItem('df_room_code');}catch(e){}
+  const sc=$('setcard');if(sc)sc.classList.remove('guest');syncGuestLock();renderFriendly();setMode(G.mode);}
 async function leaveRoom(){
+  try{localStorage.removeItem('df_room_code');}catch(e){}
   if(!room.id||!FB)return;const {D}=FB,id=room.id,uid=myUid();
   try{const others=sortedPlayers().filter(p=>p[0]!==uid);
-    if(room.host&&others.length)await D.update(rref('public'),{hostUid:others[0][0],hostName:others[0][1].name});
+    if(room.host&&others.length){
+      await D.update(rref('public'),{hostUid:others[0][0],hostName:others[0][1].name});
+      await D.update(rref('players/'+others[0][0]),{ready:true});
+    }
     await D.remove(rref('state/'+uid));
+    await D.remove(rref('loaded/'+uid));
     if(!others.length)await D.remove(rref());else await D.remove(rref('players/'+uid));
   }catch(e){console.warn(e);}
   if(room.id===id)leaveLocal();
@@ -3681,9 +3767,9 @@ function syncSettings(){
     const me=room.players[myUid()];if(me&&me.car!==G.car)FB.D.update(rref('players/'+myUid()),{car:G.car}).catch(()=>{});},150);
 }
 function renderFriendly(){
-  const el=$('flobby');if(!el)return;const card=document.querySelector('.main .card');
+  const el=$('flobby');if(!el)return;
   const fr=G.mode==='friendly';$('flcard').hidden=!fr;document.body.classList.toggle('inroom',!!room.id);
-  card.classList.toggle('guest',!!room.id&&!room.host);
+  syncGuestLock();
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('dis',!!room.id&&b.dataset.m!=='friendly'));
   if(!fr){setGo();return;}
   if(!AU.user){el.innerHTML=`<div class="fl-empty"><h3>Friendly Races</h3><p>Race friends in a private room. Sign in with Google to play — your points and results are saved to your account.</p><button class="gbtn" id="fsign">${GOOGLE_G}Continue with Google</button></div>`;$('fsign').onclick=()=>requireAuth();setGo();return;}
@@ -3720,16 +3806,71 @@ async function startFriendly(){
   if(!room.host||!room.pub||room.pub.status!=='lobby')return;
   if(sortedPlayers().some(([u,p])=>u!==myUid()&&!p.ready))return setMsg('Everyone must be ready first.');
   readSettings();const racers={};sortedPlayers().forEach(([u],i)=>racers[u]=i);const {D}=FB;
-  try{await D.update(rref(),{results:null,state:null,lastRound:null});
-    await D.update(rref('public'),{map:G.map,tod:G.tod,laps:G.laps,pit:G.pit,racers,status:'racing',startAt:Date.now()+FB.off+7000,round:(room.pub.round||0)+1});
+  const nextRound=(room.pub.round||0)+1;
+  launchingRound=0;
+  try{await D.update(rref(),{results:null,state:null,lastRound:null,loaded:null});
+    await D.update(rref('public'),{map:G.map,tod:G.tod,laps:G.laps,pit:G.pit,racers,status:'racing',introAt:0,startAt:0,round:nextRound});
   }catch(e){console.warn(e);setMsg('Could not start the race.');}
 }
 async function beginFriendly(p){
-  const slot=p.racers[myUid()];applyRoomSettings(p);G.name=AU.prof.username;showLoading();await buildWorld(G.map,G.tod);
+  const myRound=p.round;
+  const slot=p.racers[myUid()];
+  applyRoomSettings(p);
+  G.name=(AU.prof&&AU.prof.username)||G.name;
+  $('menu').style.display='none';
+  showLoading();
+  await sleep(20);
+  await buildWorld(G.map,G.tod);
   flushPendingScenery();
-  setupRace({mode:'friendly',laps:G.laps,car:G.car,name:G.name,slot});await loadStage(100,'Ready');syncLoadBarVisual(100);$('loading').hidden=true;
+  await loadStage(90,'Positioning drivers on the starting grid');
+  setupRace({mode:'friendly',laps:G.laps,car:G.car,name:G.name,slot});
+  for(const [uid,rSlot] of Object.entries(p.racers||{})){
+    if(uid===myUid())continue;
+    const pl=(room.players&&room.players[uid])||{};
+    const cIdx=clamp(pl.car||0,0,CARS.length-1),car=CARS[cIdx]||CARS[0];
+    const gs=gridSlot(rSlot),gp=posAt(gs.m,gs.lat);
+    const mesh=makeCar(car.c1,car.c2,true);
+    mesh.position.set(gp.x,gp.y,gp.z);mesh.rotation.order='YXZ';mesh.rotation.y=gp.psi;mesh.rotation.x=gp.pitch||0;
+    scene.add(mesh);meshes.push(mesh);
+    const st=newCarState(pl.name||'Driver',0,false);
+    st.color=car.c1;st.dist=gs.m;st.s=((gs.m%LAP)+LAP)%LAP;st.x=gp.x;st.z=gp.z;st.psi=gp.psi;
+    race.remote[uid]={mesh,cur:{x:gp.x,z:gp.z,psi:gp.psi,y:gp.y},tgt:{x:gp.x,z:gp.z,psi:gp.psi},st};
+  }
+  miniCache=null;drawMini();
+  await loadStage(95,'Warming up broadcast cameras & shaders');
+  {
+    introActive=false;race.on=true;
+    updateVisuals(0.016);
+    sun.position.set(P.x+sunDir.x*200,P.y+Math.max(12,sunDir.y*200),P.z+sunDir.z*200);
+    sun.target.position.set(P.x,P.y,P.z);
+    renderer.shadowMap.autoUpdate=(perfTier===0&&renderer.shadowMap.enabled);
+    if(renderer.shadowMap.enabled)renderer.shadowMap.needsUpdate=true;
+    updateLights(performance.now());
+    if(renderer.compile)renderer.compile(scene,camera);
+    if(usePost&&composer)composer.render();else renderer.render(scene,camera);
+    const pC=posAt(-24,3.5),pA=posAt(12,0);
+    camera.position.set(pC.x,pC.y+2.2,pC.z);camera.lookAt(pA.x,pA.y+1.0,pA.z);camera.updateProjectionMatrix();
+    if(usePost&&composer)composer.render();else renderer.render(scene,camera);
+  }
+  await loadStage(98,'Waiting for all drivers to sync…');
+  try{await FB.D.set(rref('loaded/'+myUid()),Date.now()+FB.off);}catch(e){}
+  checkFriendlySync();
+  const waitT0=performance.now();
+  while(room.id&&room.pub&&room.pub.status==='racing'&&room.pub.round===myRound&&!(room.pub.introAt>0)){
+    if(room.host&&performance.now()-waitT0>12000)triggerFriendlyLaunch();
+    await sleep(35);
+  }
+  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.round!==myRound)return;
+  await loadStage(100,'Ready');
+  syncLoadBarVisual(100);
+  const introAtLocal=(room.pub.introAt||(Date.now()+FB.off))-FB.off;
+  const startAtLocal=(room.pub.startAt||(introAtLocal+FB.off+Math.round(INTRO_CLIP_DUR*4*1000)+4500))-FB.off;
+  const waitMs=introAtLocal-Date.now();
+  if(waitMs>0)await sleep(Math.min(waitMs,1500));
+  $('loading').hidden=true;
   lastT=performance.now();
-  startCountdown(p.startAt-FB.off);
+  race.introAtLocal=introAtLocal;
+  runIntroAnimation(()=>startCountdown(startAtLocal));
 }
 function checkRoundDone(){
   if(!room.host||!room.pub||room.pub.status!=='racing'||!room.pub.racers)return;
@@ -3744,7 +3885,7 @@ async function finalizeRound(){
     .sort((a,b)=>a.t&&b.t?a.t-b.t:a.t?-1:b.t?1:b.d-a.d);
   const round=list.map((e,i)=>({uid:e.uid,name:e.name,pos:i+1,time:e.t,pts:e.t?(PTS[i]||0):0})),upd={};
   round.forEach(e=>{const sc=room.scores[e.uid]||{pts:0,wins:0,races:0};upd['scores/'+e.uid]={name:e.name,pts:sc.pts+e.pts,wins:sc.wins+(e.pos===1&&e.time?1:0),races:sc.races+1};});
-  upd.lastRound=round;upd['public/status']='lobby';upd.results=null;upd.state=null;
+  upd.lastRound=round;upd['public/status']='lobby';upd['public/introAt']=0;upd['public/startAt']=0;upd.results=null;upd.state=null;upd.loaded=null;
   Object.keys(room.players).forEach(u=>{if(u!==myUid())upd['players/'+u+'/ready']=false;});
   try{await FB.D.update(rref(),upd);}catch(e){console.warn(e);}
 }
@@ -3755,7 +3896,8 @@ function renderRound(){
 let lastPush=0;function pushState(now){if(race.mode!=='friendly'||!FB||!room.id||now-lastPush<100)return;lastPush=now;const me=race.me;
   FB.D.set(rref('state/'+myUid()),{name:G.name,car:G.car,x:P.x,z:P.z,psi:P.psi,v:me.v,dist:me.dist,laps:me.laps,last:me.last,fin:me.fin||0}).catch(()=>{});}
 function updateRemote(dt){for(const id in race.remote){const r=race.remote[id];if(!r.tgt)continue;const k=Math.min(1,dt*10);r.cur.x+=(r.tgt.x-r.cur.x)*k;r.cur.z+=(r.tgt.z-r.cur.z)*k;let d=r.tgt.psi-r.cur.psi;d=Math.atan2(Math.sin(d),Math.cos(d));r.cur.psi+=d*k;
-  r.mesh.position.set(r.cur.x,0,r.cur.z);r.mesh.rotation.y=r.cur.psi;}}
+  const rk=C.length?nearest(r.cur.x,r.cur.z,false):0,ry=(H&&H.length)?H[rk]:0;
+  r.mesh.position.set(r.cur.x,ry,r.cur.z);r.mesh.rotation.y=r.cur.psi;}}
 let lbData=[],lbDocCache={};
 const lbTop5=a=>{
   const byId=new Map();
@@ -4029,11 +4171,15 @@ function runIntroAnimation(onDone){
   const m=MAPS.find(x=>x.id===G.map)||MAPS[0];
   const tName=$('introTrackName');if(tName)tName.textContent=m.name+' Circuit';
   const ov=$('intro-overlay');if(ov)ov.hidden=false;
-  const skipBtn=$('btnSkipIntro');if(skipBtn)skipBtn.onclick=()=>finishIntroAnimation();
+  const skipBtn=$('btnSkipIntro');
+  if(skipBtn){
+    skipBtn.hidden=(race.mode==='friendly');
+    skipBtn.onclick=()=>{if(race.mode!=='friendly')finishIntroAnimation();};
+  }
   const clipsEl=$('introClips');
   if(clipsEl){
     [...clipsEl.children].forEach((seg,idx)=>{
-      seg.onclick=e=>{e.stopPropagation();if(introActive)introElapsed=idx*INTRO_CLIP_DUR;};
+      seg.onclick=e=>{e.stopPropagation();if(introActive&&race.mode!=='friendly')introElapsed=idx*INTRO_CLIP_DUR;};
     });
   }
   lastT=performance.now();
@@ -4129,8 +4275,11 @@ function frame(t){
     if(!race.go){
       if(race.mode==='friendly'){
         const rem=(race.startAt-Date.now())/1000;
-        if(rem>0)setLights(clamp(6-Math.ceil(rem),0,5),false);
-        else{
+        const LIGHT_STEP=0.90,TOTAL_CD=LIGHT_STEP*5;
+        if(rem>0){
+          const elapsed=clamp(TOTAL_CD-rem,0,TOTAL_CD);
+          setLights(clamp(Math.floor(elapsed/LIGHT_STEP)+1,1,5),false);
+        }else{
           const pNow=performance.now();
           race.go=true;race.t0=pNow;for(const c of race.cars)c.lapT0=pNow;
           if(keys.KeyW||keys.ArrowUp)P.thr=Math.max(P.thr,0.75);
@@ -4221,6 +4370,7 @@ function saveLobbySettings(){
   }catch(e){}
 }
 function selectMap(id){
+  if(isGuestInRoom()&&!applyingRoomSettings)return;
   if(!MAPS.some(m=>m.id===id))id='abudhabi';
   $('smap').value=id;G.map=id;
   document.querySelectorAll('.mapcard').forEach(c=>c.classList.toggle('on',c.dataset.id===id));
@@ -4243,10 +4393,10 @@ CARS.forEach((c,i)=>{const d=document.createElement('div');d.className='carcard'
   const pw=clamp((c.power-.88)/.26,.1,1),gp=clamp((c.grip-.88)/.26,.1,1),ag=clamp((c.steer-.85)/.35,.1,1),tp=clamp((1.15-c.drag)/.3,.1,1);
   d.innerHTML=`<div class="sw" style="background:linear-gradient(100deg,${hx6(c.c1)},${hx6(c.c2)})"></div><b>${c.name}</b><div class="bar"><i style="width:${pw*100}%"></i></div><div class="bar"><i style="width:${gp*100}%"></i></div><div class="bar"><i style="width:${ag*100}%"></i></div><div class="bar"><i style="width:${tp*100}%"></i></div>`;
   d.onclick=()=>selectCar(i);$('cars').appendChild(d);});
-function seg(id,hid){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$(hid).value=b.dataset.v;if(id==='todseg')applyTOD(b.dataset.v);saveLobbySettings();syncSettings();});}
+function seg(id,hid){document.querySelectorAll('#'+id+' button').forEach(b=>b.onclick=()=>{if(id==='todseg'&&isGuestInRoom()&&!applyingRoomSettings)return;document.querySelectorAll('#'+id+' button').forEach(x=>x.classList.remove('on'));b.classList.add('on');$(hid).value=b.dataset.v;if(id==='todseg')applyTOD(b.dataset.v);saveLobbySettings();syncSettings();});}
 seg('todseg','stod');seg('diffseg','sdiff');
-$('lm').onclick=()=>{$('slaps').value=clamp((+$('slaps').value||3)-1,1,30);syncPitOption();if(G.mode==='timed'){readSettings();loadLb();}saveLobbySettings();syncSettings();};
-$('lp').onclick=()=>{$('slaps').value=clamp((+$('slaps').value||3)+1,1,30);syncPitOption();if(G.mode==='timed'){readSettings();loadLb();}saveLobbySettings();syncSettings();};
+$('lm').onclick=()=>{if(isGuestInRoom())return;$('slaps').value=clamp((+$('slaps').value||3)-1,1,30);syncPitOption();if(G.mode==='timed'){readSettings();loadLb();}saveLobbySettings();syncSettings();};
+$('lp').onclick=()=>{if(isGuestInRoom())return;$('slaps').value=clamp((+$('slaps').value||3)+1,1,30);syncPitOption();if(G.mode==='timed'){readSettings();loadLb();}saveLobbySettings();syncSettings();};
 function updateTabInd(animate=true){
   const tabs=[...document.querySelectorAll('#tabs button')];
   const idx=Math.max(0,tabs.findIndex(x=>x.classList.contains('on')));
@@ -4280,12 +4430,12 @@ function setMode(m){
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
 $('presume').onclick=()=>{if(race.paused)resumeGame();else $('pause').hidden=true;};$('pquit').onclick=quitGame;
 $('go').onclick=()=>{if(G.steerMode==='tilt')requestTiltPermission();if(G.mode==='friendly')friendlyAction();else startRace();};const placeInd=()=>updateTabInd(false);addEventListener('resize',placeInd);addEventListener('orientationchange',()=>setTimeout(placeInd,200));if(typeof ResizeObserver!=='undefined'&&$('tabs'))new ResizeObserver(()=>placeInd()).observe($('tabs'));$('acct').onclick=openSettings;
-$('slaps').addEventListener('input',()=>{syncPitOption();saveLobbySettings();syncSettings();});
-$('slaps').addEventListener('change',()=>{syncPitOption();saveLobbySettings();syncSettings();});
-$('spit').addEventListener('change',()=>{pitPref=$('spit').checked;saveLobbySettings();syncSettings();});
+$('slaps').addEventListener('input',()=>{if(isGuestInRoom()){if(room.pub)$('slaps').value=room.pub.laps;return;}syncPitOption();saveLobbySettings();syncSettings();});
+$('slaps').addEventListener('change',()=>{if(isGuestInRoom()){if(room.pub)$('slaps').value=room.pub.laps;return;}syncPitOption();saveLobbySettings();syncSettings();});
+$('spit').addEventListener('change',()=>{if(isGuestInRoom()){if(room.pub)$('spit').checked=!!room.pub.pit;return;}pitPref=$('spit').checked;saveLobbySettings();syncSettings();});
 $('pname').addEventListener('input',()=>saveLobbySettings());
 $('pname').addEventListener('change',()=>saveLobbySettings());
-document.querySelector('.main .card').addEventListener('click',syncSettings);document.querySelector('.main .card').addEventListener('change',syncSettings);
+$('setcard').addEventListener('click',syncSettings);$('setcard').addEventListener('change',syncSettings);
 function loadLobbySettings(){
   let st={};
   try{st=JSON.parse(localStorage.getItem('df_settings')||'{}')||{};}catch(e){st={};}
