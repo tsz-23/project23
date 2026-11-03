@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Project 23 | PICO AI</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 86%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+  }
+
+  main {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 0.75rem 1rem 1.5rem;
+  }
+
+  .chat-panel {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 6.2rem);
+    height: calc(100dvh - 6.2rem);
+    min-height: 520px;
+    border-radius: 26px;
+    background: var(--glass-surface);
+    backdrop-filter: blur(30px) saturate(190%);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow), var(--glass-spec);
+  }
+
+  .chat-header-bar {
+    padding: 0.75rem 1.1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    flex: none;
+    z-index: 30;
+  }
+
+  .hdr-title-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .hdr-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  #activeChatTitle {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: -0.01em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  #activeChatTitle:hover {
+    color: var(--accent);
+  }
+
+  .model-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .model-dot {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: var(--good);
+    box-shadow: 0 0 8px var(--good);
+  }
+
+  .hdr-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: none;
+  }
+
+  .web-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.42rem 0.82rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    transition: all 0.2s var(--apple-ease);
+  }
+
+  .web-pill-btn svg {
+    width: 0.98rem;
+    height: 0.98rem;
+  }
+
+  .web-pill-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+
+  .web-pill-btn.active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--card-2));
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+    color: var(--accent);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .chat-inner-layout {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chat-sidebar-pane {
+    width: 286px;
+    border-right: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    background: color-mix(in srgb, var(--card-solid) 68%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 0.95rem 0.85rem;
+    transition: width 0.28s var(--apple-ease), padding 0.28s var(--apple-ease), transform 0.28s var(--apple-ease), opacity 0.22s ease;
+    flex: none;
+    z-index: 40;
+  }
+
+  .chat-panel.sidebar-collapsed .chat-sidebar-pane {
+    transform: translateX(-100%);
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-right: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .chat-sidebar-backdrop {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 18, 0.52);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 35;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .sb-top {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  #newChatBtn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.58rem 1rem;
+    border-radius: 14px;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  #newChatBtn svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .sb-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  #sbSearchIc {
+    position: absolute;
+    left: 0.72rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    pointer-events: none;
+    line-height: 0;
+  }
+
+  #sbSearchIc svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    display: block;
+  }
+
+  .sb-search input {
+    width: 100%;
+    padding: 0.44rem 0.7rem 0.44rem 2.05rem;
+    border-radius: 11px;
+    font-size: 0.82rem;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+  }
+
+  .sb-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    padding: 0.1rem 0.35rem 0;
+  }
+
+  .chat-list {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding-right: 0.15rem;
+  }
+
+  .chat-row {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    border-radius: 13px;
+    padding: 0.15rem 0.25rem 0.15rem 0.15rem;
+    border: 1px solid transparent;
+    transition: background 0.18s, border-color 0.18s;
+  }
+
+  .chat-row:hover {
+    background: var(--card-2);
+  }
+
+  .chat-row.active {
+    background: color-mix(in srgb, var(--accent) 15%, var(--card-2));
+    border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  }
+
+  .chat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.12rem;
+    padding: 0.45rem 0.55rem;
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .chat-item:hover {
+    transform: none;
+  }
+
+  .chat-item .title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    font-size: 0.87rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  .chat-row.active .chat-item .title {
+    color: var(--accent);
+  }
+
+  .chat-item .meta {
+    font-size: 0.71rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .chat-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.1rem;
+    flex: none;
+    opacity: 0.65;
+    transition: opacity 0.18s;
+  }
+
+  .chat-row:hover .chat-row-actions,
+  .chat-row.active .chat-row-actions {
+    opacity: 1;
+  }
+
+  .chat-act {
+    background: transparent;
+    border: 0;
+    color: var(--muted);
+    width: 1.85rem;
+    height: 1.85rem;
+    padding: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+
+  .chat-act:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    transform: none;
+  }
+
+  .chat-act.del:hover {
+    color: var(--bad);
+    background: color-mix(in srgb, var(--bad) 14%, transparent);
+  }
+
+  .chat-act svg {
+    width: 0.92rem;
+    height: 0.92rem;
+  }
+
+  .chat-main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: transparent;
+    height: 100%;
+    position: relative;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.35rem clamp(1rem, 3vw, 2.2rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+    scroll-behavior: smooth;
+    min-height: 0;
+  }
+
+  .msg {
+    display: flex;
+    gap: 0.75rem;
+    max-width: min(86%, 760px);
+    animation: rise 0.26s var(--apple-spring) both;
+    align-self: flex-start;
+  }
+
+  .msg.user {
+    margin-left: auto;
+    flex-direction: row-reverse;
+    align-self: flex-end;
+  }
+
+  .msg-avatar {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 22%, var(--card-2)), var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+    color: var(--accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    margin-top: 0.1rem;
+  }
+
+  .msg.user .msg-avatar {
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: transparent;
+    color: var(--on-accent);
+  }
+
+  .msg-avatar svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .msg-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .msg.user .msg-col {
+    align-items: flex-end;
+  }
+
+  .msg-bubble {
+    padding: 0.82rem 1.05rem;
+    border-radius: 20px 20px 20px 6px;
+    background: var(--glass-elevated);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    box-shadow: 0 6px 20px -6px rgba(0, 0, 0, 0.22), var(--glass-spec);
+    font-size: 0.94rem;
+    line-height: 1.56;
+    word-break: break-word;
+    font-family: var(--body);
+  }
+
+  .msg.user .msg-bubble {
+    border-radius: 20px 20px 6px 20px;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent2) 75%, var(--accent)));
+    color: var(--on-accent);
+    border-color: transparent;
+    box-shadow: 0 8px 24px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .msg-bubble img {
+    max-width: min(100%, 320px);
+    border-radius: 12px;
+    margin-top: 0.55rem;
+    display: block;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .msg-meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.25rem;
+  }
+
+  .msg-copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+  }
+
+  .msg-copy-btn:hover {
+    background: var(--card-2);
+    border-color: var(--line);
+    color: var(--text);
+    transform: none;
+  }
+
+  .msg-copy-btn svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  .thinking-box {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.15rem 0;
+  }
+
+  .thinking-status {
+    font-size: 0.84rem;
+    color: var(--accent);
+    font-family: var(--display);
+    font-weight: 600;
+    animation: pulseText 1.1s infinite alternate;
+  }
+
+  @keyframes pulseText {
+    from { opacity: 0.55; }
+    to { opacity: 1; }
+  }
+
+  .welcome-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem 1rem;
+    margin: auto;
+    max-width: 620px;
+    animation: rise 0.45s var(--apple-spring) both;
+  }
+
+  .pico-hero-wrap {
+    position: relative;
+    margin-bottom: 1.1rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .pico-hero-glow {
+    position: absolute;
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--accent), var(--accent2), var(--accent3), var(--accent));
+    filter: blur(22px);
+    opacity: 0.48;
+    animation: psspin 6s linear infinite;
+  }
+
+  .pico-hero-icon {
+    position: relative;
+    width: 4.4rem;
+    height: 4.4rem;
+    border-radius: 22px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: grid;
+    place-items: center;
+    color: var(--on-accent);
+    box-shadow: 0 16px 36px -6px color-mix(in srgb, var(--accent) 50%, transparent), inset 0 1.5px 1px rgba(255, 255, 255, 0.45);
+  }
+
+  .pico-hero-icon svg {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+
+  .welcome-screen h2 {
+    font-size: clamp(1.65rem, 3.5vw, 2.1rem);
+    margin-bottom: 0.35rem;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .welcome-screen p {
+    max-width: 460px;
+    margin: 0 auto 1.35rem;
+    font-size: 0.93rem;
+  }
+
+  .prompt-pills {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  .prompt-pill {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    padding: 0.82rem 0.95rem;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--card-2) 78%, transparent);
+    border: 1px solid var(--line);
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+    transition: border-color 0.2s, transform 0.2s var(--apple-ease), background 0.2s;
+  }
+
+  .prompt-pill:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    background: color-mix(in srgb, var(--accent) 10%, var(--card-2));
+  }
+
+  .prompt-pill .pp-tag {
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+  }
+
+  .prompt-pill .pp-txt {
+    font-size: 0.86rem;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .chat-input-area {
+    padding: 0.75rem clamp(0.85rem, 2.5vw, 1.6rem) 0.95rem;
+    background: linear-gradient(to top, color-mix(in srgb, var(--card-solid) 92%, transparent) 60%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: none;
+  }
+
+  .composer-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.5rem 0.55rem 0.5rem 0.65rem;
+    border-radius: 22px;
+    background: var(--card-solid);
+    border: 1px solid color-mix(in srgb, var(--text) 12%, var(--line));
+    box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.32), var(--glass-spec);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .composer-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 12px 34px -8px rgba(0, 0, 0, 0.4), 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
+
+  .chat-input-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .chat-input-row textarea {
+    flex: 1;
+    min-height: 2.2rem;
+    max-height: 7.5rem;
+    resize: none;
+    padding: 0.38rem 0.35rem;
+    border: 0;
+    background: transparent;
+    font-family: var(--body);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .chat-input-row textarea:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  #attachBtn {
+    width: 2.2rem;
+    height: 2.2rem;
+    flex: none;
+    background: var(--card-2);
+  }
+
+  #sendBtn {
+    height: 2.25rem;
+    padding: 0 1.05rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    font-size: 0.86rem;
+    flex: none;
+  }
+
+  #sendBtn svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .attach-preview {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    padding: 0.15rem 0.2rem 0;
+  }
+
+  .attach-preview:empty {
+    display: none;
+  }
+
+  .att-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0.28rem 0.6rem;
+    border-radius: 10px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  .att-chip img {
+    width: 22px;
+    height: 22px;
+    object-fit: cover;
+    border-radius: 5px;
+  }
+
+  .att-chip button {
+    background: transparent;
+    border: 0;
+    padding: 0 0.15rem;
+    cursor: pointer;
+    color: var(--bad);
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1;
+  }
+
+  .search-sources {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    flex-wrap: wrap;
+  }
+
+  .search-source-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 500;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .search-source-pill:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-2));
+  }
+
+  @media (max-width: 760px) {
+    main {
+      padding: 0.45rem 0.55rem 5.4rem;
+    }
+
+    .chat-panel {
+      height: calc(100vh - 9.4rem - env(safe-area-inset-bottom));
+      height: calc(100dvh - 9.4rem - env(safe-area-inset-bottom));
+      min-height: 400px;
+      border-radius: 22px;
+    }
+
+    .chat-sidebar-pane {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      height: 100%;
+      width: min(280px, 82vw);
+      background: var(--card-solid);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      transform: translateX(-100%);
+    }
+
+    .chat-panel:not(.sidebar-collapsed) .chat-sidebar-pane {
+      transform: translateX(0);
+    }
+
+    .chat-panel:not(.sidebar-collapsed) .chat-sidebar-backdrop {
+      display: block;
+      opacity: 1;
+    }
+
+    .prompt-pills {
+      grid-template-columns: 1fr;
+    }
+
+    .msg {
+      max-width: 94%;
+    }
+
+    .web-pill-btn span {
+      display: none;
+    }
+
+    .web-pill-btn {
+      padding: 0.45rem;
+    }
+  }
+</style>
+</head>
+<body data-page="pico">
+<header id="topbar"></header>
+<main>
+  <section class="panel chat-panel" id="chatPanel">
+    <div class="chat-header-bar">
+      <button class="iconbtn" id="toggleSidebarBtn" title="Toggle Conversation History" aria-label="Toggle History"></button>
+      <div class="hdr-title-wrap">
+        <div class="hdr-title-row">
+          <b id="activeChatTitle" title="Click to rename conversation">PICO</b>
+        </div>
+        <div class="model-pill">
+          <span class="model-dot"></span>
+          <span id="activeChatModelInfo">Powered by Gemini Flash</span>
+        </div>
+      </div>
+      <div class="hdr-actions">
+        <button type="button" id="webSearchToggle" class="web-pill-btn" title="Toggle Google Web Search Grounding" aria-pressed="false"></button>
+        <button type="button" id="topNewChatBtn" class="iconbtn" title="New Conversation" aria-label="New Conversation"></button>
+      </div>
+    </div>
+
+    <div class="chat-inner-layout">
+      <div class="chat-sidebar-backdrop" id="sidebarBackdrop"></div>
+      <aside class="chat-sidebar-pane" id="chatSidebarPane" aria-label="Conversations">
+        <div class="sb-top">
+          <button type="button" class="primary" id="newChatBtn"></button>
+          <div class="sb-search">
+            <span id="sbSearchIc"></span>
+            <input type="search" id="chatFilterInput" placeholder="Filter chats…" aria-label="Filter conversations">
+          </div>
+        </div>
+        <div class="sb-label">Conversations</div>
+        <div class="chat-list" id="chatList"></div>
+      </aside>
+
+      <div class="chat-main-area">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-area">
+          <div class="composer-box">
+            <div class="attach-preview" id="attachPreview"></div>
+            <div class="chat-input-row">
+              <input type="file" id="fileInput" accept="image/*,.txt,.pdf,.md,.csv,.json" style="display:none" multiple>
+              <button type="button" class="iconbtn" id="attachBtn" title="Attach image or file" aria-label="Attach file"></button>
+              <textarea id="userInput" placeholder="Ask PICO anything…" rows="1"></textarea>
+              <button type="button" class="primary" id="sendBtn" aria-label="Send message"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  DB.whenReady(async () => {
+    const $ = id => document.getElementById(id);
+    const CHATS_KEY = "p23.pico_chats";
+    const FREE_MODELS = [
+      "gemini-3.8-flash",
+      "gemini-3.6-flash",
+      "gemini-3.5-flash-lite"
+    ];
+
+    const PICO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2h-4V4a2 2 0 0 1 2-2z"/><rect x="3" y="8" width="18" height="12" rx="4"/><path d="M9 13v2M15 13v2M9 17h6"/></svg>';
+    const THINKING_PHRASES = [
+      "Thinking through your request...",
+      "Gathering ideas and context...",
+      "Crafting a clear response...",
+      "Connecting the dots...",
+      "Almost ready..."
+    ];
+
+    let chats = (DB.get(CHATS_KEY, []) || []).slice();
+    let activeChatId = chats[0]?.id || null;
+    let currentAttachments = [];
+    let webSearchEnabled = false;
+    let currentModelIndex = 0;
+    let filterQuery = "";
+    let isStreaming = false;
+
+    if (matchMedia("(max-width: 760px)").matches) {
+      $("chatPanel").classList.add("sidebar-collapsed");
+    }
+
+    $("toggleSidebarBtn").innerHTML = DB.icon("list");
+    $("newChatBtn").innerHTML = DB.icon("plus") + "<span>New Conversation<" + "/span>";
+    $("topNewChatBtn").innerHTML = DB.icon("plus");
+    $("attachBtn").innerHTML = DB.icon("upload");
+    $("sbSearchIc").innerHTML = DB.icon("search");
+    $("webSearchToggle").innerHTML = DB.icon("globe") + "<span>Web Search<" + "/span>";
+    $("sendBtn").innerHTML = DB.icon("send") + "<span>Send<" + "/span>";
+
+    const toggleSidebar = () => {
+      $("chatPanel").classList.toggle("sidebar-collapsed");
+    };
+    $("toggleSidebarBtn").onclick = toggleSidebar;
+    $("sidebarBackdrop").onclick = toggleSidebar;
+
+    $("chatFilterInput").oninput = e => {
+      filterQuery = e.target.value.trim().toLowerCase();
+      renderChatList();
+    };
+
+    function getMasterApiKey() {
+      if (DB.getPicoKey) return DB.getPicoKey();
+      return Promise.resolve(null);
+    }
+
+    function saveChats() {
+      const cleaned = DB.sanitizePicoChats ? DB.sanitizePicoChats(chats) : chats;
+      DB.set(CHATS_KEY, cleaned);
+    }
+
+    function getActiveChat() {
+      return chats.find(c => c.id === activeChatId) || null;
+    }
+
+    function relTime(ts) {
+      if (!ts) return "Just now";
+      const diff = Math.max(0, Date.now() - ts);
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return "Just now";
+      if (mins < 60) return mins + "m ago";
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + "h ago";
+      return new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" });
+    }
+
+    $("webSearchToggle").onclick = () => {
+      webSearchEnabled = !webSearchEnabled;
+      $("webSearchToggle").classList.toggle("active", webSearchEnabled);
+      $("webSearchToggle").setAttribute("aria-pressed", webSearchEnabled);
+      DB.toast(webSearchEnabled ? "Web Search Grounding Enabled" : "Web Search Grounding Disabled", "", 2000);
+    };
+
+    function compressImageDataUrl(dataUrl) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 260;
+          let w = img.width, h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          const cv = document.createElement("canvas");
+          cv.width = w; cv.height = h;
+          cv.getContext("2d").drawImage(img, 0, 0, w, h);
+          try { resolve(cv.toDataURL("image/jpeg", 0.72)); }
+          catch { resolve(null); }
+        };
+        img.onerror = () => resolve(null);
+        img.src = dataUrl;
+      });
+    }
+
+    $("attachBtn").onclick = () => $("fileInput").click();
+    $("fileInput").onchange = e => {
+      const files = [...e.target.files];
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const resultStr = String(reader.result || "");
+          const base64Data = resultStr.includes(",") ? resultStr.split(",")[1] : btoa(unescape(encodeURIComponent(resultStr)));
+          let previewUrl = null;
+          if (file.type.startsWith("image/")) {
+            previewUrl = await compressImageDataUrl(resultStr);
+          }
+          currentAttachments.push({
+            name: file.name,
+            mimeType: file.type || "text/plain",
+            data: base64Data,
+            preview: previewUrl
+          });
+          renderAttachments();
+        };
+        reader.readAsDataURL(file);
+      });
+      $("fileInput").value = "";
+    };
+
+    function renderAttachments() {
+      const prev = $("attachPreview");
+      prev.innerHTML = currentAttachments.map((att, i) => `
+        <div class="att-chip">
+          ${att.preview ? `<img src="${att.preview}" alt="">` : DB.icon("note")}
+          <span>${DB.esc(att.name)}<" + "/span>
+          <button type="button" data-rm="${i}" aria-label="Remove attachment">×<" + "/button>
+        <" + "/div>
+      `).join("");
+      prev.querySelectorAll("button[data-rm]").forEach(btn => {
+        btn.onclick = () => {
+          currentAttachments.splice(+btn.dataset.rm, 1);
+          renderAttachments();
+        };
+      });
+    }
+
+    function promptRenameChat(chat) {
+      if (!chat) return;
+      const node = document.createElement("div");
+      node.innerHTML = `
+        <h2>Rename Conversation<" + "/h2>
+        <div class="field">
+          <label for="rnInput">Title<" + "/label>
+          <input id="rnInput" maxlength="60" value="${DB.esc(chat.title || "New Conversation")}" style="width:100%">
+        <" + "/div>
+        <div class="actions">
+          <button type="button" class="ghost" id="rnCancel">Cancel<" + "/button>
+          <button type="button" class="primary" id="rnSave">Save<" + "/button>
+        <" + "/div>`;
+      const close = DB.modal(node);
+      const inp = node.querySelector("#rnInput");
+      const commit = () => {
+        const v = inp.value.trim();
+        if (v) {
+          chat.title = v;
+          chat.updated = Date.now();
+          saveChats();
+          renderChatList();
+          $("activeChatTitle").textContent = chat.title;
+        }
+        close();
+      };
+      node.querySelector("#rnCancel").onclick = close;
+      node.querySelector("#rnSave").onclick = commit;
+      inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); commit(); } };
+    }
+
+    $("activeChatTitle").onclick = () => {
+      const c = getActiveChat();
+      if (c) promptRenameChat(c);
+    };
+
+    function renderChatList() {
+      const list = $("chatList");
+      const filtered = filterQuery
+        ? chats.filter(c => (c.title || "").toLowerCase().includes(filterQuery) || (c.messages || []).some(m => (m.text || "").toLowerCase().includes(filterQuery)))
+        : chats;
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="muted" style="padding:1.2rem .5rem;text-align:center;font-size:.82rem">${filterQuery ? "No matching chats." : "No conversations yet."}<` + `/div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(c => {
+        const count = (c.messages || []).filter(m => m.text).length;
+        return `
+        <div class="chat-row ${c.id === activeChatId ? "active" : ""}">
+          <button type="button" class="chat-item" data-id="${DB.esc(c.id)}">
+            <span class="title">${DB.esc(c.title || "New Conversation")}<` + `/span>
+            <span class="meta"><span>${relTime(c.updated)}<` + `/span><span>•<` + `/span><span>${count} msg${count === 1 ? "" : "s"}<` + `/span><` + `/span>
+          <` + `/button>
+          <div class="chat-row-actions">
+            <button type="button" class="chat-act" data-rn="${DB.esc(c.id)}" title="Rename chat" aria-label="Rename chat">${DB.icon("edit")}<` + `/button>
+            <button type="button" class="chat-act del" data-del="${DB.esc(c.id)}" title="Delete chat" aria-label="Delete chat">${DB.icon("trash")}<` + `/button>
+          <` + `/div>
+        <` + `/div>`;
+      }).join("");
+
+      list.querySelectorAll(".chat-item").forEach(btn => {
+        btn.onclick = () => {
+          activeChatId = btn.dataset.id;
+          renderChatList();
+          renderMessages();
+          if (matchMedia("(max-width: 760px)").matches) {
+            $("chatPanel").classList.add("sidebar-collapsed");
+          }
+        };
+      });
+
+      list.querySelectorAll("button[data-rn]").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const c = chats.find(x => x.id === btn.dataset.rn);
+          if (c) promptRenameChat(c);
+        };
+      });
+
+      list.querySelectorAll("button[data-del]").forEach(btn => {
+        btn.onclick = async e => {
+          e.stopPropagation();
+          if (DB.isGuest() && !(await DB.requireAuth())) return;
+          const id = btn.dataset.del;
+          chats = chats.filter(c => c.id !== id);
+          if (activeChatId === id) {
+            activeChatId = chats[0]?.id || null;
+          }
+          saveChats();
+          renderChatList();
+          renderMessages();
+          DB.toast("Conversation deleted", "", 2000);
+        };
+      });
+    }
+
+    async function createNewChat(requireLogin = false) {
+      if (requireLogin && DB.isGuest() && !(await DB.requireAuth())) return;
+      const active = getActiveChat();
+      if (active && (!active.messages || active.messages.length === 0)) {
+        renderChatList();
+        renderMessages();
+        return;
+      }
+      const newChat = {
+        id: DB.uid(),
+        title: "New Conversation",
+        updated: Date.now(),
+        messages: []
+      };
+      chats.unshift(newChat);
+      activeChatId = newChat.id;
+      if (!DB.isGuest()) saveChats();
+      renderChatList();
+      renderMessages();
+      if (matchMedia("(max-width: 760px)").matches) {
+        $("chatPanel").classList.add("sidebar-collapsed");
+      }
+    }
+    $("newChatBtn").onclick = () => createNewChat(true);
+    $("topNewChatBtn").onclick = () => createNewChat(true);
+
+    function formatMarkdown(text) {
+      if (DB.formatPicoMD) return DB.formatPicoMD(text);
+      return DB.esc(text || "").replace(/\n/g, "<br>");
+    }
+
+    function renderMessages() {
+      const chat = getActiveChat();
+      const container = $("chatMessages");
+      $("activeChatTitle").textContent = chat ? (chat.title || "New Conversation") : "PICO";
+
+      if (!chat || !chat.messages || !chat.messages.length) {
+        container.innerHTML = `
+          <div class="welcome-screen">
+            <div class="pico-hero-wrap">
+              <div class="pico-hero-glow"><` + `/div>
+              <div class="pico-hero-icon">${PICO_SVG}<` + `/div>
+            <` + `/div>
+            <h2>Meet PICO<` + `/h2>
+            <p class="muted">Your intelligent AI collaborator for Project 23 — synced across every page and device.<` + `/p>
+            <div class="prompt-pills">
+              <button type="button" class="prompt-pill" data-prompt="Summarize the key themes and tropes of classic science fiction literature">
+                <span class="pp-tag">Literature<` + `/span>
+                <span class="pp-txt">Overview of classic sci-fi themes & tropes<` + `/span>
+              <` + `/button>
+              <button type="button" class="prompt-pill" data-prompt="Write a short, suspenseful mystery story set in a rainy neon-lit city">
+                <span class="pp-tag">Creative Writing<` + `/span>
+                <span class="pp-txt">Write a short neon-noir mystery story<` + `/span>
+              <` + `/button>
+              <button type="button" class="prompt-pill" data-prompt="Give me 5 creative productivity tips to stay focused during deep work">
+                <span class="pp-tag">Productivity<` + `/span>
+                <span class="pp-txt">5 actionable deep-work focus strategies<` + `/span>
+              <` + `/button>
+              <button type="button" class="prompt-pill" data-prompt="Explain how modern renewable energy grids balance supply and demand in simple terms">
+                <span class="pp-tag">Science & Tech<` + `/span>
+                <span class="pp-txt">How modern renewable energy grids work<` + `/span>
+              <` + `/button>
+            <` + `/div>
+          <` + `/div>`;
+
+        container.querySelectorAll(".prompt-pill").forEach(btn => {
+          btn.onclick = () => {
+            $("userInput").value = btn.dataset.prompt;
+            sendMessage();
+          };
+        });
+        return;
+      }
+
+      container.innerHTML = chat.messages.map((m, idx) => `
+        <div class="msg ${m.role}">
+          <div class="msg-avatar">${m.role === "user" ? DB.icon("user") : PICO_SVG}<` + `/div>
+          <div class="msg-col">
+            <div class="msg-bubble">${m.text === "" && m.role === "assistant"
+              ? `<div class="thinking-box"><div class="thinking-status" id="thinkingStatus">Thinking through your request...<` + `/div><div class="typing-dots"><span><` + `/span><span><` + `/span><span><` + `/span><` + `/div><` + `/div>`
+              : formatMarkdown(m.text)}
+              ${m.attachments && m.attachments.length ? m.attachments.map(a => a.preview ? `<img src="${a.preview}" alt="${DB.esc(a.name)}">` : `<div class="chip" style="margin-top:.4rem">📄 ${DB.esc(a.name)}<` + `/div>`).join("") : ""}
+            <` + `/div>
+            ${m.sources && m.sources.length ? `<div class="search-sources"><span>Sources:<` + `/span>${m.sources.map(s => `<a href="${DB.esc(s.uri)}" target="_blank" rel="noopener" class="search-source-pill">${DB.icon("globe")}<span>${DB.esc(s.title || s.uri)}<` + `/span><` + `/a>`).join("")}<` + `/div>` : ""}
+            ${m.role === "assistant" && m.text ? `<div class="msg-meta-bar"><button type="button" class="msg-copy-btn" data-copy="${idx}">${DB.icon("note")}<span>Copy<` + `/span><` + `/button><` + `/div>` : ""}
+          <` + `/div>
+        <` + `/div>
+      `).join("");
+
+      container.querySelectorAll("button[data-copy]").forEach(btn => {
+        btn.onclick = () => {
+          const msg = chat.messages[+btn.dataset.copy];
+          if (msg && msg.text) {
+            navigator.clipboard && navigator.clipboard.writeText(msg.text);
+            DB.toast("Response copied", "", 1800);
+          }
+        };
+      });
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function updateChatTitleFromContext(chat, prompt) {
+      if (chat.title !== "New Conversation") return;
+      let clean = (prompt || "").replace(/^(how to do|how do i|what is|can you|please|explain|write a)\s*/i, "").trim();
+      if (clean.length > 28) clean = clean.slice(0, 28) + "…";
+      if (clean) {
+        chat.title = clean.charAt(0).toUpperCase() + clean.slice(1);
+      }
+    }
+
+    async function sendMessage() {
+      if (isStreaming) return;
+      const textInput = $("userInput");
+      const text = textInput.value.trim();
+      if (!text && !currentAttachments.length) return;
+
+      if (DB.isGuest() && !(await DB.requireAuth())) return;
+
+      const apiKey = await getMasterApiKey();
+      if (!apiKey) {
+        DB.toast("API Key Missing", "Please check your Firebase config/gemini key.", 5000);
+        return;
+      }
+
+      if (!activeChatId || !getActiveChat()) {
+        await createNewChat(false);
+      }
+
+      isStreaming = true;
+      const chat = getActiveChat();
+      updateChatTitleFromContext(chat, text || (currentAttachments[0]?.name || "Attachment"));
+
+      const sentAttachments = currentAttachments.map(a => ({ ...a }));
+      const userMsg = {
+        role: "user",
+        text: text,
+        attachments: sentAttachments.map(a => ({
+          name: a.name,
+          mimeType: a.mimeType,
+          preview: a.preview
+        }))
+      };
+
+      chat.messages.push(userMsg);
+      chat.updated = Date.now();
+      chats.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+
+      textInput.value = "";
+      textInput.style.height = "auto";
+      currentAttachments = [];
+      renderAttachments();
+      saveChats();
+      renderChatList();
+
+      const assistantMsg = { role: "assistant", text: "" };
+      chat.messages.push(assistantMsg);
+      renderMessages();
+
+      let phraseIdx = 0;
+      const thinkingInterval = setInterval(() => {
+        phraseIdx = (phraseIdx + 1) % THINKING_PHRASES.length;
+        const statusEl = document.getElementById("thinkingStatus");
+        if (statusEl) statusEl.textContent = THINKING_PHRASES[phraseIdx];
+      }, 1500);
+
+      const container = $("chatMessages");
+      const lastBubble = container.lastElementChild ? container.lastElementChild.querySelector(".msg-bubble") : null;
+
+      const historyMsgs = chat.messages.slice(0, -1);
+      const contents = historyMsgs.map((m, idx) => {
+        const parts = [{ text: m.text || "" }];
+        const atts = (idx === historyMsgs.length - 1) ? sentAttachments : (m.attachments || []);
+        atts.forEach(att => {
+          if (att.data) {
+            parts.push({
+              inlineData: {
+                mimeType: att.mimeType,
+                data: att.data
+              }
+            });
+          }
+        });
+        return {
+          role: m.role === "assistant" ? "model" : "user",
+          parts
+        };
+      });
+
+      const payload = {
+        systemInstruction: {
+          parts: [{ text: "You are PICO (Project 23 Integrated Chat Operator), a friendly, witty, entertaining, and highly knowledgeable AI companion. You love chatting, telling engaging stories, cracking jokes, helping with coding, writing, and exploring the world." }]
+        },
+        contents
+      };
+
+      if (webSearchEnabled) {
+        payload.tools = [{ googleSearch: {} }];
+      }
+
+      let success = false;
+      let attempts = 0;
+
+      while (!success && attempts < FREE_MODELS.length) {
+        const modelToUse = FREE_MODELS[currentModelIndex];
+        $("activeChatModelInfo").textContent = `Powered by ${modelToUse}`;
+        currentModelIndex = (currentModelIndex + 1) % FREE_MODELS.length;
+
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:streamGenerateContent?alt=sse&key=${apiKey}`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            const errJson = await response.json().catch(() => ({}));
+            let errMsg = errJson.error?.message || `API Error: ${response.status}`;
+            if (response.status === 503) {
+              errMsg = `Model ${modelToUse} is overloaded (503). Trying fallback model...`;
+            }
+            throw new Error(errMsg);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let firstChunkReceived = false;
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
+
+            for (const line of lines) {
+              if (!line.startsWith("data: ")) continue;
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === "[DONE]") continue;
+              try {
+                const data = JSON.parse(jsonStr);
+                const chunkText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                if (chunkText) {
+                  if (!firstChunkReceived) {
+                    clearInterval(thinkingInterval);
+                    firstChunkReceived = true;
+                  }
+                  assistantMsg.text += chunkText;
+                  if (lastBubble) lastBubble.innerHTML = formatMarkdown(assistantMsg.text);
+                  container.scrollTop = container.scrollHeight;
+                }
+
+                const grounding = data.candidates?.[0]?.groundingMetadata;
+                if (grounding && grounding.groundingChunks) {
+                  const sources = grounding.groundingChunks
+                    .filter(c => c.web)
+                    .map(c => ({ title: c.web.title, uri: c.web.uri }));
+                  if (sources.length) assistantMsg.sources = sources;
+                }
+              } catch {}
+            }
+          }
+          clearInterval(thinkingInterval);
+          success = true;
+          chat.updated = Date.now();
+          saveChats();
+          renderChatList();
+          renderMessages();
+        } catch (err) {
+          attempts++;
+          if (attempts >= FREE_MODELS.length) {
+            clearInterval(thinkingInterval);
+            assistantMsg.text = "⚠️ Server busy or 503 overload encountered across all models. Please try again in a few seconds. (" + err.message + ")";
+            if (lastBubble) lastBubble.innerHTML = formatMarkdown(assistantMsg.text);
+            saveChats();
+            renderMessages();
+          } else {
+            await new Promise(r => setTimeout(r, 700));
+          }
+        }
+      }
+      isStreaming = false;
+    }
+
+    $("sendBtn").onclick = sendMessage;
+    $("userInput").onkeydown = e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    };
+    $("userInput").oninput = function () {
+      this.style.height = "auto";
+      this.style.height = Math.min(120, this.scrollHeight) + "px";
+    };
+
+    const syncFromCloud = () => {
+      if (isStreaming) return;
+      const latest = (DB.get(CHATS_KEY, []) || []).slice();
+      if (latest.length) {
+        chats = latest;
+        if (!activeChatId || !chats.some(c => c.id === activeChatId)) {
+          activeChatId = chats[0].id;
+        }
+        renderChatList();
+        renderMessages();
+      }
+    };
+
+    DB.onLogin(syncFromCloud);
+    document.addEventListener("p23pico", syncFromCloud);
+
+    if (!chats.length) {
+      await createNewChat(false);
+    } else {
+      renderChatList();
+      renderMessages();
+    }
+  });
+</script>
+</body>
+</html>

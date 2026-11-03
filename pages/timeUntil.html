@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Until | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/widgets.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 80%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 88%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --radius-2xl: 26px;
+    --radius-xl: 20px;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-pill: 999px;
+  }
+
+  .countdown-shell {
+    max-width: 1040px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    padding-bottom: 2rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.25rem auto 1.4rem;
+    padding: 0 1rem;
+    gap: 0.45rem;
+  }
+
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent) 70%, var(--accent2) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
+    margin: 0;
+  }
+
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    border-radius: var(--radius-pill);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.95rem, 1.8vw, 1.05rem);
+    max-width: 540px;
+    line-height: 1.5;
+  }
+
+  .cbar-panel {
+    position: relative;
+    z-index: 30;
+    background: var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 16px 36px -16px rgba(0, 0, 0, 0.35);
+    border-radius: var(--radius-xl);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .cbar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    background: color-mix(in srgb, var(--card-2) 90%, transparent);
+    border: 1px solid var(--line);
+    padding: 0.25rem;
+    border-radius: var(--radius-pill);
+  }
+
+  .filter-btn {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.38rem 0.82rem;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.2s var(--apple-ease);
+  }
+
+  .filter-btn:hover {
+    color: var(--text);
+  }
+
+  .filter-btn.active {
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent2)));
+    color: #fff;
+    box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .cbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .cbar-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 360px;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .cd-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.52rem 0.9rem 0.52rem 2.35rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .cd-search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .sort-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+    position: relative;
+  }
+
+  .custom-sort-dropdown {
+    position: relative;
+    min-width: 175px;
+  }
+
+  .sort-trigger-btn {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.5rem 0.88rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s var(--apple-ease);
+  }
+
+  .sort-trigger-btn:hover,
+  .custom-sort-dropdown.open .sort-trigger-btn {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .sort-trigger-btn svg {
+    width: 15px;
+    height: 15px;
+    color: var(--muted);
+    transition: transform 0.22s var(--apple-ease), color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .custom-sort-dropdown.open .sort-trigger-btn svg {
+    transform: rotate(180deg);
+    color: var(--accent);
+  }
+
+  .sort-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 195px;
+    background: var(--card-solid);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.65);
+    padding: 0.35rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    animation: popMenu 0.18s var(--apple-spring) both;
+  }
+
+  .sort-menu[hidden] {
+    display: none !important;
+  }
+
+  @keyframes popMenu {
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .sort-option {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.86rem;
+    font-weight: 500;
+    padding: 0.58rem 0.78rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .sort-option:hover {
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-2));
+  }
+
+  .sort-option.active {
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-2));
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .sort-check {
+    opacity: 0;
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.82rem;
+  }
+
+  .sort-option.active .sort-check {
+    opacity: 1;
+  }
+
+  #listPanel {
+    position: relative;
+    z-index: 1;
+    background:
+      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 55%),
+      var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 20px 44px -16px rgba(0, 0, 0, 0.4);
+    border-radius: var(--radius-2xl);
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .cgrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+    gap: 1.15rem;
+  }
+
+  .cdcard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.15rem 1.15rem;
+    border-radius: 22px;
+    background:
+      radial-gradient(110% 90% at 50% 0%, color-mix(in srgb, var(--c, var(--accent)) 18%, transparent) 0%, transparent 68%),
+      var(--glass-elevated);
+    border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 28%, var(--line));
+    box-shadow: var(--glass-spec), 0 14px 32px -14px rgba(0, 0, 0, 0.42);
+    animation: rise 0.45s var(--apple-spring) both;
+    animation-delay: calc(var(--k, 0) * 50ms);
+    transition: transform 0.24s var(--apple-ease), border-color 0.24s, box-shadow 0.24s;
+    overflow: hidden;
+  }
+
+  .cdcard:hover {
+    transform: translateY(-4px);
+    border-color: var(--c, var(--accent));
+    box-shadow: var(--glass-spec), 0 20px 38px -14px color-mix(in srgb, var(--c, var(--accent)) 32%, rgba(0, 0, 0, 0.5));
+  }
+
+  .cdcard.done {
+    opacity: 0.72;
+    border-color: var(--line);
+  }
+
+  .cdcard-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .cd-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.22rem 0.62rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--c, var(--accent)) 18%, transparent);
+    color: var(--c, var(--accent));
+    border: 1px solid color-mix(in srgb, var(--c, var(--accent)) 38%, transparent);
+  }
+
+  .cdcard.done .cd-status-pill {
+    background: color-mix(in srgb, var(--text) 10%, transparent);
+    color: var(--muted);
+    border-color: var(--line);
+  }
+
+  .cdcard .edit {
+    width: 2.15rem;
+    height: 2.15rem;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--card-solid) 80%, transparent);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s var(--apple-ease);
+  }
+
+  .cdcard .edit:hover {
+    color: var(--text);
+    border-color: var(--c, var(--accent));
+    transform: scale(1.06);
+  }
+
+  .cdcard .edit svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .cdcard h3 {
+    margin: 0.15rem 0 0;
+    font-family: var(--display);
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    word-break: break-word;
+    line-height: 1.25;
+    color: var(--text);
+  }
+
+  .cdcard .line {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: var(--text);
+    padding: 0.32rem 0.78rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    border: 1px solid var(--line);
+  }
+
+  .cd-units-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.38rem;
+    width: 100%;
+    margin-top: 0.1rem;
+  }
+
+  .cd-unit-box {
+    background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 10px;
+    padding: 0.38rem 0.2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.08rem;
+  }
+
+  .cd-unit-box b {
+    font-family: var(--display);
+    font-size: 0.98rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .cd-unit-box small {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .cdcard-footer {
+    width: 100%;
+    padding-top: 0.65rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cdcard .when {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .cd-mode-tag {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 0.15rem 0.48rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .cdempty {
+    text-align: center;
+    padding: 3rem 1.25rem;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .cdempty .ico {
+    width: 4.2rem;
+    height: 4.2rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    margin-bottom: 0.35rem;
+    box-shadow: 0 12px 28px -8px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  .cdempty .ico svg {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .preset-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.38rem;
+    margin-top: 0.45rem;
+  }
+
+  .preset-title-chip {
+    padding: 0.28rem 0.65rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+    background: var(--card-2);
+    color: var(--muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .preset-title-chip:hover,
+  .preset-title-chip.active {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  input.input-error {
+    border-color: var(--bad, #ff7675) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--bad, #ff7675) 26%, transparent) !important;
+    animation: fieldShake 0.34s var(--apple-ease);
+  }
+
+  .field-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.38rem;
+    color: var(--bad, #ff7675);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .field-error-msg[hidden] {
+    display: none !important;
+  }
+
+  @keyframes fieldShake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+  }
+
+.custom-date-picker-wrap {
+    position: relative;
+  }
+
+  .date-input-combo-bar {
+    display: flex;
+    align-items: center;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--card-2);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+  }
+
+  .date-input-combo-bar:focus-within,
+  .date-input-combo-bar.open {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+  }
+
+  .date-input-combo-bar.error {
+    border-color: var(--warn, #e74c3c);
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.25);
+  }
+
+  .date-combo-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 0.68rem 0.95rem;
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .date-combo-input::placeholder {
+    color: var(--muted);
+    font-weight: 400;
+    opacity: 0.75;
+  }
+
+  .cal-picker-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    border-left: 1px solid var(--line);
+    color: var(--accent);
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s, transform 0.18s;
+    flex-shrink: 0;
+  }
+
+  .cal-picker-btn:hover {
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-2));
+    color: var(--accent2);
+  }
+
+  .cal-picker-btn.active,
+  .date-input-combo-bar.open .cal-picker-btn {
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-2));
+    color: #fff;
+  }
+
+  .cal-picker-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .custom-calendar-menu {
+    margin-top: 0.55rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--card-2) 95%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    animation: popMenu 0.2s var(--apple-spring) both;
+  }
+
+  .custom-calendar-menu[hidden] {
+    display: none !important;
+  }
+
+  .cal-quick-jumps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+
+  .cal-jump-chip {
+    padding: 0.24rem 0.6rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+    background: var(--card-solid);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .cal-jump-chip:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+  }
+
+  .cal-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .cal-month-title {
+    font-family: var(--display);
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .cal-nav-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .cal-nav-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--card-solid);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all 0.15s ease;
+  }
+
+  .cal-nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .cal-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+
+  .cal-day-btn {
+    height: 34px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.84rem;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.15s var(--apple-ease);
+  }
+
+  .cal-day-btn:hover {
+    background: color-mix(in srgb, var(--accent) 18%, var(--card-solid));
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+
+  .cal-day-btn.other-month {
+    color: var(--muted);
+    opacity: 0.38;
+  }
+
+  .cal-day-btn.today {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+  }
+
+  .cal-day-btn.selected {
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent2)));
+    color: #fff !important;
+    border-color: transparent;
+    font-weight: 800;
+    box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+
+  .optional-time-box {
+    padding: 0.8rem 0.95rem;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card-2) 75%, transparent);
+    border: 1px solid var(--line);
+    margin-bottom: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .optional-time-input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  }
+
+  .optional-time-input-wrap[hidden] {
+    display: none !important;
+  }
+
+  .time-wheel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+
+  .time-wheel-title {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .time-wheel-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .time-wheel-stage {
+    position: relative;
+    height: 180px;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr 0.85fr;
+    user-select: none;
+  }
+
+  .time-wheel-stage::before,
+  .time-wheel-stage::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 68px;
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .time-wheel-stage::before {
+    top: 0;
+    background: linear-gradient(180deg, var(--card-solid) 8%, transparent 100%);
+  }
+
+  .time-wheel-stage::after {
+    bottom: 0;
+    background: linear-gradient(0deg, var(--card-solid) 8%, transparent 100%);
+  }
+
+  .time-wheel-highlight {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: 72px;
+    height: 36px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-2));
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--accent) 40%, transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .time-wheel-col {
+    position: relative;
+    z-index: 2;
+    height: 180px;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    padding: 72px 0;
+    box-sizing: border-box;
+    text-align: center;
+  }
+
+  .time-wheel-col::-webkit-scrollbar {
+    display: none;
+  }
+
+  .time-wheel-col + .time-wheel-col {
+    border-left: 1px solid color-mix(in srgb, var(--line) 45%, transparent);
+  }
+
+  .time-wheel-item {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    scroll-snap-align: center;
+    font-family: var(--mono);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--muted);
+    opacity: 0.55;
+    cursor: pointer;
+    transition: color 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .time-wheel-item.active {
+    color: var(--text);
+    opacity: 1;
+    font-weight: 800;
+    font-size: 1.04rem;
+    transform: scale(1.06);
+  }
+
+  @media (max-width: 560px) {
+    .cbar-panel {
+      padding: 0.95rem 1rem;
+    }
+
+    .cbar-top,
+    .cbar-bottom {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filter-pills {
+      justify-content: space-between;
+    }
+
+    .filter-btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.38rem 0.45rem;
+      font-size: 0.78rem;
+    }
+
+    .cbar-actions {
+      width: 100%;
+    }
+
+    .cbar-actions button {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .search-wrap {
+      max-width: 100%;
+    }
+
+    .sort-wrap {
+      justify-content: space-between;
+    }
+
+    .custom-sort-dropdown {
+      flex: 1;
+    }
+
+    .cgrid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body data-page="timeUntil">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>TIME UNTIL</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>
+        Event Countdowns
+      </span>
+    </div>
+    <p>Count down to the dates and moments that matter.</p>
+  </div>
+
+  <div class="countdown-shell">
+    <section class="cbar-panel" aria-label="Countdown Controls">
+      <div class="cbar-top">
+        <div class="filter-pills" role="tablist" aria-label="Filter countdowns">
+          <button type="button" class="filter-btn active" data-filter="all">All</button>
+          <button type="button" class="filter-btn" data-filter="upcoming">Upcoming</button>
+          <button type="button" class="filter-btn" data-filter="soon">Within 7 Days</button>
+          <button type="button" class="filter-btn" data-filter="ended">Ended</button>
+        </div>
+        <div class="cbar-actions">
+          <button id="importCalBtn" class="ghost" type="button" title="Turn a Calendar event into a countdown"></button>
+          <button id="clearEnded" class="ghost" type="button" hidden></button>
+          <button id="add" class="primary" type="button"></button>
+        </div>
+      </div>
+
+      <div class="cbar-bottom">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" id="cdSearch" class="cd-search-input" placeholder="Search countdowns by name or date...">
+        </div>
+
+        <div class="sort-wrap">
+          <span>Sort by</span>
+          <div class="custom-sort-dropdown" id="sortDropdownWrap">
+            <button type="button" class="sort-trigger-btn" id="sortTriggerBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span id="sortTriggerLabel">Soonest First</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="sort-menu" id="sortDropdownMenu" role="listbox" hidden>
+              <button type="button" class="sort-option active" data-sort="soonest" role="option" aria-selected="true">
+                <span>Soonest First</span>
+                <span class="sort-check">✓</span>
+              </button>
+              <button type="button" class="sort-option" data-sort="farthest" role="option" aria-selected="false">
+                <span>Farthest First</span>
+                <span class="sort-check">✓</span>
+              </button>
+              <button type="button" class="sort-option" data-sort="name" role="option" aria-selected="false">
+                <span>Name (A–Z)</span>
+                <span class="sort-check">✓</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="listPanel">
+      <div class="cgrid" id="grid"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+window.P23CD = window.P23CD || (() => {
+  const CIRC = 2 * Math.PI * 42;
+  return {
+    ring(c, sz = 150) {
+      return `<div class="cring" style="--sz:${sz}px;--c:${c.color || "var(--accent)"}">
+        <svg viewBox="0 0 100 100">
+          <circle class="trk" cx="50" cy="50" r="42" stroke-width="8"/>
+          <circle class="bar" cx="50" cy="50" r="42" stroke-width="8" stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="0"/>
+        </svg>
+        <div class="in"><b>0</b><span>days</span></div>
+      </div>`;
+    },
+    tick(el, c, now) {
+      const diff = c.target - now;
+      const b = el.querySelector(".cring .in b");
+      const s = el.querySelector(".cring .in span");
+      const bar = el.querySelector(".cring .bar");
+      if (!b || !s) return;
+      if (diff <= 0) {
+        b.textContent = "✓";
+        s.textContent = "arrived";
+        if (bar) bar.style.strokeDashoffset = "0";
+        return;
+      }
+      const sec = Math.ceil(diff / 1000);
+      const days = Math.floor(sec / 86400);
+      const hrs = Math.floor((sec % 86400) / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      if (days > 0) { b.textContent = String(days); s.textContent = days === 1 ? "day" : "days"; }
+      else if (hrs > 0) { b.textContent = String(hrs); s.textContent = hrs === 1 ? "hour" : "hours"; }
+      else if (mins > 0) { b.textContent = String(mins); s.textContent = mins === 1 ? "min" : "mins"; }
+      else { b.textContent = String(sec); s.textContent = "sec"; }
+      if (bar) {
+        const span = Math.max(86400000, c.target - (c.created || (c.target - 7 * 86400000)));
+        const prog = Math.max(0, Math.min(1, 1 - diff / span));
+        bar.style.strokeDashoffset = String((CIRC * (1 - prog)).toFixed(1));
+      }
+    },
+    line(c, now) {
+      const diff = c.target - now;
+      if (diff <= 0) return "Arrived";
+      const s = Math.floor(diff / 1000);
+      const d = Math.floor(s / 86400);
+      const h = Math.floor((s % 86400) / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sc = s % 60;
+      if (d > 0) return `${d}d ${h}h ${m}m`;
+      if (h > 0) return `${h}h ${m}m ${sc}s`;
+      return `${m}m ${sc}s`;
+    }
+  };
+})();
+
+DB.whenReady(() => {
+  const $ = id => document.getElementById(id), KEY = "p23.countdowns";
+  let items = DB.get(KEY, []);
+  let activeFilter = "all";
+  let searchQuery = "";
+  let sortBy = "soonest";
+
+  $("add").innerHTML = DB.icon("plus") + " New countdown";
+  $("clearEnded").innerHTML = DB.icon("trash") + " Clear ended";
+  $("importCalBtn").innerHTML = DB.icon("cal") + " From Calendar";
+
+  function itemHasTime(c) {
+    if (typeof c.hasTime === "boolean") return c.hasTime;
+    return DB.toInputTime(c.target) !== "00:00";
+  }
+
+  function fmtWhen(c) {
+    const d = new Date(c.target);
+    const datePart = d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+    if (!itemHasTime(c)) return datePart;
+    const timePart = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    return `${datePart} · ${timePart}`;
+  }
+
+  function formatDateDisplay(yyyyMmDd) {
+    if (!yyyyMmDd) return "Select a date";
+    const [y, m, d] = yyyyMmDd.split("-").map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function parseUserDate(str) {
+    if (!str) return null;
+    str = str.trim();
+    const mIso = str.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+    if (mIso) {
+      const y = +mIso[1], mo = +mIso[2], d = +mIso[3];
+      const dt = new Date(y, mo - 1, d);
+      if (!isNaN(dt.getTime())) {
+        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      }
+    }
+    const mUs = str.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    if (mUs) {
+      const mo = +mUs[1], d = +mUs[2], y = +mUs[3];
+      const dt = new Date(y, mo - 1, d);
+      if (!isNaN(dt.getTime())) {
+        return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      }
+    }
+    const dt = new Date(str);
+    if (!isNaN(dt.getTime())) {
+      return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+    }
+    return null;
+  }
+
+  function computeStatusBadge(c, now) {
+    const todayKey = DB.toInputDate(now);
+    const targetKey = DB.toInputDate(c.target);
+    if (!itemHasTime(c) && todayKey === targetKey) {
+      return { text: "Today!", isDone: false };
+    }
+    const diff = c.target - now;
+    if (diff <= 0) return { text: "Completed", isDone: true };
+    const days = Math.ceil(diff / 86400000);
+    if (days <= 1) return { text: "Within 24h", isDone: false };
+    if (days <= 7) return { text: `In ${days} days`, isDone: false };
+    return { text: `${days} days left`, isDone: false };
+  }
+
+  function computeUnits(c, now) {
+    const diff = Math.max(0, c.target - now);
+    const totalSec = Math.floor(diff / 1000);
+    const d = Math.floor(totalSec / 86400);
+    const h = Math.floor((totalSec % 86400) / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const pad = n => String(n).padStart(2, "0");
+    return { d, h: pad(h), m: pad(m), s: pad(s) };
+  }
+
+  const save = () => DB.set(KEY, items);
+
+  function render() {
+    const grid = $("grid");
+    grid.innerHTML = "";
+    const now = Date.now();
+
+    const hasEnded = items.some(c => c.target <= now && !(!itemHasTime(c) && DB.toInputDate(c.target) === DB.toInputDate(now)));
+    $("clearEnded").hidden = !hasEnded;
+
+    const q = searchQuery.toLowerCase().trim();
+    const filtered = items.filter(c => {
+      const isTodayDateOnly = !itemHasTime(c) && DB.toInputDate(c.target) === DB.toInputDate(now);
+      const isEnded = c.target <= now && !isTodayDateOnly;
+      if (activeFilter === "upcoming" && isEnded) return false;
+      if (activeFilter === "ended" && !isEnded) return false;
+      if (activeFilter === "soon") {
+        if (isEnded || (c.target - now) > 7 * 86400000) return false;
+      }
+      if (q) {
+        const hay = `${c.title} ${fmtWhen(c)}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const sorted = [...filtered].sort((a, b) => {
+      const aEnded = a.target <= now && !(!itemHasTime(a) && DB.toInputDate(a.target) === DB.toInputDate(now));
+      const bEnded = b.target <= now && !(!itemHasTime(b) && DB.toInputDate(b.target) === DB.toInputDate(now));
+      if (aEnded !== bEnded) return aEnded - bEnded;
+      if (sortBy === "farthest") return b.target - a.target;
+      if (sortBy === "name") return a.title.localeCompare(b.title);
+      return a.target - b.target;
+    });
+
+    if (!sorted.length) {
+      grid.style.display = "block";
+      const emptyMsg = items.length === 0
+        ? (DB.isGuest()
+          ? "Sign in to create countdowns for important dates."
+          : "No countdowns yet. Add a date or import any calendar event.")
+        : "No countdowns match your current filter or search.";
+      grid.innerHTML = `<div class="cdempty">
+        <div class="ico">${DB.icon("timer")}</div>
+        <h3 style="margin:0;color:var(--text);font-family:var(--display);">${items.length === 0 ? "Start Counting Down" : "No Matching Countdowns"}</h3>
+        <p style="margin:0;max-width:42ch;">${emptyMsg}</p>
+        <div style="margin-top:0.5rem;">
+          ${DB.isGuest()
+            ? '<button class="primary" id="emptySign">Sign in with Google</button>'
+            : (items.length === 0
+              ? '<button class="primary" id="emptyAdd">New countdown</button>'
+              : '<button class="ghost" id="emptyReset">Reset filters</button>')}
+        </div>
+      </div>`;
+      const a = $("emptyAdd"); if (a) a.onclick = newOne;
+      const s = $("emptySign"); if (s) s.onclick = () => DB.requireAuth();
+      const r = $("emptyReset"); if (r) r.onclick = () => {
+        activeFilter = "all";
+        searchQuery = "";
+        $("cdSearch").value = "";
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === "all"));
+        render();
+      };
+      return;
+    }
+
+    grid.style.display = "";
+    sorted.forEach((c, k) => {
+      const status = computeStatusBadge(c, now);
+      const units = computeUnits(c, now);
+      const hasTime = itemHasTime(c);
+      const el = document.createElement("div");
+      el.className = "cdcard" + (status.isDone ? " done" : "");
+      el.style.setProperty("--c", c.color || DB.palette[0]);
+      el.style.setProperty("--k", Math.min(k, 10));
+      el.dataset.id = c.id;
+
+      el.innerHTML = `
+        <div class="cdcard-top">
+          <span class="cd-status-pill" data-role="status">${status.text}</span>
+          <button class="edit ghost" aria-label="Edit countdown" title="Edit countdown">${DB.icon("edit")}</button>
+        </div>
+        ${P23CD.ring(c, 148)}
+        <h3>${DB.esc(c.title)}</h3>
+        <div class="line">${P23CD.line(c, now)}</div>
+        <div class="cd-units-grid">
+          <div class="cd-unit-box"><b data-u="d">${units.d}</b><small>Days</small></div>
+          <div class="cd-unit-box"><b data-u="h">${units.h}</b><small>Hours</small></div>
+          <div class="cd-unit-box"><b data-u="m">${units.m}</b><small>Min</small></div>
+          <div class="cd-unit-box"><b data-u="s">${units.s}</b><small>Sec</small></div>
+        </div>
+        <div class="cdcard-footer">
+          <div class="when">${DB.icon("cal")} <span>${fmtWhen(c)}</span></div>
+          <span class="cd-mode-tag">${hasTime ? "Timed" : "Date only"}</span>
+        </div>
+      `;
+      el.querySelector(".edit").onclick = () => openEditor(c);
+      grid.appendChild(el);
+    });
+    tick();
+  }
+
+  function tick() {
+    if (document.hidden) return;
+    const now = Date.now();
+    document.querySelectorAll(".cdcard").forEach(el => {
+      const c = items.find(x => x.id === el.dataset.id);
+      if (!c) return;
+      P23CD.tick(el, c, now);
+      const l = el.querySelector(".line"), t = P23CD.line(c, now);
+      if (l && l.textContent !== t) l.textContent = t;
+
+      const status = computeStatusBadge(c, now);
+      const stEl = el.querySelector('[data-role="status"]');
+      if (stEl && stEl.textContent !== status.text) stEl.textContent = status.text;
+      el.classList.toggle("done", status.isDone);
+
+      const units = computeUnits(c, now);
+      const uD = el.querySelector('[data-u="d"]'); if (uD && uD.textContent !== String(units.d)) uD.textContent = String(units.d);
+      const uH = el.querySelector('[data-u="h"]'); if (uH && uH.textContent !== units.h) uH.textContent = units.h;
+      const uM = el.querySelector('[data-u="m"]'); if (uM && uM.textContent !== units.m) uM.textContent = units.m;
+      const uS = el.querySelector('[data-u="s"]'); if (uS && uS.textContent !== units.s) uS.textContent = units.s;
+    });
+  }
+  setInterval(tick, 1000);
+  document.addEventListener("visibilitychange", tick);
+
+  async function newOne() {
+    if (!(await DB.requireAuth())) return;
+    openEditor(null);
+  }
+
+  function openEditor(c) {
+    const isNew = !c;
+    const defaultDateStr = DB.toInputDate(Date.now() + 7 * 86400000);
+    const defaultTargetMs = DB.fromInputs(defaultDateStr, "00:00");
+    const initialHasTime = isNew ? false : itemHasTime(c);
+
+    const t = c
+      ? { ...c, hasTime: initialHasTime }
+      : { id: DB.uid(), title: "", target: defaultTargetMs, created: Date.now(), color: DB.palette[0], notify: true, hasTime: false };
+
+    const initialDateVal = DB.toInputDate(t.target);
+    const initialTimeVal = t.hasTime ? DB.toInputTime(t.target) : "";
+
+    const n = document.createElement("div");
+    n.innerHTML = `
+      <h2>${isNew ? "New countdown" : "Edit countdown"}</h2>
+      <div class="field">
+        <label for="cTitle">Event or Milestone Name</label>
+        <input id="cTitle" style="width:100%" value="${DB.esc(t.title)}" placeholder="Trip to the coast, exam day, birthday…" maxlength="80" aria-describedby="cTitleErr">
+        <div class="field-error-msg" id="cTitleErr" role="alert" hidden>Event name is missing. Please enter a title to save.</div>
+        <div class="preset-chips-row">
+          <button type="button" class="preset-title-chip" data-preset="Vacation ✈️">Vacation ✈️</button>
+          <button type="button" class="preset-title-chip" data-preset="Exam Day 📚">Exam Day 📚</button>
+          <button type="button" class="preset-title-chip" data-preset="Birthday 🎂">Birthday 🎂</button>
+          <button type="button" class="preset-title-chip" data-preset="Concert 🎵">Concert 🎵</button>
+        </div>
+      </div>
+
+      <div class="field custom-date-picker-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.35rem;">
+          <label for="cDate" style="margin:0;">Event Date</label>
+          <span class="muted" id="cDatePreview" style="font-family:var(--mono);font-size:0.75rem;"></span>
+        </div>
+        <div class="date-input-combo-bar" id="dateInputComboBar">
+          <input type="text" id="cDate" class="date-combo-input" value="${initialDateVal}" placeholder="YYYY-MM-DD or type date (e.g. 2026-11-07)" autocomplete="off">
+          <button type="button" class="cal-picker-btn" id="cDateCalToggle" title="Click to open calendar date picker" aria-label="Open calendar date picker" aria-expanded="false">
+            ${DB.icon("cal")}
+          </button>
+        </div>
+
+        <div class="custom-calendar-menu" id="cCalendarMenu" hidden>
+          <div class="cal-header-bar">
+            <button type="button" class="cal-nav-btn" id="calPrevMonth" aria-label="Previous month">‹</button>
+            <span class="cal-month-title" id="calMonthTitle">Month Year</span>
+            <button type="button" class="cal-nav-btn" id="calNextMonth" aria-label="Next month">›</button>
+          </div>
+          <div class="cal-weekdays">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-days-grid" id="calDaysGrid"></div>
+        </div>
+      </div>
+
+      <div class="optional-time-box">
+        <label class="tglrow" for="cHasTime" style="margin:0;">
+          <span>Include a specific time <span class="sub">Counts down to specific time (optional)</span></span>
+          <input type="checkbox" class="tgl" id="cHasTime" ${t.hasTime ? "checked" : ""}>
+        </label>
+        <div class="optional-time-input-wrap" id="cTimeWrap" ${t.hasTime ? "" : "hidden"}>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <label for="cTime" style="font-size:0.78rem;color:var(--muted);margin:0;">Target Time (optional)</label>
+            <span class="muted" id="cTimePreview" style="font-family:var(--mono);font-size:0.75rem;color:var(--accent);"></span>
+          </div>
+          <div class="date-input-combo-bar" id="timeInputComboBar">
+            <input type="text" id="cTime" class="date-combo-input" value="${initialTimeVal}" placeholder="HH:MM" autocomplete="off">
+            <button type="button" class="cal-picker-btn" id="cTimeClockToggle" title="Click to open time wheel scroller" aria-label="Open time scroller" aria-expanded="false">
+              ${DB.icon("clock")}
+            </button>
+          </div>
+          <div class="custom-calendar-menu" id="cTimeMenu" hidden>
+            <div class="time-wheel-stage">
+              <div class="time-wheel-highlight" aria-hidden="true"></div>
+              <div class="time-wheel-col" id="cWheelHour" aria-label="Hour"></div>
+              <div class="time-wheel-col" id="cWheelMin" aria-label="Minute"></div>
+              <div class="time-wheel-col" id="cWheelAmPm" aria-label="AM or PM"></div>
+            </div>
+            <div class="time-wheel-header">
+              <div class="time-wheel-actions">
+                <button type="button" class="cal-jump-chip" id="cClearTime">Clear</button>
+                <button type="button" class="cal-jump-chip" id="cDoneTime" style="color:var(--accent);border-color:var(--accent);">Done</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Accent Colour</label>
+        <div class="swatches" id="cSw"></div>
+      </div>
+
+      <div class="field">
+        <label class="tglrow" for="cNotify">
+          <span>Notify me when it arrives<span class="sub">Requires browser notifications enabled</span></span>
+          <input type="checkbox" class="tgl" id="cNotify" ${t.notify !== false ? "checked" : ""}>
+        </label>
+      </div>
+
+      <div class="actions">
+        ${isNew ? "" : '<button class="danger left" id="cDel">Delete</button>'}
+        <button id="cNo">Cancel</button>
+        <button class="primary" id="cOk">Save countdown</button>
+      </div>
+    `;
+
+    const close = DB.modal(n), q = id => n.querySelector("#" + id);
+    let color = t.color || DB.palette[0];
+    const paint = () => n.querySelectorAll(".swatch").forEach(b => b.classList.toggle("sel", b.dataset.c === color));
+
+    DB.palette.forEach(col => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "swatch";
+      b.dataset.c = col;
+      b.style.background = col;
+      b.setAttribute("aria-label", "Colour " + col);
+      b.onclick = () => { color = col; paint(); };
+      q("cSw").appendChild(b);
+    });
+    paint();
+
+    function clearTitleError() {
+      const titleInp = q("cTitle");
+      const titleErr = q("cTitleErr");
+      if (titleInp) {
+        titleInp.classList.remove("input-error");
+        titleInp.removeAttribute("aria-invalid");
+      }
+      if (titleErr) titleErr.hidden = true;
+    }
+
+    const syncPresetHighlight = () => {
+      const curVal = q("cTitle").value.trim();
+      n.querySelectorAll(".preset-title-chip").forEach(ch => {
+        ch.classList.toggle("active", ch.dataset.preset === curVal);
+      });
+    };
+    n.querySelectorAll(".preset-title-chip").forEach(chip => {
+      chip.onclick = () => {
+        q("cTitle").value = chip.dataset.preset;
+        clearTitleError();
+        syncPresetHighlight();
+        q("cTitle").focus();
+      };
+    });
+    q("cTitle").oninput = () => {
+      if (q("cTitle").value.trim()) clearTitleError();
+      syncPresetHighlight();
+    };
+    syncPresetHighlight();
+
+    let [selY, selM, selD] = initialDateVal.split("-").map(Number);
+    let viewYear = selY;
+    let viewMonth = selM - 1;
+
+    function updateDatePreview() {
+      const parsed = parseUserDate(q("cDate").value);
+      if (parsed) {
+        q("cDatePreview").textContent = formatDateDisplay(parsed);
+        q("dateInputComboBar").classList.remove("error");
+      } else if (q("cDate").value.trim()) {
+        q("cDatePreview").textContent = "Type YYYY-MM-DD or pick date";
+      } else {
+        q("cDatePreview").textContent = "";
+      }
+    }
+
+    updateDatePreview();
+
+    q("cDate").oninput = () => {
+      updateDatePreview();
+      const parsed = parseUserDate(q("cDate").value);
+      if (parsed) {
+        const [y, m, d] = parsed.split("-").map(Number);
+        selY = y; selM = m; selD = d;
+        viewYear = y; viewMonth = m - 1;
+        if (!q("cCalendarMenu").hidden) renderCalendarGrid();
+      }
+    };
+
+    function setSelectedDate(y, mZero, d) {
+      const dt = new Date(y, mZero, d);
+      const yStr = dt.getFullYear();
+      const mStr = String(dt.getMonth() + 1).padStart(2, "0");
+      const dStr = String(dt.getDate()).padStart(2, "0");
+      const iso = `${yStr}-${mStr}-${dStr}`;
+      q("cDate").value = iso;
+      updateDatePreview();
+      selY = yStr;
+      selM = dt.getMonth() + 1;
+      selD = dt.getDate();
+      viewYear = selY;
+      viewMonth = selM - 1;
+      renderCalendarGrid();
+    }
+
+    function renderCalendarGrid() {
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      q("calMonthTitle").textContent = `${monthNames[viewMonth]} ${viewYear}`;
+
+      const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const prevMonthDays = new Date(viewYear, viewMonth, 0).getDate();
+
+      const todayIso = DB.toInputDate(Date.now());
+      const selectedIso = parseUserDate(q("cDate").value) || "";
+
+      const cells = [];
+      for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+        const dayNum = prevMonthDays - i;
+        cells.push({ y: viewYear, m: viewMonth - 1, d: dayNum, other: true });
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        cells.push({ y: viewYear, m: viewMonth, d, other: false });
+      }
+
+      const totalCells = cells.length > 35 ? 42 : 35;
+      let nextDay = 1;
+      while (cells.length < totalCells) {
+        cells.push({ y: viewYear, m: viewMonth + 1, d: nextDay++, other: true });
+      }
+
+      const gridEl = q("calDaysGrid");
+      gridEl.innerHTML = cells.map(cell => {
+        const dt = new Date(cell.y, cell.m, cell.d);
+        const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+        const isToday = iso === todayIso;
+        const isSel = iso === selectedIso;
+        return `<button type="button" class="cal-day-btn ${cell.other ? "other-month" : ""} ${isToday ? "today" : ""} ${isSel ? "selected" : ""}" data-y="${dt.getFullYear()}" data-m="${dt.getMonth()}" data-d="${dt.getDate()}">${dt.getDate()}</button>`;
+      }).join("");
+
+      gridEl.querySelectorAll(".cal-day-btn").forEach(btn => {
+        btn.onclick = () => {
+          setSelectedDate(+btn.dataset.y, +btn.dataset.m, +btn.dataset.d);
+          q("cCalendarMenu").hidden = true;
+          q("dateInputComboBar").classList.remove("open");
+          q("cDateCalToggle").classList.remove("active");
+          q("cDateCalToggle").setAttribute("aria-expanded", "false");
+        };
+      });
+    }
+
+    q("cDateCalToggle").onclick = (e) => {
+      e.stopPropagation();
+      const isHidden = q("cCalendarMenu").hidden;
+      q("cCalendarMenu").hidden = !isHidden;
+      q("dateInputComboBar").classList.toggle("open", isHidden);
+      q("cDateCalToggle").classList.toggle("active", isHidden);
+      q("cDateCalToggle").setAttribute("aria-expanded", String(isHidden));
+      if (isHidden) {
+        const parsed = parseUserDate(q("cDate").value);
+        if (parsed) {
+          const [y, m, d] = parsed.split("-").map(Number);
+          viewYear = y; viewMonth = m - 1; selY = y; selM = m; selD = d;
+        }
+        renderCalendarGrid();
+      }
+    };
+
+    q("calPrevMonth").onclick = (e) => {
+      e.stopPropagation();
+      viewMonth--;
+      if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      renderCalendarGrid();
+    };
+
+    q("calNextMonth").onclick = (e) => {
+      e.stopPropagation();
+      viewMonth++;
+      if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      renderCalendarGrid();
+    };
+
+    n.querySelectorAll(".cal-jump-chip").forEach(chip => {
+      chip.onclick = (e) => {
+        e.stopPropagation();
+        const offsetDays = +chip.dataset.offset;
+        const targetDt = new Date(Date.now() + offsetDays * 86400000);
+        setSelectedDate(targetDt.getFullYear(), targetDt.getMonth(), targetDt.getDate());
+        q("cCalendarMenu").hidden = true;
+        q("dateInputComboBar").classList.remove("open");
+        q("cDateCalToggle").classList.remove("active");
+        q("cDateCalToggle").setAttribute("aria-expanded", "false");
+      };
+    });
+
+    const HOURS_LIST = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+    const MINS_LIST = Array.from({ length: 60 }, (_, i) => i);
+    const AMPM_LIST = ["AM", "PM"];
+    const ITEM_H = 36;
+    let selHour12 = 9, selMin = 0, selAmPm = "AM", wheelBuilt = false, suppressWheelScroll = false;
+
+    function parseUserTime(str) {
+      if (!str) return "";
+      const m = str.trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i);
+      if (!m) return "";
+      let h = +m[1];
+      const min = m[2] != null ? +m[2] : 0;
+      const ap = m[3] ? m[3].toLowerCase() : null;
+      if (min < 0 || min > 59) return "";
+      if (ap) {
+        if (h < 1 || h > 12) return "";
+        if (ap === "pm" && h < 12) h += 12;
+        if (ap === "am" && h === 12) h = 0;
+      } else if (h < 0 || h > 23) return "";
+      return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+    }
+
+    function syncTimeStateFromInput() {
+      const parsed = parseUserTime(q("cTime").value);
+      if (parsed) {
+        const [h24, m] = parsed.split(":").map(Number);
+        selAmPm = h24 >= 12 ? "PM" : "AM";
+        selHour12 = h24 % 12 || 12;
+        selMin = m;
+      }
+    }
+
+    function updateTimePreview() {
+      const parsed = parseUserTime(q("cTime").value);
+      if (parsed) {
+        const [h, m] = parsed.split(":").map(Number);
+        q("cTimePreview").textContent = new Date(2026, 0, 1, h, m).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      } else {
+        q("cTimePreview").textContent = "";
+      }
+    }
+
+    function highlightActiveWheelItems() {
+      const hIdx = HOURS_LIST.indexOf(selHour12), mIdx = selMin, aIdx = AMPM_LIST.indexOf(selAmPm);
+      q("cWheelHour").querySelectorAll(".time-wheel-item").forEach((el, i) => el.classList.toggle("active", i === hIdx));
+      q("cWheelMin").querySelectorAll(".time-wheel-item").forEach((el, i) => el.classList.toggle("active", i === mIdx));
+      q("cWheelAmPm").querySelectorAll(".time-wheel-item").forEach((el, i) => el.classList.toggle("active", i === aIdx));
+    }
+
+    function applySelectedTimeParts() {
+      let h24 = selHour12 % 12;
+      if (selAmPm === "PM") h24 += 12;
+      q("cTime").value = `${String(h24).padStart(2, "0")}:${String(selMin).padStart(2, "0")}`;
+      updateTimePreview();
+      highlightActiveWheelItems();
+    }
+
+    function scrollWheelsToCurrent(smooth = false) {
+      suppressWheelScroll = true;
+      const behavior = smooth ? "smooth" : "instant";
+      q("cWheelHour").scrollTo({ top: Math.max(0, HOURS_LIST.indexOf(selHour12)) * ITEM_H, behavior });
+      q("cWheelMin").scrollTo({ top: Math.max(0, Math.min(59, selMin)) * ITEM_H, behavior });
+      q("cWheelAmPm").scrollTo({ top: Math.max(0, AMPM_LIST.indexOf(selAmPm)) * ITEM_H, behavior });
+      highlightActiveWheelItems();
+      setTimeout(() => { suppressWheelScroll = false; }, smooth ? 240 : 60);
+    }
+
+    function buildTimeWheels() {
+      if (wheelBuilt) return;
+      wheelBuilt = true;
+      const wH = q("cWheelHour"), wM = q("cWheelMin"), wA = q("cWheelAmPm");
+      wH.innerHTML = HOURS_LIST.map((hr, i) => `<div class="time-wheel-item" data-idx="${i}">${hr}</div>`).join("");
+      wM.innerHTML = MINS_LIST.map((mn, i) => `<div class="time-wheel-item" data-idx="${i}">${String(mn).padStart(2, "0")}</div>`).join("");
+      wA.innerHTML = AMPM_LIST.map((ap, i) => `<div class="time-wheel-item" data-idx="${i}">${ap}</div>`).join("");
+
+      function bindWheel(colEl, list, onPick) {
+        let timer = null;
+        colEl.addEventListener("scroll", () => {
+          if (suppressWheelScroll) return;
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            const idx = Math.max(0, Math.min(list.length - 1, Math.round(colEl.scrollTop / ITEM_H)));
+            onPick(list[idx]);
+            applySelectedTimeParts();
+          }, 70);
+        }, { passive: true });
+
+        colEl.querySelectorAll(".time-wheel-item").forEach(item => {
+          item.onclick = e => {
+            e.stopPropagation();
+            onPick(list[+item.dataset.idx]);
+            applySelectedTimeParts();
+            scrollWheelsToCurrent(true);
+          };
+        });
+      }
+      bindWheel(wH, HOURS_LIST, v => { selHour12 = v; });
+      bindWheel(wM, MINS_LIST, v => { selMin = v; });
+      bindWheel(wA, AMPM_LIST, v => { selAmPm = v; });
+    }
+
+    function closeTimeMenu() {
+      q("cTimeMenu").hidden = true;
+      q("timeInputComboBar").classList.remove("open");
+      q("cTimeClockToggle").classList.remove("active");
+      q("cTimeClockToggle").setAttribute("aria-expanded", "false");
+    }
+
+    syncTimeStateFromInput();
+    updateTimePreview();
+
+    q("cHasTime").onchange = () => {
+      const on = q("cHasTime").checked;
+      q("cTimeWrap").hidden = !on;
+      if (on && !q("cTime").value) {
+        q("cTime").value = "09:00";
+        syncTimeStateFromInput();
+        updateTimePreview();
+      }
+      if (!on) {
+        q("cTime").value = "";
+        updateTimePreview();
+        closeTimeMenu();
+      }
+    };
+
+    q("cTime").oninput = () => {
+      syncTimeStateFromInput();
+      updateTimePreview();
+      if (!q("cTimeMenu").hidden) scrollWheelsToCurrent(true);
+    };
+
+    q("cTimeClockToggle").onclick = e => {
+      e.stopPropagation();
+      const willOpen = q("cTimeMenu").hidden;
+      q("cTimeMenu").hidden = !willOpen;
+      q("timeInputComboBar").classList.toggle("open", willOpen);
+      q("cTimeClockToggle").classList.toggle("active", willOpen);
+      q("cTimeClockToggle").setAttribute("aria-expanded", String(willOpen));
+      if (willOpen) {
+        buildTimeWheels();
+        if (!parseUserTime(q("cTime").value)) applySelectedTimeParts();
+        else syncTimeStateFromInput();
+        requestAnimationFrame(() => scrollWheelsToCurrent(false));
+      }
+    };
+
+    q("cDoneTime").onclick = e => {
+      e.stopPropagation();
+      if (!parseUserTime(q("cTime").value)) applySelectedTimeParts();
+      closeTimeMenu();
+    };
+
+    q("cClearTime").onclick = e => {
+      e.stopPropagation();
+      q("cTime").value = "";
+      updateTimePreview();
+      closeTimeMenu();
+      q("cHasTime").checked = false;
+      q("cTimeWrap").hidden = true;
+    };
+
+    q("cNo").onclick = close;
+    if (!isNew) {
+      q("cDel").onclick = () => {
+        items = items.filter(x => x.id !== t.id);
+        save();
+        close();
+        render();
+        DB.toast("Countdown deleted", "", 2000);
+      };
+    }
+
+    q("cOk").onclick = () => {
+      const titleInput = q("cTitle");
+      const titleErr = q("cTitleErr");
+      const title = titleInput.value.trim();
+      if (!title) {
+        titleInput.classList.remove("input-error");
+        void titleInput.offsetWidth;
+        titleInput.classList.add("input-error");
+        titleInput.setAttribute("aria-invalid", "true");
+        if (titleErr) titleErr.hidden = false;
+        titleInput.focus();
+        return;
+      }
+      const parsedDate = parseUserDate(q("cDate").value);
+      if (!parsedDate) {
+        q("dateInputComboBar").classList.add("error");
+        q("cDate").focus();
+        if (DB.toast) DB.toast("Invalid Date", "Please enter a valid date (e.g. 2026-11-07)", 2500);
+        return;
+      }
+
+      const useTime = q("cHasTime").checked && Boolean(q("cTime").value.trim());
+      const timeVal = useTime ? (parseUserTime(q("cTime").value) || "00:00") : "00:00";
+      const target = DB.fromInputs(parsedDate, timeVal);
+
+      Object.assign(t, {
+        title,
+        target,
+        hasTime: useTime,
+        color,
+        notify: q("cNotify").checked
+      });
+      if (target !== (c && c.target)) {
+        t.created = Math.min(t.created || Date.now(), Date.now());
+      }
+      if (isNew) items.push(t);
+      else items[items.findIndex(x => x.id === t.id)] = t;
+
+      save();
+      close();
+      render();
+      DB.toast(isNew ? "Countdown added" : "Countdown saved", title, 2200);
+    };
+  }
+
+  async function openImportFromCalendar() {
+    if (!(await DB.requireAuth())) return;
+    const allEvents = (typeof DB.loadEvents === "function" ? DB.loadEvents() : DB.get("p23.events", [])) || [];
+    const upcomingEvents = allEvents
+      .filter(e => e && e.start && e.start > Date.now())
+      .sort((a, b) => a.start - b.start)
+      .slice(0, 20);
+
+    const n = document.createElement("div");
+    if (!upcomingEvents.length) {
+      n.innerHTML = `
+        <h2>Import from Calendar</h2>
+        <p class="muted">No upcoming events found in your Calendar. Add events in the Calendar page first, or create a custom countdown directly.</p>
+        <div class="actions">
+          <button id="impClose">Close</button>
+          <button class="primary" id="impNew">Create custom countdown</button>
+        </div>
+      `;
+      const close = DB.modal(n);
+      n.querySelector("#impClose").onclick = close;
+      n.querySelector("#impNew").onclick = () => { close(); openEditor(null); };
+      return;
+    }
+
+    n.innerHTML = `
+      <h2>Import from Calendar</h2>
+      <p class="muted" style="margin-top:-0.4rem;margin-bottom:0.9rem;">Select an upcoming calendar event to create a countdown:</p>
+      <div style="display:flex;flex-direction:column;gap:0.45rem;max-height:320px;overflow-y:auto;">
+        ${upcomingEvents.map((ev, i) => `
+          <button type="button" class="ghost" data-ev-idx="${i}" style="display:flex;justify-content:space-between;align-items:center;text-align:left;padding:0.7rem 0.9rem;border-radius:12px;border:1px solid var(--line);">
+            <span><strong>${DB.esc(ev.title || "Untitled event")}</strong><br><small class="muted">${new Date(ev.start).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</small></span>
+            <span style="color:var(--accent);font-weight:700;font-size:0.82rem;">+ Add</span>
+          </button>
+        `).join("")}
+      </div>
+      <div class="actions"><button id="impCancel">Close</button></div>
+    `;
+    const close = DB.modal(n);
+    n.querySelector("#impCancel").onclick = close;
+    n.querySelectorAll("[data-ev-idx]").forEach(btn => {
+      btn.onclick = () => {
+        const ev = upcomingEvents[+btn.dataset.evIdx];
+        if (!ev) return;
+        const hasT = !ev.allDay && DB.toInputTime(ev.start) !== "00:00";
+        items.push({
+          id: DB.uid(),
+          title: ev.title || "Calendar Event",
+          target: hasT ? ev.start : DB.fromInputs(DB.toInputDate(ev.start), "00:00"),
+          hasTime: hasT,
+          created: Date.now(),
+          color: ev.color || DB.palette[0],
+          notify: true
+        });
+        save();
+        close();
+        render();
+        DB.toast("Imported from Calendar", ev.title, 2200);
+      };
+    });
+  }
+
+  $("add").onclick = newOne;
+  $("importCalBtn").onclick = openImportFromCalendar;
+  $("clearEnded").onclick = () => {
+    const now = Date.now();
+    items = items.filter(c => c.target > now || (!itemHasTime(c) && DB.toInputDate(c.target) === DB.toInputDate(now)));
+    save();
+    render();
+  };
+
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.onclick = () => {
+      activeFilter = btn.dataset.filter;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b === btn));
+      render();
+    };
+  });
+
+  $("cdSearch").oninput = e => {
+    searchQuery = e.target.value || "";
+    render();
+  };
+
+  const sortWrap = $("sortDropdownWrap");
+  const sortTrigger = $("sortTriggerBtn");
+  const sortMenu = $("sortDropdownMenu");
+  const sortLabel = $("sortTriggerLabel");
+
+  function closeSortMenu() {
+    if (!sortMenu) return;
+    sortMenu.hidden = true;
+    sortWrap.classList.remove("open");
+    sortTrigger.setAttribute("aria-expanded", "false");
+  }
+
+  sortTrigger.onclick = e => {
+    e.stopPropagation();
+    const willOpen = sortMenu.hidden;
+    sortMenu.hidden = !willOpen;
+    sortWrap.classList.toggle("open", willOpen);
+    sortTrigger.setAttribute("aria-expanded", String(willOpen));
+  };
+
+  sortMenu.querySelectorAll(".sort-option").forEach(opt => {
+    opt.onclick = e => {
+      e.stopPropagation();
+      sortBy = opt.dataset.sort;
+      sortLabel.textContent = opt.querySelector("span").textContent;
+      sortMenu.querySelectorAll(".sort-option").forEach(o => {
+        const isSel = o === opt;
+        o.classList.toggle("active", isSel);
+        o.setAttribute("aria-selected", String(isSel));
+      });
+      closeSortMenu();
+      render();
+    };
+  });
+
+  document.addEventListener("click", e => {
+    if (sortWrap && !sortWrap.contains(e.target)) {
+      closeSortMenu();
+    }
+  });
+
+  DB.onLogin(() => {
+    items = DB.get(KEY, []);
+    render();
+  });
+
+  render();
+});
+</script>
+</body>
+</html>

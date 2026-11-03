@@ -1,0 +1,2250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base href="../">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Focus | Project 23</title>
+  <meta name="theme-color" content="#05030f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Project 23">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="js/site-config.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/world.js"></script>
+  <style>
+    :root {
+      --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+      --apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
+      --glass-surface: color-mix(in srgb, var(--card-solid) 80%, transparent);
+      --glass-elevated: color-mix(in srgb, var(--card-2) 88%, transparent);
+      --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+      --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+      --radius-2xl: 26px;
+      --radius-xl: 20px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-pill: 999px;
+    }
+
+    .step[hidden] {
+      display: none !important;
+    }
+
+    .step.panel {
+      position: relative;
+      z-index: 20;
+    }
+
+    .panel:not(.step) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .focus-shell {
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    .pagetitle {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center;
+      margin: 1.25rem auto 1.5rem;
+      padding: 0 1rem;
+      gap: 0.45rem;
+    }
+
+    .pagetitle h1 {
+      display: block;
+      width: 100%;
+      font-family: var(--display);
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1.06;
+      background: linear-gradient(135deg, var(--text) 30%, var(--accent) 70%, var(--accent2) 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
+      margin: 0;
+    }
+
+    .pagetitle .badge-row-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .pagetitle .badge-sub {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.9rem;
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+      border-radius: var(--radius-pill);
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      color: var(--accent3, var(--accent));
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .pagetitle p {
+      margin: 0.15rem auto 0;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 1.8vw, 1.05rem);
+      max-width: 540px;
+      line-height: 1.5;
+    }
+
+    .focus-card {
+      background:
+        radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent) 14%, transparent) 0%, transparent 58%),
+        radial-gradient(100% 120% at 0% 100%, color-mix(in srgb, var(--accent2) 10%, transparent) 0%, transparent 55%),
+        var(--glass-surface);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-spec), 0 20px 44px -16px rgba(0, 0, 0, 0.4);
+      border-radius: var(--radius-2xl);
+      padding: clamp(1.35rem, 3.2vw, 2.25rem);
+      animation: appleCardIn 0.45s var(--apple-spring) both;
+    }
+
+    @keyframes appleCardIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .step-top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+      margin-bottom: 1.4rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    }
+
+    .step-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .step-header-left h2 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(1.35rem, 2.6vw, 1.7rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .step-pill-indicator {
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      font-weight: 700;
+      padding: 0.3rem 0.72rem;
+      border-radius: var(--radius-pill);
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .back-arrow {
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      color: var(--text);
+      width: 2.6rem;
+      height: 2.6rem;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+      transition: transform 0.2s var(--apple-ease), background 0.2s, border-color 0.2s;
+    }
+
+    .back-arrow:hover {
+      background: color-mix(in srgb, var(--accent) 16%, var(--card-2));
+      border-color: var(--accent);
+      transform: translateX(-2px);
+    }
+
+    .booking-mode-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      padding: 0.35rem;
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--card-2) 92%, transparent);
+      border: 1px solid var(--line);
+      max-width: 460px;
+      margin: 0 auto 1.6rem;
+    }
+
+    .mode-seg-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      min-height: 42px;
+      padding: 0.55rem 1rem;
+      border-radius: 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--sans, 'Outfit', sans-serif);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.22s var(--apple-ease);
+    }
+
+    .mode-seg-btn:hover {
+      color: var(--text);
+    }
+
+    .mode-seg-btn.active {
+      background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 72%, var(--accent2)));
+      color: #fff;
+      box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+
+    .mode-seg-btn svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+    }
+
+    .dest-picker-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0.85rem;
+      align-items: end;
+      margin-bottom: 1.15rem;
+    }
+
+    .swap-cities-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all 0.2s var(--apple-ease);
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .swap-cities-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: rotate(180deg);
+    }
+
+    .input-group-custom {
+      position: relative;
+      min-width: 0;
+    }
+
+    .input-group-custom label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.42rem;
+    }
+
+    .custom-city-input {
+      width: 100%;
+      min-height: 46px;
+      padding: 0.72rem 1rem;
+      border-radius: 14px;
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-family: var(--sans, 'Outfit', sans-serif);
+      font-size: 0.96rem;
+      font-weight: 500;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .custom-city-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+    }
+
+    .city-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 240px;
+      overflow-y: auto;
+      background: var(--card-solid);
+      z-index: 9999 !important;
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      box-shadow: 0 18px 38px rgba(0, 0, 0, 0.65);
+    }
+
+    .city-dropdown[hidden] {
+      display: none !important;
+    }
+
+    .city-option {
+      padding: 0.7rem 1rem;
+      cursor: pointer;
+      font-size: 0.92rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      transition: background 0.15s;
+      background: var(--card-solid);
+    }
+
+    .city-option:last-child {
+      border-bottom: none;
+    }
+
+    .city-option:hover {
+      background: color-mix(in srgb, var(--accent) 22%, var(--card-solid));
+      color: var(--text);
+    }
+
+    .city-iata-pill {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 0.18rem 0.5rem;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--accent) 16%, transparent);
+      color: var(--accent);
+    }
+
+    .time-picker-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      margin-bottom: 1.2rem;
+      padding: 1.25rem;
+      border-radius: var(--radius-xl);
+      background: color-mix(in srgb, var(--card-2) 72%, transparent);
+      border: 1px solid var(--line);
+    }
+
+    .time-hero-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .time-target-display {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+    }
+
+    .time-target-label {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .time-target-value {
+      font-family: var(--display);
+      font-size: clamp(1.85rem, 4vw, 2.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--accent);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-exact-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 12px;
+      background: var(--card-solid);
+      border: 1px solid var(--line);
+      font-size: 0.83rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .time-exact-toggle input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .duration-preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+
+    .dur-chip {
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: var(--card-solid);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s var(--apple-ease);
+    }
+
+    .dur-chip:hover {
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .dur-chip.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+
+    .duration-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .duration-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .duration-filter-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 340px) auto;
+      align-items: end;
+      justify-content: space-between;
+      gap: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    }
+
+    .shuffle-routes-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 46px;
+      padding: 0.65rem 1.05rem;
+      border-radius: 14px;
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-family: var(--sans, 'Outfit', sans-serif);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s var(--apple-ease);
+      white-space: nowrap;
+    }
+
+    .shuffle-routes-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .suggested-routes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 0.65rem;
+    }
+
+    .route-suggestion-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      padding: 0.85rem 1rem;
+      border-radius: 14px;
+      background: var(--card-solid);
+      border: 1px solid var(--line);
+      text-align: left;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.18s var(--apple-ease);
+    }
+
+    .route-suggestion-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .route-suggestion-card.selected {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+      box-shadow: 0 6px 18px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+    }
+
+    .route-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .route-card-iata {
+      font-family: var(--display);
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .route-card-dur {
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      font-weight: 700;
+      padding: 0.18rem 0.52rem;
+      border-radius: var(--radius-pill);
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+    }
+
+    .route-card-cities {
+      font-size: 0.82rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .passenger-and-summary-row {
+      display: grid;
+      grid-template-columns: minmax(200px, 280px) 1fr;
+      gap: 1rem;
+      align-items: end;
+      margin-top: 0.5rem;
+    }
+
+    .route-preview-banner {
+      min-height: 46px;
+      padding: 0.7rem 1.1rem;
+      border-radius: 14px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--card-2)), color-mix(in srgb, var(--accent2) 10%, var(--card-2)));
+      border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.65rem;
+      margin: 0;
+    }
+
+    .route-preview-main {
+      font-family: var(--display);
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .route-preview-sub {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .step-cta-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+
+    .apple-cta-btn {
+      width: 100%;
+      max-width: 360px;
+      min-height: 48px;
+      padding: 0.75rem 1.6rem;
+      border-radius: 14px;
+      font-family: var(--display);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: all 0.22s var(--apple-ease);
+    }
+
+    .cabin-legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 1.1rem;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    .legend-swatch.avail {
+      background: color-mix(in srgb, var(--accent3, #00cec9) 28%, transparent);
+      border: 1px solid var(--accent3, #00cec9);
+    }
+
+    .legend-swatch.sel {
+      background: linear-gradient(135deg, #ffd166, #ff9f5a);
+    }
+
+    .legend-swatch.taken {
+      background: var(--card-2);
+      border: 1px solid var(--line);
+      opacity: 0.5;
+    }
+
+    .seatmap {
+      display: grid;
+      grid-template-columns: 2rem repeat(3, 2.5rem) 1.5rem repeat(3, 2.5rem);
+      gap: 0.4rem;
+      justify-content: center;
+      align-items: center;
+      margin: 0.75rem auto 1.1rem;
+      padding: 2.2rem 1.35rem 1.25rem;
+      border-radius: 85px 85px 24px 24px;
+      background: var(--glass-elevated);
+      border: 1px solid var(--glass-border);
+      box-shadow: inset 0 12px 24px -12px color-mix(in srgb, var(--accent) 18%, transparent);
+      width: fit-content;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .seat {
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border-radius: 10px 10px 5px 5px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: color-mix(in srgb, var(--accent3, #00cec9) 24%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent3, #00cec9) 65%, transparent);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.18s var(--apple-spring);
+    }
+
+    .seat:hover:not(:disabled):not(.sel) {
+      transform: translateY(-2px);
+      background: color-mix(in srgb, var(--accent3, #00cec9) 40%, transparent);
+    }
+
+    .seat.taken {
+      background: var(--card-2);
+      border-color: transparent;
+      color: var(--muted);
+      opacity: 0.42;
+      text-decoration: line-through;
+      cursor: not-allowed;
+    }
+
+    .seat.sel {
+      background: linear-gradient(135deg, #ffd166, #ff9f5a);
+      border-color: #ff9f5a;
+      color: #241400;
+      font-weight: 800;
+      transform: scale(1.14);
+      box-shadow: 0 6px 18px rgba(255, 159, 90, 0.55);
+    }
+
+    .rowno {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .pass {
+      display: grid;
+      grid-template-columns: 1fr 12.5rem;
+      background: #ffffff;
+      color: #14122b;
+      border-radius: 22px;
+      overflow: hidden;
+      max-width: 760px;
+      margin: 0 auto;
+      box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.45);
+      animation: drop 0.75s var(--apple-spring) both;
+    }
+
+    @keyframes drop {
+      from {
+        opacity: 0;
+        transform: translateY(-32px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .pass .band {
+      background: linear-gradient(100deg, #6c5ce7, #ff5c9d);
+      color: #fff;
+      font-family: var(--display);
+      font-weight: 700;
+      padding: 0.65rem 1.4rem;
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.06em;
+      font-size: 0.88rem;
+    }
+
+    .pass .main {
+      padding: 1.35rem 1.5rem;
+    }
+
+    .pass .stub {
+      border-left: 2px dashed #c8c4e3;
+      padding: 1.35rem 1.25rem;
+      background: #f6f4ff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .pass small {
+      color: #6a668f;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 0.15rem;
+    }
+
+    .route {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      font-family: var(--display);
+      font-weight: 800;
+      margin: 0.55rem 0 0.25rem;
+    }
+
+    .route .iata {
+      font-size: clamp(2.2rem, 5vw, 3.1rem);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .route .line {
+      flex: 1;
+      border-top: 3px dotted #6c5ce7;
+      min-width: 1.5rem;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .meta b {
+      font-family: var(--display);
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #14122b;
+    }
+
+    .barcode {
+      display: block;
+      height: 2.6rem;
+      margin-top: 0.75rem;
+      border-radius: 4px;
+      background: repeating-linear-gradient(90deg, #14122b 0 2px, transparent 2px 4px, #14122b 4px 5px, transparent 5px 8px);
+    }
+
+    .flight-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.35rem;
+      padding-bottom: 0.95rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    }
+
+    .route-title-center {
+      text-align: center;
+      font-family: var(--display);
+      font-size: clamp(1rem, 2.2vw, 1.2rem);
+      font-weight: 800;
+      white-space: nowrap;
+      flex: 1;
+      padding: 0 0.5rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .view-switch {
+      display: flex;
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      padding: 0.22rem;
+      gap: 0.15rem;
+      flex-shrink: 0;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s var(--apple-ease);
+    }
+
+    .view-btn.on {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: var(--on-accent, #fff);
+      box-shadow: 0 4px 14px -3px color-mix(in srgb, var(--accent) 55%, transparent);
+    }
+
+    .flight-ctrls {
+      display: flex;
+      gap: 0.45rem;
+      flex-shrink: 0;
+    }
+
+    .ctrl-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      min-height: 38px;
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-pill);
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: all 0.2s var(--apple-ease);
+    }
+
+    .ctrl-action-btn:hover {
+      border-color: var(--accent);
+    }
+
+    #pauseBtn.paused {
+      background: linear-gradient(120deg, #ffd166, #ff9f5a);
+      color: #241400;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .banner {
+      margin: 0.5rem 0 1.1rem;
+      padding: 0.8rem 1.1rem;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--warn, #ffd166) 20%, transparent);
+      border: 1px solid var(--warn, #ffd166);
+      display: none;
+      font-size: 0.92rem;
+    }
+
+    .banner.show {
+      display: block;
+    }
+
+    .curved-progress-wrapper {
+      position: relative;
+      text-align: center;
+      margin: 0 auto 1.5rem;
+      max-width: 520px;
+      padding-top: 8.2rem;
+    }
+
+    #curvedProgSvg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    .bigclock {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: clamp(3.4rem, 12vw, 6.2rem);
+      line-height: 1;
+      text-align: center;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      background: linear-gradient(180deg, var(--text) 20%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-top: 0.35rem;
+    }
+
+    .phase {
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.86rem;
+      color: var(--accent3, #00cec9);
+      margin-top: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .gauges {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1.1rem;
+    }
+
+    @media (min-width: 660px) {
+      .gauges {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .gauge {
+      padding: 0.95rem 1.05rem;
+      border-radius: 16px;
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      transition: transform 0.2s var(--apple-ease), border-color 0.2s;
+      overflow: hidden;
+    }
+
+    .gauge:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+    }
+
+    .gauge small {
+      display: block;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+      white-space: nowrap;
+    }
+
+    .gauge b {
+      display: block;
+      font-family: var(--display);
+      font-size: 1.35rem;
+      line-height: 1.18;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .gauge span {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-top: 0.12rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .quote {
+      margin-top: 1.1rem;
+      padding: 1.05rem 1.25rem;
+      border-radius: 16px;
+      border: 1px solid color-mix(in srgb, var(--accent2) 35%, var(--line));
+      border-left: 4px solid var(--accent2);
+      background: var(--glass-elevated);
+      font-size: 1rem;
+      line-height: 1.55;
+      min-height: 4rem;
+      transition: opacity 0.5s, transform 0.5s;
+    }
+
+    .quote.fade {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    .quote small {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent2);
+      margin-bottom: 0.25rem;
+    }
+
+    .stage {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      margin-top: 0.75rem;
+    }
+
+    .hud {
+      position: absolute;
+      left: 0.85rem;
+      top: 0.75rem;
+      z-index: 3;
+      padding: 0.35rem 0.85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(5, 5, 20, 0.72);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .hud b {
+      font-family: var(--display);
+      font-variant-numeric: tabular-nums;
+    }
+
+    #mapSvg {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 2 / 1;
+      background: var(--map-sea);
+    }
+
+    #mapSvg .land {
+      fill: var(--map-land);
+    }
+
+    #mapSvg .grat {
+      stroke: var(--map-line);
+      fill: none;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #mapSvg .route {
+      fill: none;
+      stroke: var(--accent2);
+      stroke-width: 2;
+      stroke-dasharray: 3 7;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+      opacity: 0.85;
+    }
+
+    #mapSvg .flown {
+      fill: none;
+      stroke: var(--accent3, #00cec9);
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #mapSvg text {
+      fill: var(--text);
+      paint-order: stroke;
+      stroke: var(--map-sea);
+      stroke-width: 0.9;
+      stroke-linejoin: round;
+      font-family: var(--body);
+      font-weight: 600;
+    }
+
+    .ctrl {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.85rem;
+    }
+
+    .pauselist,
+    .log {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .pauselist li,
+    .log li {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      background: var(--glass-elevated);
+      border: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+    }
+
+    .custom-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 5, 20, 0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 1000;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .custom-modal[hidden] {
+      display: none !important;
+    }
+
+    .modal-content {
+      background: var(--card-solid);
+      border: 1px solid var(--glass-border);
+      padding: 1.85rem;
+      border-radius: 22px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+      font-family: var(--display);
+      font-size: 1.35rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.4rem;
+      justify-content: center;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-height: 42px;
+      border-radius: 12px;
+    }
+
+    @media (max-width: 720px) {
+      .dest-picker-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .swap-cities-btn {
+        margin: 0 auto;
+        transform: rotate(90deg);
+      }
+
+      .swap-cities-btn:hover {
+        transform: rotate(270deg);
+      }
+
+      .duration-filter-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .passenger-and-summary-row {
+        grid-template-columns: 1fr;
+      }
+
+      .flight-topbar {
+        flex-wrap: wrap;
+      }
+
+      .route-title-center {
+        order: -1;
+        flex: 1 1 100%;
+        text-align: left;
+        padding: 0 0 0.35rem 0;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .focus-card {
+        padding: 1.15rem 1rem;
+        border-radius: 20px;
+      }
+
+      .booking-mode-switcher {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .mode-seg-btn {
+        font-size: 0.82rem;
+        padding: 0.45rem 0.6rem;
+      }
+
+      .pass {
+        grid-template-columns: 1fr;
+      }
+
+      .pass .stub {
+        border-left: 0;
+        border-top: 2px dashed #c8c4e3;
+      }
+
+      .meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .seatmap {
+        grid-template-columns: 1.4rem repeat(3, 2.05rem) 0.9rem repeat(3, 2.05rem);
+        padding: 1.65rem 0.75rem 1rem;
+      }
+
+      .seat {
+        width: 2.05rem;
+        height: 2.05rem;
+        font-size: 0.7rem;
+      }
+
+      .curved-progress-wrapper {
+        padding-top: 6.8rem;
+      }
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #pass,
+      #pass * {
+        visibility: visible;
+      }
+      #pass {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: none;
+        animation: none;
+      }
+      .bg {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body data-page="focus">
+  <header id="topbar"></header>
+  <main>
+    <div class="pagetitle">
+      <h1>FOCUS</h1>
+      <div class="badge-row-wrap"><span class="badge-sub">✈ Flight Session Mode</span></div>
+      <p>Book your focus flight by destination or target duration and stay airborne until touchdown.</p>
+    </div>
+
+    <div class="focus-shell">
+      <section id="s1" class="step panel focus-card">
+        <div class="step-top-header">
+          <div class="step-header-left">
+            <h2>Choose Your Flight</h2>
+          </div>
+          <span class="step-pill-indicator">Step 1 of 3 · Flight &amp; Duration</span>
+        </div>
+
+        <div class="booking-mode-switcher" role="tablist" aria-label="Flight selection mode">
+          <button type="button" id="modeDestBtn" class="mode-seg-btn active" role="tab" aria-selected="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            By Destination
+          </button>
+          <button type="button" id="modeTimeBtn" class="mode-seg-btn" role="tab" aria-selected="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            By Flight Time
+          </button>
+        </div>
+
+        <div id="destPickerPane">
+          <div class="dest-picker-grid">
+            <div class="input-group-custom">
+              <label for="fromInput">Origin Airport (From)</label>
+              <input id="fromInput" class="custom-city-input" placeholder="Select origin..." autocomplete="off">
+              <div id="fromDropdown" class="city-dropdown" hidden></div>
+              <input type="hidden" id="fromVal" value="0">
+            </div>
+
+            <button type="button" id="swapCitiesBtn" class="swap-cities-btn" title="Swap origin and destination" aria-label="Swap origin and destination">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+            </button>
+
+            <div class="input-group-custom">
+              <label for="toInput">Destination Airport (To)</label>
+              <input id="toInput" class="custom-city-input" placeholder="Select destination..." autocomplete="off">
+              <div id="toDropdown" class="city-dropdown" hidden></div>
+              <input type="hidden" id="toVal" value="29">
+            </div>
+          </div>
+        </div>
+
+        <div id="timePickerPane" class="time-picker-panel" hidden>
+          <div class="time-hero-row">
+            <div class="time-target-display">
+              <span class="time-target-label">Target Focus Flight Time</span>
+              <div class="time-target-value" id="targetTimeDisplay">45m</div>
+            </div>
+            <label class="time-exact-toggle" title="Use your exact chosen focus duration or the selected route's natural flight duration">
+              <input type="checkbox" id="lockExactTimeToggle" checked>
+              <span>Lock timer to exact chosen duration</span>
+            </label>
+          </div>
+
+          <div class="duration-preset-chips" id="durationPresets">
+            <button type="button" class="dur-chip" data-mins="15">15m</button>
+            <button type="button" class="dur-chip" data-mins="25">25m</button>
+            <button type="button" class="dur-chip" data-mins="30">30m</button>
+            <button type="button" class="dur-chip active" data-mins="45">45m</button>
+            <button type="button" class="dur-chip" data-mins="60">1h</button>
+            <button type="button" class="dur-chip" data-mins="90">1h 30m</button>
+            <button type="button" class="dur-chip" data-mins="120">2h</button>
+            <button type="button" class="dur-chip" data-mins="180">3h</button>
+            <button type="button" class="dur-chip" data-mins="300">5h</button>
+          </div>
+
+          <div class="duration-slider-wrap">
+            <span class="rowno">10m</span>
+            <input type="range" id="durationSlider" class="duration-slider" min="10" max="480" step="5" value="45" aria-label="Target focus duration in minutes">
+            <span class="rowno">8h</span>
+          </div>
+
+          <div class="duration-filter-bar">
+            <div class="input-group-custom">
+              <label for="timeOriginInput">Departing From</label>
+              <input id="timeOriginInput" class="custom-city-input" placeholder="Search departure airport or Any..." autocomplete="off">
+              <div id="timeOriginDropdown" class="city-dropdown" hidden></div>
+              <input type="hidden" id="timeOriginVal" value="any">
+            </div>
+            <button type="button" id="shuffleTimeRoutesBtn" class="shuffle-routes-btn">
+              ↻ Shuffle Matching Routes
+            </button>
+          </div>
+
+          <div class="suggested-routes-grid" id="suggestedRoutesGrid" role="listbox" aria-label="Suggested routes matching target duration"></div>
+        </div>
+
+        <div class="passenger-and-summary-row">
+          <div class="input-group-custom">
+            <label for="name">Passenger Name</label>
+            <input id="name" class="custom-city-input" placeholder="Your name" maxlength="24">
+          </div>
+          <div id="routeInfo" class="route-preview-banner"></div>
+        </div>
+
+        <div class="step-cta-row">
+          <button id="to2" class="primary apple-cta-btn">Choose Your Cabin Seat →</button>
+        </div>
+      </section>
+
+      <section id="s2" class="step panel focus-card" hidden>
+        <div class="step-top-header">
+          <div class="step-header-left">
+            <button id="back1" class="back-arrow" aria-label="Back to flight selection">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2>Pick Your Cabin Seat</h2>
+          </div>
+          <span class="step-pill-indicator">Step 2 of 3 · Cabin Map</span>
+        </div>
+
+        <div class="cabin-legend">
+          <span class="legend-item"><span class="legend-swatch avail"></span> Available</span>
+          <span class="legend-item"><span class="legend-swatch sel"></span> Selected</span>
+          <span class="legend-item"><span class="legend-swatch taken"></span> Occupied</span>
+        </div>
+
+        <div class="seatmap" id="seatmap" role="group" aria-label="Seat map"></div>
+        <p style="text-align:center; margin: 0.5rem 0 0;">Selected Seat: <strong id="seatLabel" style="color: var(--accent);">None</strong></p>
+        <div class="step-cta-row">
+          <button id="to3" class="primary apple-cta-btn" disabled>Generate Boarding Pass →</button>
+        </div>
+      </section>
+
+      <section id="s3" class="step panel focus-card" hidden>
+        <div class="step-top-header">
+          <div class="step-header-left">
+            <button id="back2" class="back-arrow" aria-label="Change seat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h2>Your Boarding Pass</h2>
+          </div>
+          <span class="step-pill-indicator">Step 3 of 3 · Ready for Takeoff</span>
+        </div>
+
+        <div class="pass" id="pass">
+          <div class="band"><span>BOARDING PASS · FOCUS AIRWAYS</span><span id="pFlight"></span></div>
+          <div class="main">
+            <small>Passenger</small>
+            <div style="font-family:var(--display);font-size:1.55rem;font-weight:800" id="pName"></div>
+            <div class="route"><span class="iata" id="pFrom"></span><span class="line"></span><span style="font-size:1.5rem">✈</span><span class="line"></span><span class="iata" id="pTo"></span></div>
+            <div style="color:#6a668f;font-weight:600;font-size:0.92rem;" id="pCities"></div>
+            <div class="meta">
+              <div><small>Seat</small><b id="pSeat"></b></div>
+              <div><small>Gate</small><b id="pGate"></b></div>
+              <div><small>Flight Time</small><b id="pDur"></b></div>
+              <div><small>Distance</small><b id="pDist"></b></div>
+              <div><small>Boards</small><b>Now</b></div>
+              <div><small>Date</small><b id="pDate"></b></div>
+            </div>
+          </div>
+          <div class="stub">
+            <div>
+              <small>Cabin Seat</small>
+              <div style="font-family:var(--display);font-size:2.5rem;font-weight:800;line-height:1.1;" id="pSeat2"></div>
+              <small style="margin-top:0.4rem;"><span id="pFrom2"></span> → <span id="pTo2"></span></small>
+            </div>
+            <span class="barcode" aria-hidden="true"></span>
+          </div>
+        </div>
+
+        <div class="step-cta-row">
+          <button id="start" class="signal apple-cta-btn">Take Off · Start Focus Flight</button>
+        </div>
+      </section>
+
+      <section id="s4" class="step panel focus-card" hidden>
+        <div class="flight-topbar">
+          <div class="view-switch" role="tablist" aria-label="Flight view">
+            <button role="tab" data-mode="details" class="view-btn on" aria-label="Details">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+              </svg>
+              <span class="label">Telemetry</span>
+            </button>
+            <button role="tab" data-mode="map" class="view-btn" aria-label="Map">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
+                <line x1="8" y1="2" x2="8" y2="18" />
+                <line x1="16" y1="6" x2="16" y2="22" />
+              </svg>
+              <span class="label">Live Map</span>
+            </button>
+          </div>
+          <strong id="routeTitle" class="route-title-center"></strong>
+          <div class="flight-ctrls">
+            <button id="pauseBtn" class="ctrl-action-btn" aria-label="Pause flight">
+              <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="4" width="4" height="16" />
+                <rect x="14" y="4" width="4" height="16" />
+              </svg>
+              <span class="text">Pause</span>
+            </button>
+            <button id="cancel" class="ctrl-action-btn danger" aria-label="Cancel flight">
+              <svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span class="text">Cancel</span>
+            </button>
+          </div>
+        </div>
+        <div class="banner" id="pausedBanner"></div>
+
+        <div id="v-details">
+          <div class="curved-progress-wrapper" aria-hidden="true">
+            <svg id="curvedProgSvg" viewBox="0 0 330 180">
+              <path d="M -11 182 A 162 162 0 0 1 340 182" fill="none" stroke="var(--card-2)" stroke-width="8" stroke-linecap="round" />
+              <path id="curvedProgPath" d="M -11 182 A 162 162 0 0 1 340 182" fill="none" stroke="url(#progGrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="558" stroke-dashoffset="558" style="transition: linear;" />
+              <defs>
+                <linearGradient id="progGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="var(--accent)" />
+                  <stop offset="50%" stop-color="var(--accent2)" />
+                  <stop offset="100%" stop-color="var(--accent3)" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <div class="bigclock" id="clock">00:00</div>
+            <div class="phase" id="phase"></div>
+          </div>
+
+          <div class="gauges">
+            <div class="gauge"><small>Altitude</small><b id="gAlt"></b><span id="gAltSub"></span></div>
+            <div class="gauge"><small>Ground Speed</small><b id="gSpd"></b><span id="gSpdSub"></span></div>
+            <div class="gauge"><small>Outside Air</small><b id="gTemp"></b><span>at current altitude</span></div>
+            <div class="gauge"><small>Heading</small><b id="gHdg"></b><span id="gHdgSub"></span></div>
+            <div class="gauge"><small>Distance Left</small><b id="gLeft"></b><span id="gFlown"></span></div>
+            <div class="gauge"><small>Arrival ETA</small><b id="gETA"></b><span id="gElapsed"></span></div>
+            <div class="gauge"><small>Cabin Seat</small><b id="gSeat"></b><span id="gFlightNo"></span></div>
+            <div class="gauge"><small>Turbulence</small><b id="gTurb">0</b><span>tab switches</span></div>
+          </div>
+          <div class="quote" id="quote"></div>
+        </div>
+
+        <div id="v-map" hidden>
+          <div class="stage">
+            <div class="hud"><span class="hudPhase"></span> · <b class="hudTime"></b></div>
+            <svg id="mapSvg" role="img" aria-label="Flight map showing origin, destination and the plane's current position"></svg>
+          </div>
+          <div class="ctrl">
+            <button id="zoomRoute" class="on">Zoom to Route</button>
+            <button id="zoomWorld">Whole World</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="pauseCard" class="step panel focus-card" hidden>
+        <h3 style="margin-top:0; font-family:var(--display);">In-Flight Pause Log</h3>
+        <div id="pauseLog"></div>
+      </section>
+
+      <section id="s5" class="step panel focus-card" hidden>
+        <h2 style="margin-top:0; font-family:var(--display); font-size:1.85rem;">🛬 Touchdown · You Have Landed</h2>
+        <p id="landMsg" style="font-size:1.05rem; line-height:1.65;"></p>
+        <div id="landPauses"></div>
+        <div class="step-cta-row">
+          <button id="again" class="primary apple-cta-btn">Book Another Focus Flight</button>
+        </div>
+      </section>
+
+      <section class="panel focus-card">
+        <div class="step-top-header" style="margin-bottom:1rem; padding-bottom:0.75rem;">
+          <div class="step-header-left">
+            <h3 style="margin:0; font-family:var(--display); font-size:1.3rem;">Flight Logbook</h3>
+          </div>
+          <span class="muted" id="logSummary" style="font-family:var(--mono); font-size:0.78rem;"></span>
+        </div>
+        <ul class="log" id="log"></ul>
+      </section>
+    </div>
+
+    <div id="cancelModal" class="custom-modal" hidden>
+      <div class="modal-content">
+        <h3>Cancel Flight?</h3>
+        <p class="muted">Aborting mid-air means this session will not be recorded in your Focus Flight Logbook.</p>
+        <div class="modal-actions">
+          <button id="modalKeepFlying" class="primary">Keep Flying</button>
+          <button id="modalConfirmCancel" class="danger">Cancel Flight</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  DB.whenReady(() => {
+    const $ = id => document.getElementById(id);
+    const FKEY = "p23.activeFlight", LKEY = "p23.flightLog";
+    const CITIES = [
+      ["YYZ", "Toronto", 43.68, -79.63], ["YOW", "Ottawa", 45.32, -75.67], ["YUL", "Montréal", 45.47, -73.74], ["YVR", "Vancouver", 49.19, -123.18], ["YYC", "Calgary", 51.11, -114.02],
+      ["JFK", "New York", 40.64, -73.78], ["LAX", "Los Angeles", 33.94, -118.41], ["SFO", "San Francisco", 37.62, -122.38], ["MIA", "Miami", 25.79, -80.29], ["ANC", "Anchorage", 61.17, -150.0],
+      ["HNL", "Honolulu", 21.32, -157.92], ["MEX", "Mexico City", 19.44, -99.07], ["BOG", "Bogotá", 4.7, -74.14], ["GRU", "São Paulo", -23.43, -46.47], ["EZE", "Buenos Aires", -34.82, -58.54],
+      ["LHR", "London", 51.47, -0.45], ["CDG", "Paris", 49.01, 2.55], ["FRA", "Frankfurt", 50.03, 8.57], ["FCO", "Rome", 41.8, 12.25], ["REK", "Reykjavík", 63.99, -22.61],
+      ["IST", "Istanbul", 41.26, 28.74], ["CAI", "Cairo", 30.12, 31.4], ["LOS", "Lagos", 6.58, 3.32], ["NBO", "Nairobi", -1.32, 36.93], ["CPT", "Cape Town", -33.97, 18.6],
+      ["DXB", "Dubai", 25.25, 55.36], ["DEL", "Delhi", 28.56, 77.1], ["BKK", "Bangkok", 13.69, 100.75], ["SIN", "Singapore", 1.36, 103.99], ["HKG", "Hong Kong", 22.31, 113.91],
+      ["ICN", "Seoul", 37.46, 126.44], ["HND", "Tokyo", 35.55, 139.78], ["SYD", "Sydney", -33.94, 151.18], ["AKL", "Auckland", -37.01, 174.79],
+      ["BOS", "Boston", 42.36, -71.01], ["ORD", "Chicago", 41.98, -87.90], ["DCA", "Washington", 38.85, -77.04], ["SEA", "Seattle", 47.45, -122.31],
+      ["AMS", "Amsterdam", 52.31, 4.76], ["ZRH", "Zurich", 47.46, 8.55], ["MAD", "Madrid", 40.49, -3.57], ["DUB", "Dublin", 53.42, -6.27],
+      ["TPE", "Taipei", 25.08, 121.23], ["KIX", "Osaka", 34.43, 135.23]
+    ];
+    const CRUISE_KMH = 800, MIN_MIN = 10;
+    const pad = n => String(n).padStart(2, "0");
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const ease = k => k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    function distKm(a, b) { const R = 6371, r = x => x * Math.PI / 180, dLat = r(b[2] - a[2]), dLon = r(b[3] - a[3]); const h = Math.sin(dLat / 2) ** 2 + Math.cos(r(a[2])) * Math.cos(r(b[2])) * Math.sin(dLon / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+    const flightMinutes = km => Math.max(MIN_MIN, Math.round((km / CRUISE_KMH) * 60));
+    function fmtDur(m) { m = Math.round(m); const h = Math.floor(m / 60), r = m % 60; return h ? `${h}h ${pad(r)}m` : `${m}m`; }
+    function fmtShort(ms) { const s = Math.round(ms / 1000); if (s < 60) return s + "s"; const m = Math.floor(s / 60); if (m < 60) return `${m}m ${pad(s % 60)}s`; return `${Math.floor(m / 60)}h ${pad(m % 60)}m`; }
+    function fmtClock(ms) { const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`; }
+
+    const ALL_ROUTES = [];
+    for (let i = 0; i < CITIES.length; i++) {
+      for (let j = 0; j < CITIES.length; j++) {
+        if (i === j) continue;
+        const km = distKm(CITIES[i], CITIES[j]);
+        const naturalMins = flightMinutes(km);
+        ALL_ROUTES.push({ fromIdx: i, toIdx: j, km, naturalMins });
+      }
+    }
+
+    const steps = ["s1", "s2", "s3", "s4", "s5"];
+    function show(id) { steps.forEach(s => { const el = $(s); if (el) el.hidden = s !== id; }); const pc = $("pauseCard"); if (pc) pc.hidden = id !== "s4"; }
+
+    const D2R = Math.PI / 180;
+    function gc(a, b, t) {
+      const p1 = a[0] * D2R, l1 = a[1] * D2R, p2 = b[0] * D2R, l2 = b[1] * D2R;
+      const d = 2 * Math.asin(Math.sqrt(Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((l2 - l1) / 2) ** 2)); if (!d) return a.slice();
+      const A = Math.sin((1 - t) * d) / Math.sin(d), B = Math.sin(t * d) / Math.sin(d);
+      const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2), y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2), z = A * Math.sin(p1) + B * Math.sin(p2);
+      return [Math.atan2(z, Math.hypot(x, y)) / D2R, Math.atan2(y, x) / D2R];
+    }
+    function bearing(a, b) { const p1 = a[0] * D2R, p2 = b[0] * D2R, dl = (b[1] - a[1]) * D2R; return (Math.atan2(Math.sin(dl) * Math.cos(p2), Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl)) / D2R + 360) % 360; }
+    const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+
+    const state = { from: null, to: null, seat: null, name: "", flightNo: "", gate: "", mins: 0, km: 0, bookingMode: "dest", targetMins: 45, lockExactTime: true };
+    let F = null, loop = null, lastKey = null, firstTick = true, cur = null, mode = "details";
+    let M = null, zoomMode = "route", shuffleSalt = 0;
+
+    const totalMs = f => f.mins * 60000;
+    const pausedMs = (f, now) => f.pauses.reduce((a, p) => a + ((p.e ?? now) - p.s), 0);
+    const elapsedAt = (f, now) => clamp(now - f.startedAt - pausedMs(f, now), 0, totalMs(f));
+    const isPaused = f => { const l = f.pauses[f.pauses.length - 1]; return !!l && l.e == null; };
+
+    function profile(f, el) {
+      const T = totalMs(f), roll = Math.min(.03 * T, 90000), climb = Math.min(.18 * T, 20 * 60000), desc = Math.min(.2 * T, 25 * 60000), land = Math.min(.02 * T, 60000);
+      const cruiseAlt = clamp(f.km * 15, 9000, 37000);
+      const effectiveCruiseKmh = clamp(Math.round((f.km || 500) / (Math.max(10, f.mins) / 60)), 320, 980);
+      const v = effectiveCruiseKmh, jitter = Math.sin(el / 23000) * 14 + Math.sin(el / 7000) * 5;
+      let key, alt, spd;
+      if (el < roll) { key = "roll"; alt = 0; spd = 260 * (el / roll); }
+      else if (el < climb) { key = "climb"; const k = (el - roll) / (climb - roll); alt = cruiseAlt * ease(k); spd = 260 + (v - 260) * k; }
+      else if (el < T - desc) { key = "cruise"; alt = cruiseAlt + Math.sin(el / 90000) * 150; spd = v + jitter; }
+      else if (el < T - land) { key = "descend"; const k = (el - (T - desc)) / (desc - land); alt = cruiseAlt * (1 - ease(k)); spd = v + (280 - v) * k; }
+      else { key = "land"; const k = (el - (T - land)) / land; alt = 0; spd = 280 * (1 - k); }
+      const label = { roll: "Takeoff roll", climb: "Climbing", cruise: "Cruising", descend: "Descending", land: "Landing" }[key];
+      const temp = alt < 36089 ? 15 - 0.00198 * alt : -56.5;
+      return { key, label, alt: Math.max(0, alt), spd: Math.max(0, spd), temp, cruiseAlt };
+    }
+
+    const Sound = (() => {
+      let ctx, master, engG, engLP, airG, droneG;
+      const LEVELS = { roll: { e: .95, a: .12, d: .25, f: 700 }, climb: { e: .8, a: .16, d: .22, f: 600 }, cruise: { e: .4, a: .1, d: .14, f: 380 }, descend: { e: .48, a: .13, d: .16, f: 450 }, land: { e: .75, a: .1, d: .2, f: 650 }, paused: { e: .08, a: .015, d: .02, f: 240 } };
+      function noise(brown) { const n = ctx.sampleRate * 4, b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0); let last = 0; for (let i = 0; i < n; i++) { const w = Math.random() * 2 - 1; if (brown) { last = (last + .02 * w) / 1.02; d[i] = last * 3.5; } else d[i] = w * .5; } return b; }
+      function init() {
+        if (ctx) return true; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+        ctx = new AC(); master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+        const e = ctx.createBufferSource(); e.buffer = noise(true); e.loop = true; engLP = ctx.createBiquadFilter(); engLP.type = "lowpass"; engLP.frequency.value = 380; engG = ctx.createGain(); engG.gain.value = 0; e.connect(engLP).connect(engG).connect(master); e.start();
+        const a = ctx.createBufferSource(); a.buffer = noise(false); a.loop = true; const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1800; bp.Q.value = .5; airG = ctx.createGain(); airG.gain.value = 0; a.connect(bp).connect(airG).connect(master); a.start();
+        const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 170; droneG = ctx.createGain(); droneG.gain.value = 0; lp.connect(droneG).connect(master);
+        [62, 63.4].forEach(fr => { const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = fr; o.connect(lp); o.start(); });
+        return true;
+      }
+      const api = {
+        start() { if (!init()) return; ctx.resume(); api.apply(); },
+        ready: () => !!ctx,
+        apply() {
+          if (!ctx) return; const on = DB.settings.sound && DB.settings.volume > 0;
+          master.gain.setTargetAtTime(on ? DB.settings.volume : 0, ctx.currentTime, .15);
+          if (on) { if (ctx.state === "suspended" && F) ctx.resume(); }
+          else setTimeout(() => { if (ctx.state === "running" && !(DB.settings.sound && DB.settings.volume > 0)) ctx.suspend(); }, 500);
+        },
+        level(k) { if (!ctx) return; const L = LEVELS[k], t = ctx.currentTime; engG.gain.setTargetAtTime(L.e, t, 1.2); airG.gain.setTargetAtTime(L.a, t, 1.2); droneG.gain.setTargetAtTime(L.d, t, 1.2); engLP.frequency.setTargetAtTime(L.f, t, 1.2); },
+        ding(times = 1) { if (!ctx) return; for (let i = 0; i < times; i++) { [880, 659.25].forEach((fr, j) => { const t = ctx.currentTime + i * 1.1 + j * .32, o = ctx.createOscillator(), g = ctx.createGain(); o.type = "sine"; o.frequency.value = fr; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.45, t + .015); g.gain.exponentialRampToValueAtTime(.001, t + 1.3); o.connect(g).connect(master); o.start(t); o.stop(t + 1.4); }); } },
+        silence() { if (ctx) { master.gain.setTargetAtTime(0, ctx.currentTime, .4); setTimeout(() => { if (!F && ctx.state === "running") ctx.suspend(); }, 1200); } }
+      };
+      return api;
+    })();
+
+    document.addEventListener("p23audio", () => Sound.apply());
+
+    const QUOTES = [
+      "Cruising altitude reached. The only way out is through your to-do list.", "Turbulence is temporary. So is the urge to check your phone.", "Attention passengers: deep work is now in progress.",
+      "The destination will still be there when you land. Keep going.", "Every great arrival begins with staying in your seat.", "Your future self is waiting at the arrivals gate.",
+      "No notifications at 35,000 feet. Enjoy the quiet.", "One task at a time. Even jets only fly one route.", "The cabin crew recommends finishing what you started.",
+      "Clouds drift by. Thoughts too. Let them.", "Small steps, long distance. That is how planes cross oceans.", "A smooth flight is just many calm minutes in a row.",
+      "You have already left the ground. Momentum is on your side.", "Focus is a runway: clear it and you take off.", "Tip from the captain: sip some water, stretch, then back to it.",
+      "Halfway is just where the downhill part begins.", "Distance is only a number of focused minutes.", "You are not behind. You are in flight.", "Good work looks a lot like staring at a horizon for a while."
+    ];
+    let qi = Math.floor(Math.random() * QUOTES.length);
+    function nextQuote(first) {
+      const el = $("quote"); if (!el) return; const set = () => { qi = (qi + 1 + Math.floor(Math.random() * (QUOTES.length - 2))) % QUOTES.length; el.innerHTML = `<small>From the flight deck</small>${DB.esc(QUOTES[qi])}`; el.classList.remove("fade"); };
+      if (first) { set(); return; } el.classList.add("fade"); setTimeout(set, 650);
+    }
+    setInterval(() => { if (F && !document.hidden) nextQuote(); }, 25000);
+
+    function begin(f, resumed) {
+      F = f; DB.set(FKEY, F); firstTick = !!resumed; lastKey = null; show("s4");
+      $("routeTitle").textContent = `${f.from[1]} (${f.from[0]}) → ${f.to[1]} (${f.to[0]})`; $("gSeat").textContent = f.seat; $("gFlightNo").textContent = f.flightNo;
+      setupMap(); setMode(mode); nextQuote(true); renderPauseLog();
+      clearInterval(loop); tick(); uiStamp = 0; loop = setInterval(tick, 1000); wake();
+    }
+
+    const txtCache = {};
+    function setT(id, txt) { if (txtCache[id] === txt) return; txtCache[id] = txt; const e = $(id); if (e) e.textContent = txt; }
+    const round = (v, step) => Math.round(v / step) * step;
+    let uiStamp = 0, progShown = -1;
+
+    function tick() {
+      if (!F) return;
+      const now = Date.now(), el = elapsedAt(F, now), P = profile(F, el), paused = isPaused(F), T = totalMs(F), p = el / T;
+      if (!paused && P.key !== lastKey) {
+        if (!firstTick) { if (P.key === "roll" || P.key === "cruise" || P.key === "descend") Sound.ding(1); if (P.key === "land") Sound.ding(2); }
+        Sound.level(P.key); lastKey = P.key;
+      }
+      if (paused && lastKey !== "paused") { Sound.level("paused"); lastKey = "paused"; }
+      firstTick = false;
+      const pos = gc([F.from[2], F.from[3]], [F.to[2], F.to[3]], p), hdg = bearing(pos, [F.to[2], F.to[3]]), left = F.km * (1 - p);
+      cur = { el, P, p, pos, hdg, paused, left, now };
+      if (!paused && el >= T) { land(); return; }
+      if (document.hidden) return;
+
+      const clockTxt = fmtClock(T - el), label = paused ? "Paused · holding" : P.label;
+      setT("clock", clockTxt); setT("phase", label);
+      const prog = Math.round(p * 1000);
+      if (prog !== progShown) { progShown = prog; const pp = $("curvedProgPath"); if (pp) pp.style.strokeDashoffset = 558 * (1 - prog / 1000); }
+      document.querySelectorAll(".hudTime").forEach(e => { if (e.textContent !== clockTxt) e.textContent = clockTxt; });
+      document.querySelectorAll(".hudPhase").forEach(e => { if (e.textContent !== label) e.textContent = label; });
+      const b = $("pausedBanner"); if (b) b.classList.toggle("show", paused);
+      if (paused && b) { const lp = F.pauses[F.pauses.length - 1]; b.innerHTML = `⏸ <b>Flight paused</b> for ${fmtShort(now - lp.s)}. The clock is stopped. Resume when you're ready.`; }
+      updatePauseLive(now);
+
+      if (now - uiStamp < 2000) return;
+      uiStamp = now;
+      const altR = round(P.alt, 500), spdR = round(P.spd, 10);
+      setT("gAlt", altR.toLocaleString() + " ft"); setT("gAltSub", (round(P.alt * .3048, 100)).toLocaleString() + " m");
+      setT("gSpd", spdR + " km/h"); setT("gSpdSub", round(P.spd * .621, 10) + " mph");
+      setT("gTemp", Math.round(P.temp) + " °C");
+      setT("gHdg", Math.round(hdg) + "°"); setT("gHdgSub", COMPASS[Math.round(hdg / 22.5) % 16]);
+      setT("gLeft", round(left, 10).toLocaleString() + " km"); setT("gFlown", round(F.km - left, 10).toLocaleString() + " km flown");
+      setT("gETA", paused ? "On hold" : DB.fmtTime(now + (T - el))); setT("gElapsed", fmtDur(el / 60000) + " in the air");
+      setT("gTurb", String(F.turbulence));
+      updateMap();
+    }
+
+    function syncPauseBtn() {
+      const p = isPaused(F);
+      const btn = $("pauseBtn");
+      if (!btn) return;
+      btn.innerHTML = p ? '<svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg><span class="text">Resume</span>' : '<svg class="btn-icon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg><span class="text">Pause</span>';
+      btn.classList.toggle("paused", p);
+    }
+
+    function renderPauseLog() {
+      syncPauseBtn(); const box = $("pauseLog"), now = Date.now(); if (!box) return;
+      if (!F.pauses.length) { box.innerHTML = '<p class="muted" style="margin:0">No pauses yet. When you pause, the time you were away is recorded here.</p>'; return; }
+      const total = pausedMs(F, now);
+      box.innerHTML = '<ul class="pauselist">' + F.pauses.map((p, i) => `<li><span><b>Pause ${i + 1}</b> at ${DB.fmtTime(p.s)} · ${fmtShort(p.at)} into the flight</span><span data-pi="${i}">${p.e ? fmtShort(p.e - p.s) : fmtShort(now - p.s) + " (now)"}</span></li>`).join("") + `</ul><p class="muted" style="margin:.6rem 0 0" id="pauseTotal">${F.pauses.length} ${F.pauses.length === 1 ? "pause" : "pauses"}, ${fmtShort(total)} in total</p>`;
+    }
+
+    function updatePauseLive(now) {
+      if (!F || !F.pauses.length) return; const last = F.pauses.length - 1, p = F.pauses[last];
+      if (p.e == null) { const s = document.querySelector(`[data-pi="${last}"]`); if (s) s.textContent = fmtShort(now - p.s) + " (now)"; const t = $("pauseTotal"); if (t) t.textContent = `${F.pauses.length} ${F.pauses.length === 1 ? "pause" : "pauses"}, ${fmtShort(pausedMs(F, now))} in total`; }
+    }
+
+    let hiddenSince = null;
+    document.addEventListener("visibilitychange", () => {
+      if (!F) return;
+      if (document.hidden) { hiddenSince = Date.now(); }
+      else {
+        if (hiddenSince && Date.now() - hiddenSince > 5000 && !isPaused(F)) { F.turbulence++; DB.set(FKEY, F); }
+        hiddenSince = null; wake(); uiStamp = 0; tick();
+      }
+    });
+    let lock = null; async function wake() { try { if ("wakeLock" in navigator && !document.hidden && F) lock = await navigator.wakeLock.request("screen"); } catch { } }
+
+    function endFlight() { clearInterval(loop); loop = null; DB.del(FKEY); Sound.silence(); try { lock && lock.release(); } catch { } F = null; cur = null; }
+
+    function land() {
+      const f = F;
+      if (!f) return;
+      const now = Date.now(), T = totalMs(f), lateBy = now - (f.startedAt + pausedMs(f, now) + T);
+      clearInterval(loop); loop = null; Sound.level("land"); if (lateBy < 20000) Sound.ding(2); setTimeout(() => Sound.silence(), 4500);
+      const pm = pausedMs(f, now), log = DB.get(LKEY, []);
+      const toName = f.to ? f.to[1] : "Destination";
+      const fromName = f.from ? f.from[1] : "Origin";
+
+      log.unshift({ from: fromName, to: toName, mins: f.mins, km: Math.round(f.km || 0), turbulence: f.turbulence || 0, pauses: (f.pauses || []).length, pausedMs: pm, date: new Date().toISOString() });
+      DB.set(LKEY, log); DB.del(FKEY);
+
+      const landMsg = $("landMsg");
+      if (landMsg) landMsg.innerHTML = `Welcome to <b>${DB.esc(toName)}</b>. You focused for <b>${fmtDur(f.mins)}</b> across ${Math.round(f.km || 0).toLocaleString()} km with ${f.turbulence || 0} turbulence ${(f.turbulence || 0) === 1 ? "event" : "events"}.`;
+
+      const landPauses = $("landPauses");
+      const pauses = f.pauses || [];
+      if (landPauses) landPauses.innerHTML = pauses.length ? `<h3>Pauses</h3><ul class="pauselist">${pauses.map((p, i) => `<li><span>Pause ${i + 1} at ${DB.fmtTime(p.s)} (${fmtShort(p.at)} in)</span><span>${fmtShort((p.e || now) - p.s)}</span></li>`).join("")}</ul><p class="muted">${fmtShort(pm)} paused in total.</p>` : '<p class="muted">You flew non-stop with zero pauses.</p>';
+
+      document.title = "Landed · Focus flight"; show("s5"); renderLog(); F = null; cur = null; try { lock && lock.release(); } catch { }
+      if (DB.settings.notifyFlight && lateBy < 120000) DB.fire(`Landed in ${toName}`, `Your ${fmtDur(f.mins)} focus flight is complete.`, { tag: "landing", url: "pages/focus.html" });
+    }
+
+    function renderLog() {
+      const log = DB.get(LKEY, []), mins = log.reduce((a, l) => a + l.mins, 0), km = log.reduce((a, l) => a + l.km, 0);
+      const sum = $("logSummary"); if (sum) sum.textContent = log.length ? `${log.length} flights · ${fmtDur(mins)} focused · ${km.toLocaleString()} km flown` : "No completed flights yet";
+      const logEl = $("log"); if (logEl) {
+        logEl.innerHTML = "";
+        if (!log.length) {
+          logEl.innerHTML = '<li class="muted" style="justify-content:center;">Complete your first focus flight to build your logbook.</li>';
+          return;
+        }
+        log.slice(0, 10).forEach(l => {
+          const li = document.createElement("li");
+          const dateStr = new Date(l.date).toLocaleDateString([], { month: "short", day: "numeric" });
+          const pauseStr = l.pauses ? `${l.pauses} ${l.pauses === 1 ? "pause" : "pauses"} (${fmtShort(l.pausedMs)})` : "Non-stop";
+          li.innerHTML = `<span><b>${DB.esc(l.from)} → ${DB.esc(l.to)}</b> <span class="muted">· ${dateStr}</span></span><span style="font-family:var(--mono);font-size:0.8rem;">${fmtDur(l.mins)} · ${pauseStr} · Turb ${l.turbulence}</span>`;
+          logEl.appendChild(li);
+        });
+      }
+    }
+
+    function setMode(m) {
+      mode = m; DB.set("p23.focusMode", m);
+      ["details", "map", "window"].forEach(k => { const el = $("v-" + k); if (el) el.hidden = k !== m; });
+      document.querySelectorAll(".view-btn").forEach(b => {
+        const isOn = b.dataset.mode === m;
+        b.classList.toggle("on", isOn);
+        b.setAttribute("aria-selected", isOn);
+      });
+      if (m === "map") updateMap();
+    }
+
+    const landPath = () => WORLD_LAND.map(poly => "M" + poly.map(([x, y]) => x + " " + (-y)).join("L") + "Z").join("");
+    const seaPath = () => WORLD_SEAS.map(poly => "M" + poly.map(([x, y]) => x + " " + (-y)).join("L") + "Z").join("");
+
+    function setupMap() {
+      if (!F) return;
+      const a = [F.from[2], F.from[3]], b = [F.to[2], F.to[3]], N = 240, pts = []; let prev = a[1];
+      for (let i = 0; i <= N; i++) { let [lat, lon] = gc(a, b, i / N); while (lon - prev > 180) lon -= 360; while (lon - prev < -180) lon += 360; prev = lon; pts.push([lon, -lat]); }
+      const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      M = { pts, N, minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) }; drawMap();
+    }
+
+    function drawMap() {
+      const svg = $("mapSvg"); if (!svg || !M) return;
+      const { pts, minX, maxX, minY, maxY } = M; let w, h, x0, y0;
+      if (zoomMode === "route") { w = maxX - minX; h = maxY - minY; const px = Math.max(w * .3, 16), py = Math.max(h * .4, 9); w += 2 * px; h += 2 * py; if (w / h > 2) h = w / 2; else w = h * 2; w = Math.min(w, 360); h = w / 2; x0 = (minX + maxX) / 2 - w / 2; y0 = clamp((minY + maxY) / 2 - h / 2, -90, 90 - h); }
+      else { w = 360; h = 180; x0 = (minX + maxX) / 2 - 180; y0 = -90; }
+      M.w = w; svg.setAttribute("viewBox", `${x0} ${y0} ${w} ${h}`);
+      let g = ""; for (let lon = Math.floor(x0 / 30) * 30; lon <= x0 + w; lon += 30) g += `M${lon} -90V90`; for (let lat = -60; lat <= 60; lat += 30) g += `M${x0} ${-lat}H${x0 + w}`;
+      const land = landPath(), sea = seaPath(), offs = [-720, -360, 0, 360, 720].filter(o => x0 + w > o - 180 && x0 < o + 180 + 360);
+      const r = w / 110, fs = w / 40, pl = [...pts[0]], dl = pts[pts.length - 1];
+      svg.innerHTML = `<path class="grat" d="${g}"/>` + offs.map(o => `<g transform="translate(${o} 0)"><path class="land" d="${land}"/><path d="${sea}" style="fill:var(--map-sea)"/></g>`).join("") +
+        `<path class="route" d="M${pts.map(p => p.join(" ")).join("L")}"/><path class="flown" id="mFlown" d=""/>` +
+        [[pl, F.from], [dl, F.to]].map(([p, c]) => { const left = p[0] > (minX + maxX) / 2; return `<circle cx="${p[0]}" cy="${p[1]}" r="${r}" fill="var(--accent2)" stroke="#fff" stroke-width="${r * .35}"/><text x="${p[0] + (left ? -r - 2 : r + 2)}" y="${p[1] + fs * .35}" font-size="${fs}" text-anchor="${left ? "end" : "start"}">${c[0]} ${c[1]}</text>`; }).join("") +
+        `<g id="mPlane"><circle id="mPulse" r="${r * 3}" fill="var(--accent3)" opacity=".25"/><polygon fill="#fff" stroke="var(--accent3)" stroke-width="${r * .3}" points="${[[1, 0], [.35, .12], [.1, .12], [-.35, .9], [-.5, .9], [-.35, .12], [-.8, .1], [-.95, .35], [-1, .35], [-.9, 0], [-1, -.35], [-.95, -.35], [-.8, -.1], [-.35, -.12], [-.5, -.9], [-.35, -.9], [.1, -.12], [.35, -.12]].map(([x, y]) => (x * w / 34).toFixed(3) + "," + (y * w / 34).toFixed(3)).join(" ")}"/></g>`;
+
+      const zr = $("zoomRoute"); if (zr) zr.classList.toggle("on", zoomMode === "route");
+      const zw = $("zoomWorld"); if (zw) zw.classList.toggle("on", zoomMode === "world");
+      updateMap();
+    }
+
+    function updateMap() {
+      if (!M || !cur || mode !== "map") return;
+      const f = cur.p * M.N, i = Math.min(M.N - 1, Math.floor(f)), t = f - i, a = M.pts[i], b = M.pts[i + 1];
+      const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, ang = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+      const pl = $("mPlane"), fl = $("mFlown"); if (!pl) return;
+      pl.setAttribute("transform", `translate(${x} ${y}) rotate(${ang})`);
+      if (!M.str) M.str = M.pts.map(p => p.join(" "));
+      fl.setAttribute("d", "M" + M.str.slice(0, i + 1).join("L") + "L" + x + " " + y);
+    }
+
+    function syncCityInputsFromVal() {
+      const fIdx = +$("fromVal").value;
+      const tIdx = +$("toVal").value;
+      if ($("fromInput") && CITIES[fIdx]) $("fromInput").value = `${CITIES[fIdx][1]} (${CITIES[fIdx][0]})`;
+      if ($("toInput") && CITIES[tIdx]) $("toInput").value = `${CITIES[tIdx][1]} (${CITIES[tIdx][0]})`;
+    }
+
+    function renderTimeSuggestions(autoPickFirst = true) {
+      const target = state.targetMins;
+      const originFilter = $("timeOriginVal") ? $("timeOriginVal").value : "any";
+      const grid = $("suggestedRoutesGrid");
+      if (!grid) return;
+
+      const candidates = ALL_ROUTES.filter(r => originFilter === "any" || r.fromIdx === +originFilter);
+      candidates.sort((a, b) => {
+        const diffA = Math.abs(a.naturalMins - target);
+        const diffB = Math.abs(b.naturalMins - target);
+        if (diffA !== diffB) return diffA - diffB;
+        return ((a.fromIdx * 31 + a.toIdx + shuffleSalt) % 97) - ((b.fromIdx * 31 + b.toIdx + shuffleSalt) % 97);
+      });
+
+      const picked = [];
+      const seenPairs = new Set();
+      for (const c of candidates) {
+        const pairKey = [Math.min(c.fromIdx, c.toIdx), Math.max(c.fromIdx, c.toIdx)].join("-");
+        if (seenPairs.has(pairKey) && candidates.length > 12) continue;
+        seenPairs.add(pairKey);
+        picked.push(c);
+        if (picked.length === 6) break;
+      }
+
+      if (autoPickFirst && picked.length > 0) {
+        $("fromVal").value = picked[0].fromIdx;
+        $("toVal").value = picked[0].toIdx;
+        syncCityInputsFromVal();
+      }
+
+      const curFrom = +$("fromVal").value;
+      const curTo = +$("toVal").value;
+
+      grid.innerHTML = picked.map(r => {
+        const a = CITIES[r.fromIdx], b = CITIES[r.toIdx];
+        const isSel = r.fromIdx === curFrom && r.toIdx === curTo;
+        const effectiveMins = state.lockExactTime ? target : r.naturalMins;
+        const subNote = state.lockExactTime && r.naturalMins !== target
+          ? `${fmtDur(effectiveMins)} timer · ~${fmtDur(r.naturalMins)} natural`
+          : `${fmtDur(r.naturalMins)} flight`;
+        return `
+          <button type="button" class="route-suggestion-card ${isSel ? "selected" : ""}" data-from="${r.fromIdx}" data-to="${r.toIdx}">
+            <div class="route-card-top">
+              <span class="route-card-iata">${a[0]} → ${b[0]}</span>
+              <span class="route-card-dur">${fmtDur(effectiveMins)}</span>
+            </div>
+            <div class="route-card-cities">${a[1]} to ${b[1]}</div>
+            <div class="rowno" style="text-align:left; font-size:0.7rem;">${Math.round(r.km).toLocaleString()} km · ${subNote}</div>
+          </button>
+        `;
+      }).join("");
+
+      grid.querySelectorAll(".route-suggestion-card").forEach(card => {
+        card.onclick = () => {
+          $("fromVal").value = card.dataset.from;
+          $("toVal").value = card.dataset.to;
+          syncCityInputsFromVal();
+          renderTimeSuggestions(false);
+          updateRoute();
+        };
+      });
+
+      updateRoute();
+    }
+
+    function setBookingMode(newMode) {
+      state.bookingMode = newMode;
+      const isTime = newMode === "time";
+      $("modeDestBtn").classList.toggle("active", !isTime);
+      $("modeDestBtn").setAttribute("aria-selected", String(!isTime));
+      $("modeTimeBtn").classList.toggle("active", isTime);
+      $("modeTimeBtn").setAttribute("aria-selected", String(isTime));
+      $("destPickerPane").hidden = isTime;
+      $("timePickerPane").hidden = !isTime;
+      if (isTime) {
+        renderTimeSuggestions(true);
+      } else {
+        updateRoute();
+      }
+    }
+
+    function setTargetDuration(mins) {
+      state.targetMins = clamp(Math.round(mins), 10, 720);
+      if ($("targetTimeDisplay")) $("targetTimeDisplay").textContent = fmtDur(state.targetMins);
+      if ($("durationSlider")) $("durationSlider").value = String(clamp(state.targetMins, 10, 480));
+      document.querySelectorAll(".dur-chip").forEach(chip => {
+        chip.classList.toggle("active", +chip.dataset.mins === state.targetMins);
+      });
+      renderTimeSuggestions(true);
+    }
+
+    function updateRoute() {
+      const fromIdx = +$("fromVal").value;
+      const toIdx = +$("toVal").value;
+      const a = CITIES[fromIdx], b = CITIES[toIdx];
+      const infoEl = $("routeInfo"), to2El = $("to2");
+      if (!infoEl || !to2El) return;
+      if (!a || !b || a === b) {
+        infoEl.innerHTML = `<span class="route-preview-main">Select two different airports to calculate your route.</span>`;
+        to2El.disabled = true;
+        return;
+      }
+      const km = distKm(a, b);
+      const naturalMins = flightMinutes(km);
+      const finalMins = (state.bookingMode === "time" && state.lockExactTime) ? state.targetMins : naturalMins;
+      state.km = km;
+      state.mins = finalMins;
+
+      infoEl.innerHTML = `
+        <span class="route-preview-main">✈ ${a[1]} (${a[0]}) → ${b[1]} (${b[0]})</span>
+        <span class="route-preview-sub">${fmtDur(finalMins)} Focus Session · ${Math.round(km).toLocaleString()} km</span>
+      `;
+      to2El.disabled = false;
+    }
+
+    function buildSeats() {
+      const map = $("seatmap"); if (!map) return;
+      map.innerHTML = ""; state.seat = null; const sLabel = $("seatLabel"); if (sLabel) sLabel.textContent = "None"; const to3 = $("to3"); if (to3) to3.disabled = true;
+      const cols = ["A", "B", "C", null, "D", "E", "F"];
+      map.appendChild(document.createElement("span")); cols.forEach(c => { const h = document.createElement("span"); h.className = "rowno"; h.textContent = c || ""; map.appendChild(h); });
+      for (let r = 1; r <= 14; r++) {
+        const n = document.createElement("span"); n.className = "rowno"; n.textContent = r; map.appendChild(n);
+        cols.forEach(c => {
+          if (!c) { map.appendChild(document.createElement("span")); return; }
+          const b = document.createElement("button"); b.className = "seat"; b.textContent = c; b.setAttribute("aria-label", `Seat ${r}${c}`);
+          if (Math.random() < .35) { b.classList.add("taken"); b.disabled = true; }
+          const seatType = (c === "A" || c === "F") ? "Window" : (c === "C" || c === "D") ? "Aisle" : "Middle";
+          b.onclick = () => {
+            map.querySelectorAll(".sel").forEach(x => x.classList.remove("sel"));
+            b.classList.add("sel");
+            state.seat = `${r}${c}`;
+            if (sLabel) sLabel.textContent = `${state.seat} (${seatType})`;
+            if (to3) to3.disabled = false;
+          };
+          map.appendChild(b);
+        });
+      }
+    }
+
+    (() => {
+      renderLog();
+      const volEl = $("vol");
+      if (volEl) volEl.value = DB.settings.volume;
+
+      if ($("name")) $("name").value = localStorage.getItem("p23.name") || (DB.profile ? DB.profile.username : "");
+      if ($("modeDestBtn")) $("modeDestBtn").onclick = () => setBookingMode("dest");
+      if ($("modeTimeBtn")) $("modeTimeBtn").onclick = () => setBookingMode("time");
+
+      if ($("swapCitiesBtn")) $("swapCitiesBtn").onclick = () => {
+        const tmp = $("fromVal").value;
+        $("fromVal").value = $("toVal").value;
+        $("toVal").value = tmp;
+        syncCityInputsFromVal();
+        updateRoute();
+      };
+
+      document.querySelectorAll(".dur-chip").forEach(chip => {
+        chip.onclick = () => setTargetDuration(+chip.dataset.mins);
+      });
+
+      if ($("durationSlider")) {
+        $("durationSlider").oninput = (e) => setTargetDuration(+e.target.value);
+      }
+
+      if ($("lockExactTimeToggle")) {
+        $("lockExactTimeToggle").onchange = (e) => {
+          state.lockExactTime = e.target.checked;
+          renderTimeSuggestions(false);
+        };
+      }
+
+      if ($("shuffleTimeRoutesBtn")) {
+        $("shuffleTimeRoutesBtn").onclick = () => {
+          shuffleSalt += 7;
+          renderTimeSuggestions(true);
+        };
+      }
+
+      if ($("to2")) $("to2").onclick = () => {
+        state.from = CITIES[$("fromVal").value];
+        state.to = CITIES[$("toVal").value];
+        state.km = distKm(state.from, state.to);
+        const naturalMins = flightMinutes(state.km);
+        state.mins = (state.bookingMode === "time" && state.lockExactTime) ? state.targetMins : naturalMins;
+        state.name = ($("name").value.trim() || "Guest").toUpperCase();
+        localStorage.setItem("p23.name", $("name").value.trim());
+        buildSeats();
+        show("s2");
+      };
+
+      if ($("back1")) $("back1").onclick = () => show("s1");
+      if ($("back2")) $("back2").onclick = () => show("s2");
+
+      if ($("to3")) $("to3").onclick = () => {
+        state.flightNo = "DB" + (100 + Math.floor(Math.random() * 900));
+        state.gate = "ABCDE"[Math.floor(Math.random() * 5)] + (1 + Math.floor(Math.random() * 24));
+        $("pFlight").textContent = "FLIGHT " + state.flightNo;
+        $("pName").textContent = state.name;
+        $("pFrom").textContent = $("pFrom2").textContent = state.from[0];
+        $("pTo").textContent = $("pTo2").textContent = state.to[0];
+        $("pCities").textContent = `${state.from[1]} to ${state.to[1]}`;
+        $("pSeat").textContent = $("pSeat2").textContent = state.seat;
+        $("pGate").textContent = state.gate;
+        $("pDur").textContent = fmtDur(state.mins);
+        $("pDist").textContent = Math.round(state.km).toLocaleString() + " km";
+        $("pDate").textContent = new Date().toLocaleDateString([], { month: "short", day: "numeric" });
+        const p = $("pass");
+        if (p) { p.style.animation = "none"; void p.offsetWidth; p.style.animation = ""; }
+        show("s3");
+      };
+
+      if ($("start")) $("start").onclick = async () => {
+        if (!(await DB.requireAuth())) return;
+        const f = { ...state, startedAt: Date.now(), pauses: [], turbulence: 0 };
+        Sound.start();
+        begin(f, false);
+      };
+
+      if ($("pauseBtn")) $("pauseBtn").onclick = () => {
+        if (!F) return;
+        const now = Date.now();
+        if (isPaused(F)) { F.pauses[F.pauses.length - 1].e = now; lastKey = null; }
+        else F.pauses.push({ s: now, e: null, at: elapsedAt(F, now) });
+        DB.set(FKEY, F);
+        syncPauseBtn();
+        renderPauseLog();
+        tick();
+      };
+
+      if ($("cancel")) $("cancel").onclick = () => { const m = $("cancelModal"); if (m) m.hidden = false; };
+      if ($("modalKeepFlying")) $("modalKeepFlying").onclick = () => { const m = $("cancelModal"); if (m) m.hidden = true; };
+      if ($("modalConfirmCancel")) $("modalConfirmCancel").onclick = () => { const m = $("cancelModal"); if (m) m.hidden = true; endFlight(); show("s1"); };
+
+      if ($("again")) $("again").onclick = () => { show("s1"); };
+
+      document.querySelectorAll(".view-btn").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+      if ($("zoomRoute")) $("zoomRoute").onclick = () => { zoomMode = "route"; M && drawMap(); };
+      if ($("zoomWorld")) $("zoomWorld").onclick = () => { zoomMode = "world"; M && drawMap(); };
+
+      const f = DB.get(FKEY, null);
+      if (f && f.startedAt && f.to) {
+        if (!isPaused(f) && elapsedAt(f, Date.now()) >= totalMs(f)) {
+          F = f;
+          land();
+        } else {
+          begin(f, true);
+        }
+      }
+
+      DB.onLogin(() => {
+        renderLog();
+        if ($("name") && !$("name").value && DB.profile) $("name").value = DB.profile.username;
+        const g = DB.get(FKEY, null);
+        if (!F && g && g.startedAt && g.to) { if (!isPaused(g) && elapsedAt(g, Date.now()) >= totalMs(g)) { F = g; land(); } else begin(g, true); }
+      });
+
+      function setupCityDropdown(inputId, dropdownId, hiddenValId, defaultIndex, allowAny = false, onSelectCallback = null) {
+        const input = $(inputId);
+        const dropdown = $(dropdownId);
+        const hiddenVal = $(hiddenValId);
+
+        function formatDisplay(val) {
+          if (allowAny && val === "any") return "Any Airport Worldwide (ALL)";
+          const idx = +val;
+          if (CITIES[idx]) return `${CITIES[idx][1]} (${CITIES[idx][0]})`;
+          return "";
+        }
+
+        hiddenVal.value = defaultIndex;
+        input.value = formatDisplay(defaultIndex);
+
+        function renderList(query = "") {
+          const q = query.toLowerCase().trim();
+          let html = "";
+
+          if (allowAny && (!q || "any airport worldwide (all)".includes(q))) {
+            html += `<div class="city-option" data-index="any"><strong>Any Airport Worldwide</strong> <span class="city-iata-pill">ALL</span></div>`;
+          }
+
+          const filtered = CITIES.map((c, i) => ({ c, i })).filter(({ c }) =>
+            c[1].toLowerCase().includes(q) || c[0].toLowerCase().includes(q)
+          );
+
+          html += filtered.map(({ c, i }) => `<div class="city-option" data-index="${i}"><strong>${c[1]}</strong> <span class="city-iata-pill">${c[0]}</span></div>`).join("");
+
+          if (!html) {
+            dropdown.innerHTML = '<div class="city-option" style="color:var(--muted);cursor:default;">No airports found</div>';
+          } else {
+            dropdown.innerHTML = html;
+          }
+          dropdown.hidden = false;
+        }
+
+        input.onfocus = () => {
+          input.value = "";
+          renderList("");
+        };
+
+        input.oninput = (e) => {
+          renderList(e.target.value);
+        };
+
+        dropdown.onclick = (e) => {
+          const opt = e.target.closest(".city-option");
+          if (!opt || opt.dataset.index === undefined) return;
+          const val = opt.dataset.index;
+          hiddenVal.value = val;
+          input.value = formatDisplay(val);
+          dropdown.hidden = true;
+          if (onSelectCallback) onSelectCallback();
+          else updateRoute();
+        };
+
+        document.addEventListener("click", (e) => {
+          if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.hidden = true;
+            input.value = formatDisplay(hiddenVal.value);
+          }
+        });
+      }
+
+      setupCityDropdown("fromInput", "fromDropdown", "fromVal", 0, false);
+      setupCityDropdown("toInput", "toDropdown", "toVal", 29, false);
+      setupCityDropdown("timeOriginInput", "timeOriginDropdown", "timeOriginVal", "any", true, () => renderTimeSuggestions(true));
+      updateRoute();
+    })();
+  });
+  </script>
+</body>
+</html>
