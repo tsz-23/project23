@@ -63,7 +63,9 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
+  if (e.request.method !== "GET") return;
+  const u = new URL(e.request.url);
+  if (u.origin !== location.origin || u.pathname.startsWith("/__/auth/")) return;
   e.respondWith(
     fetch(e.request)
       .then(r => {
