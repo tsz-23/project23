@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Goals | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 90%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --tr-green: #30d158;
+    --tr-gold: #ff9f0a;
+    --tr-blue: #0a84ff;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.1rem 1rem 4.5rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.42rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.3rem, 7.5vw, 4.1rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.9rem, 1.7vw, 1.02rem);
+    max-width: 610px;
+    line-height: 1.5;
+  }
+
+  .tr-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .apple-panel {
+    background: var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(185%);
+    -webkit-backdrop-filter: blur(28px) saturate(185%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 18px 42px -18px rgba(0, 0, 0, 0.35);
+    border-radius: 26px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tr-btn {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.81rem;
+    font-weight: 600;
+    padding: 0 0.92rem;
+    height: 38px;
+    min-height: 38px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    box-shadow: var(--glass-spec);
+    transition: all 0.18s var(--apple-ease);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .tr-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-solid));
+    transform: translateY(-1px);
+  }
+  .tr-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: var(--on-accent, #fff);
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--accent) 48%, transparent);
+  }
+  .tr-btn.primary:hover {
+    filter: brightness(1.06);
+  }
+  .tr-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  .tr-entry-box {
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .tr-entry-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .tr-entry-head b {
+    font-family: var(--display);
+    font-size: 0.95rem;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+  }
+
+  .tr-entry-grid {
+    display: grid;
+    grid-template-columns: auto 1.6fr 1.15fr 0.75fr 0.85fr;
+    gap: 0.68rem;
+    align-items: end;
+  }
+  .tr-entry-grid.has-interval {
+    grid-template-columns: auto 1.45fr 1.05fr 0.65fr 0.7fr 0.8fr;
+  }
+  .tr-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+  .tr-field label {
+    font-size: 0.71rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0;
+    white-space: nowrap;
+  }
+  .tr-field input[type="text"],
+  .tr-field input[type="number"] {
+    width: 100%;
+    height: 42px;
+    border-radius: 13px;
+    padding: 0 0.8rem;
+    font-size: 0.86rem;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+  .tr-field input:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
+
+  .tr-icon-pick-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    min-height: 42px;
+    padding: 0;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--pick-c, var(--accent)) 18%, var(--card-solid));
+    border: 1.5px solid color-mix(in srgb, var(--pick-c, var(--accent)) 45%, var(--line));
+    color: var(--pick-c, var(--accent));
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .tr-icon-pick-btn:hover {
+    transform: translateY(-1px) scale(1.03);
+    border-color: var(--pick-c, var(--accent));
+  }
+  .tr-icon-pick-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .tr-dd-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .tr-dd-trigger {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    padding: 0 0.75rem 0 0.85rem;
+    border-radius: 13px;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.84rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.16s;
+  }
+  .tr-dd-trigger:hover,
+  .tr-dd-trigger[aria-expanded="true"] {
+    border-color: var(--accent);
+    transform: none;
+  }
+  .tr-dd-trigger svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform 0.2s var(--apple-ease);
+  }
+  .tr-dd-trigger[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+    color: var(--accent);
+  }
+
+  .tr-entry-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.45rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  }
+  .tr-presets-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    flex: 1 1 320px;
+  }
+  .tr-presets-lbl {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-right: 0.15rem;
+  }
+  .tr-preset-chip {
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-solid) 65%, transparent);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.22rem 0.62rem;
+    min-height: 28px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tr-preset-chip:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-solid));
+    transform: none;
+  }
+
+  .tr-pop {
+    position: fixed;
+    z-index: 10060;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--card-solid) 95%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    box-shadow: 0 22px 54px -12px rgba(0, 0, 0, 0.52), var(--glass-spec);
+    animation: trPopIn 0.18s var(--apple-spring);
+    user-select: none;
+  }
+  @keyframes trPopIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .tr-menu-pop {
+    min-width: 220px;
+    padding: 0.38rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tr-menu-opt {
+    width: 100%;
+    padding: 0.5rem 0.68rem;
+    border-radius: 11px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.14s;
+  }
+  .tr-menu-opt:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    transform: none;
+  }
+  .tr-menu-opt.active {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+  }
+  .tr-menu-opt-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.06rem;
+  }
+  .tr-menu-opt-txt b {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .tr-menu-opt.active .tr-menu-opt-txt b {
+    color: var(--accent);
+  }
+  .tr-menu-opt-txt span {
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+  .tr-menu-opt svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .tr-ic-pop {
+    width: 286px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+  .tr-ic-pop-lbl {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .tr-ic-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.35rem;
+  }
+  .tr-ic-cell {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    border-radius: 11px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .tr-ic-cell:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: none;
+  }
+  .tr-ic-cell.active {
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-solid));
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .tr-ic-cell svg {
+    width: 17px;
+    height: 17px;
+  }
+  .tr-color-row {
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+    flex-wrap: wrap;
+  }
+  .tr-color-swatch {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: var(--sw-c);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .tr-color-swatch:hover {
+    transform: scale(1.1);
+  }
+  .tr-color-swatch.active {
+    border-color: var(--text);
+    box-shadow: 0 0 0 2px var(--card-solid), 0 0 12px var(--sw-c);
+  }
+
+  .tr-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .tr-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding: 0.1rem 0;
+    flex: 1 1 280px;
+  }
+  .tr-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .tr-pill {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.34rem 0.78rem;
+    min-height: 34px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.16s;
+  }
+  .tr-pill:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .tr-pill[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent, #fff);
+    border-color: transparent;
+  }
+
+  .tr-search-box {
+    height: 36px;
+    min-width: 215px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .tr-search-box svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+  }
+  .tr-search-box input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  .tr-search-box input:focus {
+    outline: none;
+  }
+
+  .tr-goals-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+    gap: 1.05rem;
+  }
+  .tr-goal-card {
+    background: var(--glass-elevated);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+    box-shadow: var(--glass-spec);
+    transition: border-color 0.22s var(--apple-ease), transform 0.22s var(--apple-ease);
+  }
+  .tr-goal-card:hover {
+    border-color: color-mix(in srgb, var(--goal-c, var(--accent)) 45%, var(--line));
+  }
+  .tr-goal-card.is-done {
+    border-color: color-mix(in srgb, var(--tr-green) 52%, var(--line));
+    background: linear-gradient(160deg, color-mix(in srgb, var(--tr-green) 8%, var(--card-solid)), var(--glass-elevated));
+  }
+
+  .tr-goal-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .tr-goal-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .tr-goal-ic {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--goal-c, var(--accent)) 18%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--goal-c, var(--accent)) 38%, transparent);
+    color: var(--goal-c, var(--accent));
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .tr-goal-ic svg {
+    width: 22px;
+    height: 22px;
+  }
+  .tr-goal-title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+  }
+  .tr-goal-title-wrap h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tr-goal-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .tr-freq-badge {
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    font-weight: 700;
+    color: var(--goal-c, var(--accent));
+    background: color-mix(in srgb, var(--goal-c, var(--accent)) 15%, transparent);
+    padding: 0.12rem 0.54rem;
+    border-radius: 999px;
+  }
+  .tr-reset-badge {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--card-solid) 75%, transparent);
+    border: 1px solid var(--line);
+    padding: 0.11rem 0.52rem;
+    border-radius: 999px;
+  }
+  .tr-streak-badge {
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    font-weight: 700;
+    color: var(--tr-gold);
+    background: color-mix(in srgb, var(--tr-gold) 15%, transparent);
+    padding: 0.12rem 0.54rem;
+    border-radius: 999px;
+  }
+
+  .tr-card-menu-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.22rem;
+    flex-shrink: 0;
+  }
+  .tr-icon-btn {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .tr-icon-btn:hover {
+    background: var(--card-solid);
+    border-color: var(--line);
+    color: var(--text);
+    transform: none;
+  }
+  .tr-icon-btn.del:hover {
+    color: #ff453a;
+    border-color: rgba(255, 69, 58, 0.38);
+  }
+  .tr-icon-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .tr-progress-box {
+    background: color-mix(in srgb, var(--card-solid) 76%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+    border-radius: 18px;
+    padding: 0.85rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .tr-progress-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .tr-progress-count {
+    display: flex;
+    align-items: baseline;
+    gap: 0.38rem;
+  }
+  .tr-progress-count b {
+    font-family: var(--mono);
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+  .tr-progress-count span {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .tr-progress-pct {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--goal-c, var(--accent));
+  }
+  .tr-goal-card.is-done .tr-progress-pct {
+    color: var(--tr-green);
+  }
+
+  .tr-bar-track {
+    width: 100%;
+    height: 11px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-2) 85%, var(--line));
+    overflow: hidden;
+    position: relative;
+  }
+  .tr-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--goal-c, var(--accent)), color-mix(in srgb, var(--goal-c, var(--accent)) 70%, #fff));
+    transition: width 0.32s var(--apple-ease);
+  }
+  .tr-goal-card.is-done .tr-bar-fill {
+    background: linear-gradient(90deg, var(--tr-green), #63e6be);
+  }
+
+  .tr-cups-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+    flex-wrap: wrap;
+  }
+  .tr-cup-dot {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1.5px solid color-mix(in srgb, var(--goal-c, var(--accent)) 35%, var(--line));
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.15s var(--apple-spring);
+  }
+  .tr-cup-dot:hover {
+    border-color: var(--goal-c, var(--accent));
+    transform: scale(1.08);
+  }
+  .tr-cup-dot.filled {
+    background: var(--goal-c, var(--accent));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 3px 9px color-mix(in srgb, var(--goal-c, var(--accent)) 40%, transparent);
+  }
+  .tr-goal-card.is-done .tr-cup-dot.filled {
+    background: var(--tr-green);
+  }
+
+  .tr-log-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding-top: 0.15rem;
+  }
+  .tr-step-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 1;
+  }
+  .tr-minus-btn {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    border-radius: 11px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .tr-minus-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    transform: none;
+  }
+  .tr-minus-btn:disabled {
+    opacity: 0.38;
+    cursor: default;
+  }
+  .tr-plus-btn {
+    flex: 1;
+    height: 36px;
+    min-height: 36px;
+    padding: 0 0.9rem;
+    border-radius: 11px;
+    border: 0;
+    background: linear-gradient(135deg, var(--goal-c, var(--accent)), color-mix(in srgb, var(--goal-c, var(--accent)) 75%, var(--accent2)));
+    color: #fff;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.38rem;
+    cursor: pointer;
+    box-shadow: 0 6px 16px -5px color-mix(in srgb, var(--goal-c, var(--accent)) 50%, transparent);
+    transition: all 0.16s var(--apple-ease);
+  }
+  .tr-plus-btn:hover {
+    filter: brightness(1.07);
+    transform: translateY(-1px);
+  }
+  .tr-plus-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+  .tr-complete-btn {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 0.72rem;
+    border-radius: 11px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+  }
+  .tr-complete-btn:hover {
+    color: var(--tr-green);
+    border-color: var(--tr-green);
+    transform: none;
+  }
+
+  .tr-stats-box {
+    background: color-mix(in srgb, var(--card-solid) 64%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 18px;
+    padding: 0.82rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.72rem;
+  }
+  .tr-stats-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .tr-stats-title {
+    font-family: var(--display);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .tr-stats-title span {
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .tr-view-tabs {
+    display: inline-flex;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .tr-view-tab {
+    height: 24px;
+    min-height: 24px;
+    padding: 0 0.58rem;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.69rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .tr-view-tab:hover {
+    color: var(--text);
+    transform: none;
+  }
+  .tr-view-tab.active {
+    background: color-mix(in srgb, var(--goal-c, var(--accent)) 22%, var(--card-solid));
+    color: var(--text);
+  }
+
+  .tr-mini-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+  }
+  .tr-kpi {
+    background: color-mix(in srgb, var(--card-2) 65%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+    border-radius: 11px;
+    padding: 0.38rem 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.04rem;
+    text-align: center;
+  }
+  .tr-kpi b {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .tr-kpi span {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+
+  .tr-chart-wrap {
+    position: relative;
+    padding-top: 0.35rem;
+  }
+  .tr-bars-grid {
+    display: grid;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 0.32rem;
+    align-items: end;
+    height: 108px;
+    padding-top: 16px;
+    position: relative;
+  }
+  .tr-target-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 16px;
+    border-top: 1px dashed color-mix(in srgb, var(--goal-c, var(--accent)) 45%, var(--muted));
+    pointer-events: none;
+  }
+  .tr-bar-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.24rem;
+    height: 100%;
+    justify-content: flex-end;
+    cursor: pointer;
+  }
+  .tr-bar-val {
+    font-family: var(--mono);
+    font-size: 0.61rem;
+    font-weight: 700;
+    color: var(--muted);
+    line-height: 1;
+  }
+  .tr-bar-col.is-met .tr-bar-val {
+    color: var(--tr-green);
+  }
+  .tr-bar-col.is-cur .tr-bar-val {
+    color: var(--text);
+  }
+  .tr-bar-vtrack {
+    width: 100%;
+    max-width: 24px;
+    height: 62px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--card-2) 75%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    padding: 1px;
+  }
+  .tr-bar-col:hover .tr-bar-vtrack {
+    border-color: var(--goal-c, var(--accent));
+  }
+  .tr-bar-col.is-cur .tr-bar-vtrack {
+    border-color: color-mix(in srgb, var(--goal-c, var(--accent)) 65%, var(--line));
+  }
+  .tr-bar-vfill {
+    width: 100%;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--goal-c, var(--accent)) 72%, transparent);
+    transition: height 0.26s var(--apple-ease);
+  }
+  .tr-bar-col.is-met .tr-bar-vfill {
+    background: linear-gradient(180deg, var(--tr-green), color-mix(in srgb, var(--tr-green) 72%, #000));
+  }
+  .tr-bar-lbl {
+    font-family: var(--mono);
+    font-size: 0.59rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .tr-bar-col.is-cur .tr-bar-lbl {
+    color: var(--text);
+    font-weight: 800;
+  }
+
+  .tr-history-table-wrap {
+    max-height: 215px;
+    overflow-y: auto;
+    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+  .tr-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.76rem;
+  }
+  .tr-history-table th {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--card-solid) 80%, transparent);
+    padding: 0.45rem 0.6rem;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+  }
+  .tr-history-table th:nth-child(2),
+  .tr-history-table th:nth-child(3),
+  .tr-history-table th:nth-child(4) {
+    text-align: center;
+  }
+  .tr-history-table td {
+    padding: 0.42rem 0.6rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .tr-history-table tr:last-child td {
+    border-bottom: 0;
+  }
+  .tr-history-table td:nth-child(2),
+  .tr-history-table td:nth-child(3),
+  .tr-history-table td:nth-child(4) {
+    text-align: center;
+    font-family: var(--mono);
+  }
+  .tr-hist-status {
+    display: inline-block;
+    padding: 0.1rem 0.48rem;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+  }
+  .tr-hist-status.met {
+    background: color-mix(in srgb, var(--tr-green) 18%, transparent);
+    color: var(--tr-green);
+  }
+  .tr-hist-status.part {
+    background: color-mix(in srgb, var(--tr-gold) 18%, transparent);
+    color: var(--tr-gold);
+  }
+  .tr-hist-status.miss {
+    background: color-mix(in srgb, var(--muted) 14%, transparent);
+    color: var(--muted);
+  }
+  .tr-hist-adj-btn {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 700;
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .tr-hist-adj-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: none;
+  }
+
+  .tr-empty {
+    text-align: center;
+    padding: 2.7rem 1.2rem;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--card-2) 55%, transparent);
+    border: 1px dashed var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .tr-empty-ic {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+  }
+  .tr-empty-ic svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  @media (max-width: 980px) {
+    .tr-entry-grid,
+    .tr-entry-grid.has-interval {
+      grid-template-columns: auto 1fr 1fr;
+    }
+    .tr-goals-list {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    main {
+      padding: 0.8rem 0.65rem 6.5rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .tr-entry-grid,
+    .tr-entry-grid.has-interval {
+      grid-template-columns: 1fr;
+    }
+    .tr-entry-bottom-row #addGoalBtn {
+      width: 100%;
+      justify-content: center;
+    }
+    .tr-search-box {
+      width: 100%;
+      min-width: 0;
+    }
+    .tr-mini-kpis {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .tr-bars-grid {
+      gap: 0.2rem;
+    }
+  }
+</style>
+</head>
+<body data-page="tracker">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>GOAL TRACKER</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Habit &amp; Routine Tracker
+      </span>
+    </div>
+  </div>
+
+  <div class="tr-shell">
+    <section class="panel apple-panel" aria-label="Create Habit or Routine Goal">
+      <div class="tr-entry-box">
+        <div class="tr-entry-head">
+          <b>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+            New Habit or Routine Goal
+          </b>
+        </div>
+
+        <div class="tr-entry-grid" id="trEntryGrid">
+          <div class="tr-field">
+            <label>Icon</label>
+            <button type="button" class="tr-icon-pick-btn" id="trIconPickBtn" title="Choose icon and color" aria-label="Choose icon and color"></button>
+          </div>
+
+          <div class="tr-field">
+            <label for="trTitleInput">Goal Name</label>
+            <input type="text" id="trTitleInput" placeholder="e.g. Drink 8 Cups of Water" autocomplete="off" maxlength="70">
+          </div>
+
+          <div class="tr-field">
+            <label>Frequency</label>
+            <div class="tr-dd-wrap" id="trFreqDdWrap">
+              <button type="button" class="tr-dd-trigger" id="trFreqTriggerBtn" aria-haspopup="listbox" aria-expanded="false">
+                <span id="trFreqTriggerLbl">Daily (Resets Every Day)</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="tr-field" id="trIntervalField" hidden>
+            <label for="trIntervalInput">Every X Days</label>
+            <input type="number" id="trIntervalInput" min="2" max="90" step="1" value="3" inputmode="numeric">
+          </div>
+
+          <div class="tr-field">
+            <label for="trTargetInput">Target Goal</label>
+            <input type="number" id="trTargetInput" min="1" max="10000" step="1" value="8" placeholder="8" inputmode="numeric">
+          </div>
+
+          <div class="tr-field">
+            <label for="trUnitInput">Unit</label>
+            <input type="text" id="trUnitInput" value="cups" placeholder="cups, mins, times…" autocomplete="off" maxlength="20">
+          </div>
+        </div>
+
+        <div class="tr-entry-bottom-row">
+          <div class="tr-presets-wrap" id="trPresetChips">
+            <span class="tr-presets-lbl">Quick Ideas:</span>
+            <button type="button" class="tr-preset-chip" data-title="Drink Water" data-freq="daily" data-target="8" data-unit="cups" data-icon="drop" data-color="#0a84ff">Drink 8 Cups Water (Daily)</button>
+            <button type="button" class="tr-preset-chip" data-title="Workout" data-freq="weekly" data-target="2" data-unit="sessions" data-icon="dumbbell" data-color="#30d158">Gym 2x (Weekly)</button>
+            <button type="button" class="tr-preset-chip" data-title="Studying" data-freq="weekly" data-target="5" data-unit="sessions" data-icon="book" data-color="#6c5ce7">Study 5 Sessions (Weekly)</button>
+            <button type="button" class="tr-preset-chip" data-title="Deep Clean Room" data-freq="biweekly" data-target="1" data-unit="time" data-icon="sparkle" data-color="#bf5af2">Clean Room (Bi-Weekly)</button>
+            <button type="button" class="tr-preset-chip" data-title="Review Monthly Budget" data-freq="monthly" data-target="1" data-unit="time" data-icon="target" data-color="#ff9f0a">Review Budget (Monthly)</button>
+          </div>
+
+          <button type="button" class="tr-btn primary" id="addGoalBtn" style="height:40px;padding:0 1.2rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add Goal</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel apple-panel" aria-label="Tracked Goals and Recent Statistics">
+      <div class="tr-controls-bar">
+        <div class="tr-pills" id="trFilterPills" role="tablist" aria-label="Filter goals by frequency"></div>
+        <div class="tr-search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="trSearchInput" placeholder="Search habits &amp; routines…" autocomplete="off">
+        </div>
+      </div>
+
+      <div id="trGoalsContainer" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const TR_KEY = "p23.tracker";
+  const $ = id => document.getElementById(id);
+  const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const GOAL_ICONS = {
+    drop: '<path d="M12 2.7s7 7.2 7 12a7 7 0 0 1-14 0c0-4.8 7-12 7-12z"/>',
+    dumbbell: '<path d="M6.5 6.5l11 11"/><path d="M21 21l-1-1"/><path d="M3 3l1 1"/><path d="M18 22l4-4"/><path d="M2 6l4-4"/><path d="M3 10l7-7"/><path d="M14 21l7-7"/>',
+    book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>',
+    flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+    code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+    heart: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>',
+    moon: '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>',
+    coffee: '<path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/>',
+    music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+    sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+    bike: '<circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"/>',
+    brain: '<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04Z"/>',
+    check: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
+    wallet: '<path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/>'
+  };
+
+  const GOAL_COLORS = ["#6c5ce7", "#0a84ff", "#30d158", "#ff9f0a", "#bf5af2", "#ff5c9d", "#00b8c8", "#12b886"];
+
+  const FREQ_OPTIONS = [
+    { id: "daily", label: "Daily", full: "Daily (Every Day)", desc: "Resets every night at 12:00 AM" },
+    { id: "every_n_days", label: "Every Few Days", full: "Every Few Days", desc: "Customize the interval resetting" },
+    { id: "weekly", label: "Weekly", full: "Weekly (Every Monday)", desc: "Track total completions across the week" },
+    { id: "biweekly", label: "Bi-Weekly", full: "Bi-Weekly (Every 2 Weeks)", desc: "Track total completions across 14-day cycle" },
+    { id: "monthly", label: "Monthly", full: "Monthly (Resets 1st of Month)", desc: "Track total completions across the month" }
+  ];
+
+  const state = {
+    entryIcon: "drop",
+    entryColor: "#0a84ff",
+    entryFreq: "daily",
+    entryInterval: 3,
+    filter: "all",
+    searchQuery: "",
+    cardViewMode: {},
+    syncInFlight: false
+  };
+
+  function getIconSvg(name) {
+    const inner = GOAL_ICONS[name] || GOAL_ICONS.check;
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
+  }
+
+  async function ensureAccountAccess() {
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    if (ok) {
+      await initDirectFirestoreSync();
+      renderAll();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, select, textarea, .tr-bar-col");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+    mainEl.addEventListener("focusin", e => {
+      if (!DB.isGuest()) return;
+      const inp = e.target.closest("input, select, textarea");
+      if (inp) {
+        inp.blur();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+
+  let directFirestoreBound = false;
+  let localGoalsCache = null;
+
+  function getUserDocRef() {
+    if (DB.isGuest() || !window.firebase || !firebase.firestore) return null;
+    const uid = typeof DB.userId === "function" ? DB.userId() : (DB.user && DB.user.uid);
+    if (!uid) return null;
+    return firebase.firestore().collection("users").doc(uid);
+  }
+
+  async function initDirectFirestoreSync() {
+    const userRef = getUserDocRef();
+    if (!userRef || directFirestoreBound) return;
+    directFirestoreBound = true;
+
+    try {
+      const [stateSnap, colSnap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("tracker").get().catch(() => null),
+        userRef.collection("tracker").get().catch(() => null),
+        userRef.get().catch(() => null)
+      ]);
+
+      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
+      let cloudList = null;
+
+      if (stateSnap && stateSnap.exists && Array.isArray(stateSnap.data()?.items) && stateSnap.data().items.length) {
+        cloudList = stateSnap.data().items;
+      } else if (colSnap && colSnap.docs && colSnap.docs.length) {
+        cloudList = colSnap.docs.map(d => d.data());
+      } else if (Array.isArray(userData.trackerGoals) && userData.trackerGoals.length) {
+        cloudList = userData.trackerGoals;
+      }
+
+      if (Array.isArray(cloudList) && cloudList.length) {
+        localGoalsCache = cloudList;
+        DB.set(TR_KEY, localGoalsCache);
+      }
+
+      userRef.collection("state").doc("tracker").onSnapshot(docSnap => {
+        if (state.syncInFlight) return;
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)) {
+          const items = docSnap.data().items;
+          if (items.length > 0 || !localGoalsCache || localGoalsCache.length === 0) {
+            localGoalsCache = items;
+            try { localStorage.setItem(TR_KEY, JSON.stringify(items)); } catch {}
+            renderAll();
+          }
+        }
+      }, () => {});
+    } catch {}
+  }
+
+  function loadGoals() {
+    if (DB.isGuest()) return [];
+    if (Array.isArray(localGoalsCache)) return localGoalsCache.slice();
+    const raw = DB.get(TR_KEY, []);
+    return Array.isArray(raw) ? raw.slice() : [];
+  }
+
+  async function saveGoals(list) {
+    if (DB.isGuest()) {
+      await ensureAccountAccess();
+      return;
+    }
+    localGoalsCache = list.slice();
+    DB.set(TR_KEY, localGoalsCache);
+    if (typeof DB.flush === "function") DB.flush();
+
+    renderAll();
+
+    const userRef = getUserDocRef();
+    if (userRef) {
+      state.syncInFlight = true;
+      try {
+        const cleanList = JSON.parse(JSON.stringify(localGoalsCache));
+        await Promise.all([
+          userRef.collection("state").doc("tracker").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {}),
+          userRef.set({ trackerGoals: cleanList }, { merge: true }).catch(() => {})
+        ]);
+      } catch {}
+      state.syncInFlight = false;
+    }
+  }
+
+  function startOfLocalDayMs(ms = Date.now()) {
+    const d = new Date(ms);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  }
+
+  function startOfMondayWeekMs(ms = Date.now()) {
+    const d = new Date(ms);
+    const day = d.getDay();
+    const diffToMon = (day + 6) % 7;
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() - diffToMon).getTime();
+  }
+
+  function ymdKey(ms) {
+    const d = new Date(ms);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function shortDateLabel(ms) {
+    const d = new Date(ms);
+    return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  function getGoalPeriodInfo(goal, offset = 0, nowMs = Date.now()) {
+    const freq = goal.freq || "daily";
+    const intervalDays = Math.max(2, parseInt(goal.intervalDays, 10) || 3);
+
+    if (freq === "daily") {
+      const baseDay = new Date(nowMs);
+      const start = new Date(baseDay.getFullYear(), baseDay.getMonth(), baseDay.getDate() + offset);
+      const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1);
+      const key = ymdKey(start.getTime());
+      const isToday = offset === 0;
+      const isYest = offset === -1;
+      return {
+        key,
+        shortLabel: isToday ? "Today" : `${ start.getMonth() + 1 }/${ start.getDate() }`,
+        fullLabel: isToday ? `Today (${shortDateLabel(start.getTime())})` : (isYest ? `Yesterday (${shortDateLabel(start.getTime())})` : shortDateLabel(start.getTime())),
+        startMs: start.getTime(),
+        endMs: end.getTime()
+      };
+    }
+
+    if (freq === "every_n_days") {
+      const anchorMs = startOfLocalDayMs(goal.anchorMs || goal.createdAt || nowMs);
+      const todayMs = startOfLocalDayMs(nowMs);
+      const daysElapsed = Math.round((todayMs - anchorMs) / 86400000);
+      const curCycleIdx = Math.floor(Math.max(0, daysElapsed) / intervalDays) + offset;
+      const startD = new Date(anchorMs);
+      startD.setDate(startD.getDate() + curCycleIdx * intervalDays);
+      const endD = new Date(startD);
+      endD.setDate(endD.getDate() + intervalDays);
+      const lastDayD = new Date(endD.getTime() - 86400000);
+      const key = `nd-${intervalDays}-${ymdKey(startD.getTime())}`;
+      return {
+        key,
+        shortLabel: offset === 0 ? "Current" : `${startD.getMonth() + 1}/${startD.getDate()}`,
+        fullLabel: `${shortDateLabel(startD.getTime())} – ${shortDateLabel(lastDayD.getTime())}`,
+        startMs: startD.getTime(),
+        endMs: endD.getTime()
+      };
+    }
+
+    if (freq === "weekly") {
+      const curMonMs = startOfMondayWeekMs(nowMs);
+      const startD = new Date(curMonMs);
+      startD.setDate(startD.getDate() + offset * 7);
+      const endD = new Date(startD);
+      endD.setDate(endD.getDate() + 7);
+      const sunD = new Date(endD.getTime() - 86400000);
+      const key = `wk-${ymdKey(startD.getTime())}`;
+      return {
+        key,
+        shortLabel: offset === 0 ? "This Wk" : `${startD.getMonth() + 1}/${startD.getDate()}`,
+        fullLabel: `Week of ${shortDateLabel(startD.getTime())} – ${shortDateLabel(sunD.getTime())}`,
+        startMs: startD.getTime(),
+        endMs: endD.getTime()
+      };
+    }
+
+    if (freq === "biweekly") {
+      const anchorMonMs = startOfMondayWeekMs(goal.anchorMs || goal.createdAt || nowMs);
+      const curMonMs = startOfMondayWeekMs(nowMs);
+      const daysDiff = Math.round((curMonMs - anchorMonMs) / 86400000);
+      const curBiIdx = Math.floor(Math.max(0, daysDiff) / 14) + offset;
+      const startD = new Date(anchorMonMs);
+      startD.setDate(startD.getDate() + curBiIdx * 14);
+      const endD = new Date(startD);
+      endD.setDate(endD.getDate() + 14);
+      const lastD = new Date(endD.getTime() - 86400000);
+      const key = `bwk-${ymdKey(startD.getTime())}`;
+      return {
+        key,
+        shortLabel: offset === 0 ? "Current" : `${startD.getMonth() + 1}/${startD.getDate()}`,
+        fullLabel: `${shortDateLabel(startD.getTime())} – ${shortDateLabel(lastD.getTime())}`,
+        startMs: startD.getTime(),
+        endMs: endD.getTime()
+      };
+    }
+
+    const nowD = new Date(nowMs);
+    const startD = new Date(nowD.getFullYear(), nowD.getMonth() + offset, 1);
+    const endD = new Date(startD.getFullYear(), startD.getMonth() + 1, 1);
+    const key = `mo-${startD.getFullYear()}-${String(startD.getMonth() + 1).padStart(2, "0")}`;
+    return {
+      key,
+      shortLabel: `${MONTH_SHORT[startD.getMonth()]} '${String(startD.getFullYear()).slice(-2)}`,
+      fullLabel: `${MONTH_SHORT[startD.getMonth()]} ${startD.getFullYear()}`,
+      startMs: startD.getTime(),
+      endMs: endD.getTime()
+    };
+  }
+
+  function formatResetRemaining(endMs, nowMs = Date.now()) {
+    const remMs = Math.max(0, endMs - nowMs);
+    const totalMins = Math.max(1, Math.floor(remMs / 60000));
+    const days = Math.floor(totalMins / 1440);
+    const hours = Math.floor((totalMins % 1440) / 60);
+    const mins = totalMins % 60;
+    if (days > 0) return `Resets in ${days}d ${hours}h`;
+    return `Resets in ${hours}h ${mins}m`;
+  }
+
+  function getFrequencyDisplayLabel(goal) {
+    const freq = goal.freq || "daily";
+    if (freq === "daily") return "Daily";
+    if (freq === "every_n_days") return `Every ${Math.max(2, parseInt(goal.intervalDays, 10) || 3)} Days`;
+    if (freq === "weekly") return "Weekly";
+    if (freq === "biweekly") return "Bi-Weekly";
+    if (freq === "monthly") return "Monthly";
+    return "Daily";
+  }
+
+  function getPeriodCount(goal, periodKey) {
+    if (!goal || !goal.history) return 0;
+    return Math.max(0, Number(goal.history[periodKey]) || 0);
+  }
+
+  function computeGoalAnalytics(goal, nowMs = Date.now()) {
+    const target = Math.max(1, Number(goal.target) || 1);
+    const periods = [];
+    for (let off = -9; off <= 0; off++) {
+      const info = getGoalPeriodInfo(goal, off, nowMs);
+      const count = getPeriodCount(goal, info.key);
+      const pct = Math.min(100, Math.round((count / target) * 100));
+      const isMet = count >= target;
+      periods.push({
+        offset: off,
+        isCurrent: off === 0,
+        key: info.key,
+        shortLabel: info.shortLabel,
+        fullLabel: info.fullLabel,
+        startMs: info.startMs,
+        endMs: info.endMs,
+        count,
+        target,
+        pct,
+        isMet
+      });
+    }
+
+    let currentStreak = 0;
+    const curInfo = getGoalPeriodInfo(goal, 0, nowMs);
+    const curMet = getPeriodCount(goal, curInfo.key) >= target;
+    let checkOffset = curMet ? 0 : -1;
+    while (checkOffset >= -60) {
+      const pInfo = getGoalPeriodInfo(goal, checkOffset, nowMs);
+      if (getPeriodCount(goal, pInfo.key) >= target) {
+        currentStreak++;
+        checkOffset--;
+      } else {
+        break;
+      }
+    }
+
+    const createdMs = goal.createdAt || nowMs;
+    const activePeriods = periods.filter(p => p.endMs > createdMs || p.count > 0 || p.isCurrent);
+    const metCount = activePeriods.filter(p => p.isMet).length;
+    const completionRate = activePeriods.length > 0 ? Math.round((metCount / activePeriods.length) * 100) : 0;
+
+    let bestStreak = currentStreak;
+    let running = 0;
+    for (let off = -30; off <= 0; off++) {
+      const pInfo = getGoalPeriodInfo(goal, off, nowMs);
+      if (getPeriodCount(goal, pInfo.key) >= target) {
+        running++;
+        if (running > bestStreak) bestStreak = running;
+      } else {
+        running = 0;
+      }
+    }
+
+    const totalLoggedRecent = activePeriods.reduce((acc, p) => acc + p.count, 0);
+    const avgRecent = activePeriods.length > 0 ? (totalLoggedRecent / activePeriods.length) : 0;
+
+    return {
+      periods,
+      currentPeriod: periods[periods.length - 1],
+      currentStreak,
+      bestStreak,
+      completionRate,
+      avgRecent
+    };
+  }
+
+  let activePopover = null;
+  function closeActivePopover() {
+    if (!activePopover) return;
+    const { pop, triggerBtn, onDocDown, onKey } = activePopover;
+    activePopover = null;
+    if (triggerBtn) triggerBtn.setAttribute("aria-expanded", "false");
+    document.removeEventListener("pointerdown", onDocDown, true);
+    document.removeEventListener("keydown", onKey, true);
+    if (pop && pop.parentNode) pop.remove();
+  }
+
+  function openFrequencyDropdown(triggerBtn, currentFreq, onSelectFreq) {
+    if (activePopover && activePopover.triggerBtn === triggerBtn) {
+      closeActivePopover();
+      return;
+    }
+    closeActivePopover();
+    triggerBtn.setAttribute("aria-expanded", "true");
+
+    const pop = document.createElement("div");
+    pop.className = "tr-pop tr-menu-pop";
+    pop.setAttribute("role", "listbox");
+    const chkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+
+    pop.innerHTML = FREQ_OPTIONS.map(opt => {
+      const isAct = opt.id === currentFreq;
+      return `
+        <button type="button" class="tr-menu-opt ${isAct ? "active" : ""}" role="option" aria-selected="${isAct}" data-freq="${opt.id}">
+          <div class="tr-menu-opt-txt">
+            <b>${DB.esc(opt.label)}</b>
+            <span>${DB.esc(opt.desc)}</span>
+          </div>
+          ${isAct ? chkSvg : ""}
+        </button>
+      `;
+    }).join("");
+    document.body.appendChild(pop);
+
+    const r = triggerBtn.getBoundingClientRect();
+    const popW = Math.max(r.width, 250);
+    pop.style.width = `${popW}px`;
+    pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - popW - 8))}px`;
+    const popH = pop.offsetHeight || 240;
+    pop.style.top = (r.bottom + 6 + popH > window.innerHeight - 10 && r.top - popH - 6 > 8)
+      ? `${r.top - popH - 6}px`
+      : `${r.bottom + 6}px`;
+
+    pop.querySelectorAll("[data-freq]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const picked = btn.dataset.freq;
+        closeActivePopover();
+        onSelectFreq(picked);
+      };
+    });
+
+    const onDocDown = e => {
+      if (!pop.contains(e.target) && e.target !== triggerBtn && !triggerBtn.contains(e.target)) {
+        closeActivePopover();
+      }
+    };
+    const onKey = e => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeActivePopover();
+      }
+    };
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePopover = { pop, triggerBtn, onDocDown, onKey };
+  }
+
+  function openIconAndColorPicker(triggerBtn, curIcon, curColor, onUpdate) {
+    if (activePopover && activePopover.triggerBtn === triggerBtn) {
+      closeActivePopover();
+      return;
+    }
+    closeActivePopover();
+
+    let selIcon = curIcon || "drop";
+    let selColor = curColor || "#6c5ce7";
+
+    const pop = document.createElement("div");
+    pop.className = "tr-pop tr-ic-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", "Choose icon and color");
+    document.body.appendChild(pop);
+
+    function renderPop() {
+      pop.innerHTML = `
+        <div class="tr-ic-pop-lbl">Choose Icon</div>
+        <div class="tr-ic-grid">
+          ${Object.keys(GOAL_ICONS).map(icKey => `
+            <button type="button" class="tr-ic-cell ${icKey === selIcon ? "active" : ""}" data-ic="${icKey}" aria-label="${icKey}">
+              ${getIconSvg(icKey)}
+            </button>
+          `).join("")}
+        </div>
+        <div class="tr-ic-pop-lbl">Accent Color</div>
+        <div class="tr-color-row">
+          ${GOAL_COLORS.map(c => `
+            <button type="button" class="tr-color-swatch ${c === selColor ? "active" : ""}" style="--sw-c:${c}" data-col="${c}" aria-label="Color ${c}"></button>
+          `).join("")}
+        </div>
+      `;
+
+      pop.querySelectorAll("[data-ic]").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          selIcon = btn.dataset.ic;
+          onUpdate(selIcon, selColor);
+          renderPop();
+        };
+      });
+
+      pop.querySelectorAll("[data-col]").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          selColor = btn.dataset.col;
+          onUpdate(selIcon, selColor);
+          renderPop();
+        };
+      });
+    }
+
+    renderPop();
+
+    const r = triggerBtn.getBoundingClientRect();
+    const popW = 286;
+    pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - popW - 8))}px`;
+    const popH = pop.offsetHeight || 260;
+    pop.style.top = (r.bottom + 6 + popH > window.innerHeight - 10 && r.top - popH - 6 > 8)
+      ? `${r.top - popH - 6}px`
+      : `${r.bottom + 6}px`;
+
+    const onDocDown = e => {
+      if (!pop.contains(e.target) && e.target !== triggerBtn && !triggerBtn.contains(e.target)) {
+        closeActivePopover();
+      }
+    };
+    const onKey = e => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeActivePopover();
+      }
+    };
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePopover = { pop, triggerBtn, onDocDown, onKey };
+  }
+
+  function updateEntryFormUI() {
+    const icBtn = $("trIconPickBtn");
+    icBtn.style.setProperty("--pick-c", state.entryColor);
+    icBtn.innerHTML = getIconSvg(state.entryIcon);
+
+    const freqObj = FREQ_OPTIONS.find(x => x.id === state.entryFreq) || FREQ_OPTIONS[0];
+    $("trFreqTriggerLbl").textContent = freqObj.full;
+
+    const isEveryN = state.entryFreq === "every_n_days";
+    $("trIntervalField").hidden = !isEveryN;
+    $("trEntryGrid").classList.toggle("has-interval", isEveryN);
+  }
+
+  async function adjustGoalProgress(goalId, periodKey, delta, setExact = null) {
+    if (!(await ensureAccountAccess())) return;
+    const list = loadGoals();
+    const goal = list.find(x => x.id === goalId);
+    if (!goal) return;
+
+    if (!goal.history || typeof goal.history !== "object") {
+      goal.history = {};
+    }
+    const prev = Math.max(0, Number(goal.history[periodKey]) || 0);
+    const next = setExact !== null ? Math.max(0, Number(setExact) || 0) : Math.max(0, prev + delta);
+    goal.history[periodKey] = next;
+    goal.updatedAt = Date.now();
+
+    await saveGoals(list);
+
+    const target = Math.max(1, Number(goal.target) || 1);
+    const curInfo = getGoalPeriodInfo(goal, 0);
+    if (periodKey === curInfo.key && prev < target && next >= target) {
+      DB.toast("Goal Completed! 🎉", `You reached ${next} / ${target} ${goal.unit || ""} for "${goal.title}"!`, 2800);
+    }
+  }
+
+  function renderGoalsList(list) {
+    const freqCounts = {
+      all: list.length,
+      daily: list.filter(x => (x.freq || "daily") === "daily").length,
+      every_n_days: list.filter(x => x.freq === "every_n_days").length,
+      weekly: list.filter(x => x.freq === "weekly").length,
+      biweekly: list.filter(x => x.freq === "biweekly").length,
+      monthly: list.filter(x => x.freq === "monthly").length
+    };
+
+    const pillDefs = [
+      { id: "all", label: `All Goals (${freqCounts.all})` },
+      { id: "daily", label: `Daily (${freqCounts.daily})` },
+      { id: "every_n_days", label: `Every Few Days (${freqCounts.every_n_days})` },
+      { id: "weekly", label: `Weekly (${freqCounts.weekly})` },
+      { id: "biweekly", label: `Bi-Weekly (${freqCounts.biweekly})` },
+      { id: "monthly", label: `Monthly (${freqCounts.monthly})` }
+    ];
+
+    const pillsEl = $("trFilterPills");
+    pillsEl.innerHTML = pillDefs.map(p => `
+      <button type="button" class="tr-pill" data-f="${p.id}" aria-pressed="${state.filter === p.id}">${DB.esc(p.label)}</button>
+    `).join("");
+
+    pillsEl.querySelectorAll("[data-f]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        state.filter = btn.dataset.f;
+        renderGoalsList(loadGoals());
+      };
+    });
+
+    const q = state.searchQuery.toLowerCase();
+    const filtered = list.filter(g => {
+      const f = g.freq || "daily";
+      if (state.filter !== "all" && f !== state.filter) return false;
+      if (q) {
+        const hay = `${g.title || ""} ${g.unit || ""} ${getFrequencyDisplayLabel(g)}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const container = $("trGoalsContainer");
+    if (!filtered.length) {
+      const guest = DB.isGuest();
+      container.innerHTML = `
+        <div class="tr-empty">
+          <div class="tr-empty-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3>${guest ? "Sign In to Track Your Habits & Routines" : (list.length ? "No matching goals" : "No Goals Created Yet")}</h3>
+          <p class="muted" style="max-width:27rem;font-size:.84rem;">
+            ${guest
+              ? "Sign in with your Project 23 account to create daily, weekly, bi-weekly, monthly, or custom multi-day goals and track your progress across devices."
+              : (list.length
+                ? "Try switching the frequency filter above or clearing your search."
+                : "Add a goal above — like drinking 8 cups of water daily — or tap one of the Quick Ideas to start tracking your progress.")}
+          </p>
+          ${guest ? `<button type="button" class="tr-btn primary" id="trEmptySignInBtn" style="margin-top:.35rem;">Sign in to continue</button>` : ""}
+        </div>
+      `;
+      const signBtn = $("trEmptySignInBtn");
+      if (signBtn) signBtn.onclick = () => ensureAccountAccess();
+      return;
+    }
+
+    const nowMs = Date.now();
+    const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+    const delSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+
+    container.innerHTML = `<div class="tr-goals-list">
+      ${filtered.map(goal => {
+        const analytics = computeGoalAnalytics(goal, nowMs);
+        const cur = analytics.currentPeriod;
+        const target = Math.max(1, Number(goal.target) || 1);
+        const unitStr = goal.unit ? String(goal.unit).trim() : "times";
+        const singUnit = unitStr.replace(/s$/i, "") || unitStr;
+        const color = goal.color || "#6c5ce7";
+        const isDone = cur.count >= target;
+        const viewMode = state.cardViewMode[goal.id] || "both";
+        const resetText = formatResetRemaining(cur.endMs, nowMs);
+        const maxBarVal = Math.max(target, ...analytics.periods.map(p => p.count));
+        const targetLineTopPct = Math.round((1 - (target / maxBarVal)) * 62) + 16;
+
+        let dotsHtml = "";
+        if (target >= 2 && target <= 16) {
+          const dots = [];
+          for (let i = 1; i <= target; i++) {
+            const filled = cur.count >= i;
+            dots.push(`<button type="button" class="tr-cup-dot ${filled ? "filled" : ""}" data-set-count="${i}" data-goal-id="${DB.esc(goal.id)}" data-period-key="${DB.esc(cur.key)}" title="Set to ${i} ${DB.esc(unitStr)}">${i}</button>`);
+          }
+          dotsHtml = `<div class="tr-cups-dots">${dots.join("")}</div>`;
+        }
+
+        return `
+          <article class="tr-goal-card ${isDone ? "is-done" : ""}" style="--goal-c:${DB.esc(color)}" data-goal-card="${DB.esc(goal.id)}">
+            <div class="tr-goal-top">
+              <div class="tr-goal-identity">
+                <div class="tr-goal-ic">${getIconSvg(goal.icon || "drop")}</div>
+                <div class="tr-goal-title-wrap">
+                  <h3>${DB.esc(goal.title)}</h3>
+                  <div class="tr-goal-badges">
+                    <span class="tr-freq-badge">${DB.esc(getFrequencyDisplayLabel(goal))}</span>
+                    <span class="tr-reset-badge" data-reset-timer="${cur.endMs}">${DB.esc(resetText)}</span>
+                    ${analytics.currentStreak > 0 ? `<span class="tr-streak-badge">${analytics.currentStreak} Streak</span>` : ""}
+                  </div>
+                </div>
+              </div>
+              <div class="tr-card-menu-btns">
+                <button type="button" class="tr-icon-btn" data-edit-goal="${DB.esc(goal.id)}" title="Edit goal" aria-label="Edit goal">${editSvg}</button>
+                <button type="button" class="tr-icon-btn del" data-del-goal="${DB.esc(goal.id)}" title="Delete goal" aria-label="Delete goal">${delSvg}</button>
+              </div>
+            </div>
+
+            <!-- Active Period Progress & Logging Controls -->
+            <div class="tr-progress-box">
+              <div class="tr-progress-head">
+                <div class="tr-progress-count">
+                  <b>${cur.count}</b>
+                  <span>/ ${target} ${DB.esc(unitStr)} (${DB.esc(cur.fullLabel)})</span>
+                </div>
+                <span class="tr-progress-pct">${isDone ? "✓ Goal Reached" : `${cur.pct}%`}</span>
+              </div>
+
+              <div class="tr-bar-track">
+                <div class="tr-bar-fill" style="width:${Math.min(100, cur.pct)}%"></div>
+              </div>
+
+              ${dotsHtml}
+
+              <div class="tr-log-actions">
+                <div class="tr-step-btns">
+                  <button type="button" class="tr-minus-btn" data-step-delta="-1" data-goal-id="${DB.esc(goal.id)}" data-period-key="${DB.esc(cur.key)}" ${cur.count <= 0 ? "disabled" : ""} title="Undo 1 ${DB.esc(singUnit)}" aria-label="Decrease">−</button>
+                  <button type="button" class="tr-plus-btn" data-step-delta="1" data-goal-id="${DB.esc(goal.id)}" data-period-key="${DB.esc(cur.key)}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    <span>Log +1 ${DB.esc(singUnit)}</span>
+                  </button>
+                </div>
+                ${!isDone && target > 1 ? `
+                  <button type="button" class="tr-complete-btn" data-complete-goal="${DB.esc(goal.id)}" data-period-key="${DB.esc(cur.key)}" data-target-val="${target}" title="Mark all ${target} ${DB.esc(unitStr)} complete">
+                    <span>✓ Complete (${target})</span>
+                  </button>
+                ` : ""}
+              </div>
+            </div>
+
+            <!-- Under-Goal Recent Stats: Chart + Table -->
+            <div class="tr-stats-box">
+              <div class="tr-stats-head">
+                <div class="tr-stats-title">
+                  Recent Performance
+                  <span>(Last 10 Periods)</span>
+                </div>
+                <div class="tr-view-tabs" role="tablist">
+                  <button type="button" class="tr-view-tab ${viewMode === "both" ? "active" : ""}" data-view-mode="both" data-goal-id="${DB.esc(goal.id)}">Chart + Table</button>
+                  <button type="button" class="tr-view-tab ${viewMode === "chart" ? "active" : ""}" data-view-mode="chart" data-goal-id="${DB.esc(goal.id)}">Chart</button>
+                  <button type="button" class="tr-view-tab ${viewMode === "table" ? "active" : ""}" data-view-mode="table" data-goal-id="${DB.esc(goal.id)}">Table</button>
+                </div>
+              </div>
+
+              <div class="tr-mini-kpis">
+                <div class="tr-kpi"><b>${analytics.currentStreak}</b><span>Current Streak</span></div>
+                <div class="tr-kpi"><b>${analytics.bestStreak}</b><span>Best Streak</span></div>
+                <div class="tr-kpi"><b>${analytics.completionRate}%</b><span>Completion Rate</span></div>
+                <div class="tr-kpi"><b>${analytics.avgRecent.toFixed(1)}</b><span>Avg ${DB.esc(unitStr)}</span></div>
+              </div>
+
+              ${viewMode !== "table" ? `
+                <div class="tr-chart-wrap">
+                  <div class="tr-bars-grid">
+                    <div class="tr-target-line" style="top:${targetLineTopPct}px" title="Target: ${target} ${DB.esc(unitStr)}"></div>
+                    ${analytics.periods.map(p => {
+                      const hPct = p.count > 0 ? Math.max(8, Math.round((p.count / maxBarVal) * 100)) : 3;
+                      return `
+                        <div class="tr-bar-col ${p.isMet ? "is-met" : ""} ${p.isCurrent ? "is-cur" : ""}" data-bar-goal="${DB.esc(goal.id)}" data-bar-period="${DB.esc(p.key)}" title="${DB.esc(p.fullLabel)}: ${p.count} / ${target} ${DB.esc(unitStr)} (Click to +1)">
+                          <span class="tr-bar-val">${p.count}</span>
+                          <div class="tr-bar-vtrack">
+                            <div class="tr-bar-vfill" style="height:${hPct}%"></div>
+                          </div>
+                          <span class="tr-bar-lbl">${DB.esc(p.shortLabel)}</span>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
+                </div>
+              ` : ""}
+
+              ${viewMode !== "chart" ? `
+                <div class="tr-history-table-wrap">
+                  <table class="tr-history-table">
+                    <thead>
+                      <tr>
+                        <th>Period</th>
+                        <th>Logged</th>
+                        <th>Status</th>
+                        <th>Adjust</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${analytics.periods.slice().reverse().map(p => {
+                        const statusCls = p.isMet ? "met" : (p.count > 0 ? "part" : "miss");
+                        const statusTxt = p.isMet ? `✓ Done (${p.pct}%)` : (p.count > 0 ? `${p.pct}%` : "0%");
+                        return `
+                          <tr>
+                            <td><b>${DB.esc(p.fullLabel)}</b></td>
+                            <td>${p.count} / ${target} ${DB.esc(unitStr)}</td>
+                            <td><span class="tr-hist-status ${statusCls}">${DB.esc(statusTxt)}</span></td>
+                            <td>
+                              <button type="button" class="tr-hist-adj-btn" data-step-delta="-1" data-goal-id="${DB.esc(goal.id)}" data-period-key="${DB.esc(p.key)}" title="Subtract 1">−</button>
+                              <button type="button" class="tr-hist-adj-btn" data-step-delta="1" data-goal-id="${DB.esc(goal.id)}" data-period-key="${DB.esc(p.key)}" title="Add 1">+</button>
+                            </td>
+                          </tr>
+                        `;
+                      }).join("")}
+                    </tbody>
+                  </table>
+                </div>
+              ` : ""}
+            </div>
+          </article>
+        `;
+      }).join("")}
+    </div>`;
+
+    container.querySelectorAll("[data-step-delta]").forEach(btn => {
+      btn.onclick = () => {
+        const gId = btn.dataset.goalId;
+        const pKey = btn.dataset.periodKey;
+        const delta = parseInt(btn.dataset.stepDelta, 10) || 1;
+        adjustGoalProgress(gId, pKey, delta);
+      };
+    });
+
+    container.querySelectorAll("[data-set-count]").forEach(btn => {
+      btn.onclick = () => {
+        const gId = btn.dataset.goalId;
+        const pKey = btn.dataset.periodKey;
+        const want = parseInt(btn.dataset.setCount, 10);
+        const goal = loadGoals().find(x => x.id === gId);
+        const curVal = goal ? getPeriodCount(goal, pKey) : 0;
+        const nextVal = curVal === want ? want - 1 : want;
+        adjustGoalProgress(gId, pKey, 0, nextVal);
+      };
+    });
+
+    container.querySelectorAll("[data-complete-goal]").forEach(btn => {
+      btn.onclick = () => {
+        const gId = btn.dataset.completeGoal;
+        const pKey = btn.dataset.periodKey;
+        const targetVal = parseInt(btn.dataset.targetVal, 10) || 1;
+        adjustGoalProgress(gId, pKey, 0, targetVal);
+      };
+    });
+
+    container.querySelectorAll("[data-bar-goal]").forEach(col => {
+      col.onclick = () => {
+        adjustGoalProgress(col.dataset.barGoal, col.dataset.barPeriod, 1);
+      };
+    });
+
+    container.querySelectorAll("[data-view-mode]").forEach(tab => {
+      tab.onclick = () => {
+        state.cardViewMode[tab.dataset.goalId] = tab.dataset.viewMode;
+        renderGoalsList(loadGoals());
+      };
+    });
+
+    container.querySelectorAll("[data-edit-goal]").forEach(btn => {
+      btn.onclick = () => {
+        const goal = loadGoals().find(x => x.id === btn.dataset.editGoal);
+        if (goal) openEditGoalModal(goal);
+      };
+    });
+
+    container.querySelectorAll("[data-del-goal]").forEach(btn => {
+      btn.onclick = async () => {
+        const list = loadGoals();
+        const idx = list.findIndex(x => x.id === btn.dataset.delGoal);
+        if (idx === -1) return;
+        const removed = list[idx];
+        list.splice(idx, 1);
+        await saveGoals(list);
+        DB.toast("Goal Removed", `"${removed.title}" was deleted.`, 2200);
+      };
+    });
+  }
+
+  function openEditGoalModal(goal) {
+    let modalIcon = goal.icon || "drop";
+    let modalColor = goal.color || "#6c5ce7";
+    let modalFreq = goal.freq || "daily";
+    const freqObj = FREQ_OPTIONS.find(x => x.id === modalFreq) || FREQ_OPTIONS[0];
+
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Edit Goal</h2>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:.65rem;align-items:end;margin-bottom:.75rem;">
+        <div class="field" style="margin:0;">
+          <label>Icon</label>
+          <button type="button" class="tr-icon-pick-btn" id="edGoalIconBtn" style="--pick-c:${DB.esc(modalColor)}">${getIconSvg(modalIcon)}</button>
+        </div>
+        <div class="field" style="margin:0;">
+          <label for="edGoalTitle">Goal Name</label>
+          <input id="edGoalTitle" type="text" value="${DB.esc(goal.title || "")}" style="width:100%" maxlength="70">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label>Frequency</label>
+          <div class="tr-dd-wrap">
+            <button type="button" class="tr-dd-trigger" id="edGoalFreqBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span id="edGoalFreqLbl">${DB.esc(freqObj.full)}</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field" id="edGoalIntervalField" ${modalFreq === "every_n_days" ? "" : "hidden"}>
+          <label for="edGoalInterval">Every X Days</label>
+          <input id="edGoalInterval" type="number" min="2" max="90" step="1" value="${Math.max(2, parseInt(goal.intervalDays, 10) || 3)}" style="width:100%">
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label for="edGoalTarget">Target Goal</label>
+          <input id="edGoalTarget" type="number" min="1" max="10000" step="1" value="${Math.max(1, Number(goal.target) || 1)}" style="width:100%">
+        </div>
+        <div class="field">
+          <label for="edGoalUnit">Unit</label>
+          <input id="edGoalUnit" type="text" value="${DB.esc(goal.unit || "times")}" style="width:100%" maxlength="20">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="ghost left" id="edGoalCancel">Cancel</button>
+        <button type="button" class="primary" id="edGoalSave">Save Changes</button>
+      </div>
+    `;
+
+    const close = DB.modal(node, () => closeActivePopover());
+
+    const edIconBtn = node.querySelector("#edGoalIconBtn");
+    edIconBtn.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openIconAndColorPicker(edIconBtn, modalIcon, modalColor, (ic, col) => {
+        modalIcon = ic;
+        modalColor = col;
+        edIconBtn.style.setProperty("--pick-c", modalColor);
+        edIconBtn.innerHTML = getIconSvg(modalIcon);
+      });
+    };
+
+    const edFreqBtn = node.querySelector("#edGoalFreqBtn");
+    edFreqBtn.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openFrequencyDropdown(edFreqBtn, modalFreq, picked => {
+        modalFreq = picked;
+        const fObj = FREQ_OPTIONS.find(x => x.id === modalFreq) || FREQ_OPTIONS[0];
+        node.querySelector("#edGoalFreqLbl").textContent = fObj.full;
+        node.querySelector("#edGoalIntervalField").hidden = modalFreq !== "every_n_days";
+      });
+    };
+
+    node.querySelector("#edGoalCancel").onclick = close;
+    node.querySelector("#edGoalSave").onclick = async () => {
+      const newTitle = node.querySelector("#edGoalTitle").value.trim();
+      const newTarget = Math.max(1, parseInt(node.querySelector("#edGoalTarget").value, 10) || 1);
+      const newUnit = node.querySelector("#edGoalUnit").value.trim() || "times";
+      const newInterval = Math.max(2, parseInt(node.querySelector("#edGoalInterval").value, 10) || 3);
+
+      if (!newTitle) {
+        node.querySelector("#edGoalTitle").focus();
+        return;
+      }
+
+      const list = loadGoals();
+      const target = list.find(x => x.id === goal.id);
+      if (target) {
+        target.title = newTitle;
+        target.icon = modalIcon;
+        target.color = modalColor;
+        target.freq = modalFreq;
+        target.intervalDays = newInterval;
+        target.target = newTarget;
+        target.unit = newUnit;
+        target.updatedAt = Date.now();
+        await saveGoals(list);
+        DB.toast("Goal Updated", `"${newTitle}" was updated.`, 2200);
+      }
+      close();
+    };
+  }
+
+  function renderAll() {
+    updateEntryFormUI();
+    renderGoalsList(loadGoals());
+  }
+
+  $("trIconPickBtn").onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    openIconAndColorPicker($("trIconPickBtn"), state.entryIcon, state.entryColor, (ic, col) => {
+      state.entryIcon = ic;
+      state.entryColor = col;
+      updateEntryFormUI();
+    });
+  };
+
+  $("trFreqTriggerBtn").onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    openFrequencyDropdown($("trFreqTriggerBtn"), state.entryFreq, picked => {
+      state.entryFreq = picked;
+      updateEntryFormUI();
+    });
+  };
+
+  document.querySelectorAll("#trPresetChips [data-title]").forEach(chip => {
+    chip.onclick = async () => {
+      if (!(await ensureAccountAccess())) return;
+      $("trTitleInput").value = chip.dataset.title || "";
+      state.entryFreq = chip.dataset.freq || "daily";
+      if (chip.dataset.interval) {
+        $("trIntervalInput").value = chip.dataset.interval;
+      }
+      $("trTargetInput").value = chip.dataset.target || "1";
+      $("trUnitInput").value = chip.dataset.unit || "times";
+      state.entryIcon = chip.dataset.icon || "check";
+      state.entryColor = chip.dataset.color || "#6c5ce7";
+      updateEntryFormUI();
+      $("trTitleInput").focus();
+    };
+  });
+
+  async function submitNewGoal() {
+    if (!(await ensureAccountAccess())) return;
+    const titleVal = $("trTitleInput").value.trim();
+    const targetVal = Math.max(1, parseInt($("trTargetInput").value, 10) || 1);
+    const unitVal = $("trUnitInput").value.trim() || "times";
+    const intervalVal = Math.max(2, parseInt($("trIntervalInput").value, 10) || 3);
+
+    if (!titleVal) {
+      $("trTitleInput").focus();
+      return;
+    }
+
+    const newGoal = {
+      id: DB.uid(),
+      title: titleVal,
+      icon: state.entryIcon,
+      color: state.entryColor,
+      freq: state.entryFreq,
+      intervalDays: intervalVal,
+      target: targetVal,
+      unit: unitVal,
+      anchorMs: startOfLocalDayMs(Date.now()),
+      history: {},
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    const list = loadGoals();
+    list.unshift(newGoal);
+
+    $("trTitleInput").value = "";
+    await saveGoals(list);
+    DB.toast("Goal Added", `"${titleVal}" (${getFrequencyDisplayLabel(newGoal)} · ${targetVal} ${unitVal}) is ready to track.`, 2600);
+  }
+
+  $("addGoalBtn").onclick = submitNewGoal;
+  [$("trTitleInput"), $("trTargetInput"), $("trUnitInput"), $("trIntervalInput")].forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitNewGoal();
+      }
+    });
+  });
+
+  $("trSearchInput").oninput = e => {
+    state.searchQuery = e.target.value.trim();
+    renderGoalsList(loadGoals());
+  };
+
+  let lastDayKeyChecked = ymdKey(Date.now());
+  setInterval(() => {
+    const nowKey = ymdKey(Date.now());
+    if (nowKey !== lastDayKeyChecked) {
+      lastDayKeyChecked = nowKey;
+      renderAll();
+    } else {
+      document.querySelectorAll("[data-reset-timer]").forEach(el => {
+        const endMs = Number(el.dataset.resetTimer) || 0;
+        if (endMs > 0) el.textContent = formatResetRemaining(endMs, Date.now());
+      });
+    }
+  }, 30000);
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(async () => {
+      await initDirectFirestoreSync();
+      renderAll();
+    });
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) renderAll();
+  });
+
+  initDirectFirestoreSync().then(() => {
+    renderAll();
+  });
+});
+</script>
+</body>
+</html>

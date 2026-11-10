@@ -1,0 +1,2919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Birthday | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 90%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --bd-pink: var(--accent);
+    --bd-gold: #ff9f0a;
+    --bd-green: #30d158;
+    --bd-blue: #0a84ff;
+    --bd-purple: #bf5af2;
+  }
+
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 1.1rem 1rem 4.5rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.42rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.3rem, 7.5vw, 4.1rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.9rem, 1.7vw, 1.02rem);
+    max-width: 600px;
+    line-height: 1.5;
+  }
+
+  .bd-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .apple-panel {
+    background: var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(185%);
+    -webkit-backdrop-filter: blur(28px) saturate(185%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 18px 42px -18px rgba(0, 0, 0, 0.35);
+    border-radius: 26px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .bd-alert-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.05rem;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--bd-pink) 8%, var(--glass-elevated));
+    border: 1px solid color-mix(in srgb, var(--bd-pink) 26%, var(--line));
+  }
+  .bd-alert-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 220px;
+    flex: 1;
+  }
+  .bd-alert-ic {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--bd-pink) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--bd-pink) 36%, transparent);
+    color: var(--bd-pink);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .bd-alert-ic svg {
+    width: 21px;
+    height: 21px;
+  }
+  .bd-alert-txt {
+    display: flex;
+    flex-direction: column;
+    gap: 0.14rem;
+    min-width: 0;
+  }
+  .bd-alert-txt b {
+    font-family: var(--display);
+    font-size: 0.94rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+  .bd-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bd-green);
+    box-shadow: 0 0 10px rgba(48, 209, 88, 0.55);
+    display: inline-block;
+  }
+  .bd-status-dot.warn {
+    background: var(--bd-gold);
+    box-shadow: 0 0 10px rgba(255, 159, 10, 0.55);
+  }
+  .bd-alert-txt span {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .bd-alert-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .bd-btn {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.81rem;
+    font-weight: 600;
+    padding: 0 0.9rem;
+    height: 38px;
+    min-height: 38px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    box-shadow: var(--glass-spec);
+    transition: all 0.18s var(--apple-ease);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .bd-btn:hover {
+    border-color: var(--bd-pink);
+    background: color-mix(in srgb, var(--bd-pink) 12%, var(--card-solid));
+    transform: translateY(-1px);
+  }
+  .bd-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--accent) 48%, transparent);
+  }
+  .bd-btn.primary:hover {
+    filter: brightness(1.06);
+  }
+  .bd-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  .bd-entry-box {
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .bd-entry-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .bd-entry-head b {
+    font-family: var(--display);
+    font-size: 0.95rem;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .bd-tz-presets {
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+    flex-wrap: wrap;
+  }
+  .bd-tz-chip {
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-solid) 65%, transparent);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.22rem 0.62rem;
+    min-height: 28px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bd-tz-chip:hover {
+    color: var(--text);
+    border-color: var(--bd-pink);
+    transform: none;
+  }
+  .bd-tz-chip.active {
+    background: color-mix(in srgb, var(--bd-pink) 18%, var(--card-solid));
+    border-color: var(--bd-pink);
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .bd-entry-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.95fr 1.55fr 1.35fr;
+    gap: 0.7rem;
+    align-items: end;
+  }
+  .bd-entry-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  }
+  .bd-entry-bottom-left {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    flex: 1 1 320px;
+  }
+  .bd-presets-lbl {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-right: 0.15rem;
+  }
+  .bd-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+  .bd-field label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0;
+  }
+  .bd-field input[type="text"] {
+    width: 100%;
+    height: 42px;
+    border-radius: 13px;
+    padding: 0 0.8rem;
+    font-size: 0.86rem;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+  .bd-field input[type="text"]:focus {
+    border-color: var(--bd-pink);
+    outline: none;
+  }
+
+  .bd-date-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  .bd-date-input-wrap input[type="text"] {
+    width: 100%;
+    padding-right: 2.4rem !important;
+    font-family: var(--mono);
+    font-size: 0.83rem;
+  }
+  .bd-cal-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    min-height: 31px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: color-mix(in srgb, var(--bd-pink) 13%, transparent);
+    color: var(--bd-pink);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .bd-cal-btn:hover {
+    background: color-mix(in srgb, var(--bd-pink) 24%, var(--card-solid));
+    border-color: color-mix(in srgb, var(--bd-pink) 42%, var(--line));
+    color: var(--text);
+    transform: translateY(-50%) scale(1.04);
+  }
+  .bd-cal-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .bd-tz-select-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .bd-tz-trigger {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    padding: 0 0.75rem 0 0.85rem;
+    border-radius: 13px;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.83rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.16s, background 0.16s;
+  }
+  .bd-tz-trigger:hover,
+  .bd-tz-trigger[aria-expanded="true"] {
+    border-color: var(--bd-pink);
+    transform: none;
+  }
+  .bd-tz-trigger-main {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+  .bd-tz-trigger-lbl {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bd-tz-trigger-sub {
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    color: var(--bd-pink);
+    background: color-mix(in srgb, var(--bd-pink) 13%, transparent);
+    padding: 0.12rem 0.45rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .bd-tz-trigger svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform 0.2s var(--apple-ease);
+  }
+  .bd-tz-trigger[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+    color: var(--bd-pink);
+  }
+
+  .bd-live-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.62rem 0.88rem;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--card-solid) 75%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--bd-pink) 35%, var(--line));
+    font-size: 0.79rem;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .bd-live-preview b {
+    color: var(--text);
+  }
+  .bd-live-preview .bd-prev-highlight {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--bd-pink);
+    background: color-mix(in srgb, var(--bd-pink) 13%, transparent);
+    padding: 0.18rem 0.58rem;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .bd-pop {
+    position: fixed;
+    z-index: 10060;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--card-solid) 95%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    box-shadow: 0 22px 54px -12px rgba(0, 0, 0, 0.52), var(--glass-spec);
+    animation: bdPopIn 0.18s var(--apple-spring);
+    user-select: none;
+  }
+  @keyframes bdPopIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .bd-cal-pop {
+    width: 292px;
+    padding: 0.85rem;
+  }
+  .bd-cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+  }
+  .bd-cal-title {
+    font-family: var(--display);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .bd-cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .bd-cal-nav-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .bd-cal-nav-btn:hover {
+    border-color: var(--bd-pink);
+    color: var(--bd-pink);
+    transform: none;
+  }
+  .bd-cal-nav-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .bd-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.32rem;
+  }
+  .bd-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .bd-cal-day {
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .bd-cal-day:hover {
+    background: color-mix(in srgb, var(--bd-pink) 16%, transparent);
+    border-color: color-mix(in srgb, var(--bd-pink) 35%, transparent);
+    transform: none;
+  }
+  .bd-cal-day.is-out {
+    color: var(--muted);
+    opacity: 0.4;
+  }
+  .bd-cal-day.is-today {
+    border-color: var(--bd-pink);
+    color: var(--bd-pink);
+    font-weight: 800;
+  }
+  .bd-cal-day.is-selected {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    font-weight: 800;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 42%, transparent);
+  }
+  .bd-cal-year-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .bd-cal-year-inp {
+    width: 86px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 0.45rem !important;
+    border-radius: 8px !important;
+    font-family: var(--mono);
+    font-size: 0.76rem !important;
+    text-align: center;
+    background: var(--glass-elevated) !important;
+    border: 1px solid var(--line) !important;
+    color: var(--text) !important;
+  }
+  .bd-cal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.55rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--line);
+  }
+  .bd-cal-foot-btn {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 0.65rem;
+    border-radius: 8px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .bd-cal-foot-btn.today {
+    color: var(--bd-pink);
+    border-color: color-mix(in srgb, var(--bd-pink) 35%, var(--line));
+  }
+  .bd-cal-foot-btn:hover {
+    border-color: var(--bd-pink);
+    transform: none;
+  }
+
+  .bd-tz-pop {
+    width: min(380px, calc(100vw - 16px));
+    padding: 0.65rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .bd-tz-search {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 36px;
+    padding: 0 0.68rem;
+    border-radius: 11px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+  }
+  .bd-tz-search svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .bd-tz-search input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  .bd-tz-search input:focus {
+    outline: none;
+  }
+  .bd-tz-list {
+    max-height: 270px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 2px;
+  }
+  .bd-tz-item {
+    width: 100%;
+    padding: 0.48rem 0.62rem;
+    border-radius: 11px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.14s;
+  }
+  .bd-tz-item:hover {
+    background: color-mix(in srgb, var(--bd-pink) 13%, transparent);
+    transform: none;
+  }
+  .bd-tz-item.active {
+    background: color-mix(in srgb, var(--bd-pink) 20%, transparent);
+  }
+  .bd-tz-item-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .bd-tz-item-left b {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bd-tz-item-left span {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+  .bd-tz-item-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.08rem;
+    flex-shrink: 0;
+  }
+  .bd-tz-item-right .tz-off {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--bd-pink);
+  }
+  .bd-tz-item-right .tz-diff {
+    font-size: 0.67rem;
+    color: var(--muted);
+  }
+
+  .bd-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .bd-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding: 0.1rem 0;
+    flex: 1 1 280px;
+  }
+  .bd-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .bd-pill {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.34rem 0.78rem;
+    min-height: 34px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.16s;
+  }
+  .bd-pill:hover {
+    color: var(--text);
+    border-color: var(--bd-pink);
+    transform: none;
+  }
+  .bd-pill[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .bd-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+  }
+  .bd-search-box {
+    height: 36px;
+    min-width: 210px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .bd-search-box svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+  }
+  .bd-search-box input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  .bd-search-box input:focus {
+    outline: none;
+  }
+
+  .bd-sort-dd {
+    position: relative;
+  }
+  .bd-sort-btn {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 0.75rem 0 0.85rem;
+    border-radius: 999px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    cursor: pointer;
+  }
+  .bd-sort-btn:hover,
+  .bd-sort-dd.open .bd-sort-btn {
+    border-color: var(--bd-pink);
+    transform: none;
+  }
+  .bd-sort-btn svg {
+    width: 13px;
+    height: 13px;
+    color: var(--muted);
+    transition: transform 0.2s var(--apple-ease);
+  }
+  .bd-sort-dd.open .bd-sort-btn svg {
+    transform: rotate(180deg);
+    color: var(--bd-pink);
+  }
+  .bd-sort-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 175px;
+    padding: 0.34rem;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--card-solid) 95%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    box-shadow: 0 16px 38px -10px rgba(0, 0, 0, 0.45), var(--glass-spec);
+    z-index: 95;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: bdPopIn 0.16s var(--apple-spring);
+  }
+  .bd-sort-menu[hidden] {
+    display: none !important;
+  }
+  .bd-sort-opt {
+    width: 100%;
+    height: 33px;
+    min-height: 33px;
+    padding: 0 0.68rem;
+    border-radius: 9px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .bd-sort-opt:hover {
+    background: color-mix(in srgb, var(--bd-pink) 14%, transparent);
+    transform: none;
+  }
+  .bd-sort-opt.active {
+    background: color-mix(in srgb, var(--bd-pink) 20%, transparent);
+    color: var(--bd-pink);
+    font-weight: 700;
+  }
+  .bd-sort-opt svg {
+    width: 13px;
+    height: 13px;
+    color: var(--bd-pink);
+  }
+
+  .bd-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 0.95rem;
+  }
+  .bd-card {
+    position: relative;
+    background: var(--glass-elevated);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    padding: 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    box-shadow: var(--glass-spec);
+    transition: transform 0.22s var(--apple-ease), border-color 0.22s;
+  }
+  .bd-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--bd-pink) 42%, var(--line));
+  }
+  .bd-card.is-today-bday {
+    border-color: var(--bd-pink);
+    background: linear-gradient(155deg, color-mix(in srgb, var(--bd-pink) 13%, var(--card-solid)), var(--glass-elevated));
+    box-shadow: 0 14px 36px -12px color-mix(in srgb, var(--accent) 38%, transparent), var(--glass-spec);
+  }
+  .bd-card.is-imminent {
+    border-color: var(--bd-gold);
+    background: linear-gradient(155deg, color-mix(in srgb, var(--bd-gold) 12%, var(--card-solid)), var(--glass-elevated));
+  }
+
+  .bd-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem;
+  }
+  .bd-person {
+    display: flex;
+    align-items: center;
+    gap: 0.72rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .bd-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--bd-pink) 26%, var(--card-solid)), color-mix(in srgb, var(--bd-gold) 22%, var(--card-solid)));
+    border: 1px solid color-mix(in srgb, var(--bd-pink) 38%, transparent);
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 1.05rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .bd-person-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.14rem;
+    min-width: 0;
+  }
+  .bd-person-meta h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.04rem;
+    font-weight: 800;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bd-date-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .bd-date-pill {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--bd-pink);
+    background: color-mix(in srgb, var(--bd-pink) 14%, transparent);
+    padding: 0.12rem 0.52rem;
+    border-radius: 999px;
+  }
+  .bd-age-pill {
+    font-size: 0.71rem;
+    font-weight: 700;
+    color: var(--bd-gold);
+    background: color-mix(in srgb, var(--bd-gold) 15%, transparent);
+    padding: 0.12rem 0.52rem;
+    border-radius: 999px;
+  }
+  .bd-status-badge {
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    font-weight: 700;
+    padding: 0.22rem 0.58rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-solid) 80%, transparent);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .bd-status-badge.live {
+    background: color-mix(in srgb, var(--bd-pink) 20%, transparent);
+    border-color: var(--bd-pink);
+    color: var(--bd-pink);
+  }
+  .bd-status-badge.soon {
+    background: color-mix(in srgb, var(--bd-gold) 20%, transparent);
+    border-color: var(--bd-gold);
+    color: var(--bd-gold);
+  }
+
+  .bd-countdown-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.42rem;
+  }
+  .bd-cd-cell {
+    background: color-mix(in srgb, var(--card-solid) 75%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    border-radius: 13px;
+    padding: 0.45rem 0.3rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.06rem;
+  }
+  .bd-cd-cell b {
+    font-family: var(--mono);
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.15;
+  }
+  .bd-cd-cell span {
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+
+  .bd-tz-box {
+    background: color-mix(in srgb, var(--card-solid) 70%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    border-radius: 15px;
+    padding: 0.68rem 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    font-size: 0.77rem;
+  }
+  .bd-tz-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .bd-tz-row .lbl {
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+  }
+  .bd-tz-row .lbl svg {
+    width: 13px;
+    height: 13px;
+    color: var(--bd-pink);
+    flex-shrink: 0;
+  }
+  .bd-tz-row .val {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+  }
+  .bd-tz-row.alert-row {
+    padding-top: 0.38rem;
+    border-top: 1px dashed color-mix(in srgb, var(--line) 80%, transparent);
+  }
+  .bd-tz-row.alert-row .val {
+    color: var(--bd-green);
+  }
+
+  .bd-note-strip {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--card-solid) 50%, transparent);
+    border-left: 3px solid var(--bd-pink);
+    padding: 0.42rem 0.68rem;
+    border-radius: 0 10px 10px 0;
+    line-height: 1.4;
+  }
+
+  .bd-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    padding-top: 0.25rem;
+    margin-top: auto;
+  }
+  .bd-wish-btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.72rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--bd-pink) 35%, var(--line));
+    background: color-mix(in srgb, var(--bd-pink) 12%, transparent);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bd-wish-btn:hover {
+    background: color-mix(in srgb, var(--bd-pink) 22%, var(--card-solid));
+    border-color: var(--bd-pink);
+    transform: none;
+  }
+  .bd-wish-btn svg {
+    width: 13px;
+    height: 13px;
+    color: var(--bd-pink);
+  }
+  .bd-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .bd-icon-btn {
+    width: 31px;
+    height: 31px;
+    min-width: 31px;
+    min-height: 31px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bd-icon-btn:hover {
+    background: var(--card-solid);
+    border-color: var(--line);
+    color: var(--text);
+    transform: none;
+  }
+  .bd-icon-btn.bell-on {
+    color: var(--bd-green);
+  }
+  .bd-icon-btn.del:hover {
+    color: #ff453a;
+    border-color: rgba(255, 69, 58, 0.38);
+  }
+  .bd-icon-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .bd-empty {
+    text-align: center;
+    padding: 2.7rem 1.2rem;
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--card-2) 55%, transparent);
+    border: 1px dashed var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .bd-empty-ic {
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--bd-pink) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--bd-pink) 35%, var(--line));
+    color: var(--bd-pink);
+    display: grid;
+    place-items: center;
+  }
+  .bd-empty-ic svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  @media (max-width: 980px) {
+    .bd-entry-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .bd-entry-grid .full-sm {
+      grid-column: 1 / -1;
+    }
+    .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    main {
+      padding: 0.8rem 0.65rem 6.5rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .bd-entry-grid {
+      grid-template-columns: 1fr;
+    }
+    .bd-entry-bottom-row #addBdBtn {
+      width: 100%;
+      justify-content: center;
+    }
+    .bd-alert-actions {
+      width: 100%;
+    }
+    .bd-alert-actions .bd-btn {
+      flex: 1;
+      justify-content: center;
+    }
+    .bd-right-tools {
+      width: 100%;
+    }
+    .bd-search-box {
+      flex: 1;
+      min-width: 0;
+    }
+    .bd-cards-grid {
+      grid-template-columns: 1fr;
+    }
+    .bd-tz-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.15rem;
+    }
+    .bd-tz-row .val {
+      text-align: left;
+    }
+  }
+</style>
+</head>
+<body data-page="birthday">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>BIRTHDAY ALERT</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/><path d="M7 4h.01"/><path d="M12 4h.01"/><path d="M17 4h.01"/></svg>
+        Smart Birthday Reminders
+      </span>
+    </div>
+</div>
+
+  <div class="bd-shell">
+    <section class="panel apple-panel" aria-label="Birthday Alert Status and Quick Entry">
+      <div class="bd-alert-bar">
+        <div class="bd-alert-info">
+          <div class="bd-alert-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </div>
+          <div class="bd-alert-txt">
+            <b>
+              <i class="bd-status-dot" id="bdAlertDot"></i>
+              <span id="bdAlertTitle">5-Minute Pre-Midnight Alerts Active</span>
+            </b>
+            <span id="bdLocalTzSub">Detecting your local time zone…</span>
+          </div>
+        </div>
+        <div class="bd-alert-actions">
+          <button type="button" class="bd-btn primary" id="bdAlertActionBtn" title="Enable browser notifications and send a test alert">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="bdAlertActionLbl">Enable &amp; Test Alert</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="bd-entry-box">
+        <div class="bd-entry-head">
+          <b>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+            Add Birthday Reminder
+          </b>
+        </div>
+
+        <div class="bd-entry-grid">
+          <div class="bd-field">
+            <label for="bdNameInput">Person's Name</label>
+            <input type="text" id="bdNameInput" placeholder="e.g. MeowChair" autocomplete="off" maxlength="60">
+          </div>
+
+          <div class="bd-field">
+            <label for="bdDateInput">Birthday (MM/DD)</label>
+            <div class="bd-date-input-wrap" id="bdDateWrap">
+              <input type="text" id="bdDateInput" placeholder="MM/DD or MM/DD/YYYY" autocomplete="off" spellcheck="false">
+              <button type="button" class="bd-cal-btn" id="bdDateCalBtn" title="Open calendar picker" aria-label="Open calendar picker">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="bd-field">
+            <label>Time Zone</label>
+            <div class="bd-tz-select-wrap" id="bdTzSelectWrap">
+              <button type="button" class="bd-tz-trigger" id="bdTzTriggerBtn" aria-haspopup="listbox" aria-expanded="false">
+                <span class="bd-tz-trigger-main">
+                  <span class="bd-tz-trigger-lbl" id="bdTzTriggerLbl">Toronto / Ottawa / New York (Eastern)</span>
+                  <span class="bd-tz-trigger-sub" id="bdTzTriggerSub">GMT-5</span>
+                </span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="bd-field">
+            <label for="bdNoteInput">Notes (Optional)</label>
+            <input type="text" id="bdNoteInput" placeholder="e.g. gift idea" autocomplete="off" maxlength="140">
+          </div>
+        </div>
+
+        <div class="bd-live-preview" id="bdLivePreview" aria-live="polite"></div>
+
+        <div class="bd-entry-bottom-row">
+          <div class="bd-entry-bottom-left">
+            <span class="bd-presets-lbl">Suggested:</span>
+            <div class="bd-tz-presets" id="quickTzChips" aria-label="Quick select time zone">
+              <button type="button" class="bd-tz-chip active" data-tz="local">My Time Zone</button>
+              <button type="button" class="bd-tz-chip" data-tz="Asia/Hong_Kong">Hong Kong</button>
+              <button type="button" class="bd-tz-chip" data-tz="Asia/Tokyo">Japan (Tokyo)</button>
+              <button type="button" class="bd-tz-chip" data-tz="Asia/Taipei">Taiwan</button>
+              <button type="button" class="bd-tz-chip" data-tz="Asia/Seoul">South Korea</button>
+              <button type="button" class="bd-tz-chip" data-tz="Europe/London">UK (London)</button>
+              <button type="button" class="bd-tz-chip" data-tz="America/Vancouver">Pacific (Vancouver/LA)</button>
+              <button type="button" class="bd-tz-chip" data-tz="Australia/Sydney">Australia (Sydney)</button>
+            </div>
+          </div>
+
+          <button type="button" class="bd-btn primary" id="addBdBtn" style="height:40px;padding:0 1.15rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add Birthday</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel apple-panel" aria-label="Saved Birthday Reminders">
+      <div class="bd-controls-bar">
+        <div class="bd-pills" id="bdFilterPills" role="tablist" aria-label="Filter birthdays"></div>
+        <div class="bd-right-tools">
+          <div class="bd-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="bdSearchInput" placeholder="Search name or time zone…" autocomplete="off">
+          </div>
+          <div class="bd-sort-dd" id="bdSortDropdown">
+            <button type="button" class="bd-sort-btn" id="bdSortBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span id="bdSortLbl">Sort: Soonest Alert</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="bd-sort-menu" id="bdSortMenu" role="listbox" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="bdCardsContainer" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const BD_KEY = "p23.birthdays";
+  const FIRED_KEY = "p23.fired";
+  const $ = id => document.getElementById(id);
+
+  const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const FALLBACK_EASTERN_TZ = "America/Toronto";
+  const LOCAL_TZ = (() => {
+    try {
+      const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return detected || FALLBACK_EASTERN_TZ;
+    } catch {
+      return FALLBACK_EASTERN_TZ;
+    }
+  })();
+
+  const CURATED_TIMEZONES = [
+    { tz: "Pacific/Pago_Pago", label: "Pago Pago (American Samoa)", country: "Samoa", tags: "sst gmt-11", priority: 1 },
+    { tz: "Pacific/Honolulu", label: "Honolulu (Hawaii)", country: "USA", tags: "hst gmt-10", priority: 1 },
+    { tz: "America/Anchorage", label: "Anchorage (Alaska)", country: "USA", tags: "akst akdt gmt-9", priority: 1 },
+    { tz: "America/Vancouver", label: "Vancouver / Seattle / Los Angeles (Pacific)", country: "Canada / USA", tags: "pst pdt bc california san francisco gmt-8", priority: 1 },
+    { tz: "America/Edmonton", label: "Calgary / Edmonton / Denver (Mountain)", country: "Canada / USA", tags: "mst mdt alberta colorado gmt-7", priority: 1 },
+    { tz: "America/Winnipeg", label: "Winnipeg / Chicago / Dallas / Mexico City (Central)", country: "Canada / USA / Mexico", tags: "cst cdt manitoba texas illinois mexico gmt-6", priority: 1 },
+    { tz: "America/Toronto", label: "Toronto / Ottawa / New York (Eastern)", country: "Canada / USA", tags: "est edt east coast ontario quebec montreal boston miami gmt-5", priority: 1 },
+    { tz: "America/Halifax", label: "Halifax / Atlantic Canada / Santiago", country: "Canada / Chile", tags: "ast adt nova scotia new brunswick pei gmt-4", priority: 1 },
+    { tz: "America/St_Johns", label: "St. John's (Newfoundland)", country: "Canada", tags: "nst ndt nl gmt-3:30", priority: 1 },
+    { tz: "America/Sao_Paulo", label: "São Paulo / Rio de Janeiro / Buenos Aires", country: "Brazil / Argentina", tags: "brt art brazil argentina gmt-3", priority: 1 },
+    { tz: "America/Noronha", label: "Fernando de Noronha / South Georgia", country: "Brazil / Atlantic", tags: "fnst gmt-2", priority: 1 },
+    { tz: "Atlantic/Azores", label: "Azores / Cape Verde", country: "Portugal / Cabo Verde", tags: "azot cvt gmt-1", priority: 1 },
+    { tz: "Europe/London", label: "London / Dublin / Lisbon (UK & Ireland)", country: "United Kingdom / Portugal", tags: "gmt bst wet uk england scotland ireland gmt+0 gmt0", priority: 1 },
+    { tz: "Europe/Paris", label: "Paris / Berlin / Rome / Madrid (Central Europe)", country: "Europe", tags: "cet cest france germany italy spain amsterdam zurich gmt+1", priority: 1 },
+    { tz: "Europe/Athens", label: "Athens / Helsinki / Cairo / Johannesburg", country: "Europe / Africa", tags: "eet eest sast greece finland egypt south africa gmt+2", priority: 1 },
+    { tz: "Europe/Istanbul", label: "Istanbul / Riyadh / Nairobi / Moscow", country: "Turkey / Middle East", tags: "trt msk ast eat gmt+3", priority: 1 },
+    { tz: "Asia/Dubai", label: "Dubai / Abu Dhabi / Baku", country: "UAE", tags: "gst gulf gmt+4", priority: 1 },
+    { tz: "Asia/Karachi", label: "Karachi / Tashkent / Maldives", country: "Pakistan / Uzbekistan", tags: "pkt uzt gmt+5", priority: 1 },
+    { tz: "Asia/Kolkata", label: "Mumbai / New Delhi / Bengaluru (India)", country: "India", tags: "ist india gmt+5:30", priority: 1 },
+    { tz: "Asia/Dhaka", label: "Dhaka / Almaty", country: "Bangladesh / Kazakhstan", tags: "bdt gmt+6", priority: 1 },
+    { tz: "Asia/Bangkok", label: "Bangkok / Ho Chi Minh City / Jakarta", country: "Thailand / Vietnam / Indonesia", tags: "ict wib gmt+7", priority: 1 },
+    { tz: "Asia/Hong_Kong", label: "Hong Kong / Macau", country: "Hong Kong", tags: "hkt hk gmt+8", priority: 1 },
+    { tz: "Asia/Taipei", label: "Taipei / Kaohsiung (Taiwan)", country: "Taiwan", tags: "cst taiwan gmt+8", priority: 1 },
+    { tz: "Asia/Shanghai", label: "Beijing / Shanghai / Shenzhen (China)", country: "China", tags: "cst china prc gmt+8", priority: 1 },
+    { tz: "Asia/Singapore", label: "Singapore / Kuala Lumpur / Manila / Perth", country: "Singapore / Malaysia / Philippines", tags: "sgt myt pht awst gmt+8", priority: 1 },
+    { tz: "Asia/Tokyo", label: "Tokyo / Osaka / Kyoto (Japan)", country: "Japan", tags: "jst nippon nihon gmt+9", priority: 1 },
+    { tz: "Asia/Seoul", label: "Seoul / Busan (South Korea)", country: "South Korea", tags: "kst korea gmt+9", priority: 1 },
+    { tz: "Australia/Brisbane", label: "Brisbane (Queensland)", country: "Australia", tags: "aest gmt+10", priority: 1 },
+    { tz: "Australia/Sydney", label: "Sydney / Melbourne / Canberra", country: "Australia", tags: "aest aedt nsw victoria gmt+10 gmt+11", priority: 1 },
+    { tz: "Pacific/Noumea", label: "Nouméa / Solomon Islands", country: "New Caledonia", tags: "nct sbt gmt+11", priority: 1 },
+    { tz: "Pacific/Majuro", label: "Majuro / Tarawa (Marshall Islands)", country: "Marshall Islands", tags: "mht gmt+12", priority: 1 },
+    { tz: "Pacific/Auckland", label: "Auckland / Wellington / Fiji", country: "New Zealand / Fiji", tags: "nzst nzdt nz fjt gmt+12 gmt+13", priority: 1 },
+    { tz: "Pacific/Apia", label: "Apia / Tonga", country: "Samoa / Tonga", tags: "wst tot gmt+13", priority: 1 },
+    { tz: "Pacific/Kiritimati", label: "Kiritimati (Line Islands)", country: "Kiribati", tags: "lint gmt+14", priority: 1 }
+  ];
+
+  const ALL_TIMEZONES = (() => {
+    const map = new Map();
+    for (const c of CURATED_TIMEZONES) {
+      map.set(c.tz, c);
+    }
+    try {
+      if (typeof Intl.supportedValuesOf === "function") {
+        for (const tz of Intl.supportedValuesOf("timeZone")) {
+          if (!map.has(tz)) {
+            const parts = tz.split("/");
+            const city = (parts[parts.length - 1] || tz).replace(/_/g, " ");
+            const region = (parts[0] || "").replace(/_/g, " ");
+            map.set(tz, {
+              tz,
+              label: `${city} (${tz})`,
+              country: region,
+              tags: `${city.toLowerCase()} ${region.toLowerCase()} ${tz.toLowerCase()}`
+            });
+          }
+        }
+      }
+    } catch {}
+    return [...map.values()];
+  })();
+
+  const state = {
+    selectedTz: LOCAL_TZ,
+    filter: "all",
+    sortBy: "soonest",
+    searchQuery: "",
+    syncInFlight: false
+  };
+
+  function isLeapYear(y) {
+    return (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+  }
+
+  function safeDayForYear(year, month, day) {
+    if (month === 2 && day === 29 && !isLeapYear(year)) return 28;
+    return day;
+  }
+
+  function getZonedParts(utcMs, timeZone) {
+    let tz = timeZone || LOCAL_TZ;
+    try {
+      const fmt = new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+      });
+      const parts = fmt.formatToParts(new Date(utcMs));
+      const out = {};
+      for (const p of parts) {
+        if (p.type !== "literal") out[p.type] = parseInt(p.value, 10);
+      }
+      if (out.hour === 24) out.hour = 0;
+      return out;
+    } catch {
+      const d = new Date(utcMs);
+      return {
+        year: d.getFullYear(),
+        month: d.getMonth() + 1,
+        day: d.getDate(),
+        hour: d.getHours(),
+        minute: d.getMinutes(),
+        second: d.getSeconds()
+      };
+    }
+  }
+
+  function zonedTimeToUtcMs(year, month, day, hour, minute, second, timeZone) {
+    const validDay = safeDayForYear(year, month, day);
+    const targetAsUtc = Date.UTC(year, month - 1, validDay, hour || 0, minute || 0, second || 0);
+    let guess = targetAsUtc;
+    for (let i = 0; i < 3; i++) {
+      const p = getZonedParts(guess, timeZone);
+      const actualAsUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+      const diff = targetAsUtc - actualAsUtc;
+      if (diff === 0) break;
+      guess += diff;
+    }
+    return guess;
+  }
+
+  function getTzOffsetMinutesAt(utcMs, timeZone) {
+    const p = getZonedParts(utcMs, timeZone);
+    const zonedAsUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+    return Math.round((zonedAsUtc - utcMs) / 60000);
+  }
+
+  function formatUtcOffsetLabel(offsetMins) {
+    const sign = offsetMins >= 0 ? "+" : "-";
+    const abs = Math.abs(offsetMins);
+    const hh = Math.floor(abs / 60);
+    const mm = abs % 60;
+    return mm ? `GMT${sign}${hh}:${String(mm).padStart(2, "0")}` : `GMT${sign}${hh}`;
+  }
+
+  function getRelativeHoursText(targetTz, refMs = Date.now()) {
+    const targetOff = getTzOffsetMinutesAt(refMs, targetTz);
+    const localOff = getTzOffsetMinutesAt(refMs, LOCAL_TZ);
+    const diffMins = targetOff - localOff;
+    if (diffMins === 0) return "same";
+    const diffHours = diffMins / 60;
+    const hStr = Number.isInteger(diffHours) ? String(Math.abs(diffHours)) : Math.abs(diffHours).toFixed(1);
+    return diffMins > 0 ? `${hStr}h ahead of you` : `${hStr}h behind you`;
+  }
+
+  function getTzFriendlyMeta(tz) {
+    const found = ALL_TIMEZONES.find(x => x.tz === tz);
+    if (found) return found;
+    const parts = String(tz || LOCAL_TZ).split("/");
+    const city = (parts[parts.length - 1] || tz).replace(/_/g, " ");
+    return { tz: tz || LOCAL_TZ, label: `${city} (${tz})`, country: parts[0] || "", tags: "" };
+  }
+
+  function getTzShortCity(tz) {
+    const meta = getTzFriendlyMeta(tz);
+    const first = meta.label.split("(")[0].trim();
+    return first.split("/")[0].trim() || tz;
+  }
+
+  function formatInTz(utcMs, timeZone, opts = {}) {
+    try {
+      return new Intl.DateTimeFormat("en-US", Object.assign({ timeZone }, opts)).format(new Date(utcMs));
+    } catch {
+      return new Date(utcMs).toLocaleString();
+    }
+  }
+
+  function computeBirthdaySchedule(item, nowMs = Date.now()) {
+    const tz = item.timeZone || LOCAL_TZ;
+    const m = Number(item.birthMonth) || 1;
+    const d = Number(item.birthDay) || 1;
+    const friendNow = getZonedParts(nowMs, tz);
+
+    let occYear = friendNow.year;
+    let bdayStartUtc = zonedTimeToUtcMs(occYear, m, d, 0, 0, 0, tz);
+    let bdayEndUtc = bdayStartUtc + 24 * 3600 * 1000;
+
+    if (nowMs >= bdayEndUtc) {
+      occYear += 1;
+      bdayStartUtc = zonedTimeToUtcMs(occYear, m, d, 0, 0, 0, tz);
+      bdayEndUtc = bdayStartUtc + 24 * 3600 * 1000;
+    }
+
+    const reminderUtc = bdayStartUtc - 5 * 60 * 1000;
+    const isBirthdayNowInTheirTz = nowMs >= bdayStartUtc && nowMs < bdayEndUtc;
+    const isWithinFiveMinPreAlert = nowMs >= reminderUtc && nowMs < bdayStartUtc;
+    const nextAlertUtc = nowMs < bdayStartUtc
+      ? reminderUtc
+      : zonedTimeToUtcMs(occYear + 1, m, d, 0, 0, 0, tz) - 5 * 60 * 1000;
+
+    const msUntilStart = Math.max(0, bdayStartUtc - nowMs);
+    const msUntilReminder = reminderUtc - nowMs;
+
+    const turningAge = (item.birthYear && Number(item.birthYear) > 1900 && occYear > Number(item.birthYear))
+      ? (occYear - Number(item.birthYear))
+      : null;
+
+    const targetOffMins = getTzOffsetMinutesAt(bdayStartUtc, tz);
+    const localOffMins = getTzOffsetMinutesAt(bdayStartUtc, LOCAL_TZ);
+    const diffHours = (targetOffMins - localOffMins) / 60;
+    const diffLabel = diffHours === 0
+      ? "same"
+      : (diffHours > 0
+        ? `${Number.isInteger(diffHours) ? diffHours : diffHours.toFixed(1)}h ahead`
+        : `${Number.isInteger(Math.abs(diffHours)) ? Math.abs(diffHours) : Math.abs(diffHours).toFixed(1)}h behind`);
+
+    return {
+      occYear,
+      bdayStartUtc,
+      bdayEndUtc,
+      reminderUtc,
+      nextAlertUtc,
+      isBirthdayNowInTheirTz,
+      isWithinFiveMinPreAlert,
+      msUntilStart,
+      msUntilReminder,
+      turningAge,
+      targetOffMins,
+      diffLabel
+    };
+  }
+
+  function parseBirthdayDateInput(str) {
+    const s = String(str || "").trim();
+    if (!s) return null;
+
+    const md = s.match(/^(\d{1,2})[.\/\s-](\d{1,2})(?:[.\/\s-](\d{2,4}))?$/);
+    if (md) {
+      const month = parseInt(md[1], 10);
+      const day = parseInt(md[2], 10);
+      let year = null;
+      if (md[3] !== undefined && md[3] !== "") {
+        year = parseInt(md[3], 10);
+        if (year < 100) {
+          const curYY = new Date().getFullYear() % 100;
+          year = year > curYY ? 1900 + year : 2000 + year;
+        }
+      }
+      const maxDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      if (month >= 1 && month <= 12 && day >= 1 && day <= maxDays[month - 1]) {
+        return {
+          month,
+          day,
+          year,
+          formatted: year
+            ? `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${year}`
+            : `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`
+        };
+      }
+    }
+
+    const ymd = s.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/);
+    if (ymd) {
+      const year = parseInt(ymd[1], 10);
+      const month = parseInt(ymd[2], 10);
+      const day = parseInt(ymd[3], 10);
+      if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        return {
+          month,
+          day,
+          year,
+          formatted: `${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}/${year}`
+        };
+      }
+    }
+    return null;
+  }
+
+  async function ensureAccountAccess() {
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    if (ok) {
+      await initDirectFirestoreSync();
+      renderAll();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, select, textarea");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+    mainEl.addEventListener("focusin", e => {
+      if (!DB.isGuest()) return;
+      const inp = e.target.closest("input, select, textarea");
+      if (inp) {
+        inp.blur();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+
+  let directFirestoreBound = false;
+  let localBdCache = null;
+
+  function getUserDocRef() {
+    if (DB.isGuest() || !window.firebase || !firebase.firestore) return null;
+    const uid = typeof DB.userId === "function" ? DB.userId() : (DB.user && DB.user.uid);
+    if (!uid) return null;
+    return firebase.firestore().collection("users").doc(uid);
+  }
+
+  async function initDirectFirestoreSync() {
+    const userRef = getUserDocRef();
+    if (!userRef || directFirestoreBound) return;
+    directFirestoreBound = true;
+
+    try {
+      const [stateSnap, colSnap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("birthdays").get().catch(() => null),
+        userRef.collection("birthdays").get().catch(() => null),
+        userRef.get().catch(() => null)
+      ]);
+
+      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
+      let cloudList = null;
+
+      if (stateSnap && stateSnap.exists && Array.isArray(stateSnap.data()?.items) && stateSnap.data().items.length) {
+        cloudList = stateSnap.data().items;
+      } else if (colSnap && colSnap.docs && colSnap.docs.length) {
+        cloudList = colSnap.docs.map(d => d.data());
+      } else if (Array.isArray(userData.birthdays) && userData.birthdays.length) {
+        cloudList = userData.birthdays;
+      }
+
+      if (Array.isArray(cloudList) && cloudList.length) {
+        localBdCache = cloudList;
+        DB.set(BD_KEY, localBdCache);
+      }
+
+      userRef.collection("state").doc("birthdays").onSnapshot(docSnap => {
+        if (state.syncInFlight) return;
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)) {
+          const items = docSnap.data().items;
+          if (items.length > 0 || !localBdCache || localBdCache.length === 0) {
+            localBdCache = items;
+            try { localStorage.setItem(BD_KEY, JSON.stringify(items)); } catch {}
+            renderAll();
+          }
+        }
+      }, () => {});
+    } catch {}
+  }
+
+  function loadBirthdays() {
+    if (DB.isGuest()) return [];
+    if (Array.isArray(localBdCache)) return localBdCache.slice();
+    const raw = DB.get(BD_KEY, []);
+    return Array.isArray(raw) ? raw.slice() : [];
+  }
+
+  async function saveBirthdays(list) {
+    if (DB.isGuest()) {
+      await ensureAccountAccess();
+      return;
+    }
+    localBdCache = list.slice();
+    DB.set(BD_KEY, localBdCache);
+    if (typeof DB.flush === "function") DB.flush();
+
+    renderAll();
+    checkBirthdayAlerts();
+
+    const userRef = getUserDocRef();
+    if (userRef) {
+      state.syncInFlight = true;
+      try {
+        const cleanList = JSON.parse(JSON.stringify(localBdCache));
+        await Promise.all([
+          userRef.collection("state").doc("birthdays").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {}),
+          userRef.set({ birthdays: cleanList }, { merge: true }).catch(() => {})
+        ]);
+      } catch {}
+      state.syncInFlight = false;
+    }
+  }
+
+  let activePopover = null;
+  function closeActivePopover() {
+    if (!activePopover) return;
+    const { pop, onDocDown, onKey } = activePopover;
+    activePopover = null;
+    document.removeEventListener("pointerdown", onDocDown, true);
+    document.removeEventListener("keydown", onKey, true);
+    if (pop && pop.parentNode) pop.remove();
+  }
+
+  function openAppleCalendarPicker(inputEl, triggerBtn) {
+    if (activePopover && activePopover.kind === "cal" && activePopover.inputEl === inputEl) {
+      closeActivePopover();
+      return;
+    }
+    closeActivePopover();
+
+    const parsed = parseBirthdayDateInput(inputEl.value);
+    const now = new Date();
+    let viewYear = (parsed && parsed.year) ? parsed.year : now.getFullYear();
+    let viewMonth = parsed ? parsed.month - 1 : now.getMonth();
+    let selMonth = parsed ? parsed.month : (now.getMonth() + 1);
+    let selDay = parsed ? parsed.day : now.getDate();
+    let birthYearVal = (parsed && parsed.year) ? String(parsed.year) : "";
+
+    const pop = document.createElement("div");
+    pop.className = "bd-pop bd-cal-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", "Birthday calendar picker");
+    document.body.appendChild(pop);
+
+    function positionPopover() {
+      const wrap = inputEl.closest(".bd-date-input-wrap") || triggerBtn || inputEl;
+      const r = wrap.getBoundingClientRect();
+      const popW = 292;
+      const popH = pop.offsetHeight || 340;
+      let left = Math.max(8, Math.min(r.left, window.innerWidth - popW - 8));
+      let top = r.bottom + 6;
+      if (top + popH > window.innerHeight - 10 && r.top - popH - 6 > 8) {
+        top = r.top - popH - 6;
+      }
+      pop.style.left = `${left}px`;
+      pop.style.top = `${top}px`;
+    }
+
+    function applySelection(m, d, yrStr) {
+      const cleanYr = String(yrStr || "").trim();
+      const yrNum = /^\d{4}$/.test(cleanYr) ? parseInt(cleanYr, 10) : null;
+      inputEl.value = yrNum
+        ? `${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}/${yrNum}`
+        : `${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}`;
+      inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+      inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function renderCal() {
+      const firstDayWeek = new Date(viewYear, viewMonth, 1).getDay();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
+
+      const cells = [];
+      for (let i = firstDayWeek - 1; i >= 0; i--) {
+        const dNum = daysInPrev - i;
+        const pDate = new Date(viewYear, viewMonth - 1, dNum);
+        cells.push({ m: pDate.getMonth() + 1, d: dNum, out: true });
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        cells.push({ m: viewMonth + 1, d, out: false });
+      }
+      while (cells.length < 42) {
+        const nextDay = cells.length - (firstDayWeek + daysInMonth) + 1;
+        const nDate = new Date(viewYear, viewMonth + 1, nextDay);
+        cells.push({ m: nDate.getMonth() + 1, d: nextDay, out: true });
+      }
+
+      const todayM = now.getMonth() + 1;
+      const todayD = now.getDate();
+
+      pop.innerHTML = `
+        <div class="bd-cal-head">
+          <span class="bd-cal-title">${MONTH_NAMES[viewMonth]}</span>
+          <div class="bd-cal-nav">
+            <button type="button" class="bd-cal-nav-btn" data-cal-nav="-1" aria-label="Previous month">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button type="button" class="bd-cal-nav-btn" data-cal-nav="1" aria-label="Next month">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="bd-cal-weekdays">
+          <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+        <div class="bd-cal-grid">
+          ${cells.map(c => {
+            const isToday = c.m === todayM && c.d === todayD;
+            const isSel = c.m === selMonth && c.d === selDay && !c.out;
+            const cls = [
+              "bd-cal-day",
+              c.out ? "is-out" : "",
+              isToday ? "is-today" : "",
+              isSel ? "is-selected" : ""
+            ].filter(Boolean).join(" ");
+            return `<button type="button" class="${cls}" data-m="${c.m}" data-d="${c.d}">${c.d}</button>`;
+          }).join("")}
+        </div>
+        <div class="bd-cal-year-row">
+          <span>Birth Year (optional):</span>
+          <input type="text" class="bd-cal-year-inp" id="bdCalYearInp" placeholder="YYYY" maxlength="4" value="${DB.esc(birthYearVal)}" inputmode="numeric">
+        </div>
+        <div class="bd-cal-foot">
+          <button type="button" class="bd-cal-foot-btn today" id="bdCalTodayBtn">Today</button>
+          <button type="button" class="bd-cal-foot-btn" id="bdCalDoneBtn">Done</button>
+        </div>
+      `;
+
+      const yrInp = pop.querySelector("#bdCalYearInp");
+      yrInp.oninput = e => {
+        birthYearVal = e.target.value.replace(/[^0-9]/g, "").slice(0, 4);
+        e.target.value = birthYearVal;
+        applySelection(selMonth, selDay, birthYearVal);
+      };
+
+      pop.querySelectorAll("[data-cal-nav]").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const dir = parseInt(btn.dataset.calNav, 10);
+          viewMonth = (viewMonth + dir + 12) % 12;
+          renderCal();
+        };
+      });
+
+      pop.querySelectorAll(".bd-cal-day").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          selMonth = parseInt(btn.dataset.m, 10);
+          selDay = parseInt(btn.dataset.d, 10);
+          applySelection(selMonth, selDay, birthYearVal);
+          closeActivePopover();
+        };
+      });
+
+      pop.querySelector("#bdCalTodayBtn").onclick = e => {
+        e.stopPropagation();
+        selMonth = todayM;
+        selDay = todayD;
+        applySelection(selMonth, selDay, birthYearVal);
+        closeActivePopover();
+      };
+
+      pop.querySelector("#bdCalDoneBtn").onclick = e => {
+        e.stopPropagation();
+        applySelection(selMonth, selDay, birthYearVal);
+        closeActivePopover();
+      };
+
+      positionPopover();
+    }
+
+    renderCal();
+
+    const onDocDown = e => {
+      if (!pop.contains(e.target) && e.target !== triggerBtn && !triggerBtn.contains(e.target)) {
+        closeActivePopover();
+      }
+    };
+    const onKey = e => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeActivePopover();
+      }
+    };
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePopover = { kind: "cal", pop, inputEl, onDocDown, onKey };
+  }
+
+  function openAppleTimeZonePicker(triggerBtn, currentTz, onSelectTz) {
+    if (activePopover && activePopover.kind === "tz" && activePopover.triggerBtn === triggerBtn) {
+      closeActivePopover();
+      return;
+    }
+    closeActivePopover();
+    triggerBtn.setAttribute("aria-expanded", "true");
+
+    const pop = document.createElement("div");
+    pop.className = "bd-pop bd-tz-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", "Select time zone");
+    pop.innerHTML = `
+      <div class="bd-tz-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" id="bdTzSearchInput" placeholder="Search city, country, or GMT offset (e.g. GMT-5, GMT+9, Japan)…" autocomplete="off">
+      </div>
+      <div class="bd-tz-list" id="bdTzPopList" role="listbox"></div>
+    `;
+    document.body.appendChild(pop);
+
+    const searchInp = pop.querySelector("#bdTzSearchInput");
+    const listEl = pop.querySelector("#bdTzPopList");
+
+    function positionPopover() {
+      const r = triggerBtn.getBoundingClientRect();
+      const popW = Math.min(380, window.innerWidth - 16);
+      const popH = pop.offsetHeight || 320;
+      let left = Math.max(8, Math.min(r.left, window.innerWidth - popW - 8));
+      let top = r.bottom + 6;
+      if (top + popH > window.innerHeight - 10 && r.top - popH - 6 > 8) {
+        top = r.top - popH - 6;
+      }
+      pop.style.left = `${left}px`;
+      pop.style.top = `${top}px`;
+    }
+
+    function renderTzList(query = "", autoScrollActive = false) {
+      const q = query.trim().toLowerCase();
+      const nowMs = Date.now();
+      const sourcePool = q
+        ? ALL_TIMEZONES
+        : ALL_TIMEZONES.filter(item => item.priority === 1 || item.tz === currentTz || item.tz === LOCAL_TZ);
+
+      const withOffsets = sourcePool.map(item => {
+        const offMins = getTzOffsetMinutesAt(nowMs, item.tz);
+        const offLbl = formatUtcOffsetLabel(offMins);
+        return { item, offMins, offLbl };
+      });
+
+      withOffsets.sort((a, b) => {
+        if (a.offMins !== b.offMins) return a.offMins - b.offMins;
+        if ((a.item.priority || 0) !== (b.item.priority || 0)) return (b.item.priority || 0) - (a.item.priority || 0);
+        return a.item.label.localeCompare(b.item.label);
+      });
+
+      const filtered = withOffsets.filter(({ item, offLbl }) => {
+        if (!q) return true;
+        const hay = `${item.label} ${item.country} ${item.tz} ${item.tags || ""} ${offLbl} ${offLbl.replace("GMT", "UTC")}`.toLowerCase();
+        return hay.includes(q);
+      }).slice(0, 80);
+
+      if (!filtered.length) {
+        listEl.innerHTML = `<div class="muted" style="text-align:center;padding:1.2rem .5rem;font-size:.78rem;">No matching time zones found.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(({ item, offLbl }) => {
+        const diffTxt = getRelativeHoursText(item.tz, nowMs);
+        const curTime = formatInTz(nowMs, item.tz, { hour: "numeric", minute: "2-digit" });
+        const isSel = item.tz === currentTz;
+        return `
+          <button type="button" class="bd-tz-item ${isSel ? "active" : ""}" role="option" aria-selected="${isSel}" data-tz="${DB.esc(item.tz)}">
+            <div class="bd-tz-item-left">
+              <b>${DB.esc(item.label)}</b>
+              <span>${DB.esc(item.tz)} · Now ${DB.esc(curTime)}</span>
+            </div>
+            <div class="bd-tz-item-right">
+              <span class="tz-off">${DB.esc(offLbl)}</span>
+              <span class="tz-diff">${DB.esc(diffTxt)}</span>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      listEl.querySelectorAll("[data-tz]").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const picked = btn.dataset.tz;
+          triggerBtn.setAttribute("aria-expanded", "false");
+          closeActivePopover();
+          onSelectTz(picked);
+        };
+      });
+
+      if (autoScrollActive) {
+        const activeBtn = listEl.querySelector(".bd-tz-item.active");
+        if (activeBtn) {
+          setTimeout(() => activeBtn.scrollIntoView({ block: "center" }), 10);
+        }
+      }
+    }
+
+    renderTzList("", true);
+    positionPopover();
+    setTimeout(() => searchInp.focus(), 30);
+
+    searchInp.oninput = () => renderTzList(searchInp.value);
+
+    const onDocDown = e => {
+      if (!pop.contains(e.target) && e.target !== triggerBtn && !triggerBtn.contains(e.target)) {
+        triggerBtn.setAttribute("aria-expanded", "false");
+        closeActivePopover();
+      }
+    };
+    const onKey = e => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        triggerBtn.setAttribute("aria-expanded", "false");
+        closeActivePopover();
+      }
+    };
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePopover = { kind: "tz", pop, triggerBtn, onDocDown, onKey };
+  }
+
+  function updateEntryTzUI() {
+    const meta = getTzFriendlyMeta(state.selectedTz);
+    const offMins = getTzOffsetMinutesAt(Date.now(), state.selectedTz);
+    $("bdTzTriggerLbl").textContent = meta.label;
+    $("bdTzTriggerSub").textContent = formatUtcOffsetLabel(offMins);
+
+    document.querySelectorAll("#quickTzChips [data-tz]").forEach(chip => {
+      const target = chip.dataset.tz === "local" ? LOCAL_TZ : chip.dataset.tz;
+      chip.classList.toggle("active", target === state.selectedTz);
+    });
+
+    updateLiveEntryPreview();
+  }
+
+  function updateLiveEntryPreview() {
+    const previewEl = $("bdLivePreview");
+    if (!previewEl) return;
+    const rawDate = $("bdDateInput").value.trim();
+    const parsed = parseBirthdayDateInput(rawDate);
+    const nameVal = $("bdNameInput").value.trim() || "Friend";
+    const tzMeta = getTzFriendlyMeta(state.selectedTz);
+    const shortCity = getTzShortCity(state.selectedTz);
+
+    if (!parsed) {
+      const nowOff = formatUtcOffsetLabel(getTzOffsetMinutesAt(Date.now(), state.selectedTz));
+      const relTxt = getRelativeHoursText(state.selectedTz);
+      const theirClock = formatInTz(Date.now(), state.selectedTz, { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+      previewEl.innerHTML = `
+        <span>Selected time zone: <b>${DB.esc(tzMeta.label)}</b> (${DB.esc(nowOff)} · ${DB.esc(relTxt)}). Current time there: <b>${DB.esc(theirClock)}</b>.</span>
+        <span class="bd-prev-highlight">Alerts 5m before 12:00 AM their time</span>
+      `;
+      return;
+    }
+
+    const sched = computeBirthdaySchedule({
+      birthMonth: parsed.month,
+      birthDay: parsed.day,
+      birthYear: parsed.year,
+      timeZone: state.selectedTz
+    });
+
+    const bdayMonthDay = `${MONTH_SHORT[parsed.month - 1]} ${parsed.day}`;
+    const localMidnightStr = formatInTz(sched.bdayStartUtc, LOCAL_TZ, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short"
+    });
+    const localReminderStr = formatInTz(sched.reminderUtc, LOCAL_TZ, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short"
+    });
+    const theirOffStr = formatUtcOffsetLabel(sched.targetOffMins);
+
+    previewEl.innerHTML = `
+      <span>
+        <b>${DB.esc(nameVal)}'s</b> birthday (<b>${DB.esc(bdayMonthDay)}</b>) is at <b>12:00 AM</b> in <b>${DB.esc(shortCity)} (${DB.esc(theirOffStr)})</b>
+        | <b>${DB.esc(localMidnightStr)}</b> in your time zone (${DB.esc(sched.diffLabel)})
+      </span>
+      <span class="bd-prev-highlight">🔔 Alert: ${DB.esc(localReminderStr)}</span>
+    `;
+  }
+
+  function checkBirthdayAlerts() {
+    if (DB.isGuest()) return;
+    const list = loadBirthdays();
+    if (!list.length) return;
+
+    const nowMs = Date.now();
+    const fired = DB.get(FIRED_KEY, {}) || {};
+    let dirty = false;
+
+    for (const item of list) {
+      if (item.notifyEnabled === false) continue;
+      const sched = computeBirthdaySchedule(item, nowMs);
+      const fireKey = `bday|${item.id}|${sched.occYear}`;
+      if (fired[fireKey]) continue;
+      if (nowMs >= sched.reminderUtc && nowMs < sched.bdayStartUtc + 55 * 60 * 1000) {
+        fired[fireKey] = nowMs;
+        dirty = true;
+
+        const city = getTzShortCity(item.timeZone);
+        const dateLbl = `${MONTH_NAMES[item.birthMonth - 1]} ${item.birthDay}`;
+        const localMid = formatInTz(sched.bdayStartUtc, LOCAL_TZ, { hour: "numeric", minute: "2-digit", timeZoneName: "short" });
+        const ageTxt = sched.turningAge ? ` (turning ${sched.turningAge})` : "";
+
+        const title = sched.isBirthdayNowInTheirTz
+          ? `🎂 It's ${item.name}'s Birthday in ${city}!`
+          : `🎂 ${item.name}'s Birthday Starts in 5 Minutes!`;
+        const body = sched.isBirthdayNowInTheirTz
+          ? `It is now ${dateLbl} in ${city}${ageTxt}. Send ${item.name} a happy birthday message!`
+          : `It's 11:55 PM in ${city} — ${item.name}'s birthday (${dateLbl}${ageTxt}) begins at midnight their time (${localMid} your time).`;
+
+        if (typeof DB.fire === "function") {
+          DB.fire(title, body, { tag: fireKey, url: "pages/birthday.html", force: true });
+        } else {
+          DB.toast(title, body, 8000);
+        }
+      }
+    }
+
+    if (dirty) {
+      DB.set(FIRED_KEY, fired);
+    }
+  }
+
+  function renderTopStatusAndStats() {
+    const nowMs = Date.now();
+    const localOff = formatUtcOffsetLabel(getTzOffsetMinutesAt(nowMs, LOCAL_TZ));
+    const perm = (DB.notif && typeof DB.notif.perm === "function") ? DB.notif.perm() : "default";
+    const notifOn = Boolean(DB.settings && DB.settings.notifyOn);
+    const dot = $("bdAlertDot");
+    const title = $("bdAlertTitle");
+    const sub = $("bdLocalTzSub");
+    const actionBtn = $("bdAlertActionBtn");
+    const actionLbl = $("bdAlertActionLbl");
+
+    sub.textContent = `Your local time zone: ${LOCAL_TZ} (${localOff})`;
+
+    if (notifOn && perm === "granted") {
+      dot.classList.remove("warn");
+      title.textContent = "Birthday Reminder Alerts Active (System + In-App)";
+      actionLbl.textContent = "Test Browser Alert";
+      actionBtn.classList.remove("primary");
+    } else if (notifOn) {
+      dot.classList.remove("warn");
+      title.textContent = "Birthday Reminder Alerts Active (In-App + Chime)";
+      actionLbl.textContent = "Enable & Test Browser Alert";
+      actionBtn.classList.add("primary");
+    } else {
+      dot.classList.add("warn");
+      title.textContent = "Enable Alerts for Birthday Reminder Notifications";
+      actionLbl.textContent = "Enable & Test Browser Alert";
+      actionBtn.classList.add("primary");
+    }
+  }
+
+  function formatCountdownParts(ms) {
+    const clamped = Math.max(0, ms);
+    const totalSec = Math.floor(clamped / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const mins = Math.floor((totalSec % 3600) / 60);
+    const secs = totalSec % 60;
+    return {
+      days: String(days),
+      hours: String(hours).padStart(2, "0"),
+      mins: String(mins).padStart(2, "0"),
+      secs: String(secs).padStart(2, "0")
+    };
+  }
+
+  function renderCards(list) {
+    const nowMs = Date.now();
+    const enriched = list.map(item => ({ item, sched: computeBirthdaySchedule(item, nowMs) }));
+
+    const soonCount = enriched.filter(x => x.sched.isBirthdayNowInTheirTz || x.sched.msUntilStart <= 30 * 86400000).length;
+    const todayCount = enriched.filter(x => x.sched.isBirthdayNowInTheirTz || x.sched.msUntilStart <= 86400000).length;
+
+    const pillsEl = $("bdFilterPills");
+    const pillDefs = [
+      { id: "all", label: `All Birthdays (${list.length})` },
+      { id: "upcoming30", label: `Next 30 Days (${soonCount})` },
+      { id: "today", label: `Today / Within 24h (${todayCount})` }
+    ];
+    pillsEl.innerHTML = pillDefs.map(p => `
+      <button type="button" class="bd-pill" data-bfilter="${p.id}" aria-pressed="${state.filter === p.id}">${DB.esc(p.label)}</button>
+    `).join("");
+
+    pillsEl.querySelectorAll("[data-bfilter]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        state.filter = btn.dataset.bfilter;
+        renderCards(loadBirthdays());
+      };
+    });
+
+    const sortLabels = {
+      soonest: "Sort: Soonest Alert",
+      name: "Sort: Name (A–Z)",
+      month: "Sort: Calendar Month"
+    };
+    $("bdSortLbl").textContent = sortLabels[state.sortBy] || sortLabels.soonest;
+    const chkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+    const sortMenu = $("bdSortMenu");
+    sortMenu.innerHTML = Object.entries(sortLabels).map(([k, lbl]) => `
+      <button type="button" class="bd-sort-opt ${state.sortBy === k ? "active" : ""}" role="option" aria-selected="${state.sortBy === k}" data-sort="${k}">
+        <span>${DB.esc(lbl.replace("Sort: ", ""))}</span>
+        ${state.sortBy === k ? chkSvg : ""}
+      </button>
+    `).join("");
+
+    sortMenu.querySelectorAll("[data-sort]").forEach(opt => {
+      opt.onclick = e => {
+        e.stopPropagation();
+        state.sortBy = opt.dataset.sort;
+        sortMenu.hidden = true;
+        $("bdSortDropdown").classList.remove("open");
+        $("bdSortBtn").setAttribute("aria-expanded", "false");
+        renderCards(loadBirthdays());
+      };
+    });
+
+    const q = state.searchQuery.toLowerCase();
+    const filtered = enriched.filter(({ item, sched }) => {
+      if (state.filter === "upcoming30" && !sched.isBirthdayNowInTheirTz && sched.msUntilStart > 30 * 86400000) return false;
+      if (state.filter === "today" && !sched.isBirthdayNowInTheirTz && sched.msUntilStart > 86400000) return false;
+      if (q) {
+        const tzMeta = getTzFriendlyMeta(item.timeZone);
+        const hay = `${item.name} ${tzMeta.label} ${tzMeta.country} ${item.timeZone} ${MONTH_NAMES[item.birthMonth - 1]} ${item.birthDay} ${item.notes || ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (state.sortBy === "name") return String(a.item.name || "").localeCompare(String(b.item.name || ""));
+      if (state.sortBy === "month") {
+        if (a.item.birthMonth !== b.item.birthMonth) return a.item.birthMonth - b.item.birthMonth;
+        return a.item.birthDay - b.item.birthDay;
+      }
+      if (a.sched.isBirthdayNowInTheirTz !== b.sched.isBirthdayNowInTheirTz) {
+        return a.sched.isBirthdayNowInTheirTz ? -1 : 1;
+      }
+      return a.sched.msUntilStart - b.sched.msUntilStart;
+    });
+
+    const container = $("bdCardsContainer");
+    if (!filtered.length) {
+      const guest = DB.isGuest();
+      container.innerHTML = `
+        <div class="bd-empty">
+          <div class="bd-empty-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v3"/><path d="M12 8v3"/><path d="M17 8v3"/></svg>
+          </div>
+          <h3>${guest ? "Sign In to Track Birthdays" : (list.length ? "No matching birthdays" : "No Birthdays Saved Yet")}</h3>
+          <p class="muted" style="max-width:27rem;font-size:.84rem;">
+            ${guest
+              ? "Sign in to save birthdays and get notified."
+              : (list.length
+                ? "Try switching the filter pill above or clearing your search."
+                : "Add a friend's name, birthday, and time zone above. We'll automatically calculate when midnight happens in their time zone and alert you 5 minutes early.")}
+          </p>
+          ${guest ? `<button type="button" class="bd-btn primary" id="bdEmptySignInBtn" style="margin-top:.35rem;">Sign in to continue</button>` : ""}
+        </div>
+      `;
+      const signBtn = $("bdEmptySignInBtn");
+      if (signBtn) signBtn.onclick = () => ensureAccountAccess();
+      return;
+    }
+
+    const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+    const delSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+    const bellSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+    const copySvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+
+    container.innerHTML = `<div class="bd-cards-grid">
+      ${filtered.map(({ item, sched }) => {
+        const initials = String(item.name || "?")
+          .trim()
+          .split(/\s+/)
+          .slice(0, 2)
+          .map(w => w.charAt(0).toUpperCase())
+          .join("");
+
+        const dateBadge = item.birthYear
+          ? `${MONTH_SHORT[item.birthMonth - 1]} ${item.birthDay}, ${item.birthYear}`
+          : `${MONTH_SHORT[item.birthMonth - 1]} ${item.birthDay}`;
+
+        const tzCity = getTzShortCity(item.timeZone);
+        const tzOffStr = formatUtcOffsetLabel(sched.targetOffMins);
+        const theirClockNow = formatInTz(nowMs, item.timeZone, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        });
+        const localMidnightStr = formatInTz(sched.bdayStartUtc, LOCAL_TZ, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZoneName: "short"
+        });
+        const localAlertStr = formatInTz(sched.reminderUtc, LOCAL_TZ, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          timeZoneName: "short"
+        });
+
+        const cd = formatCountdownParts(sched.msUntilStart);
+        let statusClass = "";
+        let statusText = "";
+        if (sched.isBirthdayNowInTheirTz) {
+          statusClass = "live";
+          statusText = `🎂 Birthday Now in ${tzCity}!`;
+        } else if (sched.isWithinFiveMinPreAlert) {
+          statusClass = "soon";
+          statusText = `⏰ Starts in < 5m!`;
+        } else if (sched.msUntilStart <= 86400000) {
+          statusClass = "soon";
+          statusText = `Starts in ${cd.hours}h ${cd.mins}m`;
+        } else {
+          statusText = `In ${cd.days}d ${cd.hours}h`;
+        }
+
+        const cardCls = [
+          "bd-card",
+          sched.isBirthdayNowInTheirTz ? "is-today-bday" : "",
+          (!sched.isBirthdayNowInTheirTz && sched.msUntilStart <= 86400000) ? "is-imminent" : ""
+        ].filter(Boolean).join(" ");
+
+        return `
+          <article class="${cardCls}" data-bd-card="${DB.esc(item.id)}">
+            <div class="bd-card-top">
+              <div class="bd-person">
+                <div class="bd-avatar">${DB.esc(initials)}</div>
+                <div class="bd-person-meta">
+                  <h3>${DB.esc(item.name)}</h3>
+                  <div class="bd-date-badges">
+                    <span class="bd-date-pill">${DB.esc(dateBadge)}</span>
+                    ${sched.turningAge ? `<span class="bd-age-pill">Turns ${sched.turningAge}</span>` : ""}
+                  </div>
+                </div>
+              </div>
+              <span class="bd-status-badge ${statusClass}" data-cd-badge="${DB.esc(item.id)}">${DB.esc(statusText)}</span>
+            </div>
+
+            <div class="bd-countdown-row" data-cd-grid="${DB.esc(item.id)}">
+              <div class="bd-cd-cell"><b data-cd-d>${cd.days}</b><span>Days</span></div>
+              <div class="bd-cd-cell"><b data-cd-h>${cd.hours}</b><span>Hours</span></div>
+              <div class="bd-cd-cell"><b data-cd-m>${cd.mins}</b><span>Mins</span></div>
+              <div class="bd-cd-cell"><b data-cd-s>${cd.secs}</b><span>Secs</span></div>
+            </div>
+
+            <div class="bd-tz-box">
+              <div class="bd-tz-row">
+                <span class="lbl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  Their Time Zone
+                </span>
+                <span class="val">${DB.esc(tzCity)} (${DB.esc(tzOffStr)} · ${DB.esc(sched.diffLabel)})</span>
+              </div>
+              <div class="bd-tz-row">
+                <span class="lbl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  Current Time There
+                </span>
+                <span class="val" data-their-clock="${DB.esc(item.id)}">${DB.esc(theirClockNow)}</span>
+              </div>
+              <div class="bd-tz-row">
+                <span class="lbl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                  12:00 AM Their Time
+                </span>
+                <span class="val">${DB.esc(localMidnightStr)}</span>
+              </div>
+              <div class="bd-tz-row alert-row">
+                <span class="lbl">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  5-Min Early Alert (Your Time)
+                </span>
+                <span class="val">${item.notifyEnabled === false ? "Muted" : DB.esc(localAlertStr)}</span>
+              </div>
+            </div>
+
+            ${item.notes ? `<div class="bd-note-strip">${DB.esc(item.notes)}</div>` : ""}
+
+            <div class="bd-card-foot">
+              <button type="button" class="bd-wish-btn" data-copy-wish="${DB.esc(item.id)}" title="Copy a Happy Birthday wish message">
+                ${copySvg}
+                <span>Copy Birthday Wish</span>
+              </button>
+              <div class="bd-card-actions">
+                <button type="button" class="bd-icon-btn ${item.notifyEnabled !== false ? "bell-on" : ""}" data-toggle-bell="${DB.esc(item.id)}" title="${item.notifyEnabled !== false ? "Alert enabled (click to mute)" : "Alert muted (click to enable)"}" aria-label="Toggle alert">${bellSvg}</button>
+                <button type="button" class="bd-icon-btn" data-edit-bd="${DB.esc(item.id)}" title="Edit birthday" aria-label="Edit">${editSvg}</button>
+                <button type="button" class="bd-icon-btn del" data-del-bd="${DB.esc(item.id)}" title="Delete birthday" aria-label="Delete">${delSvg}</button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("")}
+    </div>`;
+
+    container.querySelectorAll("[data-copy-wish]").forEach(btn => {
+      btn.onclick = () => {
+        const item = loadBirthdays().find(x => x.id === btn.dataset.copyWish);
+        if (!item) return;
+        const msg = item.notes && /happy birthday/i.test(item.notes)
+          ? item.notes
+          : `Happy Birthday ${item.name}! 🎂🎉 Wishing you an amazing year ahead!`;
+        navigator.clipboard && navigator.clipboard.writeText(msg);
+        DB.toast("Birthday Wish Copied", `"${msg}" copied to your clipboard.`, 2600);
+      };
+    });
+
+    container.querySelectorAll("[data-toggle-bell]").forEach(btn => {
+      btn.onclick = async () => {
+        const list = loadBirthdays();
+        const target = list.find(x => x.id === btn.dataset.toggleBell);
+        if (!target) return;
+        target.notifyEnabled = target.notifyEnabled === false;
+        await saveBirthdays(list);
+        DB.toast(
+          target.notifyEnabled ? "Alert Enabled" : "Alert Muted",
+          target.notifyEnabled
+            ? `You'll be notified 5 minutes before ${target.name}'s birthday in ${getTzShortCity(target.timeZone)}.`
+            : `Notifications muted for ${target.name}.`,
+          2400
+        );
+      };
+    });
+
+    container.querySelectorAll("[data-edit-bd]").forEach(btn => {
+      btn.onclick = () => {
+        const item = loadBirthdays().find(x => x.id === btn.dataset.editBd);
+        if (item) openEditBirthdayModal(item);
+      };
+    });
+
+    container.querySelectorAll("[data-del-bd]").forEach(btn => {
+      btn.onclick = async () => {
+        const list = loadBirthdays();
+        const idx = list.findIndex(x => x.id === btn.dataset.delBd);
+        if (idx === -1) return;
+        const removed = list[idx];
+        list.splice(idx, 1);
+        await saveBirthdays(list);
+        DB.toast("Birthday Removed", `${removed.name}'s birthday reminder was deleted.`, 2200);
+      };
+    });
+  }
+
+  function tickLiveCountdowns() {
+    if (DB.isGuest()) return;
+    const list = loadBirthdays();
+    if (!list.length) return;
+    const nowMs = Date.now();
+
+    for (const item of list) {
+      const sched = computeBirthdaySchedule(item, nowMs);
+      const grid = document.querySelector(`[data-cd-grid="${CSS.escape(item.id)}"]`);
+      if (grid) {
+        const cd = formatCountdownParts(sched.msUntilStart);
+        const dEl = grid.querySelector("[data-cd-d]");
+        const hEl = grid.querySelector("[data-cd-h]");
+        const mEl = grid.querySelector("[data-cd-m]");
+        const sEl = grid.querySelector("[data-cd-s]");
+        if (dEl) dEl.textContent = cd.days;
+        if (hEl) hEl.textContent = cd.hours;
+        if (mEl) mEl.textContent = cd.mins;
+        if (sEl) sEl.textContent = cd.secs;
+      }
+      const clockEl = document.querySelector(`[data-their-clock="${CSS.escape(item.id)}"]`);
+      if (clockEl) {
+        clockEl.textContent = formatInTz(nowMs, item.timeZone, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit"
+        });
+      }
+    }
+  }
+
+  function openEditBirthdayModal(item) {
+    let modalTz = item.timeZone || LOCAL_TZ;
+    const dateVal = item.birthYear
+      ? `${String(item.birthMonth).padStart(2, "0")}/${String(item.birthDay).padStart(2, "0")}/${item.birthYear}`
+      : `${String(item.birthMonth).padStart(2, "0")}/${String(item.birthDay).padStart(2, "0")}`;
+
+    const tzMeta = getTzFriendlyMeta(modalTz);
+    const tzOff = formatUtcOffsetLabel(getTzOffsetMinutesAt(Date.now(), modalTz));
+
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Edit Birthday Reminder</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="edBdName">Person's Name</label>
+          <input id="edBdName" type="text" value="${DB.esc(item.name || "")}" style="width:100%" maxlength="60">
+        </div>
+        <div class="field">
+          <label for="edBdDate">Birthday (MM/DD or MM/DD/YYYY)</label>
+          <div class="bd-date-input-wrap">
+            <input id="edBdDate" type="text" value="${DB.esc(dateVal)}" placeholder="MM/DD or MM/DD/YYYY" autocomplete="off" spellcheck="false" style="width:100%">
+            <button type="button" class="bd-cal-btn" id="edBdCalBtn" title="Open calendar picker" aria-label="Open calendar picker">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Person's Time Zone</label>
+        <div class="bd-tz-select-wrap">
+          <button type="button" class="bd-tz-trigger" id="edBdTzBtn" aria-haspopup="listbox" aria-expanded="false">
+            <span class="bd-tz-trigger-main">
+              <span class="bd-tz-trigger-lbl" id="edBdTzLbl">${DB.esc(tzMeta.label)}</span>
+              <span class="bd-tz-trigger-sub" id="edBdTzSub">${DB.esc(tzOff)}</span>
+            </span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="edBdNotes">Notes (Optional)</label>
+        <input id="edBdNotes" type="text" value="${DB.esc(item.notes || "")}" placeholder="e.g. gift idea…" style="width:100%" maxlength="140">
+      </div>
+
+      <div class="actions">
+        <button type="button" class="ghost left" id="edBdCancel">Cancel</button>
+        <button type="button" class="primary" id="edBdSave">Save Changes</button>
+      </div>
+    `;
+
+    const close = DB.modal(node, () => closeActivePopover());
+
+    const edDateInp = node.querySelector("#edBdDate");
+    const edCalBtn = node.querySelector("#edBdCalBtn");
+    edCalBtn.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openAppleCalendarPicker(edDateInp, edCalBtn);
+    };
+
+    const edTzBtn = node.querySelector("#edBdTzBtn");
+    edTzBtn.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openAppleTimeZonePicker(edTzBtn, modalTz, pickedTz => {
+        modalTz = pickedTz;
+        const m = getTzFriendlyMeta(modalTz);
+        const off = formatUtcOffsetLabel(getTzOffsetMinutesAt(Date.now(), modalTz));
+        node.querySelector("#edBdTzLbl").textContent = m.label;
+        node.querySelector("#edBdTzSub").textContent = off;
+      });
+    };
+
+    node.querySelector("#edBdCancel").onclick = close;
+    node.querySelector("#edBdSave").onclick = async () => {
+      const newName = node.querySelector("#edBdName").value.trim();
+      const parsedDate = parseBirthdayDateInput(edDateInp.value);
+      const newNotes = node.querySelector("#edBdNotes").value.trim();
+
+      if (!newName) {
+        node.querySelector("#edBdName").focus();
+        return;
+      }
+      if (!parsedDate) {
+        edDateInp.focus();
+        DB.toast("Invalid Birthday Date", "Please enter MM/DD or MM/DD/YYYY, or use the calendar icon.", 2600);
+        return;
+      }
+
+      const list = loadBirthdays();
+      const target = list.find(x => x.id === item.id);
+      if (target) {
+        target.name = newName;
+        target.birthMonth = parsedDate.month;
+        target.birthDay = parsedDate.day;
+        target.birthYear = parsedDate.year || null;
+        target.timeZone = modalTz;
+        target.notes = newNotes;
+        await saveBirthdays(list);
+        DB.toast("Birthday Updated", `${newName}'s reminder was updated.`, 2400);
+      }
+      close();
+    };
+  }
+
+  function renderAll() {
+    const list = loadBirthdays();
+    renderTopStatusAndStats(list);
+    updateEntryTzUI();
+    renderCards(list);
+  }
+
+  document.querySelectorAll("#quickTzChips [data-tz]").forEach(chip => {
+    chip.onclick = async () => {
+      if (!(await ensureAccountAccess())) return;
+      state.selectedTz = chip.dataset.tz === "local" ? LOCAL_TZ : chip.dataset.tz;
+      updateEntryTzUI();
+    };
+  });
+
+  $("bdDateCalBtn").onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    openAppleCalendarPicker($("bdDateInput"), $("bdDateCalBtn"));
+  };
+
+  $("bdTzTriggerBtn").onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    openAppleTimeZonePicker($("bdTzTriggerBtn"), state.selectedTz, pickedTz => {
+      state.selectedTz = pickedTz;
+      updateEntryTzUI();
+    });
+  };
+
+  [$("bdNameInput"), $("bdDateInput")].forEach(inp => {
+    inp.addEventListener("input", updateLiveEntryPreview);
+  });
+
+  async function submitNewBirthday() {
+    if (!(await ensureAccountAccess())) return;
+    const nameVal = $("bdNameInput").value.trim();
+    const rawDate = $("bdDateInput").value.trim();
+    const noteVal = $("bdNoteInput").value.trim();
+
+    if (!nameVal) {
+      $("bdNameInput").focus();
+      return;
+    }
+    const parsed = parseBirthdayDateInput(rawDate);
+    if (!parsed) {
+      $("bdDateInput").focus();
+      DB.toast("Invalid Date", "Please enter the birthday as MM/DD or MM/DD/YYYY.", 2800);
+      return;
+    }
+
+    const newItem = {
+      id: DB.uid(),
+      name: nameVal,
+      birthMonth: parsed.month,
+      birthDay: parsed.day,
+      birthYear: parsed.year || null,
+      timeZone: state.selectedTz || LOCAL_TZ,
+      notes: noteVal,
+      notifyEnabled: true,
+      createdAt: Date.now()
+    };
+
+    const list = loadBirthdays();
+    list.push(newItem);
+
+    $("bdNameInput").value = "";
+    $("bdDateInput").value = "";
+    $("bdNoteInput").value = "";
+    $("bdNameInput").focus();
+
+    await saveBirthdays(list);
+
+    const sched = computeBirthdaySchedule(newItem);
+    const alertStr = formatInTz(sched.reminderUtc, LOCAL_TZ, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short"
+    });
+    DB.toast(
+      "Birthday Reminder Saved",
+      `${nameVal} (${getTzShortCity(newItem.timeZone)}) — you'll be notified on ${alertStr} (5m before midnight their time).`,
+      3800
+    );
+  }
+
+  $("addBdBtn").onclick = submitNewBirthday;
+  [$("bdNameInput"), $("bdDateInput"), $("bdNoteInput")].forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitNewBirthday();
+      }
+    });
+  });
+
+  $("bdAlertActionBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const perm = (DB.notif && typeof DB.notif.perm === "function") ? DB.notif.perm() : "default";
+    const notifOn = Boolean(DB.settings && DB.settings.notifyOn);
+    if (!notifOn || perm !== "granted") {
+      if (DB.notif && typeof DB.notif.enable === "function") {
+        await DB.notif.enable();
+      }
+    }
+    renderTopStatusAndStats();
+
+    const list = loadBirthdays();
+    const sample = list[0];
+    if (sample) {
+      const sched = computeBirthdaySchedule(sample);
+      const city = getTzShortCity(sample.timeZone);
+      const localMid = formatInTz(sched.bdayStartUtc, LOCAL_TZ, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short"
+      });
+      const localRem = formatInTz(sched.reminderUtc, LOCAL_TZ, {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZoneName: "short"
+      });
+      DB.fire(
+        `🎂 Test Alert: ${sample.name}'s Birthday in 5 Minutes!`,
+        `In ${city}, ${sample.name}'s birthday starts at 12:00 AM their time (${localMid} your time). Scheduled 5-min reminder: ${localRem}.`,
+        { tag: "test-bday-" + Date.now(), url: "pages/birthday.html", force: true }
+      );
+    } else {
+      DB.fire(
+        "🎂 Birthday Reminder Test",
+        "Your birthday reminder alerts are working!",
+        { tag: "test-bday-" + Date.now(), url: "pages/birthday.html", force: true }
+      );
+    }
+  };
+
+  $("bdSearchInput").oninput = e => {
+    state.searchQuery = e.target.value.trim();
+    renderCards(loadBirthdays());
+  };
+
+  const sortDd = $("bdSortDropdown");
+  const sortBtn = $("bdSortBtn");
+  const sortMenu = $("bdSortMenu");
+  sortBtn.onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    const opening = sortMenu.hidden;
+    sortMenu.hidden = !opening;
+    sortDd.classList.toggle("open", opening);
+    sortBtn.setAttribute("aria-expanded", String(opening));
+  };
+  document.addEventListener("pointerdown", e => {
+    if (!sortMenu.hidden && !sortDd.contains(e.target)) {
+      sortMenu.hidden = true;
+      sortDd.classList.remove("open");
+      sortBtn.setAttribute("aria-expanded", "false");
+    }
+  }, true);
+
+  (function initEntryDefaults() {
+    const tmrw = new Date(Date.now() + 86400000);
+    const mm = String(tmrw.getMonth() + 1).padStart(2, "0");
+    const dd = String(tmrw.getDate()).padStart(2, "0");
+    $("bdDateInput").value = `${mm}/${dd}`;
+    state.selectedTz = LOCAL_TZ || FALLBACK_EASTERN_TZ;
+  })();
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(async () => {
+      await initDirectFirestoreSync();
+      renderAll();
+      checkBirthdayAlerts();
+    });
+  }
+  document.addEventListener("p23notif", () => renderTopStatusAndStats(loadBirthdays()));
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      renderAll();
+      checkBirthdayAlerts();
+    }
+  });
+
+  if (typeof DB.checkDue === "function") {
+    const origCheckDue = DB.checkDue.bind(DB);
+    DB.checkDue = function() {
+      origCheckDue();
+      checkBirthdayAlerts();
+    };
+  }
+
+  setInterval(tickLiveCountdowns, 1000);
+  setInterval(() => {
+    checkBirthdayAlerts();
+    renderTopStatusAndStats(loadBirthdays());
+  }, 5000);
+
+  initDirectFirestoreSync().then(() => {
+    renderAll();
+    checkBirthdayAlerts();
+  });
+});
+</script>
+</body>
+</html>

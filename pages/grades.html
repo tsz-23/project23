@@ -1,0 +1,2728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grade Calculator | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 86%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 92%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 11%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    --gr-green: #30d158;
+    --gr-amber: #ff9f0a;
+    --gr-red: #ff453a;
+    --gr-blue: #0a84ff;
+    --gr-purple: #6c5ce7;
+    --gr-pink: #ff5c9d;
+    --gr-teal: #00b8c8;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
+  }
+
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1rem 1rem 5.5rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.4rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.1rem, 6.6vw, 3.8rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.88rem, 1.6vw, 1rem);
+    max-width: 680px;
+    line-height: 1.5;
+  }
+
+  .gr-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .apple-panel {
+    background: var(--glass-surface);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 18px 42px -18px rgba(0, 0, 0, 0.42);
+    border-radius: 26px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    contain: layout style;
+  }
+
+  .gr-guest-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.15rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--card-solid)), color-mix(in srgb, var(--accent2) 10%, var(--card-solid)));
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+  }
+  .gr-guest-banner[hidden] {
+    display: none !important;
+  }
+  .gr-guest-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .gr-guest-ic {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--accent3, var(--accent));
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .gr-guest-ic svg {
+    width: 20px;
+    height: 20px;
+  }
+  .gr-guest-info b {
+    display: block;
+    font-family: var(--display);
+    font-size: 0.94rem;
+    color: var(--text);
+  }
+  .gr-guest-info span {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .gr-btn {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 1rem !important;
+    margin: 0 !important;
+    border-radius: 999px !important;
+    font-family: var(--body) !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.42rem !important;
+    border: 1px solid var(--line) !important;
+    background: var(--glass-elevated) !important;
+    color: var(--text) !important;
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box !important;
+    transition: transform 0.16s var(--apple-ease), border-color 0.16s, background 0.16s, box-shadow 0.16s;
+  }
+  .gr-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+  .gr-btn:hover {
+    border-color: var(--accent) !important;
+    transform: translateY(-1px);
+  }
+  .gr-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+    box-shadow: 0 8px 22px -6px rgba(108, 92, 231, 0.55);
+  }
+  .gr-btn.subtle {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 0.82rem !important;
+    font-size: 0.76rem !important;
+  }
+  .gr-btn.row-btn {
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 1rem !important;
+    font-size: 0.8rem !important;
+  }
+  .gr-btn.danger:hover {
+    border-color: var(--gr-red) !important;
+    color: var(--gr-red) !important;
+  }
+
+  .gr-ic-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 9px !important;
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent) !important;
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent) !important;
+    color: var(--muted) !important;
+    display: grid !important;
+    place-items: center !important;
+    cursor: pointer;
+    font-size: 0.82rem !important;
+    line-height: 1 !important;
+    flex-shrink: 0;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .gr-ic-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .gr-ic-btn:hover {
+    color: var(--text) !important;
+    border-color: var(--accent) !important;
+    transform: none;
+  }
+  .gr-ic-btn.del:hover {
+    color: #fff !important;
+    background: rgba(255, 69, 58, 0.35) !important;
+    border-color: var(--gr-red) !important;
+  }
+
+  .gr-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+  .gr-kpi-card {
+    background: linear-gradient(155deg, color-mix(in srgb, var(--card-solid) 92%, transparent), color-mix(in srgb, var(--card-2) 86%, transparent));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 0.95rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    box-shadow: var(--glass-spec);
+  }
+  .gr-kpi-lbl {
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .gr-kpi-val {
+    font-family: var(--display);
+    font-size: 1.62rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.12;
+  }
+  .gr-kpi-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .gr-sec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .gr-sec-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+  }
+  .gr-sec-ic {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
+    color: var(--accent3, var(--accent));
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .gr-sec-ic svg {
+    width: 18px;
+    height: 18px;
+  }
+  .gr-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .gr-title-row h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .gr-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.14rem 0.58rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+    font-family: var(--mono);
+    font-size: 0.71rem;
+    font-weight: 700;
+    color: var(--accent3, var(--accent));
+    line-height: 1.2;
+  }
+  .gr-sec-sub {
+    display: block;
+    font-size: 0.77rem;
+    color: var(--muted);
+    margin-top: 0.1rem;
+  }
+
+  .gr-empty-courses {
+    border: 1.5px dashed color-mix(in srgb, var(--accent) 42%, var(--line));
+    border-radius: 20px;
+    padding: 2.1rem 1.25rem;
+    text-align: center;
+    background: radial-gradient(circle at 50% 0%, rgba(108, 92, 231, 0.12), transparent 65%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .gr-empty-courses[hidden] {
+    display: none !important;
+  }
+  .gr-empty-courses b {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .gr-empty-courses span {
+    font-size: 0.82rem;
+    color: var(--muted);
+    max-width: 460px;
+    line-height: 1.45;
+  }
+
+  .gr-courses-rail {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+    gap: 0.75rem;
+  }
+  .gr-courses-rail[hidden] {
+    display: none !important;
+  }
+  .gr-course-tab {
+    border-radius: 18px !important;
+    padding: 0.85rem 0.95rem !important;
+    background: color-mix(in srgb, var(--card-2) 78%, transparent) !important;
+    border: 1.5px solid color-mix(in srgb, var(--line) 85%, transparent) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.48rem !important;
+    cursor: pointer;
+    text-align: left !important;
+    position: relative;
+    transition: transform 0.16s var(--apple-ease), border-color 0.16s, box-shadow 0.16s;
+  }
+  .gr-course-tab:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line)) !important;
+  }
+  .gr-course-tab.active {
+    border-color: var(--course-clr, var(--accent)) !important;
+    background:
+      radial-gradient(circle at 15% 0%, color-mix(in srgb, var(--course-clr, var(--accent)) 24%, transparent), transparent 68%),
+      color-mix(in srgb, var(--card-solid) 92%, transparent) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--course-clr, var(--accent)) 28%, transparent), 0 12px 26px -10px rgba(0, 0, 0, 0.5);
+  }
+  .gr-ct-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    width: 100%;
+  }
+  .gr-ct-code {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.14rem 0.52rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--course-clr, var(--accent)) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--course-clr, var(--accent)) 48%, transparent);
+    color: var(--text);
+  }
+  .gr-ct-goal {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: var(--muted);
+  }
+  .gr-ct-goal b {
+    color: var(--text);
+  }
+  .gr-ct-name {
+    font-family: var(--display);
+    font-size: 0.94rem;
+    font-weight: 800;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+  }
+  .gr-ct-stats {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    width: 100%;
+  }
+  .gr-ct-stats b {
+    font-family: var(--display);
+    font-size: 1.08rem;
+    color: var(--text);
+  }
+  .gr-ct-bar {
+    height: 6px;
+    width: 100%;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-solid) 86%, transparent);
+    overflow: hidden;
+  }
+  .gr-ct-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--course-clr, var(--accent));
+    transition: width 0.22s var(--apple-ease);
+  }
+
+  .gr-drawer {
+    background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 14%, var(--card-solid)), color-mix(in srgb, var(--card-2) 95%, transparent));
+    border: 1.5px solid color-mix(in srgb, var(--accent) 44%, var(--line));
+    border-radius: 22px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .gr-drawer[hidden] {
+    display: none !important;
+  }
+  .gr-course-form-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.5fr 0.85fr 1.45fr;
+    gap: 0.68rem;
+    align-items: end;
+  }
+
+  .gr-field {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-end !important;
+    gap: 0.32rem !important;
+    min-width: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .gr-field label {
+    display: block !important;
+    position: static !important;
+    transform: none !important;
+    font-family: var(--mono) !important;
+    font-size: 0.63rem !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: var(--muted) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gr-input {
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 0.78rem !important;
+    margin: 0 !important;
+    border-radius: 11px !important;
+    border: 1px solid var(--line) !important;
+    background: var(--card-solid) !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    line-height: 36px !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .gr-input:focus {
+    border-color: var(--accent) !important;
+  }
+
+  .gr-dd-btn {
+    width: 100% !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 0.75rem !important;
+    margin: 0 !important;
+    border-radius: 11px !important;
+    border: 1px solid var(--line) !important;
+    background: var(--card-solid) !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-size: 0.81rem !important;
+    font-weight: 600 !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.4rem !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    text-align: left !important;
+  }
+  .gr-dd-btn:hover {
+    border-color: var(--accent) !important;
+    transform: none !important;
+  }
+  .gr-dd-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .gr-dd-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+  }
+  .gr-dd-btn svg {
+    width: 13px;
+    height: 13px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .gr-color-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    height: 34px;
+  }
+  .gr-clr-dot {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    border: 2px solid rgba(255, 255, 255, 0.28) !important;
+    cursor: pointer;
+  }
+  .gr-clr-dot.active {
+    transform: scale(1.16);
+    border-color: #fff !important;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .gr-workspace-grid {
+    display: grid;
+    grid-template-columns: 425px minmax(0, 1fr);
+    gap: 1.15rem;
+    align-items: start;
+  }
+  .gr-workspace-grid[hidden] {
+    display: none !important;
+  }
+
+  .gr-target-hero {
+    background:
+      radial-gradient(circle at 20% 15%, rgba(108, 92, 231, 0.24), transparent 58%),
+      linear-gradient(175deg, color-mix(in srgb, var(--card-solid) 96%, #070510), color-mix(in srgb, var(--card-2) 96%, #04020a));
+    border: 1.5px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+    border-radius: 22px;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    box-shadow: var(--glass-spec), 0 16px 36px -18px rgba(0, 0, 0, 0.6);
+  }
+
+  .gr-needed-banner {
+    border-radius: 16px;
+    padding: 0.95rem 1rem;
+    background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .gr-needed-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .gr-needed-lbl {
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .gr-status-pill {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.14rem 0.55rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .gr-status-pill.good {
+    background: color-mix(in srgb, var(--gr-green) 18%, transparent);
+    color: var(--gr-green);
+    border: 1px solid color-mix(in srgb, var(--gr-green) 42%, transparent);
+  }
+  .gr-status-pill.warn {
+    background: color-mix(in srgb, var(--gr-amber) 18%, transparent);
+    color: var(--gr-amber);
+    border: 1px solid color-mix(in srgb, var(--gr-amber) 42%, transparent);
+  }
+  .gr-status-pill.bad {
+    background: color-mix(in srgb, var(--gr-red) 18%, transparent);
+    color: var(--gr-red);
+    border: 1px solid color-mix(in srgb, var(--gr-red) 42%, transparent);
+  }
+  .gr-needed-big {
+    font-family: var(--display);
+    font-size: 2.35rem;
+    font-weight: 800;
+    line-height: 1.05;
+    color: var(--text);
+  }
+  .gr-needed-desc {
+    font-size: 0.79rem;
+    color: var(--muted);
+    line-height: 1.42;
+  }
+  .gr-needed-desc b {
+    color: var(--text);
+  }
+
+  .gr-goal-box {
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+    border-radius: 16px;
+    padding: 0.85rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .gr-goal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .gr-goal-head b {
+    font-family: var(--display);
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .gr-goal-num-input {
+    width: 68px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 0.45rem !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    border: 1px solid var(--accent) !important;
+    background: var(--card-solid) !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    line-height: 30px !important;
+    text-align: center !important;
+  }
+  .gr-goal-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,69,58,0.5) 0%, rgba(255,159,10,0.6) 55%, rgba(48,209,88,0.75) 85%, rgba(10,132,255,0.85) 100%);
+    outline: none;
+    border: 0 !important;
+    cursor: pointer;
+  }
+  .gr-goal-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #fff;
+    border: 2.5px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+    cursor: pointer;
+  }
+  .gr-goal-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+  .gr-preset-chip {
+    height: 26px !important;
+    min-height: 26px !important;
+    padding: 0 0.55rem !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--line) !important;
+    background: color-mix(in srgb, var(--card-2) 80%, transparent) !important;
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.64rem !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+  }
+  .gr-preset-chip:hover {
+    color: var(--text) !important;
+    border-color: var(--accent) !important;
+    transform: none !important;
+  }
+  .gr-preset-chip.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+  }
+
+  .gr-progress-visual {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+  }
+  .gr-prog-track {
+    position: relative;
+    height: 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    overflow: hidden;
+    display: flex;
+  }
+  .gr-prog-earned {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gr-green), #24b47e);
+    transition: width 0.2s var(--apple-ease);
+  }
+  .gr-prog-whatif {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gr-blue), var(--gr-purple));
+    transition: width 0.2s var(--apple-ease);
+  }
+  .gr-prog-needed {
+    height: 100%;
+    background: repeating-linear-gradient(
+      -45deg,
+      rgba(255, 159, 10, 0.45),
+      rgba(255, 159, 10, 0.45) 6px,
+      rgba(255, 159, 10, 0.2) 6px,
+      rgba(255, 159, 10, 0.2) 12px
+    );
+    transition: width 0.2s var(--apple-ease);
+  }
+  .gr-prog-goal-pin {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2.5px;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+    z-index: 3;
+    pointer-events: none;
+  }
+  .gr-prog-legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    color: var(--muted);
+  }
+
+  .gr-cat-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .gr-cat-bd-row {
+    padding: 0.62rem 0.78rem;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .gr-cat-bd-left b {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+  .gr-cat-bd-left span {
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    color: var(--muted);
+  }
+  .gr-cat-bd-right {
+    text-align: right;
+  }
+  .gr-cat-bd-right b {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent3, var(--accent));
+  }
+  .gr-cat-bd-right span {
+    font-size: 0.66rem;
+    color: var(--muted);
+  }
+
+  .gr-ratio-builder {
+    background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 13%, var(--card-solid)), color-mix(in srgb, var(--card-2) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+    border-radius: 18px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.68rem;
+  }
+  .gr-ratio-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .gr-ratio-head b {
+    font-family: var(--display);
+    font-size: 0.88rem;
+    color: var(--text);
+  }
+  .gr-ratio-head span {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+  .gr-ratio-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr 0.65fr 1.35fr 0.75fr auto;
+    gap: 0.52rem;
+    align-items: end;
+  }
+
+  .gr-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .gr-cat-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+    flex-wrap: wrap;
+  }
+  .gr-cat-pill {
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 0.72rem !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--line) !important;
+    background: color-mix(in srgb, var(--card-2) 78%, transparent) !important;
+    color: var(--muted) !important;
+    font-size: 0.73rem !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+  }
+  .gr-cat-pill:hover {
+    color: var(--text) !important;
+    border-color: var(--accent) !important;
+    transform: none !important;
+  }
+  .gr-cat-pill.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+  }
+
+  .gr-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .gr-item-row {
+    display: grid;
+    grid-template-columns: auto minmax(125px, 1.3fr) 92px 175px 140px auto;
+    align-items: center;
+    gap: 0.58rem;
+    padding: 0.58rem 0.78rem;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--card-2) 74%, transparent);
+    border: 1.5px solid color-mix(in srgb, var(--line) 82%, transparent);
+    contain: layout style;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .gr-item-row:hover {
+    border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+  }
+  .gr-item-row.is-graded {
+    border-color: color-mix(in srgb, var(--gr-green) 42%, var(--line));
+    background: linear-gradient(145deg, color-mix(in srgb, var(--gr-green) 8%, var(--card-solid)), color-mix(in srgb, var(--card-2) 85%, transparent));
+  }
+  .gr-item-row.is-whatif {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--gr-blue) 58%, var(--line));
+    background: linear-gradient(145deg, color-mix(in srgb, var(--gr-blue) 11%, var(--card-solid)), color-mix(in srgb, var(--card-2) 85%, transparent));
+  }
+
+  .gr-type-badge {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.16rem 0.5rem;
+    border-radius: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .gr-type-badge.test { background: rgba(108, 92, 231, 0.2); color: #b7b0ff; border: 1px solid rgba(108, 92, 231, 0.42); }
+  .gr-type-badge.lab { background: rgba(0, 184, 200, 0.18); color: #5ce1ee; border: 1px solid rgba(0, 184, 200, 0.4); }
+  .gr-type-badge.assignment { background: rgba(10, 132, 255, 0.18); color: #66b2ff; border: 1px solid rgba(10, 132, 255, 0.4); }
+  .gr-type-badge.exam { background: rgba(255, 92, 157, 0.2); color: #ff85b6; border: 1px solid rgba(255, 92, 157, 0.45); }
+  .gr-type-badge.quiz { background: rgba(255, 159, 10, 0.18); color: #ffbe55; border: 1px solid rgba(255, 159, 10, 0.4); }
+  .gr-type-badge.project { background: rgba(48, 209, 88, 0.18); color: #63e685; border: 1px solid rgba(48, 209, 88, 0.4); }
+
+  .gr-inline-name {
+    width: 100% !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 0.5rem !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    border: 1px solid transparent !important;
+    background: transparent !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    line-height: 30px !important;
+    box-shadow: none !important;
+  }
+  .gr-inline-name:hover,
+  .gr-inline-name:focus {
+    border-color: var(--line) !important;
+    background: var(--card-solid) !important;
+  }
+
+  .gr-mini-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.24rem;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 0 0.45rem;
+    height: 32px;
+    box-sizing: border-box;
+  }
+  .gr-mini-input-wrap:focus-within {
+    border-color: var(--accent);
+  }
+  .gr-mini-input {
+    width: 100% !important;
+    height: 100% !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--text) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    line-height: 30px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    text-align: right !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .gr-mini-unit {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .gr-score-dual {
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+  }
+  .gr-raw-pair {
+    display: flex;
+    align-items: center;
+    gap: 0.16rem;
+    background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    border-radius: 9px;
+    padding: 0 0.38rem;
+    height: 32px;
+    width: 94px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+  .gr-raw-pair input {
+    width: 34px !important;
+    height: 100% !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.7rem !important;
+    line-height: 30px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    text-align: center !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  .gr-raw-pair input:focus {
+    color: var(--text) !important;
+  }
+  .gr-raw-pair span {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .gr-need-callout {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    min-width: 0;
+  }
+  .gr-need-pill {
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    font-weight: 700;
+    padding: 0.18rem 0.55rem;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  .gr-need-pill.earned {
+    background: color-mix(in srgb, var(--gr-green) 16%, transparent);
+    color: var(--gr-green);
+    border: 1px solid color-mix(in srgb, var(--gr-green) 36%, transparent);
+  }
+  .gr-need-pill.whatif {
+    background: color-mix(in srgb, var(--gr-blue) 18%, transparent);
+    color: #66b2ff;
+    border: 1px solid color-mix(in srgb, var(--gr-blue) 42%, transparent);
+  }
+  .gr-need-pill.target {
+    background: color-mix(in srgb, var(--gr-amber) 16%, transparent);
+    color: var(--gr-amber);
+    border: 1px solid color-mix(in srgb, var(--gr-amber) 38%, transparent);
+  }
+  .gr-need-pill.impossible {
+    background: color-mix(in srgb, var(--gr-red) 18%, transparent);
+    color: var(--gr-red);
+    border: 1px solid color-mix(in srgb, var(--gr-red) 42%, transparent);
+  }
+  .gr-need-sub {
+    font-family: var(--mono);
+    font-size: 0.59rem;
+    color: var(--muted);
+    margin-top: 0.1rem;
+  }
+
+  .gr-whatif-btn {
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 0.48rem !important;
+    margin: 0 !important;
+    border-radius: 7px !important;
+    border: 1px solid var(--line) !important;
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent) !important;
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.6rem !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+  }
+  .gr-whatif-btn.active {
+    background: color-mix(in srgb, var(--gr-blue) 24%, var(--card-solid)) !important;
+    color: #70b8ff !important;
+    border-color: var(--gr-blue) !important;
+  }
+
+  .gr-pop-menu {
+    position: absolute;
+    z-index: 9999;
+    background: color-mix(in srgb, var(--card-solid) 96%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+    border-radius: 18px;
+    box-shadow: 0 22px 48px -12px rgba(0, 0, 0, 0.65);
+    padding: 0.45rem;
+    min-width: 220px;
+    max-height: 310px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .gr-pop-item {
+    width: 100% !important;
+    padding: 0.52rem 0.75rem !important;
+    margin: 0 !important;
+    border-radius: 10px !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--text) !important;
+    font-family: var(--body) !important;
+    font-size: 0.81rem !important;
+    font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.5rem !important;
+    cursor: pointer;
+    text-align: left !important;
+  }
+  .gr-pop-item:hover {
+    background: color-mix(in srgb, var(--accent) 16%, transparent) !important;
+    transform: none !important;
+  }
+  .gr-pop-item.active {
+    background: color-mix(in srgb, var(--accent) 24%, transparent) !important;
+    color: var(--accent3, var(--accent)) !important;
+  }
+
+  @media (max-width: 1120px) {
+    .gr-workspace-grid {
+      grid-template-columns: 1fr;
+    }
+    .gr-ratio-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .gr-course-form-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .gr-kpi-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .gr-item-row {
+      grid-template-columns: 1fr auto;
+      gap: 0.45rem;
+    }
+    .gr-ratio-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    main {
+      padding: 0.75rem 0.6rem 5.5rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .gr-kpi-strip,
+    .gr-ratio-grid,
+    .gr-course-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body data-page="grades">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>GRADE CALCULATOR</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Academic Grade Calculator
+      </span>
+    </div>
+  </div>
+
+  <div class="gr-shell">
+    <div class="gr-guest-banner" id="grGuestBanner" hidden>
+      <div class="gr-guest-info">
+        <div class="gr-guest-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <b>Sign In Required</b>
+          <span>Sign in to add courses, customize syllabus ratios, and sync your academic grades.</span>
+        </div>
+      </div>
+      <button type="button" class="gr-btn primary" id="grGuestSignInBtn">Sign In to Continue</button>
+    </div>
+
+    <div class="gr-kpi-strip" aria-label="Academic Term Overview">
+      <div class="gr-kpi-card">
+        <span class="gr-kpi-lbl">Active Courses</span>
+        <div class="gr-kpi-val" id="grKpiCourses">0</div>
+        <span class="gr-kpi-sub" id="grKpiCoursesSub">0 graded assessments</span>
+      </div>
+      <div class="gr-kpi-card">
+        <span class="gr-kpi-lbl">Term Average</span>
+        <div class="gr-kpi-val" id="grKpiAvg">—</div>
+        <span class="gr-kpi-sub" id="grKpiGpaSub">Add a course to begin</span>
+      </div>
+      <div class="gr-kpi-card">
+        <span class="gr-kpi-lbl">Goal Track Status</span>
+        <div class="gr-kpi-val" id="grKpiOnTrack">0 / 0</div>
+        <span class="gr-kpi-sub" id="grKpiOnTrackSub">Courses within reach of goal</span>
+      </div>
+      <div class="gr-kpi-card">
+        <span class="gr-kpi-lbl">Remaining Work</span>
+        <div class="gr-kpi-val" id="grKpiUpcoming">0</div>
+        <span class="gr-kpi-sub" id="grKpiUpcomingSub">Upcoming tests, labs &amp; exams</span>
+      </div>
+    </div>
+
+    <section class="panel apple-panel" aria-label="My Courses">
+      <div class="gr-sec-head">
+        <div class="gr-sec-title">
+          <div class="gr-sec-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <div>
+            <div class="gr-title-row">
+              <h2>My Courses</h2>
+              <span class="gr-count-pill" id="grCourseCountBadge">0 Courses</span>
+            </div>
+            <span class="gr-sec-sub">Add your courses and configure each syllabus ratio and target grade</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0.45rem;flex-wrap:wrap;">
+          <button type="button" class="gr-btn subtle" id="grEditCourseBtn" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+            <span>Edit Course</span>
+          </button>
+          <button type="button" class="gr-btn primary subtle" id="grOpenAddCourseBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add Course</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="gr-drawer" id="grCourseDrawer" hidden>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+          <b id="grCourseDrawerTitle" style="font-family:var(--display);font-size:1rem;color:var(--text);">Add New Course</b>
+          <button type="button" class="gr-ic-btn" id="grCloseCourseDrawerBtn" title="Close">×</button>
+        </div>
+
+        <div class="gr-course-form-grid">
+          <div class="gr-field">
+            <label for="grCourseCodeInput">Course Code</label>
+            <input type="text" class="gr-input" id="grCourseCodeInput" placeholder="e.g. GNG1105…" maxlength="20">
+          </div>
+          <div class="gr-field">
+            <label for="grCourseNameInput">Course Title</label>
+            <input type="text" class="gr-input" id="grCourseNameInput" placeholder="e.g. Engineering Mechanics" maxlength="65">
+          </div>
+          <div class="gr-field">
+            <label for="grCourseGoalInput">Target Goal (%)</label>
+            <input type="number" class="gr-input" id="grCourseGoalInput" min="1" max="100" step="0.5" value="85">
+          </div>
+          <div class="gr-field">
+            <label>Starting Setup</label>
+            <button type="button" class="gr-dd-btn" id="grCourseTemplateBtn">
+              <span id="grCourseTemplateLbl">Start from Scratch (Blank)</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:0.55rem;">
+            <span style="font-family:var(--mono);font-size:0.62rem;font-weight:700;text-transform:uppercase;color:var(--muted);">Accent:</span>
+            <div class="gr-color-dots" id="grCourseColorDots"></div>
+          </div>
+
+          <div style="display:flex;gap:0.45rem;">
+            <button type="button" class="gr-btn subtle danger" id="grDeleteCourseBtn" hidden>Delete Course</button>
+            <button type="button" class="gr-btn subtle" id="grCancelCourseBtn">Cancel</button>
+            <button type="button" class="gr-btn primary subtle" id="grSaveCourseBtn">Save Course</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="gr-empty-courses" id="grEmptyCoursesState">
+        <b>No Courses Added Yet</b>
+        <span>Start from scratch by adding your first course, setting your target goal grade, and entering your syllabus ratios.</span>
+        <button type="button" class="gr-btn primary" id="grEmptyAddCourseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+          <span style="color: #eee;">Add Your First Course</span>
+        </button>
+      </div>
+
+      <div class="gr-courses-rail" id="grCoursesRail" role="tablist" hidden></div>
+    </section>
+
+    <div class="gr-workspace-grid" id="grWorkspaceGrid" hidden>
+      <section class="panel apple-panel" aria-label="Target Grade and Required Score Forecast">
+        <div class="gr-sec-head">
+          <div class="gr-sec-title">
+            <div class="gr-sec-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </div>
+            <div>
+              <div class="gr-title-row">
+                <h2 id="grActiveCourseHeading">Target Forecast</h2>
+                <span class="gr-count-pill" id="grActiveStandingPill">No Marks Yet</span>
+              </div>
+              <span class="gr-sec-sub" id="grActiveCourseSubtitle">Live required score calculation for remaining work</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="gr-target-hero">
+          <div class="gr-needed-banner">
+            <div class="gr-needed-top">
+              <span class="gr-needed-lbl" id="grNeededHeaderLbl">Needed on Remaining Work</span>
+              <span class="gr-status-pill good" id="grNeededStatusBadge">On Track</span>
+            </div>
+            <div class="gr-needed-big" id="grNeededBigVal">85.0%</div>
+            <div class="gr-needed-desc" id="grNeededDescText">
+              Add syllabus components on the right to calculate what you need on upcoming assessments.
+            </div>
+          </div>
+
+          <div class="gr-goal-box">
+            <div class="gr-goal-head">
+              <b>Target Course Goal (%)</b>
+              <div style="display:flex;align-items:center;gap:0.3rem;">
+                <input type="number" class="gr-goal-num-input" id="grGoalInlineInput" min="1" max="100" step="0.5" value="85" aria-label="Target Course Goal Percentage">
+                <span style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);">%</span>
+              </div>
+            </div>
+            <input type="range" class="gr-goal-slider" id="grGoalSlider" min="40" max="100" step="0.5" value="85" aria-label="Target Course Goal Slider">
+            <div class="gr-goal-presets" id="grGoalPresets"></div>
+          </div>
+
+          <div class="gr-progress-visual">
+            <div class="gr-prog-track" title="Green = Earned Weighted Points, Blue = What-If Pinned Points, Amber = Additional Points Needed for Goal">
+              <div class="gr-prog-earned" id="grBarEarned" style="width:0%"></div>
+              <div class="gr-prog-whatif" id="grBarWhatIf" style="width:0%"></div>
+              <div class="gr-prog-needed" id="grBarNeeded" style="width:0%"></div>
+              <div class="gr-prog-goal-pin" id="grBarGoalPin" style="left:85%"></div>
+            </div>
+            <div class="gr-prog-legend">
+              <span id="grLegendEarned">Earned: 0.0 / 0%</span>
+              <span id="grLegendRemaining">Remaining Weight: 0%</span>
+              <span id="grLegendMax">Max Possible: 0.0%</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:0.4rem;">
+            <span style="font-family:var(--mono);font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);">
+              Category Breakdown &amp; Required Averages
+            </span>
+            <div class="gr-cat-breakdown-list" id="grCatBreakdownList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel apple-panel" aria-label="Course Syllabus Ratios and Marks">
+        <div class="gr-sec-head">
+          <div class="gr-sec-title">
+            <div class="gr-sec-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <div>
+              <div class="gr-title-row">
+                <h2>Syllabus Ratios &amp; Marks</h2>
+                <span class="gr-count-pill" id="grTotalWeightBadge">Total Weight: 0%</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+            <button type="button" class="gr-btn subtle" id="grNormalizeWeightsBtn" hidden title="Scale all item weights proportionally so the syllabus totals 100%">
+              <span>Normalize to 100%</span>
+            </button>
+            <button type="button" class="gr-btn subtle" id="grClearWhatIfBtn" hidden>
+              <span>Clear What-Ifs</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="gr-ratio-builder">
+          <div class="gr-ratio-head">
+            <b>Add Syllabus Ratio / Assessment Group</b>
+          </div>
+          <div class="gr-ratio-grid">
+            <div class="gr-field">
+              <label>Category</label>
+              <button type="button" class="gr-dd-btn" id="grBatchTypeBtn">
+                <span id="grBatchTypeLbl">Test</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <div class="gr-field">
+              <label for="grBatchLabel">Label Prefix</label>
+              <input type="text" class="gr-input" id="grBatchLabel" placeholder="Test, Lab, Exam…" value="Test">
+            </div>
+            <div class="gr-field">
+              <label for="grBatchCount">Count</label>
+              <input type="number" class="gr-input" id="grBatchCount" min="1" max="30" step="1" value="2">
+            </div>
+            <div class="gr-field">
+              <label>Weight Mode</label>
+              <button type="button" class="gr-dd-btn" id="grBatchModeBtn">
+                <span id="grBatchModeLbl">% Per Item</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+            <div class="gr-field">
+              <label for="grBatchWeight">Weight (%)</label>
+              <input type="number" class="gr-input" id="grBatchWeight" min="0.1" max="100" step="0.5" value="15">
+            </div>
+            <button type="button" class="gr-btn primary row-btn" id="grAddBatchBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Add</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="gr-filter-bar">
+          <div class="gr-cat-pills" id="grFilterPills" role="tablist"></div>
+          <span style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);">
+            Tip: Enter <b>%</b> directly or type <b>earned / total</b> (e.g. 42 / 50)
+          </span>
+        </div>
+
+        <div class="gr-items-list" id="grItemsList" aria-live="polite"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const GR_KEY = "p23.grades.v2";
+  const $ = id => document.getElementById(id);
+
+  const COURSE_COLORS = [
+    { id: "#6c5ce7", label: "Royal Purple" },
+    { id: "#0a84ff", label: "Ocean Blue" },
+    { id: "#30d158", label: "Emerald Green" },
+    { id: "#ff9f0a", label: "Amber Gold" },
+    { id: "#ff5c9d", label: "Rose Pink" },
+    { id: "#00b8c8", label: "Cyan Teal" }
+  ];
+
+  const TYPE_OPTIONS = [
+    { id: "test",       label: "Test",       short: "Test",       defaultPrefix: "Test",       defaultCount: 2,  defaultWeight: 15 },
+    { id: "lab",        label: "Lab",        short: "Lab",        defaultPrefix: "Lab",        defaultCount: 10, defaultWeight: 3  },
+    { id: "assignment", label: "Assignment", short: "Assignment", defaultPrefix: "Assignment", defaultCount: 5,  defaultWeight: 4  },
+    { id: "exam",       label: "Exam",       short: "Exam",       defaultPrefix: "Exam",       defaultCount: 1,  defaultWeight: 40 }
+  ];
+
+  const TYPE_META = {
+    test:       { label: "Test",       short: "Test",       defaultPrefix: "Test" },
+    lab:        { label: "Lab",        short: "Lab",        defaultPrefix: "Lab" },
+    assignment: { label: "Assignment", short: "Assignment", defaultPrefix: "Assignment" },
+    exam:       { label: "Exam",       short: "Exam",       defaultPrefix: "Exam" },
+    quiz:       { label: "Quiz",       short: "Quiz",       defaultPrefix: "Quiz" },
+    project:    { label: "Project",    short: "Project",    defaultPrefix: "Project" }
+  };
+
+  const TEMPLATE_OPTIONS = [
+    { id: "blank",                label: "Start from Scratch (Blank)" },
+    { id: "standard_15_3_40",     label: "2 Tests (15% ea) + 10 Labs (3% ea) + Exam (40%)" },
+    { id: "midterms_assign_final",label: "2 Tests (20% ea) + 5 Assignments (4% ea) + Exam (40%)" }
+  ];
+
+  const WEIGHT_MODE_OPTIONS = [
+    { id: "each",  label: "% Per Item" },
+    { id: "total", label: "% Total Split Evenly" }
+  ];
+
+  const GOAL_PRESETS = [
+    { val: 90, label: "90% (A+)" },
+    { val: 85, label: "85% (A)" },
+    { val: 80, label: "80% (A-)" },
+    { val: 75, label: "75% (B)" },
+    { val: 70, label: "70% (C+)" },
+    { val: 60, label: "60% (C)" },
+    { val: 50, label: "50% (Pass)" }
+  ];
+
+  function buildTemplateItems(templateId) {
+    const items = [];
+    let seq = 1;
+    const mk = (type, name, weight) => ({
+      id: `item_${seq++}_${Math.random().toString(36).slice(2, 6)}`,
+      type,
+      name,
+      weight: Number(weight),
+      score: null,
+      rawEarned: "",
+      rawTotal: "",
+      isWhatIf: false
+    });
+
+    if (templateId === "standard_15_3_40") {
+      items.push(mk("test", "Test 1", 15));
+      items.push(mk("test", "Test 2", 15));
+      for (let i = 1; i <= 10; i++) {
+        items.push(mk("lab", `Lab ${i}`, 3));
+      }
+      items.push(mk("exam", "Exam", 40));
+    } else if (templateId === "midterms_assign_final") {
+      items.push(mk("test", "Test 1", 20));
+      items.push(mk("test", "Test 2", 20));
+      for (let i = 1; i <= 5; i++) {
+        items.push(mk("assignment", `Assignment ${i}`, 4));
+      }
+      items.push(mk("exam", "Exam", 40));
+    }
+    return items;
+  }
+
+  const state = {
+    activeCourseId: null,
+    editingCourseId: null,
+    courseFormColor: "#6c5ce7",
+    courseFormTemplate: "blank",
+    batchType: "test",
+    batchMode: "each",
+    itemFilter: "all",
+    syncInFlight: false
+  };
+
+  let cloudData = {
+    courses: []
+  };
+
+  let directFirestoreBound = false;
+  let persistTimer = null;
+  let lastLocalSaveTs = 0;
+
+  let activePop = null;
+  function closePop() {
+    if (!activePop) return;
+    document.removeEventListener("pointerdown", activePop.onDown, true);
+    document.removeEventListener("keydown", activePop.onKey, true);
+    if (activePop.el && activePop.el.parentNode) activePop.el.parentNode.removeChild(activePop.el);
+    activePop = null;
+  }
+
+  function openPop(triggerBtn, options, curVal, onSelect) {
+    if (activePop && activePop.triggerBtn === triggerBtn) {
+      closePop();
+      return;
+    }
+    closePop();
+    const el = document.createElement("div");
+    el.className = "gr-pop-menu";
+    el.innerHTML = options.map(o => `
+      <button type="button" class="gr-pop-item ${String(o.id) === String(curVal) ? "active" : ""}" data-val="${DB.esc(String(o.id))}">
+        <span>${DB.esc(o.label)}</span>
+        ${String(o.id) === String(curVal) ? "<span>✓</span>" : ""}
+      </button>
+    `).join("");
+    document.body.appendChild(el);
+
+    const r = triggerBtn.getBoundingClientRect();
+    const minW = Math.max(210, Math.round(r.width));
+    el.style.minWidth = `${minW}px`;
+    const left = Math.min(window.innerWidth - minW - 12, Math.max(12, r.left));
+    let top = r.bottom + 6;
+    
+    const menuHeight = el.offsetHeight; 
+    if (top + menuHeight > window.innerHeight) {
+      top = Math.max(12, r.top - menuHeight - 6);
+    }
+
+    el.style.left = `${left + window.scrollX}px`;
+    el.style.top = `${top + window.scrollY}px`;
+
+    el.querySelectorAll("[data-val]").forEach(b => {
+      b.onclick = e => {
+        e.stopPropagation();
+        closePop();
+        onSelect(b.dataset.val);
+      };
+    });
+
+    const onDown = e => { if (!el.contains(e.target) && !triggerBtn.contains(e.target)) closePop(); };
+    const onKey = e => { if (e.key === "Escape") closePop(); };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePop = { el, triggerBtn, onDown, onKey };
+  }
+
+  function updateGuestBannerUI() {
+    const banner = $("grGuestBanner");
+    if (banner) banner.hidden = !DB.isGuest();
+  }
+
+  async function ensureAccountAccess() {
+    updateGuestBannerUI();
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    updateGuestBannerUI();
+    if (ok) {
+      await initDirectFirestoreSync();
+      renderAll();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, input, .gr-course-tab");
+      if (interactive && interactive.id !== "grGuestSignInBtn") {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+  $("grGuestSignInBtn").onclick = () => ensureAccountAccess();
+
+  function getUserDocRef() {
+    if (DB.isGuest() || !window.firebase || !firebase.firestore) return null;
+    const uid = typeof DB.userId === "function" ? DB.userId() : (DB.user && DB.user.uid);
+    if (!uid) return null;
+    return firebase.firestore().collection("users").doc(uid);
+  }
+
+  function normalizeIncoming(d) {
+    if (!d || typeof d !== "object") return;
+    if (Array.isArray(d.courses)) {
+      const legacyStarterIds = new Set(["c_cs240", "c_math235", "c_phys121"]);
+      cloudData.courses = d.courses
+        .filter(c => c && !legacyStarterIds.has(c.id))
+        .map(c => ({
+          id: c.id || DB.uid(),
+          code: String(c.code || "COURSE").slice(0, 20),
+          name: String(c.name || "Untitled Course").slice(0, 65),
+          goal: Math.min(100, Math.max(1, Number(c.goal) || 85)),
+          color: c.color || "#6c5ce7",
+          items: Array.isArray(c.items) ? c.items.map(it => ({
+            id: it.id || DB.uid(),
+            type: TYPE_META[it.type] ? it.type : "test",
+            name: String(it.name || "Test").slice(0, 60),
+            weight: Math.max(0, Number(it.weight) || 0),
+            score: (it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score))) ? Number(it.score) : null,
+            rawEarned: it.rawEarned !== undefined ? String(it.rawEarned) : "",
+            rawTotal: it.rawTotal !== undefined ? String(it.rawTotal) : "",
+            isWhatIf: Boolean(it.isWhatIf)
+          })) : []
+        }));
+    }
+    if (d.activeCourseId && cloudData.courses.some(c => c.id === d.activeCourseId)) {
+      state.activeCourseId = d.activeCourseId;
+    } else if (cloudData.courses.length) {
+      state.activeCourseId = cloudData.courses[0].id;
+    } else {
+      state.activeCourseId = null;
+    }
+  }
+
+  async function initDirectFirestoreSync() {
+    const localStored = DB.get(GR_KEY, null);
+    if (localStored) normalizeIncoming(localStored);
+
+    const userRef = getUserDocRef();
+    if (!userRef || directFirestoreBound) return;
+    directFirestoreBound = true;
+
+    try {
+      const [stateSnap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("grades_v2").get().catch(() => null),
+        userRef.get().catch(() => null)
+      ]);
+      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
+      const remote = (stateSnap && stateSnap.exists && stateSnap.data()) ? stateSnap.data() : userData.gradesDataV2;
+      if (remote) normalizeIncoming(remote);
+
+      DB.set(GR_KEY, {
+        courses: cloudData.courses,
+        activeCourseId: state.activeCourseId
+      });
+
+      userRef.collection("state").doc("grades_v2").onSnapshot(docSnap => {
+        if (state.syncInFlight) return;
+        if (docSnap && docSnap.exists && docSnap.data()) {
+          const incoming = docSnap.data();
+          if (incoming.updatedAt && incoming.updatedAt === lastLocalSaveTs) return;
+          normalizeIncoming(incoming);
+          renderAll();
+        }
+      }, () => {});
+    } catch {}
+  }
+
+  async function persistCloudData() {
+    if (DB.isGuest()) {
+      await ensureAccountAccess();
+      return;
+    }
+    renderAll();
+
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(async () => {
+      persistTimer = null;
+      const nowTs = Date.now();
+      lastLocalSaveTs = nowTs;
+      const payload = {
+        courses: cloudData.courses,
+        activeCourseId: state.activeCourseId,
+        updatedAt: nowTs
+      };
+      DB.set(GR_KEY, payload);
+
+      const userRef = getUserDocRef();
+      if (userRef) {
+        state.syncInFlight = true;
+        try {
+          await Promise.all([
+            userRef.collection("state").doc("grades_v2").set(payload).catch(() => {}),
+            userRef.set({ gradesDataV2: payload }, { merge: true }).catch(() => {})
+          ]);
+        } catch {}
+        state.syncInFlight = false;
+      }
+    }, 180);
+  }
+
+  function getActiveCourse() {
+    const list = cloudData.courses || [];
+    if (!list.length) return null;
+    return list.find(c => c.id === state.activeCourseId) || list[0] || null;
+  }
+
+  function computeCourseMetrics(course) {
+    if (!course) {
+      return {
+        totalWeight: 0,
+        gradedWeight: 0,
+        officialWeight: 0,
+        whatIfWeight: 0,
+        remainingWeight: 0,
+        earnedPoints: 0,
+        officialPoints: 0,
+        whatIfPoints: 0,
+        pointsStillNeeded: 0,
+        currentAverage: null,
+        requiredOnRemaining: null,
+        maxPossibleGrade: 0,
+        gradedCount: 0,
+        whatIfCount: 0,
+        upcomingCount: 0,
+        status: "good",
+        statusLabel: "On Track"
+      };
+    }
+
+    let totalWeight = 0;
+    let gradedWeight = 0;
+    let officialWeight = 0;
+    let whatIfWeight = 0;
+    let earnedPoints = 0;
+    let officialPoints = 0;
+    let whatIfPoints = 0;
+    let gradedCount = 0;
+    let whatIfCount = 0;
+    let upcomingCount = 0;
+
+    for (const it of (course.items || [])) {
+      const w = Math.max(0, Number(it.weight) || 0);
+      totalWeight += w;
+      const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
+      if (hasScore) {
+        const sc = Math.max(0, Number(it.score));
+        const pts = (sc * w) / 100;
+        gradedWeight += w;
+        earnedPoints += pts;
+        if (it.isWhatIf) {
+          whatIfWeight += w;
+          whatIfPoints += pts;
+          whatIfCount++;
+        } else {
+          officialWeight += w;
+          officialPoints += pts;
+          gradedCount++;
+        }
+      } else {
+        upcomingCount++;
+      }
+    }
+
+    const remainingWeight = Math.max(0, totalWeight - gradedWeight);
+    const currentAverage = gradedWeight > 0 ? (earnedPoints / gradedWeight) * 100 : null;
+    const goal = Number(course.goal) || 85;
+    const pointsStillNeeded = Math.max(0, goal - earnedPoints);
+    const requiredOnRemaining = remainingWeight > 0
+      ? ((goal - earnedPoints) / remainingWeight) * 100
+      : (earnedPoints >= goal ? 0 : 999);
+    const maxPossibleGrade = earnedPoints + remainingWeight;
+
+    let status = "good";
+    let statusLabel = "On Track";
+    if (totalWeight <= 0) {
+      status = "good";
+      statusLabel = "Add Syllabus";
+    } else if (remainingWeight <= 0) {
+      if (earnedPoints >= goal - 0.01) {
+        status = "good";
+        statusLabel = "Goal Achieved!";
+      } else {
+        status = "bad";
+        statusLabel = "Below Goal";
+      }
+    } else if (requiredOnRemaining <= 0) {
+      status = "good";
+      statusLabel = "Goal Secured!";
+    } else if (requiredOnRemaining > 100) {
+      status = "bad";
+      statusLabel = "Needs Extra Credit (>100%)";
+    } else if (requiredOnRemaining > 90 || (currentAverage !== null && requiredOnRemaining > currentAverage + 8)) {
+      status = "warn";
+      statusLabel = "Stretch Target";
+    } else {
+      status = "good";
+      statusLabel = "On Track";
+    }
+
+    return {
+      totalWeight: Math.round(totalWeight * 100) / 100,
+      gradedWeight: Math.round(gradedWeight * 100) / 100,
+      officialWeight: Math.round(officialWeight * 100) / 100,
+      whatIfWeight: Math.round(whatIfWeight * 100) / 100,
+      remainingWeight: Math.round(remainingWeight * 100) / 100,
+      earnedPoints: Math.round(earnedPoints * 100) / 100,
+      officialPoints: Math.round(officialPoints * 100) / 100,
+      whatIfPoints: Math.round(whatIfPoints * 100) / 100,
+      pointsStillNeeded: Math.round(pointsStillNeeded * 100) / 100,
+      currentAverage,
+      requiredOnRemaining,
+      maxPossibleGrade: Math.round(maxPossibleGrade * 100) / 100,
+      gradedCount,
+      whatIfCount,
+      upcomingCount,
+      status,
+      statusLabel
+    };
+  }
+
+  function percentToLetterAndGpa(pct) {
+    if (pct === null || isNaN(pct)) return { letter: "—", gpa: 0 };
+    if (pct >= 90) return { letter: "A+", gpa: 4.0 };
+    if (pct >= 85) return { letter: "A",  gpa: 4.0 };
+    if (pct >= 80) return { letter: "A-", gpa: 3.7 };
+    if (pct >= 77) return { letter: "B+", gpa: 3.3 };
+    if (pct >= 73) return { letter: "B",  gpa: 3.0 };
+    if (pct >= 70) return { letter: "B-", gpa: 2.7 };
+    if (pct >= 67) return { letter: "C+", gpa: 2.3 };
+    if (pct >= 63) return { letter: "C",  gpa: 2.0 };
+    if (pct >= 60) return { letter: "C-", gpa: 1.7 };
+    if (pct >= 50) return { letter: "D",  gpa: 1.0 };
+    return { letter: "F", gpa: 0.0 };
+  }
+
+  function renderKpiStrip() {
+    const courses = cloudData.courses || [];
+    let totalGraded = 0;
+    let totalUpcoming = 0;
+    let sumAvg = 0;
+    let avgCount = 0;
+    let onTrackCount = 0;
+
+    for (const c of courses) {
+      const m = computeCourseMetrics(c);
+      totalGraded += m.gradedCount;
+      totalUpcoming += m.upcomingCount;
+      if (m.currentAverage !== null) {
+        sumAvg += m.currentAverage;
+        avgCount++;
+      }
+      if (m.totalWeight <= 0 || m.requiredOnRemaining <= 100) {
+        onTrackCount++;
+      }
+    }
+
+    $("grKpiCourses").textContent = String(courses.length);
+    $("grKpiCoursesSub").textContent = `${totalGraded} graded assessment${totalGraded === 1 ? "" : "s"}`;
+
+    if (avgCount > 0) {
+      const termAvg = sumAvg / avgCount;
+      const lg = percentToLetterAndGpa(termAvg);
+      $("grKpiAvg").textContent = `${termAvg.toFixed(1)}%`;
+      $("grKpiGpaSub").textContent = `Letter ${lg.letter} · ${lg.gpa.toFixed(2)} / 4.00 GPA`;
+    } else {
+      $("grKpiAvg").textContent = "—";
+      $("grKpiGpaSub").textContent = courses.length ? "Enter marks to see GPA" : "Add a course to begin";
+    }
+
+    $("grKpiOnTrack").textContent = `${onTrackCount} / ${courses.length}`;
+    $("grKpiOnTrackSub").textContent = !courses.length
+      ? "Courses within reach of goal"
+      : (onTrackCount === courses.length ? "All courses achievable!" : `${courses.length - onTrackCount} course needs extra credit`);
+
+    $("grKpiUpcoming").textContent = String(totalUpcoming);
+    $("grKpiUpcomingSub").textContent = `Upcoming tests, labs & exams`;
+  }
+
+  function renderCoursesRail() {
+    const courses = cloudData.courses || [];
+    $("grCourseCountBadge").textContent = `${courses.length} Course${courses.length === 1 ? "" : "s"}`;
+
+    const hasCourses = courses.length > 0;
+    $("grEmptyCoursesState").hidden = hasCourses;
+    $("grCoursesRail").hidden = !hasCourses;
+    $("grWorkspaceGrid").hidden = !hasCourses;
+    $("grEditCourseBtn").hidden = !hasCourses;
+
+    if (!hasCourses) return;
+
+    if (!state.activeCourseId || !courses.some(c => c.id === state.activeCourseId)) {
+      state.activeCourseId = courses[0].id;
+    }
+
+    const rail = $("grCoursesRail");
+    const nextHtml = courses.map(c => {
+      const m = computeCourseMetrics(c);
+      const isAct = c.id === state.activeCourseId;
+      const avgTxt = m.currentAverage !== null ? `${m.currentAverage.toFixed(1)}%` : "No marks";
+      const reqTxt = m.totalWeight <= 0
+        ? "Add syllabus"
+        : (m.remainingWeight > 0
+          ? (m.requiredOnRemaining <= 0
+            ? "Goal secured"
+            : (m.requiredOnRemaining > 100 ? `Max ${m.maxPossibleGrade.toFixed(1)}%` : `Need ${m.requiredOnRemaining.toFixed(1)}%`))
+          : `Final: ${m.earnedPoints.toFixed(1)}%`);
+
+      return `
+        <button type="button"
+                class="gr-course-tab ${isAct ? "active" : ""}"
+                style="--course-clr:${DB.esc(c.color || "#6c5ce7")}"
+                data-course-tab="${DB.esc(c.id)}">
+          <div class="gr-ct-top">
+            <span class="gr-ct-code">${DB.esc(c.code)}</span>
+            <span class="gr-ct-goal">Goal: <b>${c.goal}%</b></span>
+          </div>
+          <div class="gr-ct-name">${DB.esc(c.name)}</div>
+          <div class="gr-ct-stats">
+            <div>Standing: <b>${avgTxt}</b></div>
+            <span>${DB.esc(reqTxt)}</span>
+          </div>
+          <div class="gr-ct-bar">
+            <div class="gr-ct-fill" style="width:${Math.min(100, m.gradedWeight)}%"></div>
+          </div>
+        </button>
+      `;
+    }).join("");
+
+    if (rail.__lastHtml !== nextHtml) {
+      rail.__lastHtml = nextHtml;
+      rail.innerHTML = nextHtml;
+      rail.querySelectorAll("[data-course-tab]").forEach(btn => {
+        btn.onclick = async () => {
+          if (!(await ensureAccountAccess())) return;
+          state.activeCourseId = btn.dataset.courseTab;
+          state.itemFilter = "all";
+          await persistCloudData();
+        };
+      });
+    }
+  }
+
+  function renderCourseDrawerUI() {
+    const tplObj = TEMPLATE_OPTIONS.find(t => t.id === state.courseFormTemplate) || TEMPLATE_OPTIONS[0];
+    $("grCourseTemplateLbl").textContent = tplObj.label;
+
+    const wrap = $("grCourseColorDots");
+    wrap.innerHTML = COURSE_COLORS.map(clr => `
+      <button type="button"
+              class="gr-clr-dot ${clr.id.toLowerCase() === state.courseFormColor.toLowerCase() ? "active" : ""}"
+              style="background:${DB.esc(clr.id)}"
+              data-pick-clr="${DB.esc(clr.id)}"
+              title="${DB.esc(clr.label)}"></button>
+    `).join("");
+    wrap.querySelectorAll("[data-pick-clr]").forEach(b => {
+      b.onclick = () => {
+        state.courseFormColor = b.dataset.pickClr;
+        renderCourseDrawerUI();
+      };
+    });
+  }
+
+  function openCourseDrawer(course = null) {
+    const drawer = $("grCourseDrawer");
+    drawer.hidden = false;
+    if (course) {
+      state.editingCourseId = course.id;
+      $("grCourseDrawerTitle").textContent = `Edit ${course.code}`;
+      $("grCourseCodeInput").value = course.code;
+      $("grCourseNameInput").value = course.name;
+      $("grCourseGoalInput").value = String(course.goal);
+      $("grCourseTemplateBtn").disabled = true;
+      $("grDeleteCourseBtn").hidden = false;
+      state.courseFormColor = course.color || "#6c5ce7";
+    } else {
+      state.editingCourseId = null;
+      $("grCourseDrawerTitle").textContent = "Add New Course";
+      $("grCourseCodeInput").value = "";
+      $("grCourseNameInput").value = "";
+      $("grCourseGoalInput").value = "85";
+      $("grCourseTemplateBtn").disabled = false;
+      state.courseFormTemplate = "blank";
+      $("grDeleteCourseBtn").hidden = true;
+      state.courseFormColor = COURSE_COLORS[(cloudData.courses || []).length % COURSE_COLORS.length].id;
+    }
+    renderCourseDrawerUI();
+    $("grCourseCodeInput").focus();
+  }
+
+  function renderBatchControlsUI() {
+    const tObj = TYPE_OPTIONS.find(t => t.id === state.batchType) || TYPE_OPTIONS[0];
+    $("grBatchTypeLbl").textContent = tObj.label;
+    const mObj = WEIGHT_MODE_OPTIONS.find(m => m.id === state.batchMode) || WEIGHT_MODE_OPTIONS[0];
+    $("grBatchModeLbl").textContent = mObj.label;
+  }
+
+  function renderTargetForecastPanel() {
+    const course = getActiveCourse();
+    if (!course) return;
+    const m = computeCourseMetrics(course);
+
+    $("grActiveCourseHeading").textContent = `${course.code} Forecast`;
+    $("grActiveCourseSubtitle").textContent = course.name;
+    $("grActiveStandingPill").textContent = m.currentAverage !== null
+      ? `${m.currentAverage.toFixed(1)}% Current (${percentToLetterAndGpa(m.currentAverage).letter})`
+      : "No Marks Yet";
+
+    const badge = $("grNeededStatusBadge");
+    badge.className = `gr-status-pill ${m.status}`;
+    badge.textContent = m.statusLabel;
+
+    if (m.totalWeight <= 0) {
+      $("grNeededHeaderLbl").textContent = "Syllabus Not Configured Yet";
+      $("grNeededBigVal").textContent = `${course.goal.toFixed(1)}%`;
+      $("grNeededDescText").innerHTML = `Use <b>Add Syllabus Ratio</b> on the right (e.g. 2 Tests at 15%, 10 Labs at 3%, 1 Exam at 40%) to calculate what you need.`;
+    } else if (m.remainingWeight <= 0) {
+      $("grNeededHeaderLbl").textContent = "Final Course Grade (100% Graded)";
+      $("grNeededBigVal").textContent = `${m.earnedPoints.toFixed(1)}%`;
+      const diff = m.earnedPoints - course.goal;
+      $("grNeededDescText").innerHTML = diff >= 0
+        ? `You finished <b>${DB.esc(course.code)}</b> at <b>${m.earnedPoints.toFixed(1)}%</b>, beating your <b>${course.goal}%</b> goal by <b>+${diff.toFixed(1)}%</b>!`
+        : `All assessments are graded. Final grade is <b>${m.earnedPoints.toFixed(1)}%</b> (<b>${Math.abs(diff).toFixed(1)}%</b> below your ${course.goal}% goal).`;
+    } else if (m.requiredOnRemaining <= 0) {
+      $("grNeededHeaderLbl").textContent = "Needed on Remaining Work";
+      $("grNeededBigVal").textContent = "0.0%";
+      $("grNeededDescText").innerHTML = `You have already locked in <b>${m.earnedPoints.toFixed(1)}%</b> weighted points, which secures your <b>${course.goal}%</b> goal even with 0% on the remaining <b>${m.remainingWeight}%</b>!`;
+    } else {
+      $("grNeededHeaderLbl").textContent = `Needed Across Remaining ${m.remainingWeight}%`;
+      $("grNeededBigVal").textContent = `${m.requiredOnRemaining.toFixed(1)}%`;
+      if (m.requiredOnRemaining > 100) {
+        $("grNeededDescText").innerHTML = `To hit <b>${course.goal}%</b>, you would need <b>${m.requiredOnRemaining.toFixed(1)}%</b> on the remaining <b>${m.remainingWeight}%</b>. Scoring 100% on all remaining work gives a max final grade of <b>${m.maxPossibleGrade.toFixed(1)}%</b>.`;
+      } else {
+        $("grNeededDescText").innerHTML = `To achieve your <b>${course.goal}%</b> goal, you need an average of <b>${m.requiredOnRemaining.toFixed(1)}%</b> (${m.pointsStillNeeded.toFixed(2)} weighted pts) across the remaining <b>${m.remainingWeight}%</b> of the course.`;
+      }
+    }
+
+    if (document.activeElement !== $("grGoalInlineInput")) {
+      $("grGoalInlineInput").value = String(course.goal);
+    }
+    if (document.activeElement !== $("grGoalSlider")) {
+      $("grGoalSlider").value = String(course.goal);
+    }
+
+    const presetsEl = $("grGoalPresets");
+    const nextPresetsHtml = GOAL_PRESETS.map(p => `
+      <button type="button" class="gr-preset-chip ${Number(course.goal) === p.val ? "active" : ""}" data-goal-preset="${p.val}">
+        ${DB.esc(p.label)}
+      </button>
+    `).join("");
+    if (presetsEl.__lastHtml !== nextPresetsHtml) {
+      presetsEl.__lastHtml = nextPresetsHtml;
+      presetsEl.innerHTML = nextPresetsHtml;
+      presetsEl.querySelectorAll("[data-goal-preset]").forEach(btn => {
+        btn.onclick = async () => {
+          if (!(await ensureAccountAccess())) return;
+          course.goal = Number(btn.dataset.goalPreset) || 85;
+          await persistCloudData();
+        };
+      });
+    }
+
+    const earnedW = Math.min(100, Math.max(0, m.officialPoints));
+    const whatIfW = Math.min(100 - earnedW, Math.max(0, m.whatIfPoints));
+    const neededW = m.totalWeight > 0 ? Math.min(100 - earnedW - whatIfW, Math.max(0, course.goal - m.earnedPoints)) : 0;
+
+    $("grBarEarned").style.width = `${earnedW}%`;
+    $("grBarWhatIf").style.width = `${whatIfW}%`;
+    $("grBarNeeded").style.width = `${neededW}%`;
+    $("grBarGoalPin").style.left = `${Math.min(100, Math.max(0, course.goal))}%`;
+
+    $("grLegendEarned").textContent = `Earned: ${m.earnedPoints.toFixed(1)}% / ${m.gradedWeight}% graded`;
+    $("grLegendRemaining").textContent = `Remaining: ${m.remainingWeight}%`;
+    $("grLegendMax").textContent = `Max Possible: ${m.maxPossibleGrade.toFixed(1)}%`;
+
+    const groups = {};
+    for (const it of (course.items || [])) {
+      const t = it.type || "test";
+      if (!groups[t]) {
+        groups[t] = { type: t, totalW: 0, gradedW: 0, earnedPts: 0, totalCnt: 0, gradedCnt: 0, remCnt: 0, remW: 0 };
+      }
+      const g = groups[t];
+      const w = Math.max(0, Number(it.weight) || 0);
+      g.totalW += w;
+      g.totalCnt++;
+      const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
+      if (hasScore) {
+        g.gradedW += w;
+        g.earnedPts += (Number(it.score) * w) / 100;
+        g.gradedCnt++;
+      } else {
+        g.remCnt++;
+        g.remW += w;
+      }
+    }
+
+    const catListEl = $("grCatBreakdownList");
+    const catEntries = Object.values(groups);
+    const nextCatHtml = catEntries.length
+      ? catEntries.map(g => {
+          const meta = TYPE_META[g.type] || TYPE_META.test;
+          const catAvg = g.gradedW > 0 ? `${((g.earnedPts / g.gradedW) * 100).toFixed(1)}% avg` : "No marks yet";
+          const rightMain = g.remCnt > 0
+            ? (m.requiredOnRemaining <= 0
+              ? "0.0% needed"
+              : `Need ${m.requiredOnRemaining.toFixed(1)}% avg`)
+            : "Complete ✓";
+          const rightSub = g.remCnt > 0
+            ? `${g.remCnt} remaining (${g.remW.toFixed(1)}% weight)`
+            : `${g.totalCnt}/${g.totalCnt} graded (${g.totalW.toFixed(1)}%)`;
+
+          return `
+            <div class="gr-cat-bd-row">
+              <div class="gr-cat-bd-left">
+                <b>${DB.esc(meta.label)} (${g.totalW.toFixed(1)}% total)</b>
+                <span>${g.gradedCnt}/${g.totalCnt} graded · ${catAvg}</span>
+              </div>
+              <div class="gr-cat-bd-right">
+                <b>${DB.esc(rightMain)}</b>
+                <span>${DB.esc(rightSub)}</span>
+              </div>
+            </div>
+          `;
+        }).join("")
+      : `<div style="padding:0.85rem;text-align:center;color:var(--muted);font-size:0.76rem;border:1px dashed var(--line);border-radius:12px;">No syllabus categories added yet.</div>`;
+
+    if (catListEl.__lastHtml !== nextCatHtml) {
+      catListEl.__lastHtml = nextCatHtml;
+      catListEl.innerHTML = nextCatHtml;
+    }
+  }
+
+  function renderSyllabusAndMarksPanel() {
+    const course = getActiveCourse();
+    if (!course) return;
+    const m = computeCourseMetrics(course);
+
+    const wBadge = $("grTotalWeightBadge");
+    wBadge.textContent = `Total Weight: ${m.totalWeight}%`;
+    const isWeightExact = Math.abs(m.totalWeight - 100) < 0.05;
+    wBadge.style.color = isWeightExact ? "var(--gr-green)" : "var(--gr-amber)";
+    $("grNormalizeWeightsBtn").hidden = isWeightExact || m.totalWeight <= 0;
+    $("grClearWhatIfBtn").hidden = m.whatIfCount === 0;
+
+    const items = course.items || [];
+    const presentTypes = Array.from(new Set(items.map(x => x.type)));
+    const filterDefs = [
+      { id: "all", label: `All (${items.length})` },
+      { id: "upcoming", label: `Upcoming (${m.upcomingCount})` },
+      { id: "graded", label: `Graded (${m.gradedCount + m.whatIfCount})` },
+      ...presentTypes.map(t => ({
+        id: t,
+        label: `${TYPE_META[t]?.short || t} (${items.filter(x => x.type === t).length})`
+      }))
+    ];
+
+    const pillsEl = $("grFilterPills");
+    const nextPillsHtml = filterDefs.map(f => `
+      <button type="button" class="gr-cat-pill ${state.itemFilter === f.id ? "active" : ""}" data-item-filter="${DB.esc(f.id)}">
+        ${DB.esc(f.label)}
+      </button>
+    `).join("");
+    if (pillsEl.__lastHtml !== nextPillsHtml) {
+      pillsEl.__lastHtml = nextPillsHtml;
+      pillsEl.innerHTML = nextPillsHtml;
+      pillsEl.querySelectorAll("[data-item-filter]").forEach(btn => {
+        btn.onclick = () => {
+          state.itemFilter = btn.dataset.itemFilter;
+          renderSyllabusAndMarksPanel();
+        };
+      });
+    }
+
+    const filtered = items.filter(it => {
+      const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
+      if (state.itemFilter === "upcoming") return !hasScore;
+      if (state.itemFilter === "graded") return hasScore;
+      if (state.itemFilter !== "all") return it.type === state.itemFilter;
+      return true;
+    });
+
+    const listEl = $("grItemsList");
+    const structSig = `${course.id}|${state.itemFilter}|` + filtered.map(it => `${it.id}:${it.type}:${it.isWhatIf}`).join(",");
+
+    if (listEl.__structSig !== structSig) {
+      listEl.__structSig = structSig;
+      if (!filtered.length) {
+        listEl.innerHTML = `
+          <div style="padding:2rem 1rem;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:16px;">
+            No assessments added yet. Use the <b>Add Syllabus Ratio</b> bar above (e.g. Test, Lab, Assignment, or Exam) to add your course components.
+          </div>
+        `;
+      } else {
+        listEl.innerHTML = filtered.map(it => {
+          const meta = TYPE_META[it.type] || TYPE_META.test;
+          const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
+          return `
+            <div class="gr-item-row ${hasScore ? (it.isWhatIf ? "is-whatif" : "is-graded") : ""}" data-row-id="${DB.esc(it.id)}">
+              <span class="gr-type-badge ${DB.esc(it.type)}">${DB.esc(meta.short)}</span>
+
+              <input type="text"
+                     class="gr-inline-name"
+                     data-edit-name="${DB.esc(it.id)}"
+                     value="${DB.esc(it.name)}"
+                     aria-label="Assessment Name">
+
+              <div class="gr-mini-input-wrap" title="Syllabus Weight (%)">
+                <input type="number"
+                       class="gr-mini-input"
+                       data-edit-weight="${DB.esc(it.id)}"
+                       min="0"
+                       max="100"
+                       step="0.5"
+                       value="${it.weight}"
+                       aria-label="Syllabus Weight Percentage">
+                <span class="gr-mini-unit">% wt</span>
+              </div>
+
+              <div class="gr-score-dual">
+                <div class="gr-mini-input-wrap" style="flex:1;" title="Enter your mark as a percentage (%)">
+                  <input type="number"
+                         class="gr-mini-input"
+                         data-edit-score="${DB.esc(it.id)}"
+                         min="0"
+                         max="150"
+                         step="0.5"
+                         placeholder="—"
+                         value="${hasScore ? it.score : ""}"
+                         aria-label="Score Percentage">
+                  <span class="gr-mini-unit">%</span>
+                </div>
+                <div class="gr-raw-pair" title="Or type earned / total points (e.g. 42 / 50) to auto-calculate %">
+                  <input type="number"
+                         data-raw-earned="${DB.esc(it.id)}"
+                         placeholder="pts"
+                         step="0.5"
+                         value="${DB.esc(it.rawEarned || "")}"
+                         aria-label="Earned Points">
+                  <span>/</span>
+                  <input type="number"
+                         data-raw-total="${DB.esc(it.id)}"
+                         placeholder="max"
+                         step="0.5"
+                         value="${DB.esc(it.rawTotal || "")}"
+                         aria-label="Total Points">
+                </div>
+              </div>
+
+              <div class="gr-need-callout" data-callout-for="${DB.esc(it.id)}"></div>
+
+              <div style="display:flex;align-items:center;gap:0.28rem;">
+                <button type="button"
+                        class="gr-whatif-btn ${it.isWhatIf ? "active" : ""}"
+                        data-toggle-whatif="${DB.esc(it.id)}"
+                        title="Toggle What-If hypothetical score">
+                  What-If
+                </button>
+                <button type="button"
+                        class="gr-ic-btn del"
+                        data-del-item="${DB.esc(it.id)}"
+                        title="Remove item">×</button>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        listEl.querySelectorAll("[data-edit-name]").forEach(inp => {
+          inp.oninput = () => {
+            const item = course.items.find(x => x.id === inp.dataset.editName);
+            if (item) {
+              item.name = inp.value;
+              persistCloudData();
+            }
+          };
+        });
+
+        listEl.querySelectorAll("[data-edit-weight]").forEach(inp => {
+          inp.oninput = () => {
+            const item = course.items.find(x => x.id === inp.dataset.editWeight);
+            if (item) {
+              item.weight = Math.max(0, parseFloat(inp.value) || 0);
+              persistCloudData();
+            }
+          };
+        });
+
+        listEl.querySelectorAll("[data-edit-score]").forEach(inp => {
+          inp.oninput = () => {
+            const item = course.items.find(x => x.id === inp.dataset.editScore);
+            if (!item) return;
+            const raw = inp.value.trim();
+            if (raw === "") {
+              item.score = null;
+              item.rawEarned = "";
+              item.rawTotal = "";
+              item.isWhatIf = false;
+              const row = inp.closest("[data-row-id]");
+              if (row) {
+                const eInp = row.querySelector("[data-raw-earned]");
+                const tInp = row.querySelector("[data-raw-total]");
+                if (eInp) eInp.value = "";
+                if (tInp) tInp.value = "";
+              }
+            } else {
+              const num = parseFloat(raw);
+              if (!isNaN(num)) item.score = Math.max(0, Math.round(num * 100) / 100);
+            }
+            persistCloudData();
+          };
+        });
+
+        const handleRawFraction = itemId => {
+          const item = course.items.find(x => x.id === itemId);
+          if (!item) return;
+          const row = listEl.querySelector(`[data-row-id="${itemId}"]`);
+          if (!row) return;
+          const eVal = row.querySelector("[data-raw-earned]").value.trim();
+          const tVal = row.querySelector("[data-raw-total]").value.trim();
+          item.rawEarned = eVal;
+          item.rawTotal = tVal;
+          const eNum = parseFloat(eVal);
+          const tNum = parseFloat(tVal);
+          if (!isNaN(eNum) && !isNaN(tNum) && tNum > 0) {
+            item.score = Math.round(((eNum / tNum) * 100) * 10) / 10;
+            const scInp = row.querySelector("[data-edit-score]");
+            if (scInp) scInp.value = String(item.score);
+            persistCloudData();
+          }
+        };
+
+        listEl.querySelectorAll("[data-raw-earned]").forEach(inp => {
+          inp.oninput = () => handleRawFraction(inp.dataset.rawEarned);
+        });
+        listEl.querySelectorAll("[data-raw-total]").forEach(inp => {
+          inp.oninput = () => handleRawFraction(inp.dataset.rawTotal);
+        });
+
+        listEl.querySelectorAll("[data-toggle-whatif]").forEach(btn => {
+          btn.onclick = async () => {
+            if (!(await ensureAccountAccess())) return;
+            const item = course.items.find(x => x.id === btn.dataset.toggleWhatif);
+            if (!item) return;
+            item.isWhatIf = !item.isWhatIf;
+            if (item.isWhatIf && (item.score === null || item.score === "")) {
+              item.score = Math.min(100, Math.max(0, Math.round((m.requiredOnRemaining > 0 ? m.requiredOnRemaining : course.goal) * 10) / 10));
+            }
+            listEl.__structSig = "";
+            await persistCloudData();
+          };
+        });
+
+        listEl.querySelectorAll("[data-del-item]").forEach(btn => {
+          btn.onclick = async () => {
+            if (!(await ensureAccountAccess())) return;
+            course.items = course.items.filter(x => x.id !== btn.dataset.delItem);
+            listEl.__structSig = "";
+            await persistCloudData();
+          };
+        });
+      }
+    }
+
+    filtered.forEach(it => {
+      const row = listEl.querySelector(`[data-row-id="${it.id}"]`);
+      if (!row) return;
+      const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
+      row.classList.toggle("is-graded", hasScore && !it.isWhatIf);
+      row.classList.toggle("is-whatif", hasScore && Boolean(it.isWhatIf));
+
+      const callout = row.querySelector(`[data-callout-for="${it.id}"]`);
+      if (!callout) return;
+
+      const w = Math.max(0, Number(it.weight) || 0);
+      if (hasScore) {
+        const earnedWeighted = ((Number(it.score) * w) / 100).toFixed(2);
+        callout.innerHTML = `
+          <span class="gr-need-pill ${it.isWhatIf ? "whatif" : "earned"}">
+            ${it.isWhatIf ? `What-If: ${Number(it.score).toFixed(1)}%` : `Earned: +${earnedWeighted}%`}
+          </span>
+          <span class="gr-need-sub">${earnedWeighted} / ${w}% pts</span>
+        `;
+      } else {
+        const req = m.requiredOnRemaining;
+        if (req <= 0) {
+          callout.innerHTML = `
+            <span class="gr-need-pill earned">Need 0.0%</span>
+            <span class="gr-need-sub">Goal already secured</span>
+          `;
+        } else if (req > 100) {
+          callout.innerHTML = `
+            <span class="gr-need-pill impossible">Need ${req.toFixed(1)}%</span>
+            <span class="gr-need-sub">(${((req * w) / 100).toFixed(2)} / ${w}% pts)</span>
+          `;
+        } else {
+          callout.innerHTML = `
+            <span class="gr-need-pill target">Need ${req.toFixed(1)}%</span>
+            <span class="gr-need-sub">for ${course.goal}% goal (${((req * w) / 100).toFixed(2)}/${w}%)</span>
+          `;
+        }
+      }
+    });
+  }
+
+  $("grOpenAddCourseBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    openCourseDrawer(null);
+  };
+  $("grEmptyAddCourseBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    openCourseDrawer(null);
+  };
+
+  $("grEditCourseBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const cur = getActiveCourse();
+    if (cur) openCourseDrawer(cur);
+  };
+
+  $("grCourseTemplateBtn").onclick = e => {
+    e.stopPropagation();
+    if ($("grCourseTemplateBtn").disabled) return;
+    openPop($("grCourseTemplateBtn"), TEMPLATE_OPTIONS, state.courseFormTemplate, picked => {
+      state.courseFormTemplate = picked;
+      renderCourseDrawerUI();
+    });
+  };
+
+  $("grCloseCourseDrawerBtn").onclick = () => { $("grCourseDrawer").hidden = true; };
+  $("grCancelCourseBtn").onclick = () => { $("grCourseDrawer").hidden = true; };
+
+  $("grSaveCourseBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const code = $("grCourseCodeInput").value.trim().toUpperCase() || "COURSE 101";
+    const name = $("grCourseNameInput").value.trim() || "New Course";
+    const goal = Math.min(100, Math.max(1, parseFloat($("grCourseGoalInput").value) || 85));
+
+    if (state.editingCourseId) {
+      const c = cloudData.courses.find(x => x.id === state.editingCourseId);
+      if (c) {
+        c.code = code;
+        c.name = name;
+        c.goal = goal;
+        c.color = state.courseFormColor;
+      }
+      DB.toast("Course Updated", `Updated ${code} (${name}).`, 2100);
+    } else {
+      const newCourse = {
+        id: `c_${DB.uid()}`,
+        code,
+        name,
+        goal,
+        color: state.courseFormColor,
+        items: buildTemplateItems(state.courseFormTemplate)
+      };
+      cloudData.courses.push(newCourse);
+      state.activeCourseId = newCourse.id;
+      state.itemFilter = "all";
+      DB.toast("Course Added ✨", `Created ${code} with target goal ${goal}%.`, 2300);
+    }
+    $("grCourseDrawer").hidden = true;
+    await persistCloudData();
+  };
+
+  $("grDeleteCourseBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    if (!state.editingCourseId) return;
+    cloudData.courses = cloudData.courses.filter(c => c.id !== state.editingCourseId);
+    state.activeCourseId = cloudData.courses.length ? cloudData.courses[0].id : null;
+    $("grCourseDrawer").hidden = true;
+    await persistCloudData();
+    DB.toast("Course Removed", "Deleted course from your planner.", 2000);
+  };
+
+  $("grGoalInlineInput").oninput = e => {
+    const course = getActiveCourse();
+    if (!course) return;
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v) && v >= 1 && v <= 100) {
+      course.goal = Math.round(v * 10) / 10;
+      $("grGoalSlider").value = String(course.goal);
+      persistCloudData();
+    }
+  };
+
+  $("grGoalSlider").oninput = e => {
+    const course = getActiveCourse();
+    if (!course) return;
+    const v = parseFloat(e.target.value);
+    if (!isNaN(v)) {
+      course.goal = Math.round(v * 10) / 10;
+      $("grGoalInlineInput").value = String(course.goal);
+      persistCloudData();
+    }
+  };
+
+  $("grBatchTypeBtn").onclick = e => {
+    e.stopPropagation();
+    openPop($("grBatchTypeBtn"), TYPE_OPTIONS, state.batchType, picked => {
+      state.batchType = picked;
+      const tObj = TYPE_OPTIONS.find(t => t.id === picked) || TYPE_OPTIONS[0];
+      $("grBatchLabel").value = tObj.defaultPrefix;
+      $("grBatchCount").value = String(tObj.defaultCount);
+      $("grBatchWeight").value = String(tObj.defaultWeight);
+      renderBatchControlsUI();
+    });
+  };
+
+  $("grBatchModeBtn").onclick = e => {
+    e.stopPropagation();
+    openPop($("grBatchModeBtn"), WEIGHT_MODE_OPTIONS, state.batchMode, picked => {
+      state.batchMode = picked;
+      renderBatchControlsUI();
+    });
+  };
+
+  $("grAddBatchBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const course = getActiveCourse();
+    if (!course) return;
+
+    const type = state.batchType;
+    const prefix = $("grBatchLabel").value.trim() || (TYPE_META[type]?.defaultPrefix || "Test");
+    const count = Math.min(30, Math.max(1, parseInt($("grBatchCount").value, 10) || 1));
+    const mode = state.batchMode;
+    const rawWeight = Math.max(0.1, parseFloat($("grBatchWeight").value) || 5);
+    const perItemWeight = mode === "total"
+      ? Math.round((rawWeight / count) * 100) / 100
+      : Math.round(rawWeight * 100) / 100;
+
+    const existingOfType = course.items.filter(x => x.type === type).length;
+    for (let i = 1; i <= count; i++) {
+      const num = existingOfType + i;
+      const itemName = (count === 1 && existingOfType === 0 && type === "exam")
+        ? prefix
+        : `${prefix} ${num}`;
+      course.items.push({
+        id: `it_${DB.uid()}_${i}`,
+        type,
+        name: itemName,
+        weight: perItemWeight,
+        score: null,
+        rawEarned: "",
+        rawTotal: "",
+        isWhatIf: false
+      });
+    }
+
+    $("grItemsList").__structSig = "";
+    await persistCloudData();
+    DB.toast(
+      "Added Syllabus Ratio ✨",
+      `Added ${count}× ${prefix} (${perItemWeight}% each, ${(perItemWeight * count).toFixed(1)}% total).`,
+      2300
+    );
+  };
+
+  $("grNormalizeWeightsBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const course = getActiveCourse();
+    if (!course || !course.items.length) return;
+    const sum = course.items.reduce((acc, x) => acc + (Number(x.weight) || 0), 0);
+    if (sum <= 0) return;
+    for (const it of course.items) {
+      it.weight = Math.round(((Number(it.weight) / sum) * 100) * 100) / 100;
+    }
+    $("grItemsList").__structSig = "";
+    await persistCloudData();
+    DB.toast("Normalized Syllabus Weights", "Scaled all assessment weights proportionally to total 100%.", 2200);
+  };
+
+  $("grClearWhatIfBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const course = getActiveCourse();
+    if (!course) return;
+    for (const it of course.items) {
+      if (it.isWhatIf) {
+        it.isWhatIf = false;
+        it.score = null;
+        it.rawEarned = "";
+        it.rawTotal = "";
+      }
+    }
+    $("grItemsList").__structSig = "";
+    await persistCloudData();
+  };
+
+  function renderAll() {
+    updateGuestBannerUI();
+    renderBatchControlsUI();
+    renderKpiStrip();
+    renderCoursesRail();
+    renderTargetForecastPanel();
+    renderSyllabusAndMarksPanel();
+  }
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(async () => {
+      await initDirectFirestoreSync();
+      renderAll();
+    });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) renderAll();
+  });
+
+  initDirectFirestoreSync().then(() => {
+    renderAll();
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 80%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 88%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --radius-2xl: 26px;
+    --radius-xl: 20px;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-pill: 999px;
+  }
+
+  .about-shell {
+    max-width: 1020px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .apple-panel {
+    position: relative;
+    background:
+      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent) 14%, transparent) 0%, transparent 58%),
+      radial-gradient(100% 120% at 0% 100%, color-mix(in srgb, var(--accent2) 10%, transparent) 0%, transparent 55%),
+      var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 20px 44px -16px rgba(0, 0, 0, 0.4);
+    border-radius: var(--radius-2xl);
+    padding: clamp(1.4rem, 3.5vw, 2.35rem);
+    animation: appleFadeUp 0.5s var(--apple-spring) both;
+    scroll-margin-top: 88px;
+  }
+
+  @keyframes appleFadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.99);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .about-hero-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.15rem;
+    padding: clamp(1.8rem, 4.5vw, 3rem) clamp(1.3rem, 3.5vw, 2.5rem);
+    overflow: hidden;
+  }
+
+  .hero-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.34rem 0.85rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .status-pill.live-pill {
+    color: var(--accent3, #00cec9);
+    background: color-mix(in srgb, var(--accent3, #00cec9) 15%, transparent);
+    border-color: color-mix(in srgb, var(--accent3, #00cec9) 40%, transparent);
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 10px currentColor;
+    animation: pulseGlow 1.6s infinite alternate;
+  }
+
+  @keyframes pulseGlow {
+    from { opacity: 0.45; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1.2); }
+  }
+
+  #aboutH {
+    margin: 0;
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+  }
+
+  .jump-pill svg {
+    width: 15px;
+    height: 15px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .hero-lead {
+    margin: 0;
+    max-width: 66ch;
+    font-size: clamp(1rem, 1.9vw, 1.15rem);
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  .hero-lead strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .section-jump-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    width: 100%;
+  }
+
+  .jump-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.95rem;
+    border-radius: var(--radius-pill);
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 0.83rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s var(--apple-ease);
+  }
+
+  .jump-pill:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    transform: translateY(-1px);
+  }
+
+  .bento-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.9rem;
+    width: 100%;
+    margin-top: 0.35rem;
+  }
+
+  .metric-card {
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xl);
+    padding: 1.1rem 1.15rem;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    transition: transform 0.2s var(--apple-ease), border-color 0.2s;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  }
+
+  .metric-num {
+    font-family: var(--display);
+    font-size: clamp(1.5rem, 2.8vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text) 20%, var(--accent) 85%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+
+  .metric-title {
+    font-family: var(--display);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .metric-sub {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .section-header-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.35rem;
+    padding-bottom: 0.95rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  }
+
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+    display: block;
+  }
+
+  .section-header-row h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: clamp(1.4rem, 2.8vw, 1.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .section-header-desc {
+    margin: 0.25rem 0 0;
+    font-size: 0.92rem;
+    color: var(--muted);
+  }
+
+  .filter-pill-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .filter-pill-btn {
+    padding: 0.38rem 0.82rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s var(--apple-ease);
+  }
+
+  .filter-pill-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .filter-pill-btn.active {
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent2)));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+
+  .suite-bento-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 0.95rem;
+  }
+
+  .suite-module-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding: 1.25rem;
+    border-radius: var(--radius-xl);
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    color: var(--text);
+    text-decoration: none;
+    transition: all 0.22s var(--apple-ease);
+  }
+
+  .suite-module-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.45);
+  }
+
+  .module-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+  }
+
+  .module-icon-box {
+    width: 2.85rem;
+    height: 2.85rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, transparent), color-mix(in srgb, var(--accent2) 14%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .module-icon-box svg {
+    width: 1.4rem;
+    height: 1.4rem;
+  }
+
+  .module-title-wrap {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .module-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .module-title-row b {
+    font-family: var(--display);
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .module-cat-tag {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.16rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--muted);
+  }
+
+  .module-desc {
+    margin: 0.35rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--muted);
+    display: block;
+  }
+
+  .module-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding-top: 0.65rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  }
+
+  .module-chip {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 0.18rem 0.52rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--card-solid) 85%, transparent);
+    border: 1px solid var(--line);
+    color: var(--text);
+    opacity: 0.88;
+  }
+
+  .patch-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .patch-search-input {
+    min-width: 220px;
+    flex: 1;
+    max-width: 340px;
+    padding: 0.55rem 0.95rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--sans, 'Outfit', sans-serif);
+    font-size: 0.88rem;
+    outline: none;
+  }
+
+  .patch-search-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+
+  .patch-expand-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .patch-action-btn {
+    padding: 0.42rem 0.82rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s var(--apple-ease);
+  }
+
+  .patch-action-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .patch-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .patch-card {
+    border-radius: var(--radius-xl);
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: border-color 0.22s var(--apple-ease), box-shadow 0.22s var(--apple-ease);
+  }
+
+  .patch-card.open {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+    box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.4);
+  }
+
+  .patch-header-btn {
+    width: 100%;
+    padding: 1.05rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.18s ease;
+  }
+
+  .patch-header-btn:hover {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .patch-header-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    min-width: 0;
+  }
+
+  .patch-ver-badge {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.26rem 0.65rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent2)));
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .patch-card:not(.latest) .patch-ver-badge {
+    background: color-mix(in srgb, var(--accent) 18%, var(--card-solid));
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  .patch-title {
+    font-family: var(--display);
+    font-size: 1.04rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .patch-tag-pill {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.18rem 0.55rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--accent2) 15%, transparent);
+    color: var(--accent2);
+    border: 1px solid color-mix(in srgb, var(--accent2) 35%, transparent);
+  }
+
+  .patch-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .patch-date {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .patch-count-pill {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.18rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--muted);
+  }
+
+  .patch-chevron {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--card-solid) 85%, transparent);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    transition: transform 0.25s var(--apple-ease), color 0.2s, border-color 0.2s;
+  }
+
+  .patch-card.open .patch-chevron {
+    transform: rotate(180deg);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .patch-body {
+    display: none;
+    padding: 0 1.25rem 1.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  }
+
+  .patch-card.open .patch-body {
+    display: block;
+    animation: patchSlideDown 0.24s var(--apple-ease) both;
+  }
+
+  @keyframes patchSlideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .patch-summary-lead {
+    margin: 0.9rem 0;
+    font-size: 0.92rem;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+
+  .patch-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .patch-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--card-solid) 75%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    font-size: 0.89rem;
+    line-height: 1.55;
+  }
+
+  .change-badge {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.16rem 0.48rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+    margin-top: 0.12rem;
+  }
+
+  .change-badge.new {
+    background: rgba(0, 206, 201, 0.16);
+    color: #00cec9;
+    border: 1px solid rgba(0, 206, 201, 0.38);
+  }
+
+  .change-badge.design {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  }
+
+  .change-badge.improved {
+    background: color-mix(in srgb, var(--accent2) 18%, transparent);
+    color: var(--accent2);
+    border: 1px solid color-mix(in srgb, var(--accent2) 40%, transparent);
+  }
+
+  .change-badge.fixed {
+    background: rgba(255, 209, 102, 0.16);
+    color: #ffd166;
+    border: 1px solid rgba(255, 209, 102, 0.38);
+  }
+
+  .specs-and-guide-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 1.25rem;
+  }
+
+  .kv {
+    margin: 0;
+    display: grid;
+    grid-template-columns: minmax(130px, 175px) 1fr;
+    gap: 0.65rem 1rem;
+    align-items: baseline;
+  }
+
+  .kv dt {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    padding: 0.45rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  }
+
+  .kv dd {
+    margin: 0;
+    font-size: 0.93rem;
+    font-weight: 600;
+    color: var(--text);
+    padding: 0.45rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  }
+
+  .pwa-steps-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .pwa-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 0.95rem;
+    border-radius: 14px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+
+  .pwa-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .credits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .credit {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1.05rem 1.15rem;
+    border-radius: 16px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    transition: transform 0.2s var(--apple-ease), border-color 0.2s;
+  }
+
+  .credit:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  }
+
+  .credit .ci {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .credit b {
+    display: block;
+    font-family: var(--display);
+    font-size: 0.98rem;
+    margin-bottom: 0.2rem;
+    color: var(--text);
+  }
+
+  .credit span.muted {
+    display: block;
+    font-size: 0.84rem;
+    line-height: 1.48;
+  }
+
+  @media (max-width: 860px) {
+    .bento-metrics-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .specs-and-guide-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .apple-panel {
+      padding: 1.25rem 1.05rem;
+      border-radius: 20px;
+    }
+
+    .bento-metrics-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .metric-card {
+      padding: 0.9rem;
+    }
+
+    .kv {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+    }
+
+    .kv dt {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .kv dd {
+      padding-top: 0.1rem;
+      padding-bottom: 0.6rem;
+    }
+
+    .patch-header-btn {
+      padding: 0.9rem 1rem;
+      align-items: flex-start;
+    }
+
+    .patch-header-right {
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.35rem;
+    }
+
+    .patch-count-pill {
+      display: none;
+    }
+  }
+</style>
+</head>
+<body data-page="about">
+<header id="topbar"></header>
+<main>
+  <div class="about-shell">
+    <section class="panel apple-panel about-hero-card" id="overview">
+      <h1 id="aboutH">Project 23</h1>
+      <!-- <div class="hero-badge-row"><span class="status-pill live-pill"><span class="status-dot"></span> PW0226 v1.0</span></div> --> 
+      <p class="hero-lead">Your personal digital cockpit bringing <strong>Calendar, Reminders, Focus Sessions, Notes, Countdowns, Live Weather, World News, AI Assistance, and more</strong> together in one cohesive workspace.</p>
+
+      <nav class="section-jump-nav" aria-label="About Page Sections">
+        <a class="jump-pill" href="pages/about.html#insideSection">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span>Explore Project 23</span>
+        </a>
+        <a class="jump-pill" href="pages/about.html#patchNotesSection">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h6"/></svg>
+          <span>Update Patch Notes</span>
+        </a>
+        <a class="jump-pill" href="pages/about.html#specsSection">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>System Specs &amp; PWA</span>
+        </a>
+        <a class="jump-pill" href="pages/about.html#creditsSection">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
+          <span>Website Credits</span>
+        </a>
+      </nav>
+    </section>
+
+    <section class="panel apple-panel" id="insideSection">
+      <div class="section-header-row">
+        <div>
+          <span class="section-eyebrow">Explore the Site</span>
+          <h2>What's Inside Project 23</h2>
+          <p class="section-header-desc">Explore every integrated application in the suite.</p>
+        </div>
+        <div class="filter-pill-bar" role="tablist" aria-label="Filter modules by category">
+          <button type="button" class="filter-pill-btn active" onclick="filterSuite('all', this)">All (10)</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Productivity', this)">Productivity</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Utility', this)">Utility</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Discovery', this)">Discovery</button>
+        </div>
+      </div>
+
+      <div class="suite-bento-grid" id="suiteGrid">
+        <a href="pages/calendar.html" class="suite-module-card" data-cat="Productivity">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i1"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>Calendar</b><span class="module-cat-tag">Productivity</span></div>
+              <span class="module-desc">Import your iPhone `.ics` calendar, customize event colors, manage recurring schedules, and view daily agendas.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/todo.html" class="suite-module-card" data-cat="Productivity">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i2"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>To-do List</b><span class="module-cat-tag">Productivity</span></div>
+              <span class="module-desc">Bring in your iPhone Reminders and organize tasks with due dates, priority flags, categories, and custom tags.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/focus.html" class="suite-module-card" data-cat="Utility">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i3"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>Focus Flight</b><span class="module-cat-tag">Utility</span></div>
+              <span class="module-desc">Book a focus flight by destination or target flight time, pick a cabin seat, and fly with live telemetry, map, and airplane window views.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/notes.html" class="suite-module-card" data-cat="Productivity">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i4"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>Notes</b><span class="module-cat-tag">Productivity</span></div>
+              <span class="module-desc">Write and format rich documents with headings, checklists, callout blocks, links, highlights, and pinned notes.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/timeUntil.html" class="suite-module-card" data-cat="Utility">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i5"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>Time Until</b><span class="module-cat-tag">Utility</span></div>
+              <span class="module-desc">Count down to the milestones and dates that matter most, with live second-by-second timers and calendar event linking.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/weather.html" class="suite-module-card" data-cat="Utility">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i6"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>Weather</b><span class="module-cat-tag">Utility</span></div>
+              <span class="module-desc">Track hourly and 7-day forecasts, UV index, wind telemetry, air quality (AQI), and solar/lunar cycles for saved cities.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/so-thats-how.html" class="suite-module-card" data-cat="Discovery">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i7"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>So That's How</b><span class="module-cat-tag">Discovery</span></div>
+              <span class="module-desc">Explore 353 interactive 5-stage mechanism workbenches and 6-chapter engineering deep dives into how the physical world works.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/news.html" class="suite-module-card" data-cat="Discovery">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i8"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>World News</b><span class="module-cat-tag">Discovery</span></div>
+              <span class="module-desc">Read live breaking global stories, science dispatches, and technology briefings powered by zero-key Open-CORS APIs.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/project.html" class="suite-module-card" data-cat="Discovery">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i9"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>Project Library</b><span class="module-cat-tag">Discovery</span></div>
+              <span class="module-desc">Browse the complete historical archive of Project Web, Project Notes, and Project Medley leading up to Project 23.</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="pages/pico.html" class="suite-module-card" data-cat="Discovery">
+          <div class="module-card-top">
+            <span class="module-icon-box" id="i10"></span>
+            <div class="module-title-wrap">
+              <div class="module-title-row"><b>PICO AI</b><span class="module-cat-tag">Discovery</span></div>
+              <span class="module-desc">Consult your built-in conversational AI operator for brainstorming, quick explanations, and workspace assistance.</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="panel apple-panel" id="patchNotesSection">
+      <div class="section-header-row">
+        <div>
+          <span class="section-eyebrow">Release History</span>
+          <h2>Update Patch Notes</h2>
+          <p class="section-header-desc">Click any version card to expand or collapse its detailed release notes.</p>
+        </div>
+      </div>
+
+      <div class="patch-toolbar">
+        <div class="filter-pill-bar" role="tablist" aria-label="Filter patch notes">
+          <button type="button" class="filter-pill-btn active" onclick="filterPatches('all', this)">All Releases</button>
+          <button type="button" class="filter-pill-btn" onclick="filterPatches('feature', this)">New Features</button>
+          <button type="button" class="filter-pill-btn" onclick="filterPatches('design', this)">Redesign</button>
+          <button type="button" class="filter-pill-btn" onclick="filterPatches('fix', this)">Fixes &amp; Performance</button>
+        </div>
+        <input type="search" id="patchSearchInput" class="patch-search-input" placeholder="Search version, feature, or fix..." oninput="renderPatchNotes()">
+      </div>
+
+      <div class="patch-list" id="patchList"></div>
+    </section>
+
+    <div class="specs-and-guide-grid" id="specsSection">
+      <section class="panel apple-panel">
+        <div class="section-header-row" style="margin-bottom: 1rem;">
+          <div>
+            <span class="section-eyebrow">Technical Telemetry</span>
+            <h2>Website Information</h2>
+          </div>
+        </div>
+        <dl class="kv" id="kv"></dl>
+      </section>
+
+      <section class="panel apple-panel">
+        <div class="section-header-row" style="margin-bottom: 1rem;">
+          <div>
+            <span class="section-eyebrow">Progressive Web App</span>
+            <h2>Install on iPhone</h2>
+          </div>
+        </div>
+        <ul class="pwa-steps-list">
+          <li class="pwa-step-item">
+            <span class="pwa-step-num">1</span>
+            <div><strong>Open in Safari (iOS) or Chrome/Edge</strong><br><span class="muted">Project 23 includes a native Web App Manifest and Apple touch icons for full-screen standalone mode.</span></div>
+          </li>
+          <li class="pwa-step-item">
+            <span class="pwa-step-num">2</span>
+            <div><strong>Tap Share → "Add to Home Screen"</strong><br><span class="muted">Launches directly from your iPhone Home Screen without browser.</span></div>
+          </li>
+          <li class="pwa-step-item">
+            <span class="pwa-step-num">3</span>
+            <div><strong>Sign In with Google for Cloud Sync</strong><br><span class="muted">Your events, reminders, notes, countdowns, and flight logs sync automatically across all your signed-in devices.</span></div>
+          </li>
+        </ul>
+      </section>
+    </div>
+
+    <section class="panel apple-panel" id="creditsSection">
+      <div class="section-header-row">
+        <div>
+          <span class="section-eyebrow">Acknowledgments</span>
+          <h2>Website Credits</h2>
+          <p class="section-header-desc">The platforms, open data providers, and AI systems powering Project 23.</p>
+        </div>
+      </div>
+      <div class="credits-grid" id="credits"></div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+const PATCH_NOTES = [
+  /*{
+  {
+    version: "v1.0.1",
+    title: "Project Library Suite & Project Web Continuous Timeline",
+    date: "Jan 23, 2027",
+    tag: "Archive Overhaul",
+    categories: ["design", "feature", "fix"],
+    defaultOpen: false,
+    summary: "Redesigned the Project Library suite (library.html, projectWeb.html, projectNotes.html, projectMedley.html) with Apple Bento grids, embedded YouTube medleys, and a precision version timeline.",
+    changes: [
+      { type: "design", text: "Rebuilt Project Web (projectWeb.html) as a continuous vertical timeline enclosed in a frosted glass panel, integrating the 'Explore Zentral-Web v6.2.3' launch action into the hero header." },
+      { type: "new", text: "Updated Project Medley PM0225_Kpop to an embedded YouTube player with direct watch fallback and responsive 16:9 framing." },
+      { type: "fixed", text: "Centered all timeline nodes dynamically from the first version dot to the last dot and removed CSS scaling transforms that caused Moiré dot artifacts on animated GIF previews." },
+      { type: "improved", text: "Streamlined timeline cards by removing redundant footer captions for a cleaner visual hierarchy." }
+    ]
+  },*/
+  {
+    version: "v1.0.0",
+    title: "Project 23 Foundation — Downforce, Between Us, PICO AI, & More!",
+    date: "Dec 26, 2026",
+    tag: "Initial Launch",
+    categories: ["feature"],
+    defaultOpen: false,
+    summary: "Initial release of Project 23 (PW0226) with 23 different features, games, and functions.",
+    changes: [
+      { type: "new", text: "Launched Calendar with RFC-compliant .ics file import/export and recurring event expansion." },
+      { type: "new", text: "Launched To-Do List, Rich Text Notes, Time Until countdown timers, and Open-Meteo Weather & Air Quality dashboard." },
+      { type: "new", text: "Added Progressive Web App (PWA) manifest and iOS Home Screen installation support." }
+    ]
+  }
+];
+
+let activePatchFilter = "all";
+
+function filterSuite(cat, btnEl) {
+  document.querySelectorAll("#insideSection .filter-pill-btn").forEach(b => b.classList.toggle("active", b === btnEl));
+  document.querySelectorAll("#suiteGrid .suite-module-card").forEach(card => {
+    const match = cat === "all" || card.dataset.cat === cat;
+    card.style.display = match ? "flex" : "none";
+  });
+}
+
+function filterPatches(cat, btnEl) {
+  activePatchFilter = cat;
+  document.querySelectorAll("#patchNotesSection .filter-pill-btn").forEach(b => b.classList.toggle("active", b === btnEl));
+  renderPatchNotes();
+}
+
+function togglePatchCard(ver) {
+  const card = document.querySelector(`.patch-card[data-ver="${ver}"]`);
+  if (!card) return;
+  const isOpen = card.classList.toggle("open");
+  const btn = card.querySelector(".patch-header-btn");
+  if (btn) btn.setAttribute("aria-expanded", String(isOpen));
+}
+
+function renderPatchNotes() {
+  const listEl = document.getElementById("patchList");
+  if (!listEl) return;
+  const q = (document.getElementById("patchSearchInput")?.value || "").toLowerCase().trim();
+
+  const filtered = PATCH_NOTES.filter(p => {
+    if (activePatchFilter !== "all" && !p.categories.includes(activePatchFilter)) return false;
+    if (!q) return true;
+    const hay = `${p.version} ${p.title} ${p.tag} ${p.summary} ${p.changes.map(c => c.text).join(" ")}`.toLowerCase();
+    return hay.includes(q);
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--muted);">No update patch notes match your filter.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map((p, idx) => {
+    const isOpen = q ? true : !!p.defaultOpen;
+    const isLatest = idx === 0 && activePatchFilter === "all" && !q;
+    const badgeLabels = { new: "New", design: "Redesign", improved: "Improved", fixed: "Fixed" };
+    return `
+      <article class="patch-card ${isOpen ? "open" : ""} ${isLatest ? "latest" : ""}" data-ver="${p.version}">
+        <button type="button" class="patch-header-btn" onclick="togglePatchCard('${p.version}')" aria-expanded="${isOpen}">
+          <div class="patch-header-left">
+            <span class="patch-ver-badge">${p.version}</span>
+            <span class="patch-title">${p.title}</span>
+            <span class="patch-tag-pill">${p.tag}</span>
+          </div>
+          <div class="patch-header-right">
+            <span class="patch-count-pill">${p.changes.length} updates</span>
+            <span class="patch-date">${p.date}</span>
+            <span class="patch-chevron" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </div>
+        </button>
+        <div class="patch-body">
+          <p class="patch-summary-lead">${p.summary}</p>
+          <ul class="patch-items">
+            ${p.changes.map(c => `
+              <li class="patch-item">
+                <span class="change-badge ${c.type}">${badgeLabels[c.type] || "Update"}</span>
+                <span>${c.text}</span>
+              </li>
+            `).join("")}
+          </ul>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const C = DB.cfg, $ = id => document.getElementById(id);
+  $("aboutH").innerHTML = DB.wordmark();
+
+  if ($("heroVersionBadge")) $("heroVersionBadge").textContent = `Release ${C.version || "v1.0"}`;
+  if ($("heroCodeBadge")) $("heroCodeBadge").textContent = `Code ${C.code || "PW0226"}`;
+
+  const iconMap = {
+    i1: "cal",
+    i2: "todo",
+    i3: "plane",
+    i4: "note",
+    i5: "timer",
+    i6: "cloud",
+    i7: "lightbulb",
+    i8: "book",
+    i9: "folder",
+    i10: "sparkle"
+  };
+  Object.entries(iconMap).forEach(([id, key]) => {
+    const el = $(id);
+    if (el) el.innerHTML = DB.icon(key);
+  });
+
+  const rows = [
+    ["Project name", C.name || "Project 23"],
+    ["Project code", C.code || "PW0226"],
+    ["Current version", `${C.version || "v1.0"}`],
+    ["Application type", "Progressive Web App (iPhone Home Screen & Desktop ready)"],
+    ["Design system", "Adaptive Glassmorphism"],
+    ["Cloud & offline sync", "Google Account Auth"]
+  ];
+  if (C.creator) rows.splice(1, 0, ["Created by", C.creator]);
+  $("kv").innerHTML = rows.map(([k, v]) => `<dt>${DB.esc(k)}</dt><dd>${DB.esc(v)}</dd>`).join("");
+
+  const credits = [
+    { i: "sparkle", n: "Kenney", r: "Created 3D assets and models for Downforce. (www.kenney.nl)" },
+    { i: "db", n: "Google Firebase", r: "Provides secure Google authentication and real-time Firestore cloud synchronization across devices." },
+    { i: "cloud", n: "Open-Meteo & Live Open APIs", r: "Powers real-time weather forecasts, Wikimedia news, and Spaceflight feeds." },
+    { i: "type", n: "Google Fonts Typography", r: "Bricolage Grotesque, Outfit, and Space Mono typefaces used for display headers, body copy, and telemetry." }
+  ].concat((C.credits || []).map(c => ({ i: "user", n: c.name, r: c.role || "" })));
+
+  $("credits").innerHTML = credits.map(c =>
+    `<div class="credit"><span class="ci">${DB.icon(c.i === "user" ? "check" : c.i)}</span><div><b>${DB.esc(c.n)}</b><span class="muted">${DB.esc(c.r)}</span></div></div>`
+  ).join("");
+
+  renderPatchNotes();
+});
+</script>
+</body>
+</html>

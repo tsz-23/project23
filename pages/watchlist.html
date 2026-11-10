@@ -1,0 +1,2758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Watchlist | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 90%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --imdb-gold: #f5c518;
+    --wl-movie: #ff375f;
+    --wl-series: #0a84ff;
+    --wl-done: #30d158;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.45rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 30%, var(--accent) 70%, var(--accent2) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.3);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.95rem, 1.8vw, 1.05rem);
+    max-width: 560px;
+    line-height: 1.5;
+  }
+
+  .wl-shell {
+    max-width: 1060px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    padding-bottom: 2rem;
+  }
+
+  .apple-panel {
+    position: relative;
+    background:
+      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 58%),
+      var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 20px 44px -16px rgba(0, 0, 0, 0.4);
+    border-radius: 26px;
+    padding: clamp(1.25rem, 3vw, 1.85rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    z-index: 20;
+  }
+
+  .wl-search-row {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex-wrap: nowrap;
+    position: relative;
+  }
+  .wl-search-box {
+    flex: 1 1 0%;
+    min-width: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--glass-elevated);
+    border: 1.5px solid var(--line);
+    border-radius: 15px;
+    padding: 0 .6rem 0 .85rem;
+    height: 48px;
+    gap: .55rem;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .wl-search-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .wl-search-ic {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    transition: color .2s;
+  }
+  .wl-search-box:focus-within .wl-search-ic {
+    color: var(--accent);
+  }
+  .wl-search-ic svg {
+    width: 18px;
+    height: 18px;
+  }
+  .wl-bar-poster {
+    width: 26px;
+    height: 34px;
+    min-width: 26px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    background: var(--card);
+    display: none;
+    place-items: center;
+    box-shadow: 0 3px 8px rgba(0,0,0,.28);
+    flex: none;
+  }
+  .wl-bar-poster.show {
+    display: grid;
+    animation: rise .18s var(--apple-ease) both;
+  }
+  .wl-bar-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .wl-search-box input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 1.8rem 0 0;
+    font-size: .95rem;
+    color: var(--text);
+  }
+  .wl-search-box input:focus {
+    outline: none;
+  }
+  .wl-search-box input::-webkit-search-decoration,
+  .wl-search-box input::-webkit-search-cancel-button,
+  .wl-search-box input::-webkit-search-results-button,
+  .wl-search-box input::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+  .wl-clear-btn {
+    position: absolute;
+    right: .6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    border: 0;
+    background: color-mix(in srgb, var(--muted) 22%, transparent);
+    color: var(--text);
+    font-size: .74rem;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .wl-clear-btn.show {
+    display: inline-flex;
+  }
+
+  .wl-custom-btn {
+    height: 48px;
+    min-height: 48px;
+    padding: 0 1.1rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: .88rem;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: .42rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .2s, transform .15s;
+  }
+  .wl-custom-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .wl-ac-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--card-solid);
+    border: 1.5px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+    border-radius: 18px;
+    box-shadow: 0 24px 54px rgba(0, 0, 0, .58);
+    z-index: 90;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wl-ac-dropdown.open {
+    display: flex;
+    animation: rise .2s var(--apple-ease) both;
+  }
+  .wl-ac-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    padding: .6rem .95rem;
+    background: var(--card-2);
+    border-bottom: 1px solid var(--line);
+    font-size: .76rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .wl-ac-close {
+    min-height: 24px;
+    padding: .15rem .5rem;
+    font-size: .74rem;
+    border-radius: 7px;
+  }
+  .wl-ac-list {
+    max-height: 390px;
+    overflow-y: auto;
+  }
+  .wl-ac-item {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    padding: .68rem .95rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+    transition: background .16s;
+  }
+  .wl-ac-item:last-child {
+    border-bottom: 0;
+  }
+  .wl-ac-item:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--card-2));
+  }
+  .wl-ac-poster {
+    width: 48px;
+    height: 68px;
+    min-width: 48px;
+    border-radius: 9px;
+    overflow: hidden;
+    background: linear-gradient(145deg, #1b1635, #0b0918);
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,.28);
+  }
+  .wl-ac-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .wl-ac-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .22rem;
+  }
+  .wl-ac-title-row {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    flex-wrap: wrap;
+  }
+  .wl-ac-title {
+    font-family: var(--display);
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .wl-ac-kind {
+    font-size: .64rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .1rem .42rem;
+    border-radius: 5px;
+    flex: none;
+  }
+  .wl-ac-kind.movie {
+    background: color-mix(in srgb, var(--wl-movie) 18%, transparent);
+    color: var(--wl-movie);
+  }
+  .wl-ac-kind.series {
+    background: color-mix(in srgb, var(--wl-series) 18%, transparent);
+    color: var(--wl-series);
+  }
+  .wl-ac-sub {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    flex-wrap: wrap;
+    font-size: .76rem;
+    color: var(--muted);
+  }
+  .wl-ac-score {
+    color: var(--imdb-gold);
+    font-weight: 800;
+  }
+  .wl-ac-spec {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--text);
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    padding: .06rem .42rem;
+    border-radius: 5px;
+  }
+  .wl-ac-actions {
+    display: flex;
+    align-items: center;
+    gap: .38rem;
+    flex: none;
+  }
+  .wl-ac-add {
+    min-height: 32px;
+    padding: .3rem .72rem;
+    border-radius: 9px;
+    font-size: .78rem;
+    font-weight: 700;
+    border: 1px solid transparent;
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .wl-ac-add.saved {
+    background: color-mix(in srgb, var(--wl-done) 16%, var(--card));
+    color: var(--wl-done);
+    border-color: color-mix(in srgb, var(--wl-done) 40%, var(--line));
+  }
+  .wl-ac-edit {
+    min-height: 32px;
+    padding: .3rem .55rem;
+    border-radius: 9px;
+    font-size: .75rem;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .wl-ac-edit:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .stat {
+    padding: 0.85rem 1rem;
+    border-radius: 16px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+  }
+  .stat b {
+    display: block;
+    font-family: var(--display);
+    font-size: clamp(1.35rem, 2.6vw, 1.8rem);
+    font-weight: 800;
+    line-height: 1.08;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .stat.gold b {
+    color: var(--imdb-gold);
+  }
+  .stat span.muted {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+
+  .wl-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .65rem;
+    padding-top: .95rem;
+    border-top: 1px solid var(--line);
+    position: relative;
+  }
+  .wl-pills {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    overflow-x: auto;
+    max-width: 100%;
+    padding: .1rem .35rem .1rem 0;
+    scrollbar-width: none;
+    flex: 1;
+    min-width: 0;
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 18px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 18px), transparent 100%);
+  }
+  .wl-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .wl-filter-pill {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: .81rem;
+    font-weight: 600;
+    padding: .38rem .82rem;
+    min-height: 36px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: .36rem;
+    cursor: pointer;
+    transition: background .18s, color .18s, border-color .18s;
+    white-space: nowrap;
+  }
+  .wl-filter-pill:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .wl-filter-pill[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    border-color: transparent;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  .wl-filter-pill .cnt {
+    font-size: .7rem;
+    padding: .03rem .38rem;
+    border-radius: 999px;
+    background: rgba(0,0,0,.18);
+    color: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wl-sort-wrap {
+    position: relative;
+    flex: none;
+  }
+  .wl-sort-icon-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: border-color .2s, color .2s, background .2s, transform .16s var(--apple-ease);
+  }
+  .wl-sort-icon-btn:hover,
+  .wl-sort-icon-btn[aria-expanded="true"] {
+    color: var(--text);
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-2));
+    transform: translateY(-1px);
+  }
+  .wl-sort-icon-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+  .wl-sort-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 205px;
+    background: var(--card-solid);
+    border: 1.5px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    border-radius: 16px;
+    padding: .38rem;
+    box-shadow: 0 18px 42px rgba(0,0,0,.52);
+    z-index: 95;
+    display: none;
+    flex-direction: column;
+    gap: .15rem;
+  }
+  .wl-sort-menu.open {
+    display: flex;
+    animation: rise .18s var(--apple-ease) both;
+  }
+  .wl-sort-menu-lbl {
+    font-family: var(--mono);
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    padding: .35rem .65rem .2rem;
+    font-weight: 700;
+  }
+  .wl-sort-opt {
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: .83rem;
+    font-weight: 600;
+    padding: .48rem .68rem;
+    min-height: 34px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .6rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background .15s, color .15s;
+  }
+  .wl-sort-opt:hover {
+    background: var(--card-2);
+  }
+  .wl-sort-opt.active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--card-2));
+    color: var(--accent);
+  }
+  .wl-sort-opt .chk {
+    opacity: 0;
+    font-size: .8rem;
+    color: var(--accent);
+  }
+  .wl-sort-opt.active .chk {
+    opacity: 1;
+  }
+
+  .wl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+    gap: 1.15rem;
+  }
+  .wl-card {
+    background: var(--card);
+    border: 1.5px solid var(--line);
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    transition: transform .22s var(--apple-ease), border-color .22s, box-shadow .22s;
+    animation: rise .38s var(--apple-ease) both;
+  }
+  .wl-card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    box-shadow: 0 16px 34px rgba(0,0,0,.3);
+  }
+  .wl-poster {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 2.85;
+    background: linear-gradient(145deg, #1b1635 0%, #0b0918 100%);
+    overflow: hidden;
+  }
+  .wl-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .4s var(--apple-ease);
+  }
+  .wl-card:hover .wl-poster img {
+    transform: scale(1.04);
+  }
+  .wl-poster-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.4rem;
+    text-align: center;
+    gap: .6rem;
+    color: var(--muted);
+    background:
+      radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%),
+      linear-gradient(160deg, var(--card-2), var(--card));
+  }
+  .wl-poster-fallback svg {
+    width: 38px;
+    height: 38px;
+    color: var(--accent);
+    opacity: .85;
+  }
+  .wl-poster-top {
+    position: absolute;
+    top: .7rem;
+    left: .7rem;
+    right: .7rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    z-index: 2;
+  }
+  .wl-kind-chip {
+    padding: .22rem .58rem;
+    border-radius: 999px;
+    font-size: .67rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    background: rgba(12, 10, 24, .74);
+    border: 1px solid rgba(255,255,255,.18);
+    color: #fff;
+  }
+  .wl-kind-chip.movie { color: #ff6b8b; }
+  .wl-kind-chip.series { color: #5ac8fa; }
+
+  .wl-fav-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(12, 10, 24, .7);
+    border: 1px solid rgba(255,255,255,.18);
+    color: rgba(255,255,255,.8);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform .18s var(--apple-spring), color .2s;
+  }
+  .wl-fav-btn:hover { transform: scale(1.08); color: #ff375f; }
+  .wl-fav-btn.active {
+    color: #ff375f;
+    background: rgba(255, 55, 95, .22);
+    border-color: rgba(255, 55, 95, .48);
+  }
+  .wl-fav-btn svg { width: 15px; height: 15px; }
+
+  .wl-poster-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 2rem .75rem .7rem;
+    background: linear-gradient(to top, rgba(6, 5, 15, .95) 14%, rgba(6, 5, 15, .6) 62%, transparent 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    z-index: 2;
+  }
+  .wl-rating-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .26rem;
+    padding: .24rem .58rem;
+    border-radius: 999px;
+    background: rgba(245, 197, 24, .18);
+    border: 1px solid rgba(245, 197, 24, .45);
+    color: var(--imdb-gold);
+    font-size: .78rem;
+    font-weight: 800;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .wl-length-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .26rem;
+    padding: .24rem .58rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .14);
+    border: 1px solid rgba(255, 255, 255, .22);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: .71rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .wl-body {
+    padding: .95rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .58rem;
+    flex: 1;
+  }
+  .wl-title {
+    font-family: var(--display);
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.24;
+    display: -webkit-box;
+    line-clamp: 1;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .wl-meta-line {
+    font-size: .77rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .wl-ep-box {
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: .46rem .62rem;
+    display: flex;
+    flex-direction: column;
+    gap: .34rem;
+  }
+  .wl-ep-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .35rem;
+    font-size: .74rem;
+    font-weight: 700;
+  }
+  .wl-time-tag {
+    font-family: var(--mono);
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--accent3, var(--accent));
+    white-space: nowrap;
+  }
+  .wl-ep-controls {
+    display: inline-flex;
+    gap: .22rem;
+  }
+  .wl-ep-step {
+    min-height: 22px;
+    height: 22px;
+    padding: 0 .44rem;
+    border-radius: 6px;
+    font-size: .7rem;
+    font-weight: 700;
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .wl-ep-step:hover { border-color: var(--accent); }
+  .wl-ep-track {
+    width: 100%;
+    height: 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--line) 80%, transparent);
+    overflow: hidden;
+  }
+  .wl-ep-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--wl-series), var(--accent2));
+    transition: width .25s var(--apple-ease);
+  }
+
+  .wl-foot {
+    display: flex;
+    align-items: center;
+    gap: .38rem;
+    margin-top: auto;
+    padding-top: .2rem;
+  }
+  .wl-status-btn {
+    flex: 1;
+    min-height: 34px;
+    padding: .3rem .55rem;
+    border-radius: 10px;
+    font-size: .75rem;
+    font-weight: 700;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .wl-status-btn.watching {
+    color: #5ac8fa;
+    border-color: rgba(90, 200, 250, .35);
+  }
+  .wl-status-btn.completed {
+    color: var(--wl-done);
+    border-color: rgba(48, 209, 88, .35);
+  }
+  .wl-icon-act {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .wl-icon-act:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .wl-icon-act.del:hover {
+    color: #ff453a;
+    border-color: rgba(255, 69, 58, .45);
+  }
+  .wl-icon-act svg { width: 14px; height: 14px; }
+
+  .wl-empty {
+    text-align: center;
+    padding: 3.2rem 1.5rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .6rem;
+  }
+  .wl-empty-ic {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--accent) 15%, var(--card-2));
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+  }
+  .wl-empty-ic svg { width: 24px; height: 24px; }
+  .wl-empty h3 {
+    font-family: var(--display);
+    font-size: 1.15rem;
+    margin: .1rem 0 0;
+  }
+  .wl-empty p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 25rem;
+    font-size: .86rem;
+    line-height: 1.5;
+  }
+
+  .wl-modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-top: .75rem;
+  }
+  .wl-modal-grid .full { grid-column: 1 / -1; }
+  .wl-star-picker {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    padding: .5rem .8rem;
+    border-radius: 12px;
+  }
+  .wl-star-picker input[type="range"] {
+    flex: 1;
+    accent-color: var(--imdb-gold);
+  }
+  .wl-star-val {
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--imdb-gold);
+    min-width: 3.6rem;
+    text-align: right;
+  }
+
+  @media (max-width: 760px) {
+    .pagetitle {
+      margin: 0.75rem auto 1rem;
+      gap: 0.35rem;
+    }
+    .pagetitle h1 {
+      font-size: clamp(2rem, 9vw, 3rem);
+    }
+    .pagetitle p {
+      font-size: 0.86rem;
+      max-width: 92%;
+    }
+    .apple-panel {
+      padding: 1rem;
+      border-radius: 22px;
+      gap: 0.85rem;
+    }
+    .wl-search-box {
+      height: 44px;
+      border-radius: 13px;
+      padding: 0 .5rem 0 .7rem;
+      gap: .42rem;
+    }
+    .wl-search-box input {
+      font-size: .88rem;
+      padding-right: 1.6rem;
+    }
+    .wl-custom-btn {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 .82rem;
+      border-radius: 13px;
+      font-size: .82rem;
+      gap: .3rem;
+      flex: none;
+    }
+    .stats {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 0.52rem;
+    }
+    .stats .stat {
+      padding: 0.68rem 0.75rem;
+      border-radius: 14px;
+      gap: 0.14rem;
+      min-width: 0;
+    }
+    .stats .stat:nth-child(1),
+    .stats .stat:nth-child(2) {
+      grid-column: span 3;
+    }
+    .stats .stat:nth-child(3),
+    .stats .stat:nth-child(4),
+    .stats .stat:nth-child(5) {
+      grid-column: span 2;
+    }
+    .stats .stat b {
+      font-size: clamp(1.12rem, 4.3vw, 1.45rem);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stats .stat span.muted {
+      font-size: 0.62rem;
+      letter-spacing: 0.03em;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wl-controls-bar {
+      padding-top: .7rem;
+      gap: .45rem;
+    }
+    .wl-filter-pill {
+      font-size: .76rem;
+      padding: .32rem .68rem;
+      min-height: 33px;
+      gap: .28rem;
+    }
+    .wl-sort-icon-btn {
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      min-height: 34px;
+    }
+    .wl-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .7rem;
+    }
+    .wl-modal-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 520px) {
+    .wl-card {
+      border-radius: 17px;
+    }
+    .wl-poster-top {
+      top: .48rem;
+      left: .48rem;
+      right: .48rem;
+    }
+    .wl-kind-chip {
+      font-size: .58rem;
+      padding: .16rem .45rem;
+    }
+    .wl-fav-btn {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+      min-height: 28px;
+    }
+    .wl-poster-bottom {
+      padding: 1.4rem .5rem .48rem;
+      gap: .25rem;
+    }
+    .wl-rating-pill {
+      font-size: .68rem;
+      padding: .18rem .44rem;
+    }
+    .wl-length-pill {
+      font-size: .63rem;
+      padding: .18rem .44rem;
+    }
+    .wl-body {
+      padding: .68rem .7rem .72rem;
+      gap: .45rem;
+    }
+    .wl-title {
+      font-size: .9rem;
+    }
+    .wl-meta-line {
+      font-size: .69rem;
+    }
+    .wl-ep-box {
+      padding: .38rem .5rem;
+      border-radius: 9px;
+      gap: .26rem;
+    }
+    .wl-ep-row {
+      font-size: .67rem;
+    }
+    .wl-time-tag {
+      font-size: .64rem;
+    }
+    .wl-ep-step {
+      min-height: 20px;
+      height: 20px;
+      padding: 0 .35rem;
+      font-size: .64rem;
+    }
+    .wl-foot {
+      flex-wrap: wrap;
+      gap: .3rem;
+    }
+    .wl-status-btn {
+      flex: 1 1 100%;
+      min-height: 30px;
+      font-size: .7rem;
+      padding: .22rem .4rem;
+      border-radius: 8px;
+    }
+    .wl-icon-act {
+      flex: 1;
+      height: 29px;
+      min-height: 29px;
+      width: auto;
+      min-width: 0;
+      border-radius: 8px;
+    }
+    .wl-ac-item {
+      padding: .55rem .7rem;
+      gap: .6rem;
+    }
+    .wl-ac-poster {
+      width: 40px;
+      height: 56px;
+      min-width: 40px;
+    }
+    .wl-ac-title {
+      font-size: .86rem;
+    }
+    .wl-ac-sub {
+      font-size: .7rem;
+      gap: .3rem;
+    }
+    .wl-ac-add {
+      min-height: 29px;
+      padding: .24rem .55rem;
+      font-size: .72rem;
+    }
+    .wl-ac-edit {
+      min-height: 29px;
+      padding: .24rem .42rem;
+      font-size: .69rem;
+    }
+  }
+  @media (max-width: 340px) {
+    .wl-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body data-page="watchlist">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>WATCHLIST</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/></svg>
+        Movies, Dramas &amp; Series
+      </span>
+    </div>
+    <p>Search any movie, drama, or online series and save it to your list.</p>
+  </div>
+
+  <div class="wl-shell">
+    <section class="panel apple-panel" aria-label="Watchlist Controls">
+      <div class="wl-search-row" id="searchWrap">
+        <div class="wl-search-box">
+          <span class="wl-search-ic" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          </span>
+          <span class="wl-bar-poster" id="searchBarPoster" aria-hidden="true"></span>
+          <input type="text" id="catalogSearchInput" placeholder="Search movies, dramas, series, or anime…" autocomplete="off">
+          <button type="button" class="wl-clear-btn" id="clearCatalogBtn" aria-label="Clear search">✕</button>
+        </div>
+        <button type="button" class="wl-custom-btn" id="addCustomBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Custom</span>
+        </button>
+
+        <div class="wl-ac-dropdown" id="acDropdown" role="listbox" aria-label="Search suggestions">
+          <div class="wl-ac-head">
+            <span id="acStatusText">Matching Titles</span>
+            <button type="button" class="ghost wl-ac-close" id="closeAcBtn">Close ✕</button>
+          </div>
+          <div class="wl-ac-list" id="acList"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b id="statTotal">0</b><span class="muted">Total Dramas</span></div>
+        <div class="stat"><b id="statMovieTime">0h 0m</b><span class="muted" id="statMovieSub">Total Hours</span></div>
+        <div class="stat"><b id="statMovies">0</b><span class="muted">Movies</span></div>
+        <div class="stat"><b id="statSeries">0</b><span class="muted" id="statSeriesSub">Series &amp; Dramas</span></div>
+        <div class="stat gold"><b id="statAvg">—</b><span class="muted">Average Rating</span></div>
+      </div>
+
+      <div class="wl-controls-bar">
+        <div class="wl-pills" role="tablist" aria-label="Filter watchlist">
+          <button type="button" class="wl-filter-pill" data-filter="all" aria-pressed="true">All <span class="cnt" id="cntAll">0</span></button>
+          <button type="button" class="wl-filter-pill" data-filter="movie" aria-pressed="false">Movies <span class="cnt" id="cntMovie">0</span></button>
+          <button type="button" class="wl-filter-pill" data-filter="series" aria-pressed="false">Series &amp; Dramas <span class="cnt" id="cntSeries">0</span></button>
+          <button type="button" class="wl-filter-pill" data-filter="plan" aria-pressed="false">Up Next <span class="cnt" id="cntPlan">0</span></button>
+          <button type="button" class="wl-filter-pill" data-filter="watching" aria-pressed="false">Watching <span class="cnt" id="cntWatching">0</span></button>
+          <button type="button" class="wl-filter-pill" data-filter="completed" aria-pressed="false">Completed <span class="cnt" id="cntCompleted">0</span></button>
+          <button type="button" class="wl-filter-pill" data-filter="fav" aria-pressed="false">Favorites<span class="cnt" id="cntFav">0</span></button>
+        </div>
+
+        <div class="wl-sort-wrap" id="sortMenuWrap">
+          <button type="button" class="wl-sort-icon-btn" id="sortMenuBtn" aria-haspopup="menu" aria-expanded="false" aria-label="Sort options" title="Sort options">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          </button>
+          <div class="wl-sort-menu" id="sortMenuPopup" role="menu" aria-label="Sort watchlist by">
+            <div class="wl-sort-menu-lbl">Sort By</div>
+            <button type="button" class="wl-sort-opt active" data-sort="recent" role="menuitemradio" aria-checked="true">
+              <span>Recently Added</span><span class="chk">✓</span>
+            </button>
+            <button type="button" class="wl-sort-opt" data-sort="rating" role="menuitemradio" aria-checked="false">
+              <span>Highest Rated</span><span class="chk">✓</span>
+            </button>
+            <button type="button" class="wl-sort-opt" data-sort="title" role="menuitemradio" aria-checked="false">
+              <span>Title (A–Z)</span><span class="chk">✓</span>
+            </button>
+            <button type="button" class="wl-sort-opt" data-sort="length" role="menuitemradio" aria-checked="false">
+              <span>Duration / Episodes</span><span class="chk">✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="watchlistContainer" aria-live="polite"></section>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const WL_KEY = "p23.watchlist";
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    filter: "all",
+    sort: "recent",
+    searchResults: [],
+    searchSeq: 0,
+    debounceTimer: null
+  };
+
+  const searchCache = new Map();
+
+  async function ensureAccountAccess() {
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    if (ok) {
+      renderStats();
+      renderSavedList();
+      syncDropdownButtons();
+      backfillSavedWatchlistMetadata();
+    }
+    return Boolean(ok);
+  }
+
+  function loadWatchlist() {
+    if (DB.isGuest()) return [];
+    const raw = DB.get(WL_KEY, []);
+    return Array.isArray(raw) ? raw : [];
+  }
+
+  function saveWatchlist(list) {
+    if (DB.isGuest()) {
+      ensureAccountAccess();
+      return;
+    }
+    DB.set(WL_KEY, list);
+    if (typeof DB.flush === "function") DB.flush();
+    renderStats();
+    renderSavedList();
+    syncDropdownButtons();
+  }
+
+  function getMovieMins(item) {
+    const m = Math.round(Number(item && item.durationMins) || 0);
+    return m > 0 ? m : 120;
+  }
+
+  function getSeriesEpMins(item) {
+    const m = Math.round(Number(item && (item.episodeMins || item.durationMins)) || 0);
+    if (m > 0 && m <= 240) return m;
+    const isAnime = /anime|animation/i.test(`${(item && item.genre) || ""} ${(item && item.network) || ""}`);
+    return isAnime ? 24 : 45;
+  }
+
+  function getSeriesTotalEps(item) {
+    const eps = Math.round(Number(item && item.totalEpisodes) || 0);
+    return eps > 0 ? eps : 16;
+  }
+
+  function getItemWatchMins(item) {
+    if (!item) return 0;
+    if (item.kind === "series") {
+      return getSeriesTotalEps(item) * getSeriesEpMins(item);
+    }
+    return getMovieMins(item);
+  }
+
+  function fmtDuration(mins) {
+    const m = Math.max(0, Math.round(Number(mins) || 0));
+    if (!m) return "2h 0m";
+    const h = Math.floor(m / 60);
+    const rem = m % 60;
+    return h > 0 ? (rem > 0 ? `${h}h ${rem}m` : `${h}h`) : `${m}m`;
+  }
+
+  function fmtTotalWatchTime(totalMins) {
+    const m = Math.max(0, Math.round(Number(totalMins) || 0));
+    if (!m) return "0h 0m";
+    const h = Math.floor(m / 60);
+    const rem = m % 60;
+    if (h === 0) return `${rem}m`;
+    return `${h}h ${rem}m`;
+  }
+
+  function fmtEpisodes(totalEps) {
+    const eps = Math.max(0, Math.round(Number(totalEps) || 0));
+    if (!eps) return "16 Eps";
+    return `${eps} Ep${eps === 1 ? "" : "s"}`;
+  }
+
+  function fmtStatusLabel(st) {
+    if (st === "watching") return "▶ Watching";
+    if (st === "completed") return "✓ Completed";
+    return "Up Next";
+  }
+
+  function normTitle(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/g, "");
+  }
+
+  function normWords(s) {
+    return String(s || "").toLowerCase().replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\s]/g, " ").split(/\s+/).filter(Boolean);
+  }
+
+  function wordSimilarity(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    if (a.startsWith(b) || b.startsWith(a)) {
+      const minLen = Math.min(a.length, b.length);
+      const maxLen = Math.max(a.length, b.length);
+      if (minLen >= 3) return 0.84 + 0.14 * (minLen / maxLen);
+    }
+    const la = a.length, lb = b.length;
+    if (Math.abs(la - lb) > 3) return 0;
+    const dp = Array.from({ length: la + 1 }, (_, i) => i);
+    for (let j = 1; j <= lb; j++) {
+      let prev = dp[0];
+      dp[0] = j;
+      for (let i = 1; i <= la; i++) {
+        const temp = dp[i];
+        dp[i] = a[i - 1] === b[j - 1] ? prev : 1 + Math.min(prev, dp[i - 1], dp[i]);
+        prev = temp;
+      }
+    }
+    const dist = dp[la];
+    const maxL = Math.max(la, lb);
+    return Math.max(0, 1 - dist / maxL);
+  }
+
+  function scoreSearchMatch(item, rawQuery, altQuery = "") {
+    const computeFor = qStr => {
+      const qNorm = normTitle(qStr);
+      if (!qNorm) return 0;
+      const tNorm = normTitle(item.title);
+      const aNorm = normTitle(item.altTitle || "");
+
+      let score = 0;
+      if (tNorm === qNorm || (aNorm && aNorm === qNorm)) {
+        score += 1500;
+      } else if (tNorm.startsWith(qNorm) || (aNorm && aNorm.startsWith(qNorm))) {
+        score += 900;
+      } else if (tNorm.includes(qNorm) || (aNorm && aNorm.includes(qNorm))) {
+        score += 600;
+      } else {
+        const fullSim = Math.max(wordSimilarity(tNorm, qNorm), aNorm ? wordSimilarity(aNorm, qNorm) : 0);
+        if (fullSim >= 0.72) score += Math.round(fullSim * 950);
+      }
+
+      const qWords = normWords(qStr);
+      const tWords = [...normWords(item.title), ...normWords(item.altTitle || "")];
+      if (qWords.length && tWords.length) {
+        let totalSim = 0;
+        let strongMatches = 0;
+        for (const qw of qWords) {
+          let bestW = 0;
+          for (const tw of tWords) {
+            const sim = wordSimilarity(qw, tw);
+            if (sim > bestW) bestW = sim;
+            if (bestW === 1) break;
+          }
+          if (bestW >= 0.68) {
+            totalSim += bestW;
+            strongMatches++;
+          }
+        }
+        const ratio = totalSim / qWords.length;
+        score += Math.round(ratio * 520);
+        if (strongMatches === qWords.length && qWords.length >= 2) {
+          score += 420;
+          const extra = Math.max(0, new Set(normWords(item.title)).size - qWords.length);
+          score -= Math.min(120, extra * 14);
+        }
+      }
+      return score;
+    };
+
+    let best = computeFor(rawQuery);
+    if (altQuery && altQuery !== rawQuery) {
+      best = Math.max(best, computeFor(altQuery));
+    }
+    if (item.poster) best += 35;
+    if (item.rating > 0) best += 22;
+    if (item.durationMins > 0 || item.totalEpisodes > 0) best += 20;
+    if (item.imdbRank && item.imdbRank > 0) {
+      best += Math.max(0, 30 - Math.min(30, Math.floor(Math.log10(item.imdbRank + 1) * 7)));
+    }
+    return best;
+  }
+
+  function isSavedKey(item) {
+    if (!item) return false;
+    const list = loadWatchlist();
+    return list.some(x => {
+      if (item.imdbId && x.imdbId) return x.imdbId === item.imdbId;
+      if (item.extId && x.extId) return x.extId === item.extId;
+      if (item.imdbId || x.imdbId || item.extId || x.extId) {
+        return normTitle(x.title) === normTitle(item.title) &&
+          x.kind === item.kind &&
+          Boolean(item.year) &&
+          Boolean(x.year) &&
+          String(x.year) === String(item.year);
+      }
+      return normTitle(x.title) === normTitle(item.title) &&
+        x.kind === item.kind &&
+        String(x.year || "") === String(item.year || "");
+    });
+  }
+
+  function renderStats() {
+    const list = loadWatchlist();
+    const movies = list.filter(x => x.kind !== "series");
+    const series = list.filter(x => x.kind === "series");
+    const totalMins = list.reduce((sum, item) => sum + getItemWatchMins(item), 0);
+    const totalEps = series.reduce((a, b) => a + getSeriesTotalEps(b), 0);
+    const rated = list.filter(x => Number(x.rating) > 0);
+    const avg = rated.length
+      ? (rated.reduce((acc, x) => acc + Number(x.rating), 0) / rated.length).toFixed(1)
+      : null;
+
+    $("statTotal").textContent = list.length;
+    $("statMovieTime").textContent = fmtTotalWatchTime(totalMins);
+    $("statMovieSub").textContent = "Total Hours";
+    $("statMovies").textContent = movies.length;
+    $("statSeries").textContent = series.length;
+    $("statSeriesSub").textContent = totalEps ? `Series • ${totalEps} eps` : "Series & Dramas";
+    $("statAvg").textContent = avg ? `★ ${avg}` : "—";
+
+    $("cntAll").textContent = list.length;
+    $("cntMovie").textContent = movies.length;
+    $("cntSeries").textContent = series.length;
+    $("cntPlan").textContent = list.filter(x => (x.status || "plan") === "plan").length;
+    $("cntWatching").textContent = list.filter(x => x.status === "watching").length;
+    $("cntCompleted").textContent = list.filter(x => x.status === "completed").length;
+    $("cntFav").textContent = list.filter(x => x.fav).length;
+  }
+
+  function fetchWithTimeout(url, ms = 2500) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+  }
+
+  function fetchImdbSingleSlug(slug) {
+    return new Promise(resolve => {
+      if (!slug) { resolve([]); return; }
+      const first = slug[0] || "a";
+      const cbName = "imdb$" + slug;
+      const script = document.createElement("script");
+      let done = false;
+      const cleanup = () => {
+        if (script.parentNode) script.remove();
+      };
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        cleanup();
+        resolve([]);
+      }, 1800);
+
+      const prevCb = window[cbName];
+      window[cbName] = data => {
+        if (typeof prevCb === "function") { try { prevCb(data); } catch {} }
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        cleanup();
+        resolve((data && Array.isArray(data.d)) ? data.d : []);
+      };
+      script.onerror = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        cleanup();
+        resolve([]);
+      };
+      script.src = `https://v2.sg.media-imdb.com/suggests/${first}/${slug}.json`;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function fetchImdbJsonp(query) {
+    const clean = query.toLowerCase().trim().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+    if (!clean) return [];
+    const slugs = new Set([clean]);
+    if (clean.length > 20) slugs.add(clean.slice(0, 20));
+    const words = normWords(query);
+    if (words.length >= 2) {
+      slugs.add(words.slice(0, 2).join("_"));
+      if (words.length >= 3) slugs.add(words.slice(0, 3).join("_"));
+    }
+    const lists = await Promise.all([...slugs].map(s => fetchImdbSingleSlug(s)));
+    const seen = new Set();
+    const out = [];
+    for (const arr of lists) {
+      for (const item of arr) {
+        if (item && item.id && !seen.has(item.id)) {
+          seen.add(item.id);
+          out.push(item);
+        }
+      }
+    }
+    return out;
+  }
+
+  function mapImdbSuggestionItem(raw) {
+    if (!raw || !raw.id || !/^tt\d+/.test(raw.id)) return null;
+    const qid = String(raw.qid || raw.q || "").toLowerCase();
+    if (qid.includes("videogame") || qid.includes("game") || qid.includes("podcast") || qid.includes("musicvideo") || qid.includes("short")) return null;
+    const isSeries = qid.includes("series") || (qid.includes("tv") && !qid.includes("tvmovie"));
+    const rawImg = raw.i
+      ? (Array.isArray(raw.i) ? raw.i[0] : (raw.i.imageUrl || raw.i.url || (typeof raw.i === "string" ? raw.i : "")))
+      : "";
+    const rawPoster = rawImg ? String(rawImg).replace(/^http:/, "https:") : "";
+    let thumbPoster = rawPoster;
+    if (rawPoster && rawPoster.includes("._V1_")) {
+      thumbPoster = rawPoster.replace(/\._V1_.*?\.(jpg|png)$/i, "._V1_QL80_UX480_.jpg");
+    }
+    return {
+      imdbId: raw.id,
+      imdbRank: Number(raw.rank) || 0,
+      extId: `imdb-${raw.id}`,
+      kind: isSeries ? "series" : "movie",
+      title: raw.l || "Untitled",
+      year: raw.y ? String(raw.y) : (raw.yr ? String(raw.yr).slice(0, 4) : ""),
+      genre: isSeries ? (qid.includes("mini") ? "Mini-Series" : "Series / Drama") : "Movie",
+      network: "IMDb",
+      cast: raw.s || "",
+      rating: 0,
+      durationMins: 0,
+      totalEpisodes: 0,
+      poster: thumbPoster,
+      backupPoster: rawPoster
+    };
+  }
+
+  async function searchItunesMoviesAndShows(query) {
+    try {
+      const [movieRes, tvRes] = await Promise.all([
+        fetchWithTimeout(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=movie&entity=movie&limit=15`, 2400).catch(() => null),
+        fetchWithTimeout(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&media=tvShow&entity=tvSeason&limit=8`, 2400).catch(() => null)
+      ]);
+      const out = [];
+      if (movieRes && movieRes.ok) {
+        const mData = await movieRes.json();
+        (mData.results || []).forEach(m => {
+          const poster = m.artworkUrl100 ? m.artworkUrl100.replace(/100x100bb/g, "400x400bb") : "";
+          out.push({
+            imdbId: "",
+            extId: `itunes-movie-${m.trackId}`,
+            kind: "movie",
+            title: m.trackName || "Untitled Movie",
+            year: m.releaseDate ? m.releaseDate.slice(0, 4) : "",
+            genre: m.primaryGenreName || "Movie",
+            network: "Film",
+            cast: m.artistName ? `Dir. ${m.artistName}` : "",
+            rating: 0,
+            durationMins: m.trackTimeMillis ? Math.round(m.trackTimeMillis / 60000) : 0,
+            totalEpisodes: 0,
+            poster,
+            backupPoster: m.artworkUrl100 || ""
+          });
+        });
+      }
+      if (tvRes && tvRes.ok) {
+        const tData = await tvRes.json();
+        (tData.results || []).forEach(t => {
+          const cleanName = String(t.artistName || t.collectionName || "").replace(/,\s*Season\s*\d+.*$/i, "").trim();
+          if (!cleanName) return;
+          const poster = t.artworkUrl100 ? t.artworkUrl100.replace(/100x100bb/g, "400x400bb") : "";
+          out.push({
+            imdbId: "",
+            extId: `itunes-tv-${t.collectionId || t.artistId}`,
+            kind: "series",
+            title: cleanName,
+            year: t.releaseDate ? t.releaseDate.slice(0, 4) : "",
+            genre: t.primaryGenreName || "Series / Drama",
+            network: "Series",
+            cast: "",
+            rating: 0,
+            durationMins: 0,
+            totalEpisodes: Number(t.trackCount) || 0,
+            poster,
+            backupPoster: t.artworkUrl100 || ""
+          });
+        });
+      }
+      return out;
+    } catch {
+      return [];
+    }
+  }
+
+  async function searchTvMazeFast(query) {
+    try {
+      const res = await fetchWithTimeout(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(query)}`, 2200);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data || []).slice(0, 10).map(entry => {
+        const show = entry.show || {};
+        const imdbId = (show.externals && show.externals.imdb) ? String(show.externals.imdb) : "";
+        const poster = (show.image && (show.image.medium || show.image.original))
+          ? String(show.image.medium || show.image.original).replace(/^http:/, "https:")
+          : "";
+        return {
+          tvMazeId: show.id || 0,
+          imdbId,
+          extId: `tvmaze-${show.id}`,
+          kind: "series",
+          title: show.name || "Untitled Series",
+          year: show.premiered ? show.premiered.slice(0, 4) : "",
+          genre: Array.isArray(show.genres) && show.genres.length ? show.genres.slice(0, 2).join(" • ") : "Series / Drama",
+          network: (show.webChannel && show.webChannel.name) || (show.network && show.network.name) || "TV Series",
+          cast: "",
+          rating: (show.rating && show.rating.average) ? Number(show.rating.average) : 0,
+          durationMins: show.averageRuntime || show.runtime || 0,
+          totalEpisodes: 0,
+          poster,
+          backupPoster: poster
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  async function searchJikanAnime(query) {
+    try {
+      const res = await fetchWithTimeout(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=8&sfw=true`, 2400);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.data || []).map(item => {
+        const isMovie = String(item.type || "").toLowerCase() === "movie";
+        let mins = 0;
+        const durStr = String(item.duration || "");
+        const hrMatch = durStr.match(/(\d+)\s*hr/i);
+        const minMatch = durStr.match(/(\d+)\s*min/i);
+        if (hrMatch) mins += parseInt(hrMatch[1], 10) * 60;
+        if (minMatch) mins += parseInt(minMatch[1], 10);
+        const year = item.year || (item.aired && item.aired.from ? String(item.aired.from).slice(0, 4) : "");
+        const poster = (item.images && item.images.jpg && (item.images.jpg.image_url || item.images.jpg.large_image_url)) || "";
+        const genres = Array.isArray(item.genres) && item.genres.length ? item.genres.slice(0, 2).map(g => g.name).join(" • ") : "Animation";
+        return {
+          imdbId: "",
+          extId: `mal-${item.mal_id}`,
+          kind: isMovie ? "movie" : "series",
+          title: item.title_english || item.title || "Untitled",
+          altTitle: item.title || "",
+          year: String(year || ""),
+          genre: genres,
+          network: "Anime",
+          cast: "",
+          rating: item.score ? Number(item.score) : 0,
+          durationMins: isMovie ? (mins || 105) : mins,
+          totalEpisodes: isMovie ? 1 : (Number(item.episodes) || 0),
+          poster,
+          backupPoster: poster
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  async function resolveWikipediaSpellcheck(query) {
+    try {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srinfo=suggestion&srlimit=1&format=json&origin=*`;
+      const res = await fetchWithTimeout(url, 1500);
+      if (!res.ok) return "";
+      const data = await res.json();
+      const rawSug = (data && data.query && data.query.searchinfo && data.query.searchinfo.suggestion) || "";
+      return rawSug.replace(/<[^>]+>/g, "").trim();
+    } catch {
+      return "";
+    }
+  }
+
+  async function fetchWikidataByImdbIds(imdbIds) {
+    const valid = [...new Set((imdbIds || []).filter(id => /^tt\d+$/.test(id)))].slice(0, 12);
+    if (!valid.length) return {};
+    try {
+      const values = valid.map(id => `"${id}"`).join(" ");
+      const sparql = `SELECT ?imdb ?dur ?eps WHERE { VALUES ?imdb { ${values} } ?item wdt:P345 ?imdb . OPTIONAL { ?item p:P2047/psn:P2047/wikibase:quantityAmount ?durSec . BIND(ROUND(?durSec / 60) AS ?dur) } OPTIONAL { ?item wdt:P1113 ?eps . } }`;
+      const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(sparql)}`;
+      const res = await fetchWithTimeout(url, 2200);
+      if (!res.ok) return {};
+      const data = await res.json();
+      const bindings = (data && data.results && data.results.bindings) || [];
+      const map = {};
+      for (const b of bindings) {
+        const id = b.imdb && b.imdb.value;
+        if (!id) continue;
+        if (!map[id]) map[id] = { durationMins: 0, totalEpisodes: 0 };
+        const d = b.dur && Number(b.dur.value);
+        const e = b.eps && Number(b.eps.value);
+        if (d > 0 && d < 1200) map[id].durationMins = Math.round(d);
+        if (e > 0 && e < 10000) map[id].totalEpisodes = Math.round(e);
+      }
+      return map;
+    } catch {
+      return {};
+    }
+  }
+
+  async function enrichSingleItemMetadata(item) {
+    if (!item) return null;
+    let durationMins = Number(item.durationMins) || 0;
+    let totalEpisodes = Number(item.totalEpisodes) || 0;
+    let episodeMins = Number(item.episodeMins) || 0;
+    let poster = item.poster || "";
+
+    if (!poster && item.title) {
+      try {
+        const imdbRaw = await fetchImdbJsonp(item.title);
+        const mapped = imdbRaw.map(mapImdbSuggestionItem).filter(Boolean);
+        const hit = mapped.find(m =>
+          (item.imdbId && m.imdbId === item.imdbId) ||
+          (normTitle(m.title) === normTitle(item.title) && (!item.year || !m.year || String(m.year) === String(item.year)))
+        ) || mapped.find(m => normTitle(m.title) === normTitle(item.title));
+        if (hit && (hit.poster || hit.backupPoster)) {
+          poster = hit.poster || hit.backupPoster;
+          if (!item.imdbId && hit.imdbId) item.imdbId = hit.imdbId;
+        }
+      } catch {}
+    }
+
+    if (item.imdbId && (!durationMins || (item.kind === "series" && !totalEpisodes))) {
+      const wdMap = await fetchWikidataByImdbIds([item.imdbId]);
+      const wd = wdMap[item.imdbId];
+      if (wd) {
+        if (!durationMins && wd.durationMins > 0) {
+          if (item.kind === "series" && wd.durationMins <= 180) episodeMins = wd.durationMins;
+          else durationMins = wd.durationMins;
+        }
+        if (!totalEpisodes && wd.totalEpisodes > 0) totalEpisodes = wd.totalEpisodes;
+      }
+    }
+
+    if (item.kind !== "series" && !durationMins) {
+      const itunesItems = await searchItunesMoviesAndShows(item.title);
+      const tNorm = normTitle(item.title).replace(/^the/, "");
+      const m = itunesItems.find(x => x.kind === "movie" && x.durationMins > 0 && (
+        normTitle(x.title).replace(/^the/, "") === tNorm ||
+        normTitle(x.title).includes(tNorm) ||
+        tNorm.includes(normTitle(x.title))
+      ));
+      if (m) {
+        durationMins = m.durationMins;
+        if (!poster && m.poster) poster = m.poster;
+      }
+    }
+
+    if (item.kind === "series" && (!totalEpisodes || !episodeMins)) {
+      const tvItems = await searchTvMazeFast(item.title);
+      const tNorm = normTitle(item.title).replace(/^the/, "");
+      const m = tvItems.find(x =>
+        (item.imdbId && x.imdbId === item.imdbId) ||
+        normTitle(x.title).replace(/^the/, "") === tNorm
+      );
+      if (m) {
+        if (!episodeMins && m.durationMins > 0) episodeMins = m.durationMins;
+        if (!poster && m.poster) poster = m.poster;
+        if (!totalEpisodes && m.tvMazeId) {
+          try {
+            const epRes = await fetchWithTimeout(`https://api.tvmaze.com/shows/${m.tvMazeId}/episodes`, 1800);
+            if (epRes.ok) {
+              const eps = await epRes.json();
+              if (Array.isArray(eps) && eps.length) totalEpisodes = eps.length;
+            }
+          } catch {}
+        }
+      }
+    }
+
+    if ((!durationMins && item.kind !== "series") || (!totalEpisodes && item.kind === "series")) {
+      try {
+        const wUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvsection=0&redirects=1&titles=${encodeURIComponent(item.title)}&format=json&origin=*`;
+        const wRes = await fetchWithTimeout(wUrl, 1800);
+        if (wRes.ok) {
+          const wData = await wRes.json();
+          const pages = (wData && wData.query && wData.query.pages) || {};
+          const firstPage = Object.values(pages)[0];
+          const rev = firstPage && firstPage.revisions && firstPage.revisions[0];
+          const wikitext = (rev && (rev["*"] || (rev.slots && rev.slots.main && rev.slots.main["*"]))) || "";
+          if (wikitext) {
+            const epMatch = wikitext.match(/\|\s*num_episodes\s*=\s*(\d+)/i);
+            if (epMatch && !totalEpisodes) totalEpisodes = parseInt(epMatch[1], 10) || 0;
+            const rtMatch = wikitext.match(/\|\s*runtime\s*=\s*([^\n\r|]+)/i);
+            if (rtMatch) {
+              const rtStr = rtMatch[1];
+              const minMatch = rtStr.match(/(\d{2,3})\s*(?:minutes|mins|min\b)/i);
+              if (minMatch) {
+                const parsedMins = parseInt(minMatch[1], 10);
+                if (item.kind === "series" && parsedMins <= 180 && !episodeMins) episodeMins = parsedMins;
+                else if (item.kind !== "series" && !durationMins) durationMins = parsedMins;
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
+    return { durationMins, totalEpisodes, episodeMins, poster };
+  }
+
+  function updateSearchBarPoster(results) {
+    const barPoster = $("searchBarPoster");
+    if (!barPoster) return;
+    const topWithPoster = (results || []).find(r => r && (r.poster || r.backupPoster));
+    if (topWithPoster && $("catalogSearchInput").value.trim().length >= 2) {
+      const pUrl = topWithPoster.poster || topWithPoster.backupPoster;
+      barPoster.innerHTML = `<img src="${DB.esc(pUrl)}" alt="" referrerpolicy="no-referrer">`;
+      const img = barPoster.querySelector("img");
+      if (img) {
+        img.onerror = () => {
+          if (topWithPoster.backupPoster && img.src !== topWithPoster.backupPoster) {
+            img.src = topWithPoster.backupPoster;
+          } else {
+            barPoster.classList.remove("show");
+          }
+        };
+      }
+      barPoster.classList.add("show");
+    } else {
+      barPoster.classList.remove("show");
+      barPoster.innerHTML = "";
+    }
+  }
+
+  function runLiveTypeahead(rawQuery) {
+    const q = String(rawQuery ?? $("catalogSearchInput").value).trim();
+    const dropdown = $("acDropdown");
+    const listEl = $("acList");
+    if (q.length < 2) {
+      dropdown.classList.remove("open");
+      updateSearchBarPoster([]);
+      return;
+    }
+
+    const cacheKey = q.toLowerCase();
+    if (searchCache.has(cacheKey)) {
+      state.searchResults = searchCache.get(cacheKey);
+      dropdown.classList.add("open");
+      updateSearchBarPoster(state.searchResults);
+      renderTypeaheadResults(q);
+      return;
+    }
+
+    const seq = ++state.searchSeq;
+    dropdown.classList.add("open");
+    $("acStatusText").textContent = `Searching "${q}"…`;
+    if (!state.searchResults.length) {
+      listEl.innerHTML = `<div style="padding:1.1rem;text-align:center;color:var(--muted);font-size:.85rem;">Searching movies &amp; dramas…</div>`;
+    }
+
+    const pool = [];
+    let spellAlt = "";
+    let completedSources = 0;
+    const TOTAL_SOURCES = 4;
+
+    const stripCoreTitle = s => normTitle(String(s || "").replace(/^(marvel'?s|disney'?s|pixar'?s|the)\s+/i, ""));
+    const yearsMatchStrict = (y1, y2) => {
+      if (!y1 || !y2) return false;
+      const n1 = parseInt(y1, 10), n2 = parseInt(y2, 10);
+      if (!n1 || !n2) return y1 === y2;
+      return n1 === n2;
+    };
+    const mergeCandidate = src => {
+      if (!src || !src.title) return;
+      const srcCore = stripCoreTitle(src.title);
+      const match = pool.find(x => {
+        if (src.imdbId && x.imdbId) return x.imdbId === src.imdbId;
+        if (x.kind !== src.kind) return false;
+        const sameName = normTitle(x.title) === normTitle(src.title) ||
+          (srcCore.length >= 4 && stripCoreTitle(x.title) === srcCore) ||
+          (src.altTitle && normTitle(x.title) === normTitle(src.altTitle)) ||
+          (x.altTitle && normTitle(x.altTitle) === normTitle(src.title));
+        return sameName && yearsMatchStrict(src.year, x.year);
+      });
+      if (match) {
+        if (!match.imdbId && src.imdbId) match.imdbId = src.imdbId;
+        if (!match.imdbRank && src.imdbRank) match.imdbRank = src.imdbRank;
+        if (!match.tvMazeId && src.tvMazeId) match.tvMazeId = src.tvMazeId;
+        if (!match.rating && src.rating > 0) match.rating = src.rating;
+        if (!match.durationMins && src.durationMins > 0) match.durationMins = src.durationMins;
+        if (!match.totalEpisodes && src.totalEpisodes > 0) match.totalEpisodes = src.totalEpisodes;
+        if (src.genre && (!match.genre || match.genre === "Movie" || match.genre === "Series / Drama")) match.genre = src.genre;
+        if (!match.poster && src.poster) match.poster = src.poster;
+        if (!match.backupPoster && (src.backupPoster || src.poster)) match.backupPoster = src.backupPoster || src.poster;
+        if (!match.altTitle && src.altTitle) match.altTitle = src.altTitle;
+        if (!match.cast && src.cast) match.cast = src.cast;
+      } else {
+        pool.push({ ...src });
+      }
+    };
+
+    const flushPool = (isFinal = false) => {
+      if (seq !== state.searchSeq) return;
+      pool.sort((a, b) => scoreSearchMatch(b, q, spellAlt) - scoreSearchMatch(a, q, spellAlt));
+      state.searchResults = pool.slice(0, 18);
+      if (state.searchResults.length || isFinal) {
+        updateSearchBarPoster(state.searchResults);
+        renderTypeaheadResults(q, spellAlt);
+      }
+      if (isFinal && state.searchResults.length) {
+        searchCache.set(cacheKey, state.searchResults);
+      }
+    };
+
+    const markSourceDone = () => {
+      completedSources++;
+      flushPool(completedSources >= TOTAL_SOURCES);
+    };
+
+    fetchImdbJsonp(q).then(raw => {
+      const mapped = raw.map(mapImdbSuggestionItem).filter(Boolean);
+      mapped.forEach(mergeCandidate);
+      markSourceDone();
+      const idsToEnrich = mapped.map(m => m.imdbId).filter(Boolean).slice(0, 10);
+      if (idsToEnrich.length) {
+        fetchWikidataByImdbIds(idsToEnrich).then(wdMap => {
+          if (seq !== state.searchSeq || !wdMap) return;
+          let changed = false;
+          pool.forEach(item => {
+            const wd = item.imdbId && wdMap[item.imdbId];
+            if (!wd) return;
+            if (!item.durationMins && wd.durationMins > 0) {
+              item.durationMins = wd.durationMins;
+              changed = true;
+            }
+            if (!item.totalEpisodes && wd.totalEpisodes > 0) {
+              item.totalEpisodes = wd.totalEpisodes;
+              changed = true;
+            }
+          });
+          if (changed) flushPool(false);
+        });
+      }
+    });
+
+    searchItunesMoviesAndShows(q).then(items => {
+      items.forEach(mergeCandidate);
+      markSourceDone();
+    });
+
+    searchTvMazeFast(q).then(items => {
+      items.forEach(mergeCandidate);
+      markSourceDone();
+      items.slice(0, 5).forEach(tv => {
+        if (!tv.tvMazeId) return;
+        fetchWithTimeout(`https://api.tvmaze.com/shows/${tv.tvMazeId}/episodes`, 1800)
+          .then(r => r.ok ? r.json() : null)
+          .then(eps => {
+            if (seq !== state.searchSeq || !Array.isArray(eps) || !eps.length) return;
+            mergeCandidate({ ...tv, totalEpisodes: eps.length });
+            flushPool(false);
+          })
+          .catch(() => {});
+      });
+    });
+
+    searchJikanAnime(q).then(items => {
+      items.forEach(mergeCandidate);
+      markSourceDone();
+    });
+
+    resolveWikipediaSpellcheck(q).then(suggestion => {
+      if (seq !== state.searchSeq || !suggestion) return;
+      if (normTitle(suggestion) && normTitle(suggestion) !== normTitle(q)) {
+        spellAlt = suggestion;
+        Promise.all([
+          fetchImdbJsonp(suggestion).then(r => r.map(mapImdbSuggestionItem).filter(Boolean)),
+          searchItunesMoviesAndShows(suggestion),
+          searchTvMazeFast(suggestion),
+          searchJikanAnime(suggestion)
+        ]).then(([im, it, tv, jk]) => {
+          if (seq !== state.searchSeq) return;
+          [...im, ...it, ...tv, ...jk].forEach(mergeCandidate);
+          flushPool(true);
+        });
+      }
+    });
+  }
+
+  function renderTypeaheadResults(q, spellAlt = "") {
+    const listEl = $("acList");
+    const results = state.searchResults;
+    const labelSuffix = (spellAlt && normTitle(spellAlt) !== normTitle(q)) ? ` (showing matches for "${spellAlt}")` : "";
+    $("acStatusText").textContent = results.length
+      ? `Matches for "${q}"${labelSuffix} (${results.length})`
+      : `No matches for "${q}"`;
+
+    if (!results.length) {
+      listEl.innerHTML = `
+        <div style="padding:1.25rem;text-align:center;color:var(--muted);font-size:.86rem;">
+          No matches found for <b>${DB.esc(q)}</b>. Click <b>+ Custom</b> to add it manually.
+        </div>
+      `;
+      return;
+    }
+
+    const fallbackSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>`;
+
+    listEl.innerHTML = results.map((item, idx) => {
+      const saved = isSavedKey(item);
+      const specText = item.kind === "movie"
+        ? (item.durationMins ? `⏱ ${fmtDuration(item.durationMins)} (${item.durationMins}m)` : "⏱ Movie")
+        : (item.totalEpisodes ? `📺 ${item.totalEpisodes} Episodes` : "📺 Series / Drama");
+      const scoreHtml = item.rating > 0
+        ? `<span class="wl-ac-score">★ ${Number(item.rating).toFixed(1)}</span>`
+        : "";
+
+      return `
+        <div class="wl-ac-item" role="option">
+          <div class="wl-ac-poster">
+            ${item.poster
+              ? `<img src="${DB.esc(item.poster)}" data-backup="${DB.esc(item.backupPoster || "")}" alt="${DB.esc(item.title)}" referrerpolicy="no-referrer">`
+              : fallbackSvg}
+          </div>
+          <div class="wl-ac-main">
+            <div class="wl-ac-title-row">
+              <span class="wl-ac-title">${DB.esc(item.title)}</span>
+              <span class="wl-ac-kind ${item.kind}">${item.kind === "movie" ? "Movie" : "Series"}</span>
+            </div>
+            <div class="wl-ac-sub">
+              ${scoreHtml}
+              <span class="wl-ac-spec">${DB.esc(specText)}</span>
+              ${item.year ? `<span>• ${DB.esc(item.year)}</span>` : ""}
+              ${item.cast ? `<span>• ${DB.esc(item.cast)}</span>` : (item.genre ? `<span>• ${DB.esc(item.genre)}</span>` : "")}
+            </div>
+          </div>
+          <div class="wl-ac-actions">
+            <button type="button" class="wl-ac-add ${saved ? "saved" : ""}" data-quick-save="${idx}">
+              ${saved ? "✓ Added" : "+ Add"}
+            </button>
+            <button type="button" class="wl-ac-edit" data-custom-save="${idx}" title="Customize rating or episodes before saving">
+              Edit
+            </button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    listEl.querySelectorAll(".wl-ac-poster img").forEach(img => {
+      img.onerror = () => {
+        const b = img.dataset.backup;
+        if (b && img.src !== b) {
+          img.dataset.backup = "";
+          img.src = b;
+        } else if (img.parentNode) {
+          img.parentNode.innerHTML = fallbackSvg;
+        }
+      };
+    });
+
+    listEl.querySelectorAll("[data-quick-save]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const item = state.searchResults[Number(btn.dataset.quickSave)];
+        if (item) quickSaveItem(item);
+      };
+    });
+    listEl.querySelectorAll("[data-custom-save]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const item = state.searchResults[Number(btn.dataset.customSave)];
+        if (item) {
+          $("acDropdown").classList.remove("open");
+          openItemModal(item, true);
+        }
+      };
+    });
+  }
+
+  function syncDropdownButtons() {
+    const listEl = $("acList");
+    if (!listEl || !state.searchResults.length) return;
+    listEl.querySelectorAll("[data-quick-save]").forEach(btn => {
+      const item = state.searchResults[Number(btn.dataset.quickSave)];
+      if (!item) return;
+      const saved = isSavedKey(item);
+      btn.classList.toggle("saved", saved);
+      btn.textContent = saved ? "✓ Added" : "+ Add";
+    });
+  }
+
+  function quickSaveItem(item) {
+    const list = loadWatchlist();
+    if (isSavedKey(item)) {
+      DB.toast("Already in Watchlist", `${item.title} is already saved.`, 2400);
+      return;
+    }
+    const isSeries = item.kind === "series";
+    const isAnime = /anime|animation/i.test(`${item.genre || ""} ${item.network || ""}`);
+    const entry = {
+      id: DB.uid(),
+      imdbId: item.imdbId || "",
+      extId: item.extId || "",
+      kind: isSeries ? "series" : "movie",
+      title: item.title,
+      year: item.year || "",
+      genre: item.genre || "",
+      network: item.network || "",
+      rating: Number(item.rating) > 0 ? Number(item.rating) : 8.5,
+      durationMins: !isSeries ? (Number(item.durationMins) > 0 ? Number(item.durationMins) : 120) : (Number(item.durationMins) || 0),
+      episodeMins: isSeries ? (Number(item.durationMins) > 0 && Number(item.durationMins) <= 180 ? Number(item.durationMins) : (isAnime ? 24 : 45)) : 0,
+      totalEpisodes: isSeries ? (Number(item.totalEpisodes) > 0 ? Number(item.totalEpisodes) : 16) : 0,
+      watchedEpisodes: 0,
+      status: "plan",
+      fav: false,
+      poster: item.backupPoster || item.poster || "",
+      notes: item.cast ? `Cast: ${item.cast}` : "",
+      addedAt: Date.now()
+    };
+    list.unshift(entry);
+    saveWatchlist(list);
+    DB.toast("Added to Watchlist", `${entry.title} has been saved and synced.`, 2600);
+
+    const chosenPoster = item.poster || item.backupPoster || "";
+    entry.poster = chosenPoster;
+    if (!chosenPoster || (!isSeries && !(Number(item.durationMins) > 0)) || (isSeries && !(Number(item.totalEpisodes) > 0))) {
+      enrichSingleItemMetadata(item).then(meta => {
+        if (!meta) return;
+        const cur = loadWatchlist();
+        const target = cur.find(x => x.id === entry.id);
+        if (!target) return;
+        let updated = false;
+        if (!isSeries && meta.durationMins > 0) {
+          target.durationMins = meta.durationMins;
+          updated = true;
+        }
+        if (isSeries) {
+          if (meta.totalEpisodes > 0) { target.totalEpisodes = meta.totalEpisodes; updated = true; }
+          if (meta.episodeMins > 0) { target.episodeMins = meta.episodeMins; updated = true; }
+        }
+        if (!target.poster && meta.poster) {
+          target.poster = meta.poster;
+          updated = true;
+        }
+        if (updated) saveWatchlist(cur);
+      });
+    }
+  }
+
+  function openItemModal(initial = null, isFromSearch = false) {
+    const list = loadWatchlist();
+    const existing = (!isFromSearch && initial && initial.id) ? list.find(x => x.id === initial.id) : null;
+    const item = existing || initial || {
+      kind: "movie",
+      title: "",
+      year: String(new Date().getFullYear()),
+      genre: "",
+      network: "",
+      rating: 8.5,
+      durationMins: 120,
+      totalEpisodes: 16,
+      watchedEpisodes: 0,
+      status: "plan",
+      poster: "",
+      notes: ""
+    };
+
+    const node = document.createElement("div");
+    const isEdit = Boolean(existing);
+    const startRating = Number(item.rating) > 0 ? Number(item.rating) : 8.5;
+
+    node.innerHTML = `
+      <h2>${isEdit ? "Edit Watchlist Title" : (isFromSearch ? "Customize & Save" : "Add Custom Title")}</h2>
+      <div class="wl-modal-grid">
+        <div class="field full">
+          <label for="mTitle">Title</label>
+          <input id="mTitle" type="text" placeholder="e.g. Avengers: Endgame or Queen of Tears" value="${DB.esc(item.title || "")}">
+        </div>
+        <div class="field">
+          <label for="mKind">Category</label>
+          <select id="mKind">
+            <option value="movie" ${item.kind !== "series" ? "selected" : ""}>Movie</option>
+            <option value="series" ${item.kind === "series" ? "selected" : ""}>Series / Drama</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="mStatus">Status</label>
+          <select id="mStatus">
+            <option value="plan" ${(item.status || "plan") === "plan" ? "selected" : ""}>Up Next</option>
+            <option value="watching" ${item.status === "watching" ? "selected" : ""}>Watching</option>
+            <option value="completed" ${item.status === "completed" ? "selected" : ""}>Completed</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="mRating">Rating (1.0 – 10.0)</label>
+          <div class="wl-star-picker">
+            <input id="mRating" type="range" min="1" max="10" step="0.1" value="${startRating.toFixed(1)}">
+            <span class="wl-star-val" id="mRatingVal">★ ${startRating.toFixed(1)}</span>
+          </div>
+        </div>
+        <div class="field" id="mDurField">
+          <label for="mDuration">Movie Duration (mins)</label>
+          <input id="mDuration" type="number" min="1" max="999" placeholder="e.g. 148" value="${item.kind !== "series" ? getMovieMins(item) : (Number(item.durationMins) || 120)}">
+        </div>
+        <div class="field" id="mEpTotalField">
+          <label for="mTotalEps">Total Episodes</label>
+          <input id="mTotalEps" type="number" min="1" max="5000" placeholder="e.g. 16" value="${item.kind === "series" ? getSeriesTotalEps(item) : (Number(item.totalEpisodes) || 16)}">
+        </div>
+        <div class="field" id="mEpLenField">
+          <label for="mEpLen">Mins per Episode</label>
+          <input id="mEpLen" type="number" min="1" max="300" placeholder="e.g. 45" value="${item.kind === "series" ? getSeriesEpMins(item) : 45}">
+        </div>
+        <div class="field" id="mEpWatchedField">
+          <label for="mWatchedEps">Episodes Watched</label>
+          <input id="mWatchedEps" type="number" min="0" max="5000" placeholder="0" value="${Number(item.watchedEpisodes) || 0}">
+        </div>
+        <div class="field">
+          <label for="mYear">Release Year</label>
+          <input id="mYear" type="text" placeholder="e.g. 2024" value="${DB.esc(item.year || "")}">
+        </div>
+        <div class="field">
+          <label for="mGenre">Genre</label>
+          <input id="mGenre" type="text" placeholder="e.g. Action • Sci-Fi" value="${DB.esc(item.genre || "")}">
+        </div>
+        <div class="field full">
+          <label for="mPoster">Poster Image URL (optional)</label>
+          <input id="mPoster" type="url" placeholder="https://…" value="${DB.esc(item.backupPoster || item.poster || "")}">
+        </div>
+        <div class="field full">
+          <label for="mNotes">Notes / Cast</label>
+          <textarea id="mNotes" rows="2" placeholder="Optional notes…">${DB.esc(item.notes || item.cast || "")}</textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="left ghost" id="mCancel">Cancel</button>
+        <button type="button" class="primary" id="mSave">${isEdit ? "Save Changes" : "Save to Watchlist"}</button>
+      </div>
+    `;
+
+    const close = DB.modal(node);
+    const kindSel = node.querySelector("#mKind");
+    const durField = node.querySelector("#mDurField");
+    const epTotalField = node.querySelector("#mEpTotalField");
+    const epLenField = node.querySelector("#mEpLenField");
+    const epWatchedField = node.querySelector("#mEpWatchedField");
+    const ratingInput = node.querySelector("#mRating");
+    const ratingVal = node.querySelector("#mRatingVal");
+
+    const syncKindFields = () => {
+      const isSeries = kindSel.value === "series";
+      durField.style.display = isSeries ? "none" : "";
+      epTotalField.style.display = isSeries ? "" : "none";
+      epLenField.style.display = isSeries ? "" : "none";
+      epWatchedField.style.display = isSeries ? "" : "none";
+    };
+    syncKindFields();
+    kindSel.onchange = syncKindFields;
+
+    ratingInput.oninput = () => {
+      ratingVal.textContent = `★ ${Number(ratingInput.value).toFixed(1)}`;
+    };
+
+    node.querySelector("#mCancel").onclick = close;
+    node.querySelector("#mSave").onclick = () => {
+      const title = node.querySelector("#mTitle").value.trim();
+      if (!title) {
+        node.querySelector("#mTitle").focus();
+        return;
+      }
+      const kind = kindSel.value === "series" ? "series" : "movie";
+      const updated = {
+        id: existing ? existing.id : DB.uid(),
+        imdbId: item.imdbId || "",
+        extId: item.extId || "",
+        kind,
+        title,
+        status: node.querySelector("#mStatus").value,
+        rating: Number(ratingInput.value) || 8.5,
+        durationMins: kind === "movie" ? Math.max(1, parseInt(node.querySelector("#mDuration").value, 10) || 120) : 0,
+        episodeMins: kind === "series" ? Math.max(1, parseInt(node.querySelector("#mEpLen").value, 10) || 45) : 0,
+        totalEpisodes: kind === "series" ? Math.max(1, parseInt(node.querySelector("#mTotalEps").value, 10) || 16) : 0,
+        watchedEpisodes: kind === "series" ? Math.max(0, parseInt(node.querySelector("#mWatchedEps").value, 10) || 0) : 0,
+        year: node.querySelector("#mYear").value.trim(),
+        genre: node.querySelector("#mGenre").value.trim(),
+        network: item.network || "",
+        poster: node.querySelector("#mPoster").value.trim(),
+        notes: node.querySelector("#mNotes").value.trim(),
+        fav: existing ? Boolean(existing.fav) : false,
+        addedAt: existing ? existing.addedAt : Date.now()
+      };
+      if (updated.kind === "series" && updated.totalEpisodes > 0 && updated.watchedEpisodes >= updated.totalEpisodes) {
+        updated.watchedEpisodes = updated.totalEpisodes;
+        updated.status = "completed";
+      }
+
+      const curList = loadWatchlist();
+      if (existing) {
+        const idx = curList.findIndex(x => x.id === existing.id);
+        if (idx !== -1) curList[idx] = updated;
+      } else {
+        curList.unshift(updated);
+      }
+      saveWatchlist(curList);
+      close();
+    };
+  }
+
+  function renderSavedList() {
+    const container = $("watchlistContainer");
+    const all = loadWatchlist();
+
+    const filtered = all.filter(item => {
+      if (state.filter === "movie" && item.kind !== "movie") return false;
+      if (state.filter === "series" && item.kind !== "series") return false;
+      if (state.filter === "plan" && (item.status || "plan") !== "plan") return false;
+      if (state.filter === "watching" && item.status !== "watching") return false;
+      if (state.filter === "completed" && item.status !== "completed") return false;
+      if (state.filter === "fav" && !item.fav) return false;
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (state.sort === "rating") return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+      if (state.sort === "title") return String(a.title || "").localeCompare(String(b.title || ""));
+      if (state.sort === "length") {
+        return getItemWatchMins(b) - getItemWatchMins(a);
+      }
+      return (b.addedAt || 0) - (a.addedAt || 0);
+    });
+
+    if (!filtered.length) {
+      const guest = DB.isGuest();
+      container.innerHTML = `
+        <div class="wl-empty">
+          <div class="wl-empty-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
+          </div>
+          <h3>${guest ? "Sign In to Access Your Watchlist" : (all.length ? "No titles in this filter" : "Your Watchlist is Empty")}</h3>
+          <p>${guest
+            ? "Sign in with your Project 23 account to search, save, and sync your movies and dramas across all your devices."
+            : (all.length
+              ? "Switch the filter pills above to view your other saved movies and series."
+              : "Start typing any movie, drama, or series in the search bar above to add titles to your watchlist.")}</p>
+          ${guest ? `<button type="button" class="primary" id="wlEmptySignInBtn" style="margin-top:.45rem;">Sign in to continue</button>` : ""}
+        </div>
+      `;
+      const signInBtn = $("wlEmptySignInBtn");
+      if (signInBtn) signInBtn.onclick = () => ensureAccountAccess();
+      return;
+    }
+
+    container.innerHTML = `<div class="wl-grid">
+      ${filtered.map(item => {
+        const isMovie = item.kind !== "series";
+        const movieMins = isMovie ? getMovieMins(item) : 0;
+        const totalEps = !isMovie ? getSeriesTotalEps(item) : 0;
+        const itemTotalMins = getItemWatchMins(item);
+        const specBadge = isMovie
+          ? `⏱ ${fmtDuration(movieMins)}`
+          : `📺 ${fmtEpisodes(totalEps)}`;
+        const scoreBadge = Number(item.rating) > 0 ? `★ ${Number(item.rating).toFixed(1)}` : "★ —";
+        const status = item.status || "plan";
+        const watchedEps = Math.max(0, Number(item.watchedEpisodes) || 0);
+        const pct = totalEps > 0 ? Math.min(100, Math.round((watchedEps / totalEps) * 100)) : 0;
+        const metaParts = [
+          item.year,
+          item.genre,
+          isMovie ? `${fmtDuration(movieMins)} (${movieMins}m)` : `${totalEps} eps • ${fmtDuration(itemTotalMins)}`
+        ].filter(Boolean).join(" • ");
+
+        return `
+          <article class="wl-card" data-id="${DB.esc(item.id)}">
+            <div class="wl-poster">
+              ${item.poster
+                ? `<img class="wl-card-img" src="${DB.esc(item.poster)}" alt="${DB.esc(item.title)}" loading="lazy" referrerpolicy="no-referrer">`
+                : `<div class="wl-poster-fallback">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
+                    <strong>${DB.esc(item.title)}</strong>
+                  </div>`}
+              <div class="wl-poster-top">
+                <span class="wl-kind-chip ${isMovie ? "movie" : "series"}">${isMovie ? "Movie" : "Series"}</span>
+                <button type="button" class="wl-fav-btn ${item.fav ? "active" : ""}" data-fav="${DB.esc(item.id)}" aria-label="Favorite">
+                  <svg viewBox="0 0 24 24" fill="${item.fav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </button>
+              </div>
+              <div class="wl-poster-bottom">
+                <button type="button" class="wl-rating-pill" data-edit="${DB.esc(item.id)}" title="Click to edit rating">${scoreBadge}</button>
+                <span class="wl-length-pill">${DB.esc(specBadge)}</span>
+              </div>
+            </div>
+
+            <div class="wl-body">
+              <div>
+                <h3 class="wl-title" title="${DB.esc(item.title)}">${DB.esc(item.title)}</h3>
+                <div class="wl-meta-line">${DB.esc(metaParts || (isMovie ? "Feature Film" : "Online Series"))}</div>
+              </div>
+
+              ${!isMovie ? `
+                <div class="wl-ep-box">
+                  <div class="wl-ep-row">
+                    <span>Ep ${watchedEps} / ${totalEps} <span class="wl-time-tag">• ${fmtDuration(itemTotalMins)}</span></span>
+                    <div class="wl-ep-controls">
+                      <button type="button" class="wl-ep-step" data-ep-delta="-1" data-id="${DB.esc(item.id)}">−</button>
+                      <button type="button" class="wl-ep-step" data-ep-delta="1" data-id="${DB.esc(item.id)}">+</button>
+                    </div>
+                  </div>
+                  ${totalEps > 0 ? `<div class="wl-ep-track"><div class="wl-ep-bar" style="width:${pct}%"></div></div>` : ""}
+                </div>
+              ` : `
+                <div class="wl-ep-box">
+                  <div class="wl-ep-row">
+                    <span>⏱ Total Time</span>
+                    <span class="wl-time-tag">${fmtDuration(movieMins)} (${movieMins}m)</span>
+                  </div>
+                </div>
+              `}
+
+              <div class="wl-foot">
+                <button type="button" class="wl-status-btn ${status}" data-cycle-status="${DB.esc(item.id)}" title="Click to change watch status">
+                  ${fmtStatusLabel(status)}
+                </button>
+                ${item.imdbId ? `<a class="wl-icon-act" href="https://www.imdb.com/title/${DB.esc(item.imdbId)}/" target="_blank" rel="noopener noreferrer" title="View on IMDb" aria-label="View on IMDb">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>
+                </a>` : ""}
+                <button type="button" class="wl-icon-act" data-edit="${DB.esc(item.id)}" title="Edit details" aria-label="Edit details">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                </button>
+                <button type="button" class="wl-icon-act del" data-del="${DB.esc(item.id)}" title="Remove" aria-label="Remove">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                </button>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("")}
+    </div>`;
+
+    container.querySelectorAll(".wl-card-img").forEach(img => {
+      img.onerror = () => {
+        const card = img.closest(".wl-card");
+        const title = img.getAttribute("alt") || "Title";
+        const fb = document.createElement("div");
+        fb.className = "wl-poster-fallback";
+        fb.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="2.5"/><path d="M7 2v20M17 2v20M2 12h20"/></svg><strong>${DB.esc(title)}</strong>`;
+        img.replaceWith(fb);
+      };
+    });
+
+    container.querySelectorAll("[data-fav]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadWatchlist();
+        const it = list.find(x => x.id === btn.dataset.fav);
+        if (!it) return;
+        it.fav = !it.fav;
+        saveWatchlist(list);
+      };
+    });
+
+    container.querySelectorAll("[data-cycle-status]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadWatchlist();
+        const it = list.find(x => x.id === btn.dataset.cycleStatus);
+        if (!it) return;
+        const order = ["plan", "watching", "completed"];
+        const next = order[(order.indexOf(it.status || "plan") + 1) % order.length];
+        it.status = next;
+        if (next === "completed" && it.kind === "series" && Number(it.totalEpisodes) > 0) {
+          it.watchedEpisodes = Number(it.totalEpisodes);
+        }
+        saveWatchlist(list);
+      };
+    });
+
+    container.querySelectorAll("[data-ep-delta]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadWatchlist();
+        const it = list.find(x => x.id === btn.dataset.id);
+        if (!it) return;
+        const delta = Number(btn.dataset.epDelta) || 0;
+        const maxEps = Number(it.totalEpisodes) || 9999;
+        it.watchedEpisodes = Math.max(0, Math.min(maxEps, (Number(it.watchedEpisodes) || 0) + delta));
+        if (it.watchedEpisodes > 0 && (it.status || "plan") === "plan") it.status = "watching";
+        if (Number(it.totalEpisodes) > 0 && it.watchedEpisodes >= Number(it.totalEpisodes)) {
+          it.status = "completed";
+        }
+        saveWatchlist(list);
+      };
+    });
+
+    container.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadWatchlist();
+        const it = list.find(x => x.id === btn.dataset.edit);
+        if (it) openItemModal(it, false);
+      };
+    });
+
+    container.querySelectorAll("[data-del]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadWatchlist();
+        const idx = list.findIndex(x => x.id === btn.dataset.del);
+        if (idx === -1) return;
+        const removed = list[idx];
+        list.splice(idx, 1);
+        saveWatchlist(list);
+        DB.toast("Removed", `${removed.title} was removed from your Watchlist.`, 2400);
+      };
+    });
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, select, textarea, [role=\"button\"], [role=\"tab\"]");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+
+  const searchInput = $("catalogSearchInput");
+  const clearBtn = $("clearCatalogBtn");
+  const dropdown = $("acDropdown");
+
+  searchInput.addEventListener("pointerdown", e => {
+    if (DB.isGuest()) {
+      e.preventDefault();
+      searchInput.blur();
+      ensureAccountAccess();
+    }
+  });
+
+  searchInput.addEventListener("focus", () => {
+    if (DB.isGuest()) {
+      searchInput.blur();
+      ensureAccountAccess();
+      return;
+    }
+    if (searchInput.value.trim().length >= 2 && state.searchResults.length) {
+      dropdown.classList.add("open");
+    }
+  });
+
+  searchInput.addEventListener("input", async () => {
+    if (DB.isGuest()) {
+      searchInput.value = "";
+      searchInput.blur();
+      await ensureAccountAccess();
+      return;
+    }
+    const val = searchInput.value.trim();
+    clearBtn.classList.toggle("show", Boolean(val));
+    clearTimeout(state.debounceTimer);
+    if (val.length < 2) {
+      dropdown.classList.remove("open");
+      updateSearchBarPoster([]);
+      return;
+    }
+    state.debounceTimer = setTimeout(() => {
+      runLiveTypeahead(val);
+    }, 140);
+  });
+
+  searchInput.addEventListener("keydown", async e => {
+    if (DB.isGuest()) {
+      e.preventDefault();
+      searchInput.blur();
+      await ensureAccountAccess();
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      clearTimeout(state.debounceTimer);
+      runLiveTypeahead(searchInput.value);
+    } else if (e.key === "Escape") {
+      dropdown.classList.remove("open");
+    }
+  });
+
+  clearBtn.onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    searchInput.value = "";
+    clearBtn.classList.remove("show");
+    dropdown.classList.remove("open");
+    updateSearchBarPoster([]);
+    searchInput.focus();
+  };
+
+  $("closeAcBtn").onclick = () => dropdown.classList.remove("open");
+
+  const sortBtn = $("sortMenuBtn");
+  const sortPopup = $("sortMenuPopup");
+  const sortWrap = $("sortMenuWrap");
+
+  sortBtn.onclick = async e => {
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    const isOpen = sortPopup.classList.toggle("open");
+    sortBtn.setAttribute("aria-expanded", String(isOpen));
+  };
+
+  sortPopup.querySelectorAll("[data-sort]").forEach(opt => {
+    opt.onclick = async () => {
+      if (!(await ensureAccountAccess())) return;
+      state.sort = opt.dataset.sort;
+      sortPopup.querySelectorAll("[data-sort]").forEach(o => {
+        const active = o === opt;
+        o.classList.toggle("active", active);
+        o.setAttribute("aria-checked", String(active));
+      });
+      sortPopup.classList.remove("open");
+      sortBtn.setAttribute("aria-expanded", "false");
+      renderSavedList();
+    };
+  });
+
+  document.addEventListener("pointerdown", e => {
+    const wrap = $("searchWrap");
+    if (wrap && !wrap.contains(e.target)) {
+      dropdown.classList.remove("open");
+    }
+    if (sortWrap && !sortWrap.contains(e.target)) {
+      sortPopup.classList.remove("open");
+      sortBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  $("addCustomBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    openItemModal(null, false);
+  };
+
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.onclick = async () => {
+      if (!(await ensureAccountAccess())) return;
+      state.filter = btn.dataset.filter;
+      document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", b === btn));
+      renderSavedList();
+    };
+  });
+
+  document.addEventListener("keydown", async e => {
+    if (e.key === "/" && !["INPUT", "TEXTAREA", "SELECT"].includes((document.activeElement || {}).tagName)) {
+      e.preventDefault();
+      if (!(await ensureAccountAccess())) return;
+      searchInput.focus();
+    } else if (e.key === "Escape") {
+      sortPopup.classList.remove("open");
+      sortBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  const refreshFromCloud = () => {
+    renderStats();
+    renderSavedList();
+    syncDropdownButtons();
+    backfillSavedWatchlistMetadata();
+  };
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(refreshFromCloud);
+  }
+  document.addEventListener("p23watchlist", () => {
+    renderStats();
+    renderSavedList();
+    syncDropdownButtons();
+  });
+
+  async function backfillSavedWatchlistMetadata() {
+    const list = loadWatchlist();
+    const needsEnrich = list.filter(x =>
+      !x.poster ||
+      (x.kind !== "series" && (!x.durationMins || Number(x.durationMins) === 0)) ||
+      (x.kind === "series" && (!x.totalEpisodes || Number(x.totalEpisodes) === 0))
+    );
+    if (!needsEnrich.length) return;
+    let changed = false;
+    for (const item of needsEnrich) {
+      const meta = await enrichSingleItemMetadata(item);
+      if (meta) {
+        if (item.kind !== "series" && meta.durationMins > 0) {
+          item.durationMins = meta.durationMins;
+          changed = true;
+        } else if (item.kind === "series") {
+          if (meta.totalEpisodes > 0) { item.totalEpisodes = meta.totalEpisodes; changed = true; }
+          if (meta.episodeMins > 0) { item.episodeMins = meta.episodeMins; changed = true; }
+        }
+        if (!item.poster && meta.poster) {
+          item.poster = meta.poster;
+          changed = true;
+        }
+      }
+    }
+    if (changed) saveWatchlist(list);
+  }
+
+  renderStats();
+  renderSavedList();
+  backfillSavedWatchlistMetadata();
+});
+</script>
+</body>
+</html>

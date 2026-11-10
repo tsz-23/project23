@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Finance | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 90%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --fin-green: #30d158;
+    --fin-blue: #0a84ff;
+    --fin-purple: #bf5af2;
+    --fin-amber: #ff9f0a;
+    --fin-pink: #ff375f;
+    --sheets-green: #10b981;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  main {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 1.15rem 1rem 4rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.42rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.4rem, 7.5vw, 4.2rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.92rem, 1.8vw, 1.03rem);
+    max-width: 590px;
+    line-height: 1.5;
+  }
+
+  .fn-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  .apple-panel {
+    position: relative;
+    background:
+      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 58%),
+      var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 20px 44px -16px rgba(0, 0, 0, 0.4);
+    border-radius: 26px;
+    padding: clamp(1.1rem, 2.5vw, 1.55rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.05rem;
+  }
+
+  .fn-sheets-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--sheets-green) 11%, var(--glass-elevated));
+    border: 1px solid color-mix(in srgb, var(--sheets-green) 36%, var(--line));
+    flex-wrap: wrap;
+  }
+  .fn-sheets-info {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 0;
+    flex: 1 1 240px;
+  }
+  .fn-sheets-ic {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--sheets-green) 22%, var(--card-solid));
+    color: var(--sheets-green);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .fn-sheets-ic svg {
+    width: 20px;
+    height: 20px;
+  }
+  .fn-sheets-txt {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+  }
+  .fn-sheets-txt b {
+    font-family: var(--display);
+    font-size: 0.92rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+    flex-wrap: wrap;
+  }
+  .fn-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    display: inline-block;
+  }
+  .fn-status-dot.connected {
+    background: var(--sheets-green);
+    box-shadow: 0 0 8px var(--sheets-green);
+  }
+  .fn-sheets-txt span {
+    font-size: 0.76rem;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fn-sheets-txt a {
+    color: var(--sheets-green);
+    font-weight: 700;
+    text-decoration: underline;
+  }
+  .fn-sheets-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  .fn-btn {
+    height: 38px;
+    min-height: 38px;
+    padding: 0 0.88rem;
+    border-radius: 12px;
+    font-size: 0.81rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.15s var(--apple-ease), border-color 0.2s, background 0.2s;
+  }
+  .fn-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .fn-btn.primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: var(--glow);
+  }
+  .fn-btn.sheets-btn {
+    background: var(--sheets-green);
+    color: #051b11;
+    border-color: transparent;
+    font-weight: 700;
+  }
+  .fn-btn.sheets-btn:hover {
+    filter: brightness(1.08);
+  }
+  .fn-btn.danger-red {
+    background: color-mix(in srgb, #ff3b30 14%, var(--glass-elevated));
+    border-color: color-mix(in srgb, #ff3b30 45%, var(--line));
+    color: #ff453a;
+    font-weight: 700;
+  }
+  .fn-btn.danger-red:hover {
+    background: #ff3b30;
+    border-color: #ff3b30;
+    color: #ffffff;
+  }
+  .fn-btn svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .stat {
+    padding: 0.85rem 1rem;
+    border-radius: 16px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 0.16rem;
+    min-width: 0;
+  }
+  .stat b {
+    display: block;
+    font-family: var(--display);
+    font-size: clamp(1.28rem, 2.4vw, 1.72rem);
+    font-weight: 800;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stat.green b {
+    color: var(--fin-green);
+  }
+  .stat.accent b {
+    color: var(--accent3, var(--accent));
+  }
+  .stat span.muted {
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .fn-entry-box {
+    background: var(--glass-elevated);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 0.95rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .fn-entry-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .fn-entry-head b {
+    font-family: var(--display);
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+  }
+  .fn-bank-chips {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+  .fn-bank-chip {
+    padding: 0.18rem 0.56rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fn-bank-chip:hover,
+  .fn-bank-chip.active {
+    color: var(--on-accent);
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    border-color: transparent;
+    transform: none;
+  }
+
+  .fn-entry-grid {
+    display: grid;
+    grid-template-columns: 150px 1.6fr 1fr 130px auto;
+    gap: 0.6rem;
+    align-items: end;
+  }
+  .fn-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.24rem;
+    min-width: 0;
+  }
+  .fn-field label {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin: 0;
+  }
+  .fn-field input {
+    height: 42px;
+    border-radius: 12px;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    padding: 0 0.75rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    width: 100%;
+  }
+  .fn-amount-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .fn-amount-wrap .cur-sym {
+    position: absolute;
+    left: 0.72rem;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--muted);
+    pointer-events: none;
+  }
+  .fn-amount-wrap input {
+    padding-left: 1.55rem;
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+
+  .fn-charts-grid {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 1.15rem;
+  }
+  .fn-chart-card {
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    min-width: 0;
+  }
+  .fn-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .fn-chart-head b {
+    font-family: var(--display);
+    font-size: 0.98rem;
+    color: var(--text);
+  }
+  .fn-chart-sub {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  .fn-bars-wrap {
+    height: 205px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.42rem;
+    padding: 1.4rem 0.25rem 0.2rem;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .fn-bar-col {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.36rem;
+    cursor: pointer;
+    position: relative;
+  }
+  .fn-bar-val {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: color 0.16s, transform 0.16s;
+  }
+  .fn-bar-track {
+    width: 100%;
+    max-width: 38px;
+    height: 140px;
+    background: color-mix(in srgb, var(--card-solid) 65%, transparent);
+    border-radius: 9px 9px 4px 4px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+  }
+  .fn-bar-fill {
+    width: 100%;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+    border-radius: 7px 7px 0 0;
+    transition: height 0.35s var(--apple-ease), filter 0.18s;
+    min-height: 3px;
+  }
+  .fn-bar-col.active .fn-bar-fill {
+    background: linear-gradient(180deg, var(--fin-green), #12b886);
+    box-shadow: 0 0 14px rgba(48, 209, 88, 0.4);
+  }
+  .fn-bar-col:hover .fn-bar-val,
+  .fn-bar-col.active .fn-bar-val {
+    color: var(--text);
+    transform: translateY(-2px);
+  }
+  .fn-bar-lbl {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .fn-bar-col.active .fn-bar-lbl {
+    color: var(--fin-green);
+  }
+
+  .fn-breakdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.58rem;
+    max-height: 205px;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+  }
+  .fn-bd-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+  }
+  .fn-bd-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .fn-bd-name {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .fn-bd-amt {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--accent3, var(--accent));
+    white-space: nowrap;
+  }
+  .fn-bd-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--card-solid);
+    overflow: hidden;
+  }
+  .fn-bd-bar {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.3s var(--apple-ease);
+  }
+
+  .fn-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .fn-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding: 0.1rem 0;
+    flex: 1 1 300px;
+  }
+  .fn-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .fn-pill {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.34rem 0.76rem;
+    min-height: 34px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.16s;
+  }
+  .fn-pill:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .fn-pill[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    border-color: transparent;
+  }
+
+  .fn-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 0 1 280px;
+    min-width: 200px;
+  }
+  .fn-search-box {
+    flex: 1;
+    height: 36px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .fn-search-box svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+  }
+  .fn-search-box input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  .fn-search-box input:focus {
+    outline: none;
+  }
+
+  .fn-month-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+  .fn-month-block {
+    background: var(--glass-elevated);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  .fn-month-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem 1.05rem;
+    background: color-mix(in srgb, var(--card-solid) 80%, transparent);
+    border-bottom: 1.5px solid var(--line);
+  }
+  .fn-month-hdr b {
+    font-family: var(--display);
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .fn-month-hdr span {
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--fin-green);
+  }
+
+  .fn-sheet-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .fn-sheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+  }
+  .fn-sheet-table th {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--card-solid) 55%, transparent);
+    padding: 0.62rem 0.9rem;
+    border-bottom: 1.5px solid var(--line);
+    border-right: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+    text-align: center;
+  }
+  .fn-sheet-table th:last-child {
+    border-right: 0;
+  }
+  .fn-sheet-table td {
+    padding: 0.62rem 0.9rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+    border-right: 1px solid color-mix(in srgb, var(--line) 50%, transparent);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .fn-sheet-table td:last-child {
+    border-right: 0;
+  }
+  .fn-sheet-table tr:hover td {
+    background: color-mix(in srgb, var(--accent) 7%, transparent);
+  }
+  .fn-col-date {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    width: 126px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .fn-col-pay {
+    text-align: center;
+    width: 130px;
+    font-weight: 600;
+  }
+  .fn-pay-pill {
+    display: inline-block;
+    padding: 0.14rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    background: color-mix(in srgb, var(--accent) 15%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+    color: var(--text);
+  }
+  .fn-col-amt {
+    font-family: var(--mono);
+    font-weight: 700;
+    width: 130px;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .fn-col-amt.is-credit {
+    color: var(--fin-green);
+  }
+
+  .fn-date-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  .fn-date-input-wrap input[type="text"] {
+    width: 100%;
+    padding-right: 2.35rem !important;
+    font-family: var(--mono);
+    font-size: 0.83rem;
+  }
+  .fn-cal-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    color: var(--accent);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .fn-cal-btn:hover {
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-solid));
+    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+    color: var(--text);
+    transform: translateY(-50%) scale(1.04);
+  }
+  .fn-cal-btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .fn-cal-pop {
+    position: fixed;
+    z-index: 10050;
+    width: 284px;
+    padding: 0.85rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--card-solid) 94%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    box-shadow: 0 22px 54px -12px rgba(0, 0, 0, 0.5), var(--glass-spec);
+    animation: fnPopIn 0.18s var(--apple-spring);
+    user-select: none;
+  }
+  @keyframes fnPopIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .fn-cal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+    padding: 0 0.15rem;
+  }
+  .fn-cal-title {
+    font-family: var(--display);
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .fn-cal-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .fn-cal-nav-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .fn-cal-nav-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: none;
+  }
+  .fn-cal-nav-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  .fn-cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+  .fn-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+  .fn-cal-day {
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .fn-cal-day:hover {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    transform: none;
+  }
+  .fn-cal-day.is-out {
+    color: var(--muted);
+    opacity: 0.42;
+  }
+  .fn-cal-day.is-today {
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .fn-cal-day.is-selected {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: var(--on-accent, #fff) !important;
+    border-color: transparent !important;
+    font-weight: 800;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 42%, transparent);
+  }
+  .fn-cal-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.65rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--line);
+  }
+  .fn-cal-foot-btn {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 0.65rem;
+    border-radius: 8px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    cursor: pointer;
+  }
+  .fn-cal-foot-btn.today {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+  }
+  .fn-cal-foot-btn:hover {
+    border-color: var(--accent);
+    transform: none;
+  }
+
+  .fn-year-dd {
+    position: relative;
+    display: inline-block;
+  }
+  .fn-year-dd-btn {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 0.72rem 0 0.82rem;
+    border-radius: 999px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    cursor: pointer;
+    box-shadow: var(--glass-spec);
+    transition: all 0.18s var(--apple-ease);
+  }
+  .fn-year-dd-btn:hover,
+  .fn-year-dd.open .fn-year-dd-btn {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-solid));
+    transform: none;
+  }
+  .fn-year-dd-btn svg {
+    width: 13px;
+    height: 13px;
+    color: var(--muted);
+    transition: transform 0.2s var(--apple-ease);
+  }
+  .fn-year-dd.open .fn-year-dd-btn svg {
+    transform: rotate(180deg);
+    color: var(--accent);
+  }
+  .fn-year-dd-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 116px;
+    padding: 0.32rem;
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--card-solid) 94%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    box-shadow: 0 16px 38px -10px rgba(0, 0, 0, 0.45), var(--glass-spec);
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: fnPopIn 0.16s var(--apple-spring);
+  }
+  .fn-year-dd-menu[hidden] {
+    display: none !important;
+  }
+  .fn-year-opt {
+    width: 100%;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.65rem;
+    border-radius: 9px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background 0.14s;
+  }
+  .fn-year-opt:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    transform: none;
+  }
+  .fn-year-opt.active {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+    font-weight: 800;
+  }
+  .fn-year-opt svg {
+    width: 13px;
+    height: 13px;
+    color: var(--accent);
+  }
+  .fn-col-act {
+    width: 78px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .fn-row-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+    display: inline-grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .fn-row-btn:hover {
+    color: var(--text);
+    background: var(--card-solid);
+    border-color: var(--line);
+    transform: none;
+  }
+  .fn-row-btn.del:hover {
+    color: #ff453a;
+    border-color: rgba(255, 69, 58, 0.4);
+  }
+  .fn-row-btn svg {
+    width: 13.5px;
+    height: 13.5px;
+  }
+
+  .fn-total-row td {
+    background: color-mix(in srgb, var(--card-solid) 88%, transparent) !important;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 0.92rem;
+    border-top: 1.5px solid var(--line);
+    border-bottom: 0;
+  }
+  .fn-total-label {
+    text-align: right;
+    padding-right: 1rem !important;
+    color: var(--text);
+  }
+  .fn-total-val {
+    font-family: var(--mono) !important;
+    font-weight: 800;
+    color: var(--fin-green) !important;
+    text-align: right;
+    font-size: 0.94rem;
+  }
+
+  .fn-empty {
+    text-align: center;
+    padding: 2.6rem 1.2rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--card-2) 55%, transparent);
+    border: 1px dashed var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .fn-empty-ic {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+  }
+  .fn-empty-ic svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 900px) {
+    .fn-entry-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .fn-entry-grid .full-sm {
+      grid-column: 1 / -1;
+    }
+    .fn-charts-grid {
+      grid-template-columns: 1fr;
+    }
+    .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 560px) {
+    main {
+      padding: 0.8rem 0.65rem 6.5rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .fn-entry-grid {
+      grid-template-columns: 1fr;
+    }
+    .fn-sheets-actions {
+      width: 100%;
+    }
+    .fn-sheets-actions .fn-btn {
+      flex: 1;
+      justify-content: center;
+    }
+    .fn-search-wrap {
+      flex: 1 1 100%;
+    }
+    .fn-sheet-table th,
+    .fn-sheet-table td {
+      padding: 0.52rem 0.55rem;
+      font-size: 0.78rem;
+    }
+    .fn-col-date {
+      width: auto;
+      font-size: 0.73rem;
+    }
+    .fn-col-pay {
+      width: auto;
+    }
+    .fn-col-amt {
+      width: auto;
+    }
+  }
+</style>
+</head>
+<body data-page="finance">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>SPENDING TRACKER</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Finance &amp; Expenses Tracker
+      </span>
+    </div>
+  </div>
+
+  <div class="fn-shell">
+    <section class="panel apple-panel" aria-label="Finance Overview and Entry">
+      <div class="fn-sheets-bar">
+        <div class="fn-sheets-info">
+          <div class="fn-sheets-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/><line x1="10" y1="9" x2="10" y2="21"/></svg>
+          </div>
+          <div class="fn-sheets-txt">
+            <b>
+              <i class="fn-status-dot" id="sheetStatusDot"></i>
+              <span id="sheetStatusTitle">Google Sheets Not Connected</span>
+            </b>
+            <span id="sheetStatusSub">Connect a Google Sheet to import existing transactions and auto-sync new entries.</span>
+          </div>
+        </div>
+        <div class="fn-sheets-actions">
+          <a href="#" target="_blank" rel="noopener noreferrer" class="fn-btn" id="openSheetLinkBtn" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <span>Open Sheet</span>
+          </a>
+          <button type="button" class="fn-btn" id="syncSheetNowBtn" hidden title="Pull from & push to Google Sheets now">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <span>Sync Now</span>
+          </button>
+          <button type="button" class="fn-btn sheets-btn" id="connectSheetBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span id="connectSheetBtnLbl">Connect Google Sheet</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat green"><b id="statMonthSpend">$0.00</b><span class="muted" id="statMonthSub">This Month</span></div>
+        <div class="stat"><b id="statTotalSpend">$0.00</b><span class="muted" id="statTotalSub">Total Tracked</span></div>
+        <div class="stat accent"><b id="statAvgMonth">$0.00</b><span class="muted">Monthly Average</span></div>
+        <div class="stat"><b id="statTopBank">—</b><span class="muted" id="statTopBankSub">Primary Payment</span></div>
+      </div>
+
+      <div class="fn-entry-box">
+        <div class="fn-entry-head">
+          <b>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>
+            New Transaction
+          </b>
+          <div class="fn-bank-chips" id="quickBankChips" aria-label="Quick select payment bank">
+            <button type="button" class="fn-bank-chip" data-bank="CIBC">CIBC</button>
+            <button type="button" class="fn-bank-chip" data-bank="HSBC">HSBC</button>
+            <button type="button" class="fn-bank-chip active" data-bank="RBC">RBC</button>
+            <button type="button" class="fn-bank-chip" data-bank="TD">TD</button>
+            <button type="button" class="fn-bank-chip" data-bank="BMO">BMO</button>
+            <button type="button" class="fn-bank-chip" data-bank="Scotiabank">Scotiabank</button>
+            <button type="button" class="fn-bank-chip" data-bank="Amex">Amex</button>
+            <button type="button" class="fn-bank-chip" data-bank="Cash">Cash</button>
+          </div>
+        </div>
+
+        <div class="fn-entry-grid">
+          <div class="fn-field">
+            <label for="txDateInput">Date</label>
+            <div class="fn-date-input-wrap" id="txDateWrap">
+              <input type="text" id="txDateInput" placeholder="MM/DD/YY" autocomplete="off" spellcheck="false">
+              <button type="button" class="fn-cal-btn" id="txDateCalBtn" title="Open calendar picker" aria-label="Open calendar picker">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="fn-field full-sm">
+            <label for="txDescInput">Transaction</label>
+            <input type="text" id="txDescInput" list="merchantSuggestions" placeholder="e.g. Apple Music Subscription" autocomplete="off">
+            <datalist id="merchantSuggestions"></datalist>
+          </div>
+          <div class="fn-field">
+            <label for="txBankInput">Payment Bank</label>
+            <input type="text" id="txBankInput" value="RBC" placeholder="e.g. CIBC" autocomplete="off">
+          </div>
+          <div class="fn-field">
+            <label for="txAmountInput">Amount ($)</label>
+            <div class="fn-amount-wrap">
+              <span class="cur-sym">$</span>
+              <input type="number" id="txAmountInput" step="0.01" placeholder="0.00" inputmode="decimal">
+            </div>
+          </div>
+          <button type="button" class="fn-btn primary full-sm" id="addTxBtn" style="height:42px;justify-content:center;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel apple-panel" aria-label="Monthly Spending Graphs">
+      <div class="fn-charts-grid">
+        <div class="fn-chart-card">
+          <div class="fn-chart-head">
+            <div>
+              <b>Monthly Spending Trend</b>
+              <div class="fn-chart-sub" id="barChartSub">Tap any month bar to filter transactions</div>
+            </div>
+            <div class="fn-year-dd" id="chartYearDropdown">
+              <button type="button" class="fn-year-dd-btn" id="chartYearBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Chart year">
+                <span id="chartYearLbl">2026</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="fn-year-dd-menu" id="chartYearMenu" role="listbox" hidden></div>
+            </div>
+          </div>
+          <div class="fn-bars-wrap" id="monthlyBarsWrap"></div>
+        </div>
+
+        <div class="fn-chart-card">
+          <div class="fn-chart-head">
+            <div>
+              <b id="breakdownTitle">Top Spending Breakdown</b>
+              <div class="fn-chart-sub" id="breakdownSub">By merchant &amp; payment method</div>
+            </div>
+            <div class="fn-bank-chips">
+              <button type="button" class="fn-bank-chip active" data-bd-mode="merchant">Merchants</button>
+              <button type="button" class="fn-bank-chip" data-bd-mode="payment">Payment</button>
+            </div>
+          </div>
+          <div class="fn-breakdown-list" id="breakdownList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel apple-panel" aria-label="Transactions Ledger">
+      <div class="fn-controls-bar">
+        <div class="fn-pills" id="monthFilterPills" role="tablist" aria-label="Filter by month"></div>
+        <div class="fn-search-wrap">
+          <div class="fn-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="txSearchInput" placeholder="Search transactions or bank…" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div id="ledgerContainer" aria-live="polite"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const TX_KEY = "p23.finance";
+  const META_KEY = "p23.financeMeta";
+  const $ = id => document.getElementById(id);
+
+  const MONTH_NAMES = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const state = {
+    monthFilter: "all",
+    chartYear: new Date().getFullYear(),
+    breakdownMode: "merchant",
+    searchQuery: "",
+    googleAccessToken: sessionStorage.getItem("p23.sheetsToken") || "",
+    syncInFlight: false
+  };
+
+  (function initDefaultDateInput() {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const dd = String(now.getDate()).padStart(2, "0");
+    const yy = String(now.getFullYear()).slice(-2);
+    $("txDateInput").value = `${mm}/${dd}/${yy}`;
+  })();
+
+  async function ensureAccountAccess() {
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    if (ok) {
+      await initDirectFirestoreSync();
+      renderAll();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, select, textarea, .fn-bar-col");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+    mainEl.addEventListener("focusin", e => {
+      if (!DB.isGuest()) return;
+      const inp = e.target.closest("input, select, textarea");
+      if (inp) {
+        inp.blur();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+
+  let directFirestoreBound = false;
+  let localTxCache = null;
+  let localMetaCache = null;
+  state.hasLoadedFromSheet = false;
+
+  function getUserDocRef() {
+    if (DB.isGuest() || !window.firebase || !firebase.firestore) return null;
+    const uid = typeof DB.userId === "function" ? DB.userId() : (DB.user && DB.user.uid);
+    if (!uid) return null;
+    return firebase.firestore().collection("users").doc(uid);
+  }
+
+  async function initDirectFirestoreSync() {
+    const userRef = getUserDocRef();
+    if (!userRef || directFirestoreBound) return;
+    directFirestoreBound = true;
+
+    try {
+      const [stateTxSnap, metaSnap, colTxSnap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("finance").get().catch(() => null),
+        userRef.collection("state").doc("financeMeta").get().catch(() => null),
+        userRef.collection("finance").get().catch(() => null),
+        userRef.get().catch(() => null)
+      ]);
+
+      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
+
+      if (metaSnap && metaSnap.exists) {
+        localMetaCache = metaSnap.data() || {};
+        DB.set(META_KEY, localMetaCache);
+      } else if (userData.financeMeta) {
+        localMetaCache = userData.financeMeta;
+        DB.set(META_KEY, localMetaCache);
+      }
+
+      let cloudTx = null;
+      if (stateTxSnap && stateTxSnap.exists && Array.isArray(stateTxSnap.data()?.items) && stateTxSnap.data().items.length) {
+        cloudTx = stateTxSnap.data().items;
+      } else if (colTxSnap && colTxSnap.docs && colTxSnap.docs.length) {
+        cloudTx = colTxSnap.docs.map(d => d.data());
+      } else if (Array.isArray(userData.financeTransactions) && userData.financeTransactions.length) {
+        cloudTx = userData.financeTransactions;
+      }
+
+      if (Array.isArray(cloudTx) && cloudTx.length) {
+        localTxCache = cloudTx;
+        DB.set(TX_KEY, localTxCache);
+      }
+
+      userRef.collection("state").doc("finance").onSnapshot(docSnap => {
+        if (state.syncInFlight) return;
+        if (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)) {
+          const items = docSnap.data().items;
+          if (items.length > 0 || !localTxCache || localTxCache.length === 0) {
+            localTxCache = items;
+            try { localStorage.setItem(TX_KEY, JSON.stringify(items)); } catch {}
+            renderAll();
+          }
+        }
+      }, () => {});
+
+      userRef.collection("state").doc("financeMeta").onSnapshot(docSnap => {
+        if (docSnap && docSnap.exists) {
+          const prevScript = localMetaCache ? localMetaCache.scriptUrl : "";
+          localMetaCache = docSnap.data() || {};
+          try { localStorage.setItem(META_KEY, JSON.stringify(localMetaCache)); } catch {}
+          renderSheetStatusBar();
+          if (localMetaCache.scriptUrl && (!state.hasLoadedFromSheet || localMetaCache.scriptUrl !== prevScript)) {
+            loadFullHistoryFromSheet(true);
+          }
+        }
+      }, () => {});
+    } catch {}
+  }
+
+  function loadTransactions() {
+    if (DB.isGuest()) return [];
+    if (Array.isArray(localTxCache)) return localTxCache.slice();
+    const raw = DB.get(TX_KEY, []);
+    return Array.isArray(raw) ? raw.slice() : [];
+  }
+
+  async function saveTransactions(list, pushToSheet = false) {
+    if (DB.isGuest()) {
+      await ensureAccountAccess();
+      return;
+    }
+    localTxCache = list.slice();
+    DB.set(TX_KEY, localTxCache);
+    if (typeof DB.flush === "function") DB.flush();
+
+    renderAll();
+
+    const userRef = getUserDocRef();
+    if (userRef) {
+      state.syncInFlight = true;
+      try {
+        const cleanList = JSON.parse(JSON.stringify(localTxCache));
+        await Promise.all([
+          userRef.collection("state").doc("finance").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {}),
+          userRef.set({ financeTransactions: cleanList }, { merge: true }).catch(() => {})
+        ]);
+      } catch {}
+      state.syncInFlight = false;
+    }
+
+
+  }
+
+  function loadFinanceMeta() {
+    if (DB.isGuest()) return { sheetUrl: "", spreadsheetId: "", gid: "0", sheetName: "Sheet1", scriptUrl: "", lastSyncedAt: 0 };
+    const raw = localMetaCache || DB.get(META_KEY, {}) || {};
+    return Object.assign({ sheetUrl: "", spreadsheetId: "", gid: "0", sheetName: "Sheet1", scriptUrl: "", lastSyncedAt: 0 }, raw);
+  }
+
+  async function saveFinanceMeta(patch) {
+    if (DB.isGuest()) return;
+    const next = Object.assign({}, loadFinanceMeta(), patch);
+    localMetaCache = next;
+    DB.set(META_KEY, next);
+    if (typeof DB.flush === "function") DB.flush();
+    const userRef = getUserDocRef();
+    if (userRef) {
+      try {
+        const cleanMeta = JSON.parse(JSON.stringify(next));
+        await Promise.all([
+          userRef.collection("state").doc("financeMeta").set(cleanMeta, { merge: true }).catch(() => {}),
+          userRef.set({ financeMeta: cleanMeta }, { merge: true }).catch(() => {})
+        ]);
+      } catch {}
+    }
+    renderSheetStatusBar();
+  }
+
+  function makeDateObj(y, m, d, rawStr) {
+    const yy = String(y).slice(-2);
+    const mdyShort = `${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}/${yy}`;
+    return {
+      iso: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`,
+      mdy: `${String(m).padStart(2, "0")}/${String(d).padStart(2, "0")}/${y}`,
+      mdyShort,
+      raw: rawStr !== undefined && rawStr !== "" ? rawStr : mdyShort,
+      year: y,
+      month: m,
+      day: d,
+      monthKey: `${y}-${String(m).padStart(2, "0")}`,
+      ts: new Date(y, m - 1, d, 12, 0, 0).getTime()
+    };
+  }
+
+  function parseFlexibleDate(str, fallbackYear) {
+    const s = String(str || "").trim();
+    if (!s) return null;
+    const mdy = s.match(/^(\d{1,2})[.\/\s-](\d{1,2})(?:[.\/\s-](\d{2,4}))?$/);
+    if (mdy) {
+      const m = parseInt(mdy[1], 10);
+      const d = parseInt(mdy[2], 10);
+      let y = mdy[3] !== undefined ? parseInt(mdy[3], 10) : (fallbackYear || new Date().getFullYear());
+      if (y < 100) y = y >= 70 ? 1900 + y : 2000 + y;
+      if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return makeDateObj(y, m, d, s);
+      }
+    }
+
+    const ymd = s.match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/);
+    if (ymd) {
+      const y = parseInt(ymd[1], 10);
+      const m = parseInt(ymd[2], 10);
+      const d = parseInt(ymd[3], 10);
+      if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        return makeDateObj(y, m, d);
+      }
+    }
+
+    const gviz = s.match(/^Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})\)$/i);
+    if (gviz) {
+      const y = parseInt(gviz[1], 10);
+      const m = parseInt(gviz[2], 10) + 1;
+      const d = parseInt(gviz[3], 10);
+      return makeDateObj(y, m, d);
+    }
+    return null;
+  }
+
+  function parseCurrencyAmount(val) {
+    if (typeof val === "number") {
+      return Number.isFinite(val) ? Number(val.toFixed(2)) : NaN;
+    }
+    const s = String(val ?? "").trim();
+    if (!s) return NaN;
+    const isParenNeg = /^\(.*\)$/.test(s);
+    const isMinusNeg = /[-−]/.test(s);
+    const numStr = s.replace(/[^0-9.]/g, "");
+    if (!numStr) return NaN;
+    const n = parseFloat(numStr);
+    if (!Number.isFinite(n)) return NaN;
+    const signed = (isParenNeg || isMinusNeg) ? -Math.abs(n) : n;
+    return Number(signed.toFixed(2));
+  }
+
+  function fmtCurrency(val) {
+    const n = Number(val) || 0;
+    const absStr = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (n < 0 ? "-$" : "$") + absStr;
+  }
+
+  function monthKeyLabel(mk) {
+    const [y, m] = String(mk || "").split("-").map(Number);
+    if (!y || !m) return mk;
+    return `${MONTH_NAMES[m - 1]} ${y}`;
+  }
+
+  function monthOnlyName(mk) {
+    const [, m] = String(mk || "").split("-").map(Number);
+    return MONTH_NAMES[(m || 1) - 1] || "Month";
+  }
+
+  function extractSpreadsheetDetails(url) {
+    const s = String(url || "").trim();
+    const m = s.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    const gidMatch = s.match(/[?#&]gid=(\d+)/);
+    return {
+      spreadsheetId: m ? m[1] : (/^[a-zA-Z0-9-_]{20,}$/.test(s) ? s : ""),
+      gid: gidMatch ? gidMatch[1] : "0"
+    };
+  }
+
+  let activeCalPopover = null;
+  function closeAppleCalendarPicker() {
+    if (!activeCalPopover) return;
+    const { pop, onDocDown, onKey } = activeCalPopover;
+    activeCalPopover = null;
+    document.removeEventListener("pointerdown", onDocDown, true);
+    document.removeEventListener("keydown", onKey, true);
+    if (pop && pop.parentNode) pop.remove();
+  }
+
+  function openAppleCalendarPicker(inputEl, triggerBtn) {
+    if (activeCalPopover && activeCalPopover.inputEl === inputEl) {
+      closeAppleCalendarPicker();
+      return;
+    }
+    closeAppleCalendarPicker();
+
+    const parsed = parseFlexibleDate(inputEl.value) || parseFlexibleDate(DB.toInputDate(Date.now()));
+    let viewYear = parsed ? parsed.year : new Date().getFullYear();
+    let viewMonth = parsed ? parsed.month - 1 : new Date().getMonth();
+    const selectedIso = parsed ? parsed.iso : "";
+    const todayIso = DB.toInputDate(Date.now());
+
+    const pop = document.createElement("div");
+    pop.className = "fn-cal-pop";
+    pop.setAttribute("role", "dialog");
+    pop.setAttribute("aria-label", "Calendar date picker");
+    document.body.appendChild(pop);
+
+    function positionPopover() {
+      const wrap = inputEl.closest(".fn-date-input-wrap") || triggerBtn || inputEl;
+      const r = wrap.getBoundingClientRect();
+      const popW = 284;
+      const popH = pop.offsetHeight || 310;
+      let left = Math.max(8, Math.min(r.left, window.innerWidth - popW - 8));
+      let top = r.bottom + 6;
+      if (top + popH > window.innerHeight - 10 && r.top - popH - 6 > 8) {
+        top = r.top - popH - 6;
+      }
+      pop.style.left = `${left}px`;
+      pop.style.top = `${top}px`;
+    }
+
+    function selectDay(y, m0, d) {
+      const dObj = makeDateObj(y, m0 + 1, d);
+      inputEl.value = dObj.mdyShort;
+      inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+      inputEl.dispatchEvent(new Event("change", { bubbles: true }));
+      closeAppleCalendarPicker();
+    }
+
+    function renderCalendarMonth() {
+      const firstDayWeek = new Date(viewYear, viewMonth, 1).getDay();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const daysInPrev = new Date(viewYear, viewMonth, 0).getDate();
+
+      const cells = [];
+      for (let i = firstDayWeek - 1; i >= 0; i--) {
+        const dayNum = daysInPrev - i;
+        const pDate = new Date(viewYear, viewMonth - 1, dayNum);
+        cells.push({ y: pDate.getFullYear(), m0: pDate.getMonth(), d: dayNum, out: true });
+      }
+      for (let d = 1; d <= daysInMonth; d++) {
+        cells.push({ y: viewYear, m0: viewMonth, d, out: false });
+      }
+      while (cells.length < 42) {
+        const nextDay = cells.length - (firstDayWeek + daysInMonth) + 1;
+        const nDate = new Date(viewYear, viewMonth + 1, nextDay);
+        cells.push({ y: nDate.getFullYear(), m0: nDate.getMonth(), d: nextDay, out: true });
+      }
+
+      pop.innerHTML = `
+        <div class="fn-cal-head">
+          <span class="fn-cal-title">${MONTH_NAMES[viewMonth]} ${viewYear}</span>
+          <div class="fn-cal-nav">
+            <button type="button" class="fn-cal-nav-btn" data-cal-nav="-1" aria-label="Previous month">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button type="button" class="fn-cal-nav-btn" data-cal-nav="1" aria-label="Next month">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="fn-cal-weekdays">
+          <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+        <div class="fn-cal-grid">
+          ${cells.map(c => {
+            const iso = `${c.y}-${String(c.m0 + 1).padStart(2, "0")}-${String(c.d).padStart(2, "0")}`;
+            const cls = [
+              "fn-cal-day",
+              c.out ? "is-out" : "",
+              iso === todayIso ? "is-today" : "",
+              iso === selectedIso ? "is-selected" : ""
+            ].filter(Boolean).join(" ");
+            return `<button type="button" class="${cls}" data-y="${c.y}" data-m0="${c.m0}" data-d="${c.d}">${c.d}</button>`;
+          }).join("")}
+        </div>
+        <div class="fn-cal-foot">
+          <button type="button" class="fn-cal-foot-btn today" id="fnCalTodayBtn">Today</button>
+          <button type="button" class="fn-cal-foot-btn" id="fnCalDoneBtn">Close</button>
+        </div>
+      `;
+
+      pop.querySelectorAll("[data-cal-nav]").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const dir = parseInt(btn.dataset.calNav, 10);
+          const next = new Date(viewYear, viewMonth + dir, 1);
+          viewYear = next.getFullYear();
+          viewMonth = next.getMonth();
+          renderCalendarMonth();
+        };
+      });
+
+      pop.querySelectorAll(".fn-cal-day").forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          selectDay(parseInt(btn.dataset.y, 10), parseInt(btn.dataset.m0, 10), parseInt(btn.dataset.d, 10));
+        };
+      });
+
+      pop.querySelector("#fnCalTodayBtn").onclick = e => {
+        e.stopPropagation();
+        const now = new Date();
+        selectDay(now.getFullYear(), now.getMonth(), now.getDate());
+      };
+
+      pop.querySelector("#fnCalDoneBtn").onclick = e => {
+        e.stopPropagation();
+        closeAppleCalendarPicker();
+      };
+
+      positionPopover();
+    }
+
+    renderCalendarMonth();
+
+    const onDocDown = e => {
+      if (!pop.contains(e.target) && e.target !== triggerBtn && !triggerBtn.contains(e.target)) {
+        closeAppleCalendarPicker();
+      }
+    };
+    const onKey = e => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeAppleCalendarPicker();
+      }
+    };
+    document.addEventListener("pointerdown", onDocDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activeCalPopover = { pop, inputEl, onDocDown, onKey };
+  }
+
+  function sortTransactionsChronologically(txList) {
+    return txList.slice().sort((a, b) => {
+      const da = parseFlexibleDate(a.date);
+      const db = parseFlexibleDate(b.date);
+      const ta = da ? da.ts : 0;
+      const tb = db ? db.ts : 0;
+      if (ta !== tb) return ta - tb;
+      return (a.sheetOrder ?? a.createdAt ?? 0) - (b.sheetOrder ?? b.createdAt ?? 0);
+    });
+  }
+
+  function parseRowsFromGoogleSheet(rawRows) {
+    const blocks = [];
+    let currentBlock = [];
+    let lastDate = null;
+
+    for (let i = 0; i < rawRows.length; i++) {
+      const r = rawRows[i] || [];
+      const colA = String(r[0] ?? "").trim();
+      const colB = String(r[1] ?? "").trim();
+      const colC = String(r[2] ?? "").trim();
+      const colD = String(r[3] ?? "").trim();
+
+      if (!colA && !colB && !colC && !colD) continue;
+      const joined = `${colA} ${colB} ${colC}`;
+      if (/^date$/i.test(colA) && /transaction/i.test(colB)) continue;
+      if (/total\s*=/i.test(joined)) {
+        if (currentBlock.length) {
+          blocks.push(currentBlock);
+          currentBlock = [];
+        }
+        lastDate = null;
+        continue;
+      }
+
+      let d = parseFlexibleDate(colA, lastDate ? lastDate.year : undefined);
+      if (d) {
+        lastDate = d;
+      } else if (!colA && lastDate) {
+        d = lastDate;
+      } else {
+        continue;
+      }
+
+      const amtClean = parseCurrencyAmount(colD);
+      if (!Number.isFinite(amtClean) || amtClean === 0) continue;
+
+      currentBlock.push({
+        id: `gs-row-${i + 1}-${d.iso}-${Math.round(amtClean * 100)}`,
+        sheetRow: i + 1,
+        sheetOrder: i + 1,
+        rawDateCell: colA,
+        dObj: d,
+        date: d.iso,
+        merchant: colB || "Expense",
+        payment: colC || "RBC",
+        amount: amtClean,
+        createdAt: d.ts + i
+      });
+    }
+    if (currentBlock.length) blocks.push(currentBlock);
+
+    for (let b = blocks.length - 2; b >= 0; b--) {
+      const cur = blocks[b];
+      const nxt = blocks[b + 1];
+      if (cur.length && nxt.length) {
+        const c0 = cur[0].dObj;
+        const n0 = nxt[0].dObj;
+        if (c0.month < n0.month && c0.year === n0.year - 1) {
+          const fixedYear = n0.year;
+          cur.forEach(item => {
+            const fixedD = makeDateObj(fixedYear, item.dObj.month, item.dObj.day, item.rawDateCell);
+            item.dObj = fixedD;
+            item.date = fixedD.iso;
+          });
+        }
+      }
+    }
+
+    return blocks.flat().map(({ dObj, ...rest }) => rest);
+  }
+
+  function callAppsScriptJsonp(scriptUrl, paramsObj = {}) {
+    return new Promise((resolve, reject) => {
+      const cbName = "p23gs_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+      const script = document.createElement("script");
+      let done = false;
+
+      const cleanup = () => {
+        try { delete window[cbName]; } catch { window[cbName] = undefined; }
+        if (script.parentNode) script.remove();
+      };
+
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        cleanup();
+        reject(new Error("Apps Script request timed out."));
+      }, 12000);
+
+      window[cbName] = data => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        cleanup();
+        if (data && data.ok === false && data.error) {
+          reject(new Error(data.error));
+        } else {
+          resolve(data || {});
+        }
+      };
+
+      script.onerror = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        cleanup();
+        reject(new Error("Apps Script blocked. Make sure 'Who has access' is set to 'Anyone' in Deploy -> Manage deployments."));
+      };
+
+      const qs = new URLSearchParams();
+      Object.entries(paramsObj).forEach(([k, v]) => {
+        if (v !== undefined && v !== null) qs.set(k, String(v));
+      });
+      qs.set("callback", cbName);
+      qs.set("_t", String(Date.now()));
+
+      const sep = scriptUrl.includes("?") ? "&" : "?";
+      script.src = `${scriptUrl}${sep}${qs.toString()}`;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function loadFullHistoryFromSheet(silent = false) {
+    const meta = loadFinanceMeta();
+    if (!meta || !meta.scriptUrl) return false;
+
+    try {
+      const data = await callAppsScriptJsonp(meta.scriptUrl, {
+        action: "read",
+        spreadsheetId: meta.spreadsheetId || ""
+      });
+      if (data && Array.isArray(data.rows)) {
+        const sheetTxList = parseRowsFromGoogleSheet(data.rows);
+        state.hasLoadedFromSheet = true;
+        if (data.sheetUrl && !meta.sheetUrl) {
+          await saveFinanceMeta({ sheetUrl: data.sheetUrl, lastSyncedAt: Date.now() });
+        } else {
+          await saveFinanceMeta({ lastSyncedAt: Date.now() });
+        }
+        if (sheetTxList.length > 0 || data.rows.length <= 1) {
+          await saveTransactions(sheetTxList, false);
+        }
+        if (!silent) {
+          DB.toast("Loaded from Google Sheet", `Synced ${sheetTxList.length} transaction${sheetTxList.length === 1 ? "" : "s"} from your spreadsheet.`, 2800);
+        }
+        return true;
+      }
+    } catch (err) {
+      if (!silent) {
+        DB.toast("Google Sheet Sync Error", err.message, 4500);
+      }
+    }
+    return false;
+  }
+
+  async function insertTransactionIntoSheet(newTx) {
+    const meta = loadFinanceMeta();
+    if (!meta || !meta.scriptUrl) return false;
+
+    const d = parseFlexibleDate(newTx.date);
+    const dateMdyShort = d ? d.mdyShort : newTx.date;
+
+    try {
+      const data = await callAppsScriptJsonp(meta.scriptUrl, {
+        action: "addTx",
+        spreadsheetId: meta.spreadsheetId || "",
+        date: dateMdyShort,
+        merchant: newTx.merchant || "",
+        payment: newTx.payment || "RBC",
+        amount: Number(newTx.amount || 0).toFixed(2)
+      });
+
+      if (data && data.surgical === true && Array.isArray(data.rows)) {
+        const updatedList = parseRowsFromGoogleSheet(data.rows);
+        state.hasLoadedFromSheet = true;
+        if (updatedList.length > 0) {
+          await saveTransactions(sortTransactionsChronologically(updatedList), false);
+        }
+        await saveFinanceMeta({ lastSyncedAt: Date.now() });
+        return true;
+      }
+
+      DB.toast("Update Apps Script for Row Sync", "Open Sheet Settings → Copy Apps Script and deploy a New version so only individual rows are modified.", 5200);
+      return false;
+    } catch (err) {
+      DB.toast("Sheet Insert Error", err.message, 4000);
+      return false;
+    }
+  }
+
+  async function editTransactionInSheet(oldTx, newTx) {
+    const meta = loadFinanceMeta();
+    if (!meta || !meta.scriptUrl || !oldTx || !newTx) return false;
+
+    const oldD = parseFlexibleDate(oldTx.date);
+    const newD = parseFlexibleDate(newTx.date);
+    const oldDateMdy = oldD ? oldD.mdyShort : oldTx.date;
+    const newDateMdy = newD ? newD.mdyShort : newTx.date;
+
+    try {
+      const data = await callAppsScriptJsonp(meta.scriptUrl, {
+        action: "editTx",
+        spreadsheetId: meta.spreadsheetId || "",
+        sheetRow: oldTx.sheetRow || 0,
+        oldDate: oldDateMdy,
+        oldMerchant: oldTx.merchant || "",
+        oldPayment: oldTx.payment || "RBC",
+        oldAmount: Number(oldTx.amount || 0).toFixed(2),
+        date: newDateMdy,
+        merchant: newTx.merchant || "",
+        payment: newTx.payment || "RBC",
+        amount: Number(newTx.amount || 0).toFixed(2)
+      });
+
+      if (data && data.surgical === true && Array.isArray(data.rows)) {
+        const updatedList = parseRowsFromGoogleSheet(data.rows);
+        state.hasLoadedFromSheet = true;
+        if (updatedList.length > 0) {
+          await saveTransactions(sortTransactionsChronologically(updatedList), false);
+        }
+        await saveFinanceMeta({ lastSyncedAt: Date.now() });
+        return true;
+      }
+
+      DB.toast("Update Apps Script for Row Edit", "Open Sheet Settings → Copy Apps Script and deploy a New version to edit individual rows in-place.", 5000);
+      return false;
+    } catch (err) {
+      DB.toast("Sheet Edit Error", err.message, 4000);
+      return false;
+    }
+  }
+
+  async function deleteTransactionFromSheet(removedTx) {
+    const meta = loadFinanceMeta();
+    if (!meta || !meta.scriptUrl || !removedTx) return false;
+
+    const d = parseFlexibleDate(removedTx.date);
+    const dateMdyShort = d ? d.mdyShort : removedTx.date;
+
+    try {
+      const data = await callAppsScriptJsonp(meta.scriptUrl, {
+        action: "deleteTx",
+        spreadsheetId: meta.spreadsheetId || "",
+        sheetRow: removedTx.sheetRow || 0,
+        date: dateMdyShort,
+        merchant: removedTx.merchant || "",
+        payment: removedTx.payment || "RBC",
+        amount: Number(removedTx.amount || 0).toFixed(2)
+      });
+
+      if (data && data.surgical === true && Array.isArray(data.rows)) {
+        const updatedList = parseRowsFromGoogleSheet(data.rows);
+        state.hasLoadedFromSheet = true;
+        await saveTransactions(sortTransactionsChronologically(updatedList), false);
+        await saveFinanceMeta({ lastSyncedAt: Date.now() });
+        return true;
+      }
+    } catch {}
+    return false;
+  }
+
+  async function syncToGoogleSheet(pullFirst = true) {
+    const meta = loadFinanceMeta();
+    if (!meta.scriptUrl) {
+      openConnectSheetModal();
+      return;
+    }
+    await loadFullHistoryFromSheet(!pullFirst);
+  }
+
+  function renderSheetStatusBar() {
+    const meta = loadFinanceMeta();
+    const dot = $("sheetStatusDot");
+    const title = $("sheetStatusTitle");
+    const sub = $("sheetStatusSub");
+    const openBtn = $("openSheetLinkBtn");
+    const syncBtn = $("syncSheetNowBtn");
+    const connectLbl = $("connectSheetBtnLbl");
+
+    if (meta && (meta.scriptUrl || meta.spreadsheetId)) {
+      dot.classList.add("connected");
+      title.textContent = meta.scriptUrl ? "Connected via Google Apps Script" : "Sheet Link Saved (Add Script URL to Sync)";
+      const syncTimeStr = meta.lastSyncedAt ? `Last synced ${new Date(meta.lastSyncedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : "Saved to your account";
+      sub.innerHTML = meta.sheetUrl
+        ? `${DB.esc(syncTimeStr)} • <a href="${DB.esc(meta.sheetUrl)}" target="_blank" rel="noopener noreferrer">View Spreadsheet ↗</a>`
+        : DB.esc(syncTimeStr);
+      if (meta.sheetUrl) {
+        openBtn.href = meta.sheetUrl;
+        openBtn.hidden = false;
+      } else {
+        openBtn.hidden = true;
+      }
+      syncBtn.hidden = !meta.scriptUrl;
+      connectLbl.textContent = "Sheet Settings";
+    } else {
+      dot.classList.remove("connected");
+      title.textContent = "Google Sheets Not Connected";
+      sub.textContent = "Connect your Google Sheet via Apps Script to import existing rows and auto-sync new entries.";
+      openBtn.hidden = true;
+      syncBtn.hidden = true;
+      connectLbl.textContent = "Connect Google Sheet";
+    }
+  }
+
+  function openConnectSheetModal() {
+    const meta = loadFinanceMeta();
+    const appsScriptSnippet = `var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function makeMdy(yr, mo, da) {
+  var yy = ("0" + (yr % 100)).slice(-2);
+  return {
+    year: yr,
+    month: mo,
+    day: da,
+    monthKey: yr * 100 + mo,
+    dateVal: yr * 10000 + mo * 100 + da,
+    mdyShort: ("0" + mo).slice(-2) + "/" + ("0" + da).slice(-2) + "/" + yy
+  };
+}
+
+function parseMdy(str, fallbackYr) {
+  var s = String(str || "").trim();
+  if (!s) return null;
+  var m = s.match(/^(\\d{1,2})[.\\/\\s-](\\d{1,2})(?:[.\\/\\s-](\\d{2,4}))?$/);
+  if (m) {
+    var mo = parseInt(m[1], 10), da = parseInt(m[2], 10);
+    var yr = m[3] !== undefined ? parseInt(m[3], 10) : (fallbackYr || new Date().getFullYear());
+    if (yr < 100) yr = yr >= 70 ? 1900 + yr : 2000 + yr;
+    if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) return makeMdy(yr, mo, da);
+  }
+  var ymd = s.match(/^(\\d{4})[\\/-](\\d{1,2})[\\/-](\\d{1,2})$/);
+  if (ymd) {
+    var yr2 = parseInt(ymd[1], 10), mo2 = parseInt(ymd[2], 10), da2 = parseInt(ymd[3], 10);
+    if (mo2 >= 1 && mo2 <= 12 && da2 >= 1 && da2 <= 31) return makeMdy(yr2, mo2, da2);
+  }
+  return null;
+}
+
+function parseAmt(val) {
+  if (typeof val === "number") return isFinite(val) ? Number(val.toFixed(2)) : NaN;
+  var s = String(val || "").trim();
+  if (!s) return NaN;
+  var isNeg = /^\\(.*\\)$/.test(s) || /[-−]/.test(s);
+  var numStr = s.replace(/[^0-9.]/g, "");
+  if (!numStr) return NaN;
+  var n = parseFloat(numStr);
+  if (!isFinite(n)) return NaN;
+  return Number((isNeg ? -Math.abs(n) : n).toFixed(2));
+}
+
+function scanBlocks(sheet) {
+  var lastRow = sheet.getLastRow();
+  var vals = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, 4).getDisplayValues() : [];
+  var blocks = [];
+  var curBlock = { rows: [], totalRow: -1 };
+  var lastP = null;
+
+  for (var i = 0; i < vals.length; i++) {
+    var rNum = i + 2;
+    var colA = String(vals[i][0] || "").trim();
+    var colB = String(vals[i][1] || "").trim();
+    var colC = String(vals[i][2] || "").trim();
+    var colD = String(vals[i][3] || "").trim();
+    if (!colA && !colB && !colC && !colD) continue;
+    var joined = colA + " " + colB + " " + colC;
+    if (/total\\s*=/i.test(joined)) {
+      curBlock.totalRow = rNum;
+      if (curBlock.rows.length) blocks.push(curBlock);
+      curBlock = { rows: [], totalRow: -1 };
+      lastP = null;
+      continue;
+    }
+    var p = parseMdy(colA, lastP ? lastP.year : undefined);
+    if (p) lastP = p;
+    else if (!colA && lastP && (colB || colD)) p = lastP;
+    else continue;
+    var amt = parseAmt(colD);
+    if (!isFinite(amt) || amt === 0) continue;
+    curBlock.rows.push({
+      row: rNum,
+      p: p,
+      rawA: colA,
+      merchant: colB,
+      payment: colC,
+      amount: amt
+    });
+  }
+  if (curBlock.rows.length) blocks.push(curBlock);
+
+  for (var b = blocks.length - 2; b >= 0; b--) {
+    var c0 = blocks[b].rows[0].p;
+    var n0 = blocks[b + 1].rows[0].p;
+    if (c0.month < n0.month && c0.year === n0.year - 1) {
+      var fy = n0.year;
+      blocks[b].rows.forEach(function(item) {
+        item.p = makeMdy(fy, item.p.month, item.p.day);
+      });
+    }
+  }
+  return blocks;
+}
+
+function findMatchingRow(blocks, p, useOldFields) {
+  var wantRow = parseInt(p.sheetRow, 10) || 0;
+  var dateStr = useOldFields ? p.oldDate : p.date;
+  var merch = String((useOldFields ? p.oldMerchant : p.merchant) || "").trim().toLowerCase();
+  var pay = String((useOldFields ? p.oldPayment : p.payment) || "").trim().toLowerCase();
+  var amt = parseAmt(useOldFields ? p.oldAmount : p.amount);
+  var d = parseMdy(dateStr);
+
+  var best = null;
+  for (var bi = 0; bi < blocks.length; bi++) {
+    var bl = blocks[bi];
+    for (var ri = 0; ri < bl.rows.length; ri++) {
+      var item = bl.rows[ri];
+      var merchOk = item.merchant.toLowerCase() === merch;
+      var amtOk = Math.abs(item.amount - amt) < 0.009;
+      var dateOk = !d || item.p.dateVal === d.dateVal || (item.p.month === d.month && item.p.day === d.day);
+      if (merchOk && amtOk && dateOk) {
+        if (item.row === wantRow) return { block: bl, item: item, index: ri };
+        if (!best) best = { block: bl, item: item, index: ri };
+      }
+    }
+  }
+  return best;
+}
+
+function insertTxByDate(sheet, tx) {
+  var d = parseMdy(tx.date);
+  if (!d) throw new Error("Invalid date: " + tx.date);
+  var amt = parseAmt(tx.amount);
+  if (!isFinite(amt) || amt === 0) throw new Error("Invalid amount: " + tx.amount);
+
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1, 1, 1, 4).setValues([["Date", "Transaction", "Payment", "Amount ($)"]])
+      .setFontWeight("bold").setHorizontalAlignment("center");
+  }
+
+  var blocks = scanBlocks(sheet);
+
+  var writeTxRow = function(r, dateText) {
+    sheet.getRange(r, 1, 1, 4).breakApart();
+    sheet.getRange(r, 1, 1, 4).setValues([[dateText, tx.merchant, tx.payment, amt]]).setFontWeight("normal");
+    sheet.getRange(r, 1).setNumberFormat("@").setHorizontalAlignment("center");
+    sheet.getRange(r, 2).setHorizontalAlignment("left");
+    sheet.getRange(r, 3).setHorizontalAlignment("center");
+    sheet.getRange(r, 4).setNumberFormat("$#,##0.00");
+  };
+
+  var targetBlock = null;
+  for (var mIdx = 0; mIdx < blocks.length; mIdx++) {
+    if (blocks[mIdx].rows[0].p.monthKey === d.monthKey) {
+      targetBlock = blocks[mIdx];
+      break;
+    }
+  }
+
+  if (targetBlock) {
+    var mRows = targetBlock.rows;
+    var anchor = null;
+    for (var j = 0; j < mRows.length; j++) {
+      if (mRows[j].p.dateVal <= d.dateVal) anchor = mRows[j];
+    }
+    var newRow, dateToWrite = d.mdyShort;
+    if (anchor) {
+      sheet.insertRowAfter(anchor.row);
+      newRow = anchor.row + 1;
+      if (anchor.p.dateVal === d.dateVal) dateToWrite = "";
+    } else {
+      sheet.insertRowBefore(mRows[0].row);
+      newRow = mRows[0].row;
+    }
+    writeTxRow(newRow, dateToWrite);
+
+    var mStart = mRows[0].row;
+    var mEnd = mRows[mRows.length - 1].row + 1;
+    if (targetBlock.totalRow !== -1) {
+      var tRow = targetBlock.totalRow + 1;
+      sheet.getRange(tRow, 4).setFormula("=SUM(D" + mStart + ":D" + mEnd + ")").setFontWeight("bold").setNumberFormat("$#,##0.00");
+    }
+  } else {
+    var prevBlock = null;
+    for (var k = 0; k < blocks.length; k++) {
+      if (blocks[k].rows[0].p.monthKey < d.monthKey) prevBlock = blocks[k];
+    }
+    var insertAt;
+    if (!prevBlock) {
+      if (blocks.length > 0) {
+        sheet.insertRowsBefore(2, 3);
+      }
+      insertAt = 2;
+    } else {
+      var afterRow = prevBlock.totalRow !== -1 ? prevBlock.totalRow : prevBlock.rows[prevBlock.rows.length - 1].row;
+      var maxR = sheet.getLastRow();
+      if (afterRow + 1 <= maxR) {
+        var nextA = String(sheet.getRange(afterRow + 1, 1).getDisplayValue()).trim();
+        var nextB = String(sheet.getRange(afterRow + 1, 2).getDisplayValue()).trim();
+        if (!nextA && !nextB) afterRow++;
+      }
+      if (afterRow < maxR) {
+        sheet.insertRowsBefore(afterRow + 1, 3);
+      }
+      insertAt = afterRow + 1;
+    }
+    writeTxRow(insertAt, d.mdyShort);
+    var totR = insertAt + 1;
+    sheet.getRange(totR, 1, 1, 3).merge().setValue(MONTHS[d.month - 1] + " Total =").setFontWeight("bold").setHorizontalAlignment("right");
+    sheet.getRange(totR, 4).setFormula("=SUM(D" + insertAt + ":D" + insertAt + ")").setFontWeight("bold").setNumberFormat("$#,##0.00");
+    sheet.getRange(insertAt + 2, 1, 1, 4).breakApart().clearContent().setFontWeight("normal");
+  }
+}
+
+function deleteTxRow(sheet, p, useOldFields) {
+  var blocks = scanBlocks(sheet);
+  var match = findMatchingRow(blocks, p, !!useOldFields);
+  if (!match) return false;
+
+  var bl = match.block;
+  var item = match.item;
+  var idx = match.index;
+
+  // If this row held the visible date for a same-day group and the row below had a blank Date cell,
+  // copy the date string down to the next row before deleting this row so the next row keeps its date
+  if (item.rawA && idx + 1 < bl.rows.length && !bl.rows[idx + 1].rawA) {
+    sheet.getRange(bl.rows[idx + 1].row, 1).setValue(item.rawA).setNumberFormat("@").setHorizontalAlignment("center");
+  }
+
+  if (bl.rows.length === 1) {
+    if (bl.totalRow !== -1) {
+      var delCount = (bl.totalRow - item.row) + 1;
+      if (bl.totalRow + 1 <= sheet.getLastRow()) {
+        var spA = String(sheet.getRange(bl.totalRow + 1, 1).getDisplayValue()).trim();
+        var spB = String(sheet.getRange(bl.totalRow + 1, 2).getDisplayValue()).trim();
+        if (!spA && !spB) delCount++;
+      }
+      sheet.deleteRows(item.row, delCount);
+    } else {
+      sheet.deleteRow(item.row);
+    }
+  } else {
+    sheet.deleteRow(item.row);
+    if (bl.totalRow !== -1) {
+      var mStart = bl.rows[0].row;
+      var mEnd = bl.rows[bl.rows.length - 1].row - 1;
+      var newTotRow = bl.totalRow - 1;
+      sheet.getRange(newTotRow, 4).setFormula("=SUM(D" + mStart + ":D" + mEnd + ")").setFontWeight("bold").setNumberFormat("$#,##0.00");
+    }
+  }
+  return true;
+}
+
+function editTxRow(sheet, p) {
+  var oldD = parseMdy(p.oldDate);
+  var newD = parseMdy(p.date);
+  var newAmt = parseAmt(p.amount);
+  if (!newD || !isFinite(newAmt) || newAmt === 0) throw new Error("Invalid edit values");
+
+  var blocks = scanBlocks(sheet);
+  var match = findMatchingRow(blocks, p, true);
+
+  // If the date did NOT change and we found the exact row, update ONLY that 1 row in-place!
+  if (match && oldD && oldD.dateVal === newD.dateVal) {
+    var r = match.item.row;
+    sheet.getRange(r, 2, 1, 3).setValues([[p.merchant, p.payment, newAmt]]);
+    sheet.getRange(r, 2).setHorizontalAlignment("left");
+    sheet.getRange(r, 3).setHorizontalAlignment("center");
+    sheet.getRange(r, 4).setNumberFormat("$#,##0.00");
+    return;
+  }
+
+  // If the date changed, remove only the old row and insert at the new chronological position
+  if (match) {
+    deleteTxRow(sheet, p, true);
+  }
+  insertTxByDate(sheet, p);
+}
+
+function runSurgicalAction(p) {
+  var ss = p.spreadsheetId ? SpreadsheetApp.openById(p.spreadsheetId) : SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheets()[0];
+  if (p.action === "addTx" || p.action === "insertTxV4") {
+    insertTxByDate(sheet, p);
+    SpreadsheetApp.flush();
+  } else if (p.action === "editTx") {
+    editTxRow(sheet, p);
+    SpreadsheetApp.flush();
+  } else if (p.action === "deleteTx") {
+    deleteTxRow(sheet, p, false);
+    SpreadsheetApp.flush();
+  }
+  return {
+    ok: true,
+    surgical: true,
+    added: true,
+    rows: sheet.getDataRange().getDisplayValues(),
+    sheetUrl: ss.getUrl()
+  };
+}
+
+function doGet(e) {
+  try {
+    var p = (e && e.parameter) ? e.parameter : {};
+    var out = JSON.stringify(runSurgicalAction(p));
+    if (p.callback) {
+      return ContentService.createTextOutput(p.callback + "(" + out + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(out).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    var errOut = JSON.stringify({ ok: false, error: String(err) });
+    if (e && e.parameter && e.parameter.callback) {
+      return ContentService.createTextOutput(e.parameter.callback + "(" + errOut + ")").setMimeType(ContentService.MimeType.JAVASCRIPT);
+    }
+    return ContentService.createTextOutput(errOut).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    var res = runSurgicalAction(body);
+    return ContentService.createTextOutput(JSON.stringify(res)).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err) })).setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Connect Google Sheet (Apps Script)</h2>
+      <div class="hint" style="margin-bottom:.85rem;font-size:.8rem;line-height:1.5;">
+        <b>Quick 4-Step Setup (Surgical Single-Row Sync):</b>
+        <ol style="margin:.35rem 0 .5rem 1.15rem;padding:0;">
+          <li>Open your Google Sheet and click <b>Extensions → Apps Script</b>.</li>
+          <li>Replace the code in <code>Code.gs</code> with our surgical row-sync script (<button type="button" id="copyAppsScriptBtn" class="fn-btn" style="height:26px;min-height:26px;padding:0 .6rem;font-size:.73rem;display:inline-flex;vertical-align:middle;">Copy Apps Script</button>) and click <b>Save</b>.</li>
+          <li>Click <b>Run</b> at the top once to grant your script permission to edit your sheet.</li>
+          <li>Click <b>Deploy → New deployment</b> (or <b>Manage deployments → Edit → Version: New version → Deploy</b>), select type <b>Web app</b>, set <i>Execute as:</i> <b>Me</b> and <i>Who has access:</i> <b>Anyone</b>, then copy the <b>Web app URL</b> below.</li>
+        </ol>
+      </div>
+
+      <div class="field">
+        <label for="gsScriptInput">Apps Script Web App URL (Required for Sync)</label>
+        <input id="gsScriptInput" type="url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" value="${DB.esc(meta.scriptUrl || "")}" style="width:100%">
+      </div>
+
+      <div class="field">
+        <label for="gsUrlInput">Google Sheet URL (Saved for quick "Open Sheet" access)</label>
+        <input id="gsUrlInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/1ZSgBvh.../edit" value="${DB.esc(meta.sheetUrl || "")}" style="width:100%">
+      </div>
+
+      <div class="actions">
+        ${(meta.scriptUrl || meta.spreadsheetId) ? `<button type="button" class="danger left" id="gsDisconnectBtn">Disconnect</button>` : `<button type="button" class="ghost left" id="gsCancelBtn">Cancel</button>`}
+        ${(meta.scriptUrl || meta.spreadsheetId) ? `<button type="button" class="ghost" id="gsCancelBtn">Close</button>` : ""}
+        <button type="button" class="primary" id="gsSaveSyncBtn">Save &amp; Sync Sheet</button>
+      </div>
+    `;
+
+    const close = DB.modal(node);
+
+    node.querySelector("#copyAppsScriptBtn").onclick = e => {
+      e.preventDefault();
+      navigator.clipboard && navigator.clipboard.writeText(appsScriptSnippet);
+      const b = node.querySelector("#copyAppsScriptBtn");
+      b.textContent = "✓ Script Copied!";
+      DB.toast("Apps Script Copied", "Paste into Extensions → Apps Script and deploy a New version in Manage deployments.", 3600);
+      setTimeout(() => { b.textContent = "Copy Apps Script"; }, 2200);
+    };
+
+    const cancelBtn = node.querySelector("#gsCancelBtn");
+    if (cancelBtn) cancelBtn.onclick = close;
+
+    const discBtn = node.querySelector("#gsDisconnectBtn");
+    if (discBtn) {
+      discBtn.onclick = async () => {
+        await saveFinanceMeta({ sheetUrl: "", spreadsheetId: "", gid: "0", scriptUrl: "", lastSyncedAt: 0 });
+        close();
+        DB.toast("Disconnected", "Google Sheet connection was removed.", 2200);
+      };
+    }
+
+    node.querySelector("#gsSaveSyncBtn").onclick = async () => {
+      const scriptVal = node.querySelector("#gsScriptInput").value.trim();
+      const urlVal = node.querySelector("#gsUrlInput").value.trim();
+      if (!scriptVal || !/^https:\/\/script\.google\.com\/macros\/s\//i.test(scriptVal)) {
+        node.querySelector("#gsScriptInput").focus();
+        DB.toast("Apps Script URL Needed", "Please paste your deployed Apps Script Web App URL (https://script.google.com/macros/s/.../exec).", 3400);
+        return;
+      }
+      const { spreadsheetId, gid } = extractSpreadsheetDetails(urlVal);
+      await saveFinanceMeta({
+        sheetUrl: urlVal,
+        spreadsheetId: spreadsheetId || "",
+        gid: gid || "0",
+        scriptUrl: scriptVal
+      });
+      close();
+      DB.toast("Syncing with Google Sheet…", "Reading existing transactions and updating monthly totals.", 2600);
+      await syncToGoogleSheet(true);
+    };
+  }
+
+  function renderStatsAndSuggestions(txList) {
+    const now = new Date();
+    const curMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const targetMonthKey = state.monthFilter !== "all" ? state.monthFilter : curMonthKey;
+
+    let totalAll = 0;
+    let targetMonthSum = 0;
+    let targetMonthCount = 0;
+    const monthTotals = new Map();
+    const bankTotals = new Map();
+    const merchants = new Set();
+
+    for (const tx of txList) {
+      const amt = Number(tx.amount) || 0;
+      totalAll += amt;
+      if (tx.merchant) merchants.add(tx.merchant);
+      const bank = (tx.payment || "RBC").trim();
+      bankTotals.set(bank, (bankTotals.get(bank) || 0) + amt);
+
+      const d = parseFlexibleDate(tx.date);
+      if (d) {
+        monthTotals.set(d.monthKey, (monthTotals.get(d.monthKey) || 0) + amt);
+        if (d.monthKey === targetMonthKey) {
+          targetMonthSum += amt;
+          targetMonthCount++;
+        }
+      }
+    }
+
+    const avgMonth = monthTotals.size > 0 ? totalAll / monthTotals.size : 0;
+    let topBank = "—";
+    let topBankAmt = -Infinity;
+    for (const [bName, bSum] of bankTotals.entries()) {
+      if (bSum > topBankAmt && bSum > 0) {
+        topBankAmt = bSum;
+        topBank = bName;
+      }
+    }
+
+    $("statMonthSpend").textContent = fmtCurrency(targetMonthSum);
+    $("statMonthSub").textContent = `${monthKeyLabel(targetMonthKey)} (${targetMonthCount} tx)`;
+    $("statTotalSpend").textContent = fmtCurrency(totalAll);
+    $("statTotalSub").textContent = `${txList.length} Transaction${txList.length === 1 ? "" : "s"}`;
+    $("statAvgMonth").textContent = fmtCurrency(avgMonth);
+    $("statTopBank").textContent = topBank;
+    $("statTopBankSub").textContent = topBankAmt > 0 && Number.isFinite(topBankAmt) ? `${fmtCurrency(topBankAmt)} via ${topBank}` : "Primary Payment";
+
+    const dl = $("merchantSuggestions");
+    if (dl) {
+      dl.innerHTML = [...merchants].slice(0, 40).map(m => `<option value="${DB.esc(m)}">`).join("");
+    }
+  }
+
+  function renderCharts(txList) {
+    const yearsSet = new Set([new Date().getFullYear()]);
+    for (const tx of txList) {
+      const d = parseFlexibleDate(tx.date);
+      if (d) yearsSet.add(d.year);
+    }
+    const years = [...yearsSet].sort((a, b) => b - a);
+    if (!years.includes(state.chartYear)) state.chartYear = years[0];
+
+    // Custom Apple Year Dropdown Rendering
+    const yearLbl = $("chartYearLbl");
+    const yearMenu = $("chartYearMenu");
+    const yearDd = $("chartYearDropdown");
+    const yearBtn = $("chartYearBtn");
+    if (yearLbl) yearLbl.textContent = String(state.chartYear);
+    if (yearMenu) {
+      const chkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+      yearMenu.innerHTML = years.map(y => `
+        <button type="button" class="fn-year-opt ${y === state.chartYear ? "active" : ""}" role="option" aria-selected="${y === state.chartYear}" data-year="${y}">
+          <span>${y}</span>
+          ${y === state.chartYear ? chkSvg : ""}
+        </button>
+      `).join("");
+
+      yearMenu.querySelectorAll("[data-year]").forEach(opt => {
+        opt.onclick = e => {
+          e.stopPropagation();
+          state.chartYear = Number(opt.dataset.year) || new Date().getFullYear();
+          yearMenu.hidden = true;
+          yearDd.classList.remove("open");
+          yearBtn.setAttribute("aria-expanded", "false");
+          renderAll();
+        };
+      });
+    }
+
+    const monthSums = Array(12).fill(0);
+    for (const tx of txList) {
+      const d = parseFlexibleDate(tx.date);
+      if (d && d.year === state.chartYear) {
+        monthSums[d.month - 1] += Number(tx.amount) || 0;
+      }
+    }
+    const maxMonth = Math.max(10, ...monthSums.map(v => Math.max(0, v)));
+
+    $("monthlyBarsWrap").innerHTML = monthSums.map((sum, idx) => {
+      const mk = `${state.chartYear}-${String(idx + 1).padStart(2, "0")}`;
+      const posSum = Math.max(0, sum);
+      const pct = posSum > 0 ? Math.max(6, Math.round((posSum / maxMonth) * 100)) : 2;
+      const isAct = state.monthFilter === mk;
+      const barLblVal = sum !== 0 ? (sum < 0 ? "-$" + Math.round(Math.abs(sum)) : "$" + Math.round(sum)) : "";
+      return `
+        <div class="fn-bar-col ${isAct ? "active" : ""}" data-bar-mk="${mk}" title="${MONTH_NAMES[idx]} ${state.chartYear}: ${fmtCurrency(sum)}">
+          <span class="fn-bar-val">${barLblVal}</span>
+          <div class="fn-bar-track">
+            <div class="fn-bar-fill" style="height:${pct}%"></div>
+          </div>
+          <span class="fn-bar-lbl">${MONTH_SHORT[idx]}</span>
+        </div>
+      `;
+    }).join("");
+
+    $("monthlyBarsWrap").querySelectorAll("[data-bar-mk]").forEach(col => {
+      col.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const mk = col.dataset.barMk;
+        state.monthFilter = state.monthFilter === mk ? "all" : mk;
+        renderAll();
+      };
+    });
+
+    const scoped = state.monthFilter === "all"
+      ? txList
+      : txList.filter(tx => {
+          const d = parseFlexibleDate(tx.date);
+          return d && d.monthKey === state.monthFilter;
+        });
+
+    $("breakdownTitle").textContent = state.monthFilter === "all"
+      ? "All-Time Breakdown"
+      : `${monthKeyLabel(state.monthFilter)} Breakdown`;
+
+    const map = new Map();
+    for (const tx of scoped) {
+      const amt = Number(tx.amount) || 0;
+      const key = state.breakdownMode === "payment"
+        ? (tx.payment || "RBC").trim()
+        : (tx.merchant || "Expense").trim();
+      map.set(key, (map.get(key) || 0) + amt);
+    }
+
+    const posEntries = [...map.entries()].filter(([, sum]) => sum > 0);
+    const scopedPosTotal = posEntries.reduce((acc, [, s]) => acc + s, 0);
+    const sortedBd = posEntries.sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const bdEl = $("breakdownList");
+    if (!sortedBd.length) {
+      bdEl.innerHTML = `<div class="muted" style="text-align:center;padding:2.2rem 0;font-size:.82rem;">No spending data for this period yet.</div>`;
+    } else {
+      bdEl.innerHTML = sortedBd.map(([name, sum]) => {
+        const pct = scopedPosTotal > 0 ? Math.round((sum / scopedPosTotal) * 100) : 0;
+        return `
+          <div class="fn-bd-item">
+            <div class="fn-bd-top">
+              <span class="fn-bd-name">${DB.esc(name)}</span>
+              <span class="fn-bd-amt">${fmtCurrency(sum)} (${pct}%)</span>
+            </div>
+            <div class="fn-bd-track">
+              <div class="fn-bd-bar" style="width:${Math.max(4, pct)}%"></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+
+  function renderLedger(txList) {
+    const monthCounts = new Map();
+    for (const tx of txList) {
+      const d = parseFlexibleDate(tx.date);
+      if (d) monthCounts.set(d.monthKey, (monthCounts.get(d.monthKey) || 0) + 1);
+    }
+    const sortedMonthKeys = [...monthCounts.keys()].sort((a, b) => b.localeCompare(a));
+
+    const pillsEl = $("monthFilterPills");
+    pillsEl.innerHTML = [
+      `<button type="button" class="fn-pill" data-mfilter="all" aria-pressed="${state.monthFilter === "all"}">All Months (${txList.length})</button>`,
+      ...sortedMonthKeys.map(mk => `
+        <button type="button" class="fn-pill" data-mfilter="${mk}" aria-pressed="${state.monthFilter === mk}">
+          ${DB.esc(monthKeyLabel(mk))} (${monthCounts.get(mk)})
+        </button>
+      `)
+    ].join("");
+
+    pillsEl.querySelectorAll("[data-mfilter]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        state.monthFilter = btn.dataset.mfilter;
+        if (state.monthFilter !== "all") {
+          const yr = parseInt(state.monthFilter.split("-")[0], 10);
+          if (yr) state.chartYear = yr;
+        }
+        renderAll();
+      };
+    });
+
+    const q = state.searchQuery.toLowerCase();
+    const filtered = txList.filter(tx => {
+      const d = parseFlexibleDate(tx.date);
+      if (!d) return false;
+      if (state.monthFilter !== "all" && d.monthKey !== state.monthFilter) return false;
+      if (q) {
+        const hay = `${d.mdyShort} ${d.mdy} ${tx.merchant || ""} ${tx.payment || ""} ${tx.amount || ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const container = $("ledgerContainer");
+    if (!filtered.length) {
+      const guest = DB.isGuest();
+      container.innerHTML = `
+        <div class="fn-empty">
+          <div class="fn-empty-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <h3>${guest ? "Sign in to Track Your Spending" : (txList.length ? "No matching transactions" : "No Transactions Logged Yet")}</h3>
+          <p class="muted" style="max-width:26rem;font-size:.84rem;">
+            ${guest
+              ? "Sign in with your Project 23 account to log expenses, view monthly graphs, and sync with Google Sheets."
+              : (txList.length
+                ? "Try switching the month filter above or clearing your search."
+                : "Enter a transaction above or connect your Google Sheet to import your existing spending history.")}
+          </p>
+          ${guest ? `<button type="button" class="fn-btn primary" id="fnEmptySignInBtn" style="margin-top:.35rem;">Sign in to Continue</button>` : ""}
+        </div>
+      `;
+      const btn = $("fnEmptySignInBtn");
+      if (btn) btn.onclick = () => ensureAccountAccess();
+      return;
+    }
+
+    const monthMap = new Map();
+    for (const tx of filtered) {
+      const d = parseFlexibleDate(tx.date);
+      if (!d) continue;
+      if (!monthMap.has(d.monthKey)) monthMap.set(d.monthKey, []);
+      monthMap.get(d.monthKey).push({ tx, d });
+    }
+
+    const orderedMonthKeys = [...monthMap.keys()].sort((a, b) => b.localeCompare(a));
+    const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+    const delSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+
+    container.innerHTML = `<div class="fn-month-groups">
+      ${orderedMonthKeys.map(mk => {
+        const items = monthMap.get(mk).sort((a, b) => a.d.ts - b.d.ts || (a.tx.sheetOrder ?? a.tx.createdAt ?? 0) - (b.tx.sheetOrder ?? b.tx.createdAt ?? 0));
+        const mSum = items.reduce((acc, x) => acc + (Number(x.tx.amount) || 0), 0);
+        const mOnly = monthOnlyName(mk);
+
+        return `
+          <div class="fn-month-block">
+            <div class="fn-month-hdr">
+              <b>${DB.esc(monthKeyLabel(mk))}</b>
+              <span>${items.length} Transaction${items.length === 1 ? "" : "s"} • ${fmtCurrency(mSum)}</span>
+            </div>
+            <div class="fn-sheet-table-wrap">
+              <table class="fn-sheet-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Transaction</th>
+                    <th>Payment</th>
+                    <th>Amount ($)</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${items.map(({ tx, d }) => {
+                    const isCredit = Number(tx.amount) < 0;
+                    return `
+                    <tr>
+                      <td class="fn-col-date">${DB.esc(d.mdyShort)}</td>
+                      <td><b>${DB.esc(tx.merchant)}</b></td>
+                      <td class="fn-col-pay"><span class="fn-pay-pill">${DB.esc(tx.payment || "RBC")}</span></td>
+                      <td class="fn-col-amt ${isCredit ? "is-credit" : ""}">${fmtCurrency(tx.amount)}</td>
+                      <td class="fn-col-act">
+                        <button type="button" class="fn-row-btn" data-edit-tx="${DB.esc(tx.id)}" title="Edit transaction" aria-label="Edit">${editSvg}</button>
+                        <button type="button" class="fn-row-btn del" data-del-tx="${DB.esc(tx.id)}" title="Delete transaction" aria-label="Delete">${delSvg}</button>
+                      </td>
+                    </tr>
+                  `;
+                  }).join("")}
+                  <tr class="fn-total-row">
+                    <td colspan="3" class="fn-total-label">${DB.esc(mOnly)} Total =</td>
+                    <td class="fn-total-val">${fmtCurrency(mSum)}</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>`;
+
+    container.querySelectorAll("[data-edit-tx]").forEach(btn => {
+      btn.onclick = () => {
+        const tx = loadTransactions().find(x => x.id === btn.dataset.editTx);
+        if (tx) openEditTxModal(tx);
+      };
+    });
+
+    container.querySelectorAll("[data-del-tx]").forEach(btn => {
+      btn.onclick = async () => {
+        const list = loadTransactions();
+        const idx = list.findIndex(x => x.id === btn.dataset.delTx);
+        if (idx === -1) return;
+        const removed = list[idx];
+        list.splice(idx, 1);
+        await saveTransactions(list, false);
+        const meta = loadFinanceMeta();
+        if (meta && meta.scriptUrl) {
+          await deleteTransactionFromSheet(removed);
+        }
+        DB.toast("Transaction Removed", `${removed.merchant} (${fmtCurrency(removed.amount)}) was deleted.`, 2200);
+      };
+    });
+  }
+
+  function openEditTxModal(tx) {
+    const d = parseFlexibleDate(tx.date);
+    const dispDate = d ? d.mdyShort : String(tx.date || "");
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Edit Transaction</h2>
+      <div class="grid2">
+        <div class="field">
+          <label for="edDate">Date</label>
+          <div class="fn-date-input-wrap" id="edDateWrap">
+            <input id="edDate" type="text" value="${DB.esc(dispDate)}" placeholder="MM/DD/YY" autocomplete="off" spellcheck="false" style="width:100%">
+            <button type="button" class="fn-cal-btn" id="edDateCalBtn" title="Open calendar picker" aria-label="Open calendar picker">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="edAmount">Amount ($)</label>
+          <input id="edAmount" type="number" step="0.01" value="${Number(tx.amount).toFixed(2)}" style="width:100%">
+        </div>
+      </div>
+      <div class="field">
+        <label for="edMerchant">Transaction (What it's on)</label>
+        <input id="edMerchant" type="text" value="${DB.esc(tx.merchant || "")}" style="width:100%">
+      </div>
+      <div class="field">
+        <label for="edPayment">Payment Bank / Method</label>
+        <input id="edPayment" type="text" value="${DB.esc(tx.payment || "RBC")}" style="width:100%">
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost left" id="edCancel">Cancel</button>
+        <button type="button" class="primary" id="edSave">Save Changes</button>
+      </div>
+    `;
+    const close = DB.modal(node, () => closeAppleCalendarPicker());
+
+    const edDateInput = node.querySelector("#edDate");
+    const edCalBtn = node.querySelector("#edDateCalBtn");
+    edCalBtn.onclick = e => {
+      e.preventDefault();
+      e.stopPropagation();
+      openAppleCalendarPicker(edDateInput, edCalBtn);
+    };
+
+    node.querySelector("#edCancel").onclick = close;
+    node.querySelector("#edSave").onclick = async () => {
+      const rawDateVal = edDateInput.value.trim();
+      const parsedNew = parseFlexibleDate(rawDateVal);
+      const newAmt = parseCurrencyAmount(node.querySelector("#edAmount").value);
+      const newMerch = node.querySelector("#edMerchant").value.trim();
+      const newPay = node.querySelector("#edPayment").value.trim() || "RBC";
+      if (!parsedNew) {
+        edDateInput.focus();
+        DB.toast("Invalid Date", "Please enter a date as MM/DD/YY or pick one from the calendar.", 2600);
+        return;
+      }
+      if (!newMerch || !Number.isFinite(newAmt) || newAmt === 0) return;
+
+      const list = loadTransactions();
+      const target = list.find(x => x.id === tx.id);
+      if (target) {
+        const oldCopy = Object.assign({}, target);
+        if (target.date !== parsedNew.iso) {
+          target.sheetOrder = 1e9 + Date.now();
+          target.rawDateCell = parsedNew.mdyShort;
+        }
+        target.date = parsedNew.iso;
+        target.amount = newAmt;
+        target.merchant = newMerch;
+        target.payment = newPay;
+
+        const sorted = sortTransactionsChronologically(list);
+        await saveTransactions(sorted, false);
+        close();
+
+        const meta = loadFinanceMeta();
+        if (meta && meta.scriptUrl) {
+          const ok = await editTransactionInSheet(oldCopy, target);
+          if (ok) {
+            DB.toast("Transaction Updated", `${newMerch} (${fmtCurrency(newAmt)}) updated in your Google Sheet.`, 2400);
+          }
+        } else {
+          DB.toast("Transaction Updated", `${newMerch} (${fmtCurrency(newAmt)}) saved.`, 2200);
+        }
+      } else {
+        close();
+      }
+    };
+  }
+
+  function renderAll() {
+    const txList = loadTransactions();
+    renderSheetStatusBar();
+    renderStatsAndSuggestions(txList);
+    renderCharts(txList);
+    renderLedger(txList);
+  }
+
+  document.querySelectorAll("#quickBankChips [data-bank]").forEach(chip => {
+    chip.onclick = () => {
+      $("txBankInput").value = chip.dataset.bank;
+      document.querySelectorAll("#quickBankChips [data-bank]").forEach(c => c.classList.toggle("active", c === chip));
+    };
+  });
+
+  $("txBankInput").addEventListener("input", () => {
+    const val = $("txBankInput").value.trim().toLowerCase();
+    document.querySelectorAll("#quickBankChips [data-bank]").forEach(c => {
+      c.classList.toggle("active", c.dataset.bank.toLowerCase() === val);
+    });
+  });
+
+  $("txDateCalBtn").onclick = async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!(await ensureAccountAccess())) return;
+    openAppleCalendarPicker($("txDateInput"), $("txDateCalBtn"));
+  };
+
+  const chartYearDropdown = $("chartYearDropdown");
+  const chartYearBtn = $("chartYearBtn");
+  const chartYearMenu = $("chartYearMenu");
+  if (chartYearBtn && chartYearMenu) {
+    chartYearBtn.onclick = async e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!(await ensureAccountAccess())) return;
+      const isOpening = chartYearMenu.hidden;
+      chartYearMenu.hidden = !isOpening;
+      chartYearDropdown.classList.toggle("open", isOpening);
+      chartYearBtn.setAttribute("aria-expanded", String(isOpening));
+    };
+    document.addEventListener("pointerdown", e => {
+      if (!chartYearMenu.hidden && !chartYearDropdown.contains(e.target)) {
+        chartYearMenu.hidden = true;
+        chartYearDropdown.classList.remove("open");
+        chartYearBtn.setAttribute("aria-expanded", "false");
+      }
+    }, true);
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && !chartYearMenu.hidden) {
+        chartYearMenu.hidden = true;
+        chartYearDropdown.classList.remove("open");
+        chartYearBtn.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
+
+  async function submitNewTransaction() {
+    if (!(await ensureAccountAccess())) return;
+    const rawDateVal = $("txDateInput").value.trim() || DB.toInputDate(Date.now());
+    const dParsed = parseFlexibleDate(rawDateVal);
+    if (!dParsed) {
+      $("txDateInput").focus();
+      DB.toast("Invalid Date", "Please enter a date as MM/DD/YY or click the calendar icon.", 2800);
+      return;
+    }
+
+    const merchantVal = $("txDescInput").value.trim();
+    const bankVal = $("txBankInput").value.trim() || "RBC";
+    const amountVal = parseCurrencyAmount($("txAmountInput").value);
+
+    if (!merchantVal) {
+      $("txDescInput").focus();
+      return;
+    }
+    if (!Number.isFinite(amountVal) || amountVal === 0) {
+      $("txAmountInput").focus();
+      return;
+    }
+
+    const isoDate = dParsed.iso;
+    state.chartYear = dParsed.year;
+    if (state.monthFilter !== "all" && state.monthFilter !== dParsed.monthKey) {
+      state.monthFilter = "all";
+    }
+
+    const list = loadTransactions();
+    const newTx = {
+      id: DB.uid(),
+      date: isoDate,
+      rawDateCell: dParsed.mdyShort,
+      merchant: merchantVal,
+      payment: bankVal,
+      amount: amountVal,
+      sheetOrder: 1e9 + Date.now(),
+      createdAt: Date.now()
+    };
+    list.push(newTx);
+
+    $("txDescInput").value = "";
+    $("txAmountInput").value = "";
+    $("txDescInput").focus();
+
+    const sorted = sortTransactionsChronologically(list);
+    await saveTransactions(sorted, false);
+
+    const meta = loadFinanceMeta();
+    if (meta && meta.scriptUrl) {
+      const ok = await insertTransactionIntoSheet(newTx);
+      if (ok) {
+        DB.toast("Saved & Synced to Sheet", `${merchantVal} (${fmtCurrency(newTx.amount)}) inserted at ${dParsed.mdyShort}.`, 2800);
+      }
+    } else {
+      DB.toast("Transaction Saved", `${merchantVal} (${fmtCurrency(newTx.amount)}) saved.`, 2400);
+    }
+  }
+
+  $("addTxBtn").onclick = submitNewTransaction;
+  [$("txDateInput"), $("txDescInput"), $("txBankInput"), $("txAmountInput")].forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitNewTransaction();
+      }
+    });
+  });
+
+  $("connectSheetBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    openConnectSheetModal();
+  };
+
+  $("syncSheetNowBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    DB.toast("Syncing Google Sheet…", "Reading transactions from your spreadsheet.", 2000);
+    await syncToGoogleSheet(true);
+  };
+
+  document.querySelectorAll("[data-bd-mode]").forEach(btn => {
+    btn.onclick = () => {
+      state.breakdownMode = btn.dataset.bdMode;
+      document.querySelectorAll("[data-bd-mode]").forEach(b => b.classList.toggle("active", b === btn));
+      renderAll();
+    };
+  });
+
+  $("txSearchInput").oninput = e => {
+    state.searchQuery = e.target.value.trim();
+    renderLedger(loadTransactions());
+  };
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(async () => {
+      await initDirectFirestoreSync();
+      renderAll();
+      await loadFullHistoryFromSheet(true);
+    });
+  }
+  document.addEventListener("p23finance", renderAll);
+
+  initDirectFirestoreSync().then(async () => {
+    renderAll();
+    await loadFullHistoryFromSheet(true);
+  });
+});
+</script>
+</body>
+</html>

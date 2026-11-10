@@ -1,0 +1,4284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stylist | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 86%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 92%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 11%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    --cl-green: #30d158;
+    --cl-amber: #ff9f0a;
+    --cl-blue: #0a84ff;
+    --cl-purple: #6c5ce7;
+    --cl-pink: #ff5c9d;
+  }
+
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1rem 1rem 5.5rem;
+  }
+
+  
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.4rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.1rem, 6.6vw, 3.8rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.88rem, 1.6vw, 1rem);
+    max-width: 660px;
+    line-height: 1.5;
+  }
+
+  .cl-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .apple-panel {
+    background: var(--glass-surface);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 18px 42px -18px rgba(0, 0, 0, 0.42);
+    border-radius: 26px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    contain: layout style;
+  }
+
+  
+  .cl-guest-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.85rem 1.15rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--card-solid)), color-mix(in srgb, var(--accent2) 10%, var(--card-solid)));
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+  }
+  .cl-guest-banner[hidden] {
+    display: none !important;
+  }
+  .cl-guest-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .cl-guest-ic {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--accent3, var(--accent));
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .cl-guest-ic svg {
+    width: 20px;
+    height: 20px;
+  }
+  .cl-guest-info b {
+    display: block;
+    font-family: var(--display);
+    font-size: 0.94rem;
+    color: var(--text);
+  }
+  .cl-guest-info span {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  
+  .cl-btn {
+    height: 38px;
+    min-height: 38px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.42rem;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.16s var(--apple-ease), border-color 0.16s, background 0.16s, box-shadow 0.16s;
+  }
+  .cl-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+  .cl-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .cl-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 8px 22px -6px rgba(108, 92, 231, 0.55);
+  }
+  .cl-btn.success {
+    background: linear-gradient(135deg, #28b44c, #1f9d40);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 8px 20px -6px rgba(48, 209, 88, 0.42);
+  }
+  .cl-btn.subtle {
+    height: 33px;
+    min-height: 33px;
+    padding: 0 0.78rem;
+    font-size: 0.76rem;
+  }
+
+  
+  .cl-sec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .cl-sec-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+  }
+  .cl-sec-ic {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--line));
+    color: var(--accent3, var(--accent));
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .cl-sec-ic svg {
+    width: 18px;
+    height: 18px;
+  }
+  .cl-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .cl-title-row h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .cl-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.14rem 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, transparent);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent3, var(--accent));
+    line-height: 1.2;
+  }
+  .cl-sec-sub {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.12rem;
+    line-height: 1.38;
+  }
+
+  
+  .cl-workspace-grid {
+    display: grid;
+    grid-template-columns: 495px minmax(0, 1fr);
+    gap: 1.15rem;
+    align-items: stretch;
+  }
+
+  
+  .cl-stylist-box {
+    background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 15%, var(--card-solid)), color-mix(in srgb, var(--card-2) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+    border-radius: 18px;
+    padding: 0.68rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.48rem;
+  }
+  .cl-stylist-selectors {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 0.42rem;
+    align-items: end;
+  }
+  .cl-stylist-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+    min-width: 0;
+  }
+  .cl-stylist-col label {
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+  }
+  .cl-stylist-pick-btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.52rem;
+    border-radius: 9px;
+    border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+    background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.25rem;
+    cursor: pointer;
+  }
+  .cl-stylist-pick-btn:hover {
+    border-color: var(--accent);
+    transform: none;
+  }
+  .cl-stylist-pick-btn span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cl-stylist-pick-btn svg {
+    width: 11px;
+    height: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .cl-stylist-reason {
+    font-size: 0.69rem;
+    color: var(--accent3, var(--accent));
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  
+  .cl-mirror-stage-card {
+    background:
+      radial-gradient(circle at 30% 20%, rgba(162, 155, 254, 0.2), transparent 55%),
+      linear-gradient(180deg, color-mix(in srgb, var(--card-solid) 96%, #070510), color-mix(in srgb, var(--card-2) 98%, #04020a));
+    border: 1.5px solid color-mix(in srgb, var(--accent) 40%, var(--line));
+    border-radius: 22px;
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.68rem;
+    flex: 1;
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), 0 18px 40px -18px rgba(0, 0, 0, 0.65);
+  }
+
+  .cl-mirror-body-split {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .cl-mannequin-viewport {
+    position: relative;
+    width: 100%;
+    height: 305px;
+    border-radius: 16px;
+    background:
+      radial-gradient(ellipse at 50% 91%, rgba(108, 92, 231, 0.34), transparent 52%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.24) 100%);
+    border: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .cl-floating-zip-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 15;
+    height: 25px;
+    min-height: 25px;
+    padding: 0 0.62rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid color-mix(in srgb, var(--accent) 55%, var(--line));
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.66rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  }
+  .cl-floating-zip-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 24%, var(--card-solid));
+    transform: translateY(-1px);
+  }
+  .cl-floating-zip-btn[hidden] {
+    display: none !important;
+  }
+
+  .cl-mannequin-svg {
+    width: 100%;
+    height: 100%;
+    max-width: 275px;
+    max-height: 298px;
+  }
+  .cl-svg-layer {
+    cursor: pointer;
+    transition: opacity 0.15s var(--apple-ease);
+  }
+  .cl-svg-layer:hover {
+    opacity: 0.9;
+  }
+
+  .cl-wearing-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.38rem;
+  }
+  .cl-wearing-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    padding: 0 0.15rem;
+  }
+  .cl-wearing-head b {
+    font-family: var(--display);
+    font-size: 0.8rem;
+    color: var(--text);
+  }
+  .cl-wearing-head span {
+    font-size: 0.66rem;
+    color: var(--muted);
+  }
+
+  .cl-wearing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.38rem;
+  }
+  .cl-wear-slot-card {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--card-solid) 84%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .cl-wear-slot-card:hover {
+    border-color: var(--accent);
+  }
+  .cl-wear-slot-card.is-equipped {
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+    background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 14%, var(--card-solid)), color-mix(in srgb, var(--card-solid) 90%, transparent));
+  }
+  .cl-wear-slot-thumb {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    margin-right: 0.42rem !important;
+  }
+  .cl-wear-slot-thumb svg {
+    width: 28px;
+    height: 28px;
+  }
+  .cl-wear-slot-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 2px;
+  }
+  .cl-wear-slot-text {
+    min-width: 0;
+    margin-left: 0.42rem !important;
+  }
+  .cl-wear-slot-role {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent3, var(--accent));
+    display: block;
+  }
+  .cl-wear-slot-name {
+    font-size: 0.79rem;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cl-wear-slot-sub {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: var(--muted);
+    display: block;
+  }
+  .cl-wear-slot-x {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--muted);
+    font-size: 0.74rem;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .cl-wear-slot-x:hover {
+    color: #fff;
+    background: rgba(255, 92, 157, 0.35);
+    transform: none;
+  }
+
+  
+  .cl-closet-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.95rem;
+  }
+  .cl-filter-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .cl-cat-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .cl-cat-pill {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-2) 78%, transparent);
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .cl-cat-pill:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .cl-cat-pill.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .cl-search-and-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .cl-search-wrap {
+    flex: 1;
+    min-width: 200px;
+    height: 38px;
+    padding: 0 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-2) 84%, transparent);
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .cl-search-wrap svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .cl-search-wrap input {
+    width: 100%;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--text);
+    font-size: 0.82rem;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .cl-status-seg {
+    display: inline-flex;
+    background: color-mix(in srgb, var(--card-2) 85%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px;
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  .cl-status-btn {
+    height: 30px;
+    min-height: 30px;
+    padding: 0 0.68rem;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cl-status-btn:hover {
+    color: var(--text);
+    transform: none;
+  }
+  .cl-status-btn.active {
+    background: color-mix(in srgb, var(--accent) 24%, var(--card-solid));
+    color: var(--text);
+  }
+
+  
+  .cl-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    align-content: start;
+  }
+
+  .cl-garment-card {
+    border-radius: 20px;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(162, 155, 254, 0.12), transparent 60%),
+      color-mix(in srgb, var(--card-2) 74%, transparent);
+    border: 1.5px solid color-mix(in srgb, var(--line) 84%, transparent);
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.55rem;
+    cursor: pointer;
+    position: relative;
+    contain: layout paint;
+    will-change: transform;
+    transition: transform 0.16s var(--apple-ease), border-color 0.16s, box-shadow 0.16s;
+  }
+  .cl-garment-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+  }
+  .cl-garment-card.is-equipped {
+    border-color: var(--accent);
+    background:
+      radial-gradient(circle at 50% 15%, rgba(108, 92, 231, 0.24), transparent 65%),
+      color-mix(in srgb, var(--card-solid) 92%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent), 0 12px 26px -10px rgba(108, 92, 231, 0.48);
+  }
+  .cl-garment-card.all-in-laundry {
+    opacity: 0.72;
+    border-style: dashed;
+  }
+
+  .cl-gc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+  }
+  .cl-cycle-tag {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 0.12rem 0.48rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .cl-cycle-tag.black {
+    background: #181a22;
+    color: #e6e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+  }
+  .cl-cycle-tag.white {
+    background: #f2f4f8;
+    color: #14161f;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+  }
+  .cl-cycle-tag.mix {
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-solid));
+    color: var(--accent3, var(--accent));
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, transparent);
+  }
+  .cl-cycle-tag.nowash {
+    background: color-mix(in srgb, var(--cl-green) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--cl-green) 36%, transparent);
+  }
+
+  .cl-qty-badge {
+    font-family: var(--mono);
+    font-size: 0.61rem;
+    font-weight: 700;
+    padding: 0.12rem 0.46rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-solid) 88%, transparent);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+
+  .cl-gc-preview {
+    height: 112px;
+    border-radius: 14px;
+    background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.24));
+    border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    position: relative;
+    padding: 6px;
+  }
+  .cl-gc-preview svg {
+    width: 86px;
+    height: 86px;
+    will-change: transform;
+    transition: transform 0.18s var(--apple-spring);
+  }
+  .cl-garment-card:hover .cl-gc-preview svg,
+  .cl-garment-card:hover .cl-gc-preview img {
+    transform: scale(1.06);
+  }
+  .cl-gc-preview img {
+    max-width: 100%;
+    max-height: 96px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    will-change: transform;
+    transition: transform 0.18s var(--apple-spring);
+  }
+  .cl-on-mirror-pill {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+  }
+
+  .cl-gc-info h4 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 0.91rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.25;
+  }
+
+  
+  .cl-card-scenarios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.24rem;
+    margin-top: 0.28rem;
+  }
+  .cl-scen-tag {
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    font-weight: 700;
+    padding: 0.08rem 0.38rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    color: var(--accent3, var(--accent));
+  }
+
+  
+  .cl-wear-meter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    margin-top: 0.25rem;
+  }
+  .cl-wear-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
+  .cl-wear-row b {
+    color: var(--text);
+  }
+  .cl-wear-bar {
+    height: 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--card-solid) 85%, transparent);
+    overflow: hidden;
+  }
+  .cl-wear-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--cl-green), var(--cl-amber));
+    transition: width 0.2s;
+  }
+
+  .cl-gc-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 55%, transparent);
+  }
+  .cl-gc-act-btn {
+    flex: 1;
+    height: 29px;
+    min-height: 29px;
+    padding: 0 0.5rem;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+    background: color-mix(in srgb, var(--card-solid) 86%, transparent);
+    color: var(--text);
+    font-size: 0.7rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.22rem;
+    cursor: pointer;
+  }
+  .cl-gc-act-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent3, var(--accent));
+    transform: none;
+  }
+  .cl-gc-ic-btn {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+    min-height: 29px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.74rem;
+    flex-shrink: 0;
+  }
+  .cl-gc-ic-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+  .cl-gc-ic-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+
+  
+  .cl-pagination-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-top: 0.65rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  }
+  .cl-page-info {
+    font-family: var(--mono);
+    font-size: 0.73rem;
+    color: var(--muted);
+  }
+  .cl-page-btns {
+    display: flex;
+    align-items: center;
+    gap: 0.32rem;
+  }
+  .cl-page-num {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-2) 80%, transparent);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .cl-page-num.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+  }
+  .cl-page-num:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  
+  .cl-editor-drawer {
+    background: linear-gradient(155deg, color-mix(in srgb, var(--accent) 14%, var(--card-solid)), color-mix(in srgb, var(--card-2) 95%, transparent));
+    border: 1.5px solid color-mix(in srgb, var(--accent) 44%, var(--line));
+    border-radius: 24px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+  }
+  .cl-editor-drawer[hidden] {
+    display: none !important;
+  }
+  .cl-editor-layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 1.05rem;
+    align-items: stretch;
+  }
+  .cl-photo-drop {
+    background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.26));
+    border: 1.5px dashed color-mix(in srgb, var(--accent) 48%, var(--line));
+    border-radius: 18px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    text-align: center;
+  }
+  .cl-photo-stage {
+    width: 100%;
+    flex: 1;
+    min-height: 145px;
+    max-height: 175px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0.25rem;
+  }
+  .cl-photo-stage svg {
+    width: 100px;
+    height: 100px;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+  }
+  .cl-photo-stage img {
+    max-width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5));
+  }
+  .cl-upload-btn-lbl {
+    height: 30px;
+    padding: 0 0.72rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 22%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
+    color: var(--text);
+    font-size: 0.73rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+
+  .cl-form-row-top {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .cl-washable-controls-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 0.6rem;
+    align-items: end;
+  }
+  .cl-washable-controls-row[hidden] {
+    display: none !important;
+  }
+
+  .cl-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .cl-field label {
+    font-family: var(--mono);
+    font-size: 0.63rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+  .cl-input {
+    width: 100%;
+    height: 38px;
+    padding: 0 0.78rem;
+    border-radius: 11px !important;
+    border: 1px solid var(--line);
+    background: var(--card-solid);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.83rem;
+    outline: none;
+  }
+  .cl-dd-btn {
+    width: 100%;
+    height: 38px;
+    min-height: 38px;
+    padding: 0 0.78rem;
+    border-radius: 11px;
+    border: 1px solid var(--line);
+    background: var(--card-solid);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    cursor: pointer;
+  }
+  .cl-dd-btn svg {
+    width: 13px;
+    height: 13px;
+    color: var(--muted);
+  }
+
+  .cl-color-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.55rem 0.75rem;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  }
+  .cl-swatches-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.34rem;
+    flex-wrap: wrap;
+  }
+  .cl-sw-dot {
+    width: 23px;
+    height: 23px;
+    min-width: 23px;
+    min-height: 23px;
+    padding: 0;
+    border-radius: 999px;
+    border: 2px solid rgba(255, 255, 255, 0.28);
+    cursor: pointer;
+  }
+  .cl-sw-dot.active {
+    transform: scale(1.18);
+    border-color: #fff;
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  
+  .cl-custom-color-trigger {
+    height: 30px;
+    min-height: 30px;
+    padding: 0 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    background: color-mix(in srgb, var(--card-2) 88%, transparent);
+    color: var(--text);
+    font-size: 0.73rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    cursor: pointer;
+  }
+  .cl-custom-color-trigger:hover {
+    border-color: var(--accent);
+    transform: none;
+  }
+  .cl-custom-color-preview {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+  }
+
+  
+  .cl-scenarios-box {
+    padding: 0.6rem 0.75rem;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--card-solid) 75%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+  }
+  .cl-scenarios-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+  }
+  .cl-scen-chip {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-2) 78%, transparent);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .cl-scen-chip:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .cl-scen-chip.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .cl-3cycle-seg {
+    display: inline-flex;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .cl-3cycle-btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.72rem;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .cl-3cycle-btn:hover {
+    color: var(--text);
+    transform: none;
+  }
+  .cl-3cycle-btn.act-black {
+    background: #1d202b;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  }
+  .cl-3cycle-btn.act-white {
+    background: #f2f4f8;
+    color: #12141c;
+  }
+  .cl-3cycle-btn.act-mix {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+  }
+
+  
+  .cl-color-popover {
+    position: fixed;
+    z-index: 10000;
+    width: 265px;
+    background: color-mix(in srgb, var(--card-solid) 96%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+    border-radius: 20px;
+    box-shadow: 0 24px 52px -12px rgba(0, 0, 0, 0.72);
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+  .cl-cp-sv-box {
+    position: relative;
+    width: 100%;
+    height: 135px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: crosshair;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .cl-cp-sv-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .cl-cp-cursor {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .cl-cp-hue-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%);
+    outline: none;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    cursor: pointer;
+  }
+  .cl-cp-hue-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: #fff;
+    border: 2px solid var(--accent);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+  }
+  .cl-cp-hex-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .cl-cp-swatch-big {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    flex-shrink: 0;
+  }
+
+  
+  .cl-laundry-cycles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+  .cl-laundry-card {
+    border-radius: 22px;
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.85rem;
+    background: color-mix(in srgb, var(--card-2) 74%, transparent);
+    border: 1.5px solid color-mix(in srgb, var(--line) 85%, transparent);
+  }
+  .cl-laundry-card.type-black {
+    background: linear-gradient(160deg, rgba(22, 24, 34, 0.92), color-mix(in srgb, var(--card-solid) 88%, #000));
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+  .cl-laundry-card.type-white {
+    background: linear-gradient(160deg, color-mix(in srgb, #ffffff 11%, var(--card-solid)), color-mix(in srgb, var(--card-2) 92%, #fff));
+    border-color: color-mix(in srgb, #ffffff 26%, var(--line));
+  }
+  .cl-laundry-card.type-mix {
+    background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 14%, var(--card-solid)), color-mix(in srgb, var(--card-2) 90%, transparent));
+    border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  }
+
+  .cl-lc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .cl-lc-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .cl-lc-orb {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .cl-lc-orb.black { background: #14161f; color: #fff; border: 1.5px solid rgba(255,255,255,0.28); }
+  .cl-lc-orb.white { background: #f2f4f8; color: #14161f; border: 1.5px solid rgba(0,0,0,0.15); }
+  .cl-lc-orb.mix   { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+
+  .cl-lc-title-wrap h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .cl-lc-title-wrap span {
+    display: block;
+    font-size: 0.73rem;
+    color: var(--muted);
+  }
+
+  .cl-lc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .cl-lc-item {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.58rem;
+    padding: 0.42rem 0.56rem;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+  .cl-lc-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 9px;
+    background: rgba(0,0,0,0.2);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .cl-lc-thumb svg { width: 30px; height: 30px; }
+  .cl-lc-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+
+  .cl-lc-meta b {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cl-lc-meta span {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  
+  .cl-pop-menu {
+    position: fixed;
+    z-index: 9999;
+    background: color-mix(in srgb, var(--card-solid) 96%, transparent);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line));
+    border-radius: 18px;
+    box-shadow: 0 22px 48px -12px rgba(0, 0, 0, 0.65);
+    padding: 0.45rem;
+    min-width: 220px;
+    max-height: 310px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .cl-pop-item {
+    width: 100%;
+    padding: 0.52rem 0.75rem;
+    border-radius: 10px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    cursor: pointer;
+    text-align: left;
+  }
+  .cl-pop-item:hover {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    transform: none;
+  }
+  .cl-pop-item.active {
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
+    color: var(--accent3, var(--accent));
+  }
+
+  @media (max-width: 1040px) {
+    .cl-workspace-grid,
+    .cl-editor-layout {
+      grid-template-columns: 1fr;
+    }
+    .cl-form-row-top,
+    .cl-washable-controls-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 680px) {
+    main {
+      padding: 0.75rem 0.6rem 6rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .cl-stylist-selectors {
+      grid-template-columns: 1fr 1fr;
+    }
+    .cl-mirror-body-split {
+      grid-template-columns: 1fr;
+    }
+    .cl-mannequin-viewport {
+      height: 360px;
+    }
+    .cl-cards-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .cl-form-row-top,
+    .cl-washable-controls-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 430px) {
+    .cl-cards-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body data-page="closet">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>FASHION STYLIST</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
+        Personal Wardrobe Stylist
+      </span>
+    </div>
+  </div>
+
+  <div class="cl-shell">
+    
+    <div class="cl-guest-banner" id="clGuestBanner" hidden>
+      <div class="cl-guest-info">
+        <div class="cl-guest-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div>
+          <b>Sign In Required</b>
+          <span>Sign in with your Project 23 account to save your closet, style outfits, and sync your laundry cycles across devices.</span>
+        </div>
+      </div>
+      <button type="button" class="cl-btn primary" id="clGuestSignInBtn">Sign In to Continue</button>
+    </div>
+
+    
+    <section class="cl-editor-drawer" id="clEditorDrawer" hidden aria-label="Add or Edit Clothing Piece">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;">
+        <div class="cl-title-row">
+          <h2 id="clDrawerHeading" style="margin:0;font-family:var(--display);font-size:1.05rem;">Add Clothing Piece</h2>
+        </div>
+        <button type="button" class="cl-gc-ic-btn" id="clCloseDrawerBtn" title="Close">×</button>
+      </div>
+
+      <div class="cl-editor-layout">
+        
+        <div class="cl-photo-drop" id="clPhotoDropZone">
+          <div class="cl-photo-stage" id="clPhotoStage"></div>
+          <div style="display:flex;gap:0.35rem;flex-wrap:wrap;justify-content:center;">
+            <label class="cl-upload-btn-lbl" for="clPhotoInput">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              <span>Upload Photo</span>
+            </label>
+            <input type="file" id="clPhotoInput" accept="image/*" hidden>
+            <button type="button" class="cl-btn subtle" id="clClearPhotoBtn" hidden style="height:29px;min-height:29px;padding:0 0.55rem;">Use Vector</button>
+          </div>
+        </div>
+
+        
+        <div style="display:flex;flex-direction:column;gap:0.68rem;">
+          <div class="cl-form-row-top">
+            <div class="cl-field">
+              <label for="clFormName">Clothing Name</label>
+              <input type="text" class="cl-input" id="clFormName" placeholder="e.g. Nike Air Running Shoes, White Tee…" maxlength="65">
+            </div>
+
+            <div class="cl-field">
+              <label>Category</label>
+              <button type="button" class="cl-dd-btn" id="clFormCatBtn">
+                <span id="clFormCatLbl">Top</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <div class="cl-field">
+              <label>Type / Cut (For Selected Category)</label>
+              <button type="button" class="cl-dd-btn" id="clFormTypeBtn">
+                <span id="clFormTypeLbl">Crewneck T-Shirt</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          
+          <div class="cl-color-bar">
+            <div class="cl-swatches-wrap">
+              <span style="font-family:var(--mono);font-size:0.62rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-right:0.15rem;">Color:</span>
+              <div class="cl-swatches-wrap" id="clFormSwatches"></div>
+              <button type="button" class="cl-custom-color-trigger" id="clOpenCustomColorBtn" title="Open Custom Color Picker">
+                <span class="cl-custom-color-preview" id="clCustomColorDot" style="background:#1c1d24"></span>
+                <span id="clCustomColorHexLbl">#1C1D24</span>
+              </button>
+            </div>
+          </div>
+
+          
+          <div class="cl-scenarios-box">
+            <span style="font-family:var(--mono);font-size:0.62rem;font-weight:700;text-transform:uppercase;color:var(--muted);">
+              Suitability &amp; Scenarios (prioritized when suggesting outfits)
+            </span>
+            <div class="cl-scenarios-chips" id="clFormScenarioChips"></div>
+          </div>
+
+          
+          <div class="cl-washable-controls-row" id="clWashableControlsRow">
+            <div class="cl-field">
+              <label>Wears Before Wash</label>
+              <button type="button" class="cl-dd-btn" id="clFormMaxWearsBtn">
+                <span id="clFormMaxWearsLbl">2 wears before wash</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <div class="cl-field">
+              <label for="clFormQty">Quantity Owned (Pairs/Pieces)</label>
+              <input type="number" class="cl-input" id="clFormQty" min="1" max="50" step="1" value="1">
+            </div>
+
+            <div class="cl-field">
+              <label>Laundry Cycle Type</label>
+              <div class="cl-3cycle-seg" role="radiogroup" aria-label="Laundry Cycle Type">
+                <button type="button" class="cl-3cycle-btn act-black" data-pick-cyc="black" id="clCycBtnBlack">Black</button>
+                <button type="button" class="cl-3cycle-btn" data-pick-cyc="white" id="clCycBtnWhite">White</button>
+                <button type="button" class="cl-3cycle-btn" data-pick-cyc="mix" id="clCycBtnMix">Mix / Others</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:0.45rem;">
+            <button type="button" class="cl-btn subtle" id="clCancelFormBtn">Cancel</button>
+            <button type="button" class="cl-btn primary subtle" id="clSaveFormBtn" style="padding:0 1.2rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>
+              <span id="clSaveFormBtnLbl">Save to Closet</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <div class="cl-workspace-grid">
+      
+      <section class="panel apple-panel" aria-label="Outfit Mirror and Smart Stylist">
+        <div class="cl-sec-head">
+          <div class="cl-sec-title">
+            <div class="cl-sec-ic">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div>
+              <div class="cl-title-row">
+                <h2>Outfit Mirror</h2>
+                <span class="cl-count-pill" id="clMirrorEquippedBadge">0 / 8 Layers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="cl-stylist-box">
+          <div class="cl-stylist-selectors">
+            <div class="cl-stylist-col">
+              <label>Occasion / Mood</label>
+              <button type="button" class="cl-stylist-pick-btn" id="clPickMoodBtn">
+                <span id="clPickMoodLbl">Casual / Streetwear</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <div class="cl-stylist-col">
+              <label>Weather</label>
+              <button type="button" class="cl-stylist-pick-btn" id="clPickWeatherBtn">
+                <span id="clPickWeatherLbl">Cool / Breezy</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <div class="cl-stylist-col">
+              <label>Color Tone</label>
+              <button type="button" class="cl-stylist-pick-btn" id="clPickToneBtn">
+                <span id="clPickToneLbl">Balanced Contrast</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+            </div>
+
+            <button type="button" class="cl-btn primary subtle" id="clSuggestOutfitBtn" style="height:32px;min-height:32px;padding:0 0.78rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>
+              <span>Suggest</span>
+            </button>
+          </div>
+          <div class="cl-stylist-reason" id="clStylistReason">
+            Prioritizes matching scenario tags &amp; already-worn clothes in rotation.
+          </div>
+        </div>
+
+        
+        <div class="cl-mirror-stage-card">
+          <div class="cl-mirror-body-split">
+            
+            <div class="cl-mannequin-viewport">
+              <span id="clOuterwearStateNote" hidden></span>
+              <svg class="cl-mannequin-svg" id="clMannequinSvg" viewBox="0 0 360 475" fill="none" aria-label="Full-Body Layered Outfit Mannequin"></svg>
+              <button type="button" class="cl-floating-zip-btn" id="clToggleJacketZipBtn" title="Toggle Jacket Open (Unzipped) or Closed (Zipped)">
+                <span id="clJacketZipLbl">Unzipped</span>
+              </button>
+            </div>
+
+            
+            <div class="cl-wearing-section">
+              <div class="cl-wearing-head">
+                <b>Currently Wearing</b>
+              </div>
+              <div class="cl-wearing-grid" id="clWearingGrid"></div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr auto;gap:0.5rem;padding-top:0.2rem;">
+            <button type="button" class="cl-btn primary" id="clWearOutfitBtn" title="Log +1 wear on washable clothes (Shoes & Accessories are exempt from washing)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Wear This Outfit</span>
+            </button>
+            <button type="button" class="cl-btn subtle" id="clClearOutfitBtn" style="height:38px;">
+              <span>Clear</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      
+      <section class="panel apple-panel cl-closet-panel" aria-label="My Closet">
+        <div style="display:flex;flex-direction:column;gap:0.85rem;">
+          <div class="cl-sec-head">
+            <div class="cl-sec-title">
+              <div class="cl-sec-ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>
+              </div>
+              <div>
+                <div class="cl-title-row">
+                  <h2>My Closet</h2>
+                  <span class="cl-count-pill" id="clClosetCountBadge">0 Pieces</span>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="cl-btn primary subtle" id="clOpenAddBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Add Clothes</span>
+            </button>
+          </div>
+
+          <div class="cl-filter-stack">
+            <div class="cl-cat-pills" id="clCatPills" role="tablist"></div>
+
+            <div class="cl-search-and-status">
+              <div class="cl-search-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" id="clSearchInput" placeholder="Search clothes by name, type, or scenario tag…" autocomplete="off">
+              </div>
+
+              <div class="cl-status-seg" role="tablist" aria-label="Filter by Wear Status">
+                <button type="button" class="cl-status-btn active" data-st-btn="all">All</button>
+                <button type="button" class="cl-status-btn" data-st-btn="worn">Worn (In Rotation)</button>
+                <button type="button" class="cl-status-btn" data-st-btn="clean">Fresh Clean</button>
+                <button type="button" class="cl-status-btn" data-st-btn="laundry">In Laundry</button>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="cl-cards-grid" id="clCardsGrid" aria-live="polite"></div>
+        </div>
+
+        
+        <div class="cl-pagination-bar" id="clPaginationBar"></div>
+      </section>
+    </div>
+
+    <section class="panel apple-panel" aria-label="Weekly Laundry Basket">
+      <div class="cl-sec-head">
+        <div class="cl-sec-title">
+          <div class="cl-sec-ic" style="background:color-mix(in srgb,var(--cl-blue) 18%,var(--card-solid));color:var(--cl-blue);border-color:color-mix(in srgb,var(--cl-blue) 42%,var(--line));">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="2" width="18" height="20" rx="3"/><circle cx="12" cy="13" r="5"/><path d="M12 10a3 3 0 0 0-3 3"/></svg>
+          </div>
+          <div>
+            <div class="cl-title-row">
+              <h2>Laundry Basket</h2>
+              <span class="cl-count-pill" id="clLaundryTotalBadge">0 to wash</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:0.4rem;flex-wrap:wrap;">
+          <button type="button" class="cl-btn subtle" data-add-cycle-type="black">+ Black Cycle</button>
+          <button type="button" class="cl-btn subtle" data-add-cycle-type="white">+ White Cycle</button>
+          <button type="button" class="cl-btn subtle" data-add-cycle-type="mix">+ Mix/Others Cycle</button>
+          <button type="button" class="cl-btn success subtle" id="clWashAllBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Wash All</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cl-laundry-cycles-grid" id="clLaundryCyclesGrid"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const CL_KEY = "p23.closet.v6";
+  const PAGE_SIZE = 6;
+  const $ = id => document.getElementById(id);
+
+  const EMBEDDED_SHOES1_PHOTO = "data:image/webp;base64,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";
+
+  
+  const CATEGORIES = [
+    { id: "accessory",    label: "Headwear / Acc.", short: "Head / Acc.",  washable: false, defaultMaxWears: 1 },
+    { id: "outerwear",    label: "Outerwear Layer", short: "Outerwear",    washable: true,  defaultMaxWears: 5 },
+    { id: "top",          label: "Top (Tee / Shirt / Sweater)", short: "Top", washable: true, defaultMaxWears: 2 },
+    { id: "underclothes", label: "Underclothes (Base Layer)", short: "Underclothes", washable: true, defaultMaxWears: 1 },
+    { id: "bottom",       label: "Bottom (Pants / Shorts)", short: "Bottom", washable: true, defaultMaxWears: 4 },
+    { id: "underwear",    label: "Underwear",       short: "Underwear",    washable: true,  defaultMaxWears: 1 },
+    { id: "socks",        label: "Socks",           short: "Socks",        washable: true,  defaultMaxWears: 1 },
+    { id: "footwear",     label: "Shoes / Footwear",short: "Shoes",        washable: false, defaultMaxWears: 1 }
+  ];
+
+  const TYPES = [
+    { id: "tee",        cat: "top",          label: "Crewneck T-Shirt",          canUnzip: false },
+    { id: "shirt",      cat: "top",          label: "Button-Down Oxford Shirt",  canUnzip: false },
+    { id: "sweater",    cat: "top",          label: "Ribbed Knit Sweater",       canUnzip: false },
+    { id: "polo",       cat: "top",          label: "Collared Polo Shirt",       canUnzip: false },
+    { id: "hoodie",     cat: "outerwear",    label: "Pullover Hoodie (Closed)",  canUnzip: false },
+    { id: "zip_hoodie", cat: "outerwear",    label: "Zip-Up Hoodie (Can Unzip)", canUnzip: true  },
+    { id: "jacket",     cat: "outerwear",    label: "Bomber / Zip Jacket",       canUnzip: true  },
+    { id: "coat",       cat: "outerwear",    label: "Tailored Overcoat / Blazer",canUnzip: true  },
+    { id: "undershirt", cat: "underclothes", label: "Crew / V-Neck Undershirt",  canUnzip: false },
+    { id: "tank",       cat: "underclothes", label: "Ribbed Tank Undershirt",    canUnzip: false },
+    { id: "jeans",      cat: "bottom",       label: "Straight Jeans / Trousers", canUnzip: false },
+    { id: "sweatpants", cat: "bottom",       label: "Sweatpants / Joggers",      canUnzip: false },
+    { id: "cargo",      cat: "bottom",       label: "Utility Cargo Pants",       canUnzip: false },
+    { id: "shorts",     cat: "bottom",       label: "Tailored / Athletic Shorts",canUnzip: false },
+    { id: "boxers",     cat: "underwear",    label: "Boxer Briefs / Trunks",     canUnzip: false },
+    { id: "briefs",     cat: "underwear",    label: "Classic Briefs",            canUnzip: false },
+    { id: "crewsocks",  cat: "socks",        label: "Ribbed Crew Socks",         canUnzip: false },
+    { id: "anklesocks", cat: "socks",        label: "Low Ankle Socks",           canUnzip: false },
+    { id: "sneaker",    cat: "footwear",     label: "Low-Top Sneakers",          canUnzip: false },
+    { id: "boot",       cat: "footwear",     label: "Weatherproof / Chelsea Boots", canUnzip: false },
+    { id: "cap",        cat: "accessory",    label: "Baseball Cap",              canUnzip: false },
+    { id: "beanie",     cat: "accessory",    label: "Ribbed Knit Beanie",        canUnzip: false }
+  ];
+  const SCENARIO_OPTIONS = [
+    { id: "rain",       label: "Rain / Snow",         group: "weather" },
+    { id: "cold",       label: "Cold / Winter",       group: "weather" },
+    { id: "cool",       label: "Cool / Breezy",       group: "weather" },
+    { id: "mild",       label: "Mild / Everyday",     group: "weather" },
+    { id: "warm",       label: "Hot / Sunny",         group: "weather" },
+    { id: "formal",     label: "Formal / Smart",      group: "mood" },
+    { id: "streetwear", label: "Casual / Streetwear", group: "mood" },
+    { id: "cozy",       label: "Cozy / Lounge",       group: "mood" },
+    { id: "sporty",     label: "Active / Sport",      group: "mood" }
+  ];
+
+  const MOOD_OPTIONS = [
+    { id: "streetwear", label: "Casual / Streetwear" },
+    { id: "formal",     label: "Formal / Smart" },
+    { id: "cozy",       label: "Cozy / Lounge" },
+    { id: "sporty",     label: "Active / Sport" }
+  ];
+
+  const WEATHER_OPTIONS = [
+    { id: "cool", label: "Cool / Breezy" },
+    { id: "rain", label: "Rain / Snow" },
+    { id: "cold", label: "Cold / Winter" },
+    { id: "mild", label: "Mild / Everyday" },
+    { id: "warm", label: "Hot / Sunny" }
+  ];
+
+  const TONE_OPTIONS = [
+    { id: "contrast",   label: "Balanced Contrast" },
+    { id: "dark",       label: "Dark / Stealth" },
+    { id: "light",      label: "Light / Clean" },
+    { id: "earth",      label: "Earth / Warm" },
+    { id: "monochrome", label: "Monochrome Tonal" }
+  ];
+
+  const SWATCHES = [
+    { hex: "#1c1d24", name: "Obsidian Black", cycle: "black", toneGroup: "dark" },
+    { hex: "#363b47", name: "Charcoal Slate", cycle: "black", toneGroup: "dark" },
+    { hex: "#1d2f52", name: "Midnight Navy",  cycle: "black", toneGroup: "dark" },
+    { hex: "#2e4f8f", name: "Raw Indigo",     cycle: "black", toneGroup: "dark" },
+    { hex: "#f5f6f8", name: "Crisp White",    cycle: "white", toneGroup: "light" },
+    { hex: "#ebe2ce", name: "Oatmeal Cream",  cycle: "white", toneGroup: "light" },
+    { hex: "#c5cad4", name: "Heather Grey",   cycle: "white", toneGroup: "light" },
+    { hex: "#3d5a45", name: "Forest Olive",   cycle: "mix",   toneGroup: "earth" },
+    { hex: "#8c6239", name: "Camel Tan",      cycle: "mix",   toneGroup: "earth" },
+    { hex: "#8b2635", name: "Burgundy Wine",  cycle: "mix",   toneGroup: "earth" },
+    { hex: "#6c5ce7", name: "Royal Purple",   cycle: "mix",   toneGroup: "accent" },
+    { hex: "#5a9bd5", name: "Sky Chambray",   cycle: "mix",   toneGroup: "light" }
+  ];
+
+  const CYCLE_META = {
+    black: { label: "Black",        sub: "Blacks, darks, navy & dark denim" },
+    white: { label: "White",        sub: "Whites, creams & light greys" },
+    mix:   { label: "Mix / Others", sub: "Colors, mixed fabrics & others" }
+  };
+
+  function isCatWashable(catId) {
+    const c = CATEGORIES.find(x => x.id === catId);
+    return c ? Boolean(c.washable) : true;
+  }
+
+  function getTypeMeta(typeId) {
+    return TYPES.find(t => t.id === typeId) || TYPES[0];
+  }
+
+  function getToneGroupForHex(hex) {
+    const sw = SWATCHES.find(s => s.hex.toLowerCase() === String(hex || "").toLowerCase());
+    if (sw) return sw.toneGroup;
+    const clean = String(hex || "#1c1d24").replace("#", "");
+    if (clean.length === 6) {
+      const r = parseInt(clean.slice(0, 2), 16) || 0;
+      const g = parseInt(clean.slice(2, 4), 16) || 0;
+      const b = parseInt(clean.slice(4, 6), 16) || 0;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      return lum > 165 ? "light" : "dark";
+    }
+    return "dark";
+  }
+
+  
+  function autoTrimDataUrl(srcDataUrl) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 300;
+        let w = img.width, h = img.height;
+        if (!w || !h) { resolve(srcDataUrl); return; }
+        if (w > maxDim || h > maxDim) {
+          if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else { w = Math.round((w * maxDim) / h); h = maxDim; }
+        }
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+        const totalPx = w * h;
+        const cornerIndices = [
+          0,
+          (w - 1) * 4,
+          (h - 1) * w * 4,
+          ((h - 1) * w + (w - 1)) * 4
+        ];
+        let opaqueCornerIdx = -1;
+        for (const ci of cornerIndices) {
+          if (data[ci + 3] > 180) { opaqueCornerIdx = ci; break; }
+        }
+
+        if (opaqueCornerIdx >= 0) {
+          const bgR = data[opaqueCornerIdx], bgG = data[opaqueCornerIdx + 1], bgB = data[opaqueCornerIdx + 2];
+          const visited = new Uint8Array(totalPx);
+          const queue = new Int32Array(totalPx);
+          let qHead = 0, qTail = 0;
+          const tolSq = 48 * 48;
+          const innerSq = 26 * 26;
+
+          const enqueue = p => {
+            if (p >= 0 && p < totalPx && !visited[p]) {
+              visited[p] = 1;
+              queue[qTail++] = p;
+            }
+          };
+
+          for (let x = 0; x < w; x++) {
+            enqueue(x);
+            enqueue((h - 1) * w + x);
+          }
+          for (let y = 0; y < h; y++) {
+            enqueue(y * w);
+            enqueue(y * w + (w - 1));
+          }
+
+          while (qHead < qTail) {
+            const p = queue[qHead++];
+            const idx = p * 4;
+            const dr = data[idx] - bgR;
+            const dg = data[idx + 1] - bgG;
+            const db = data[idx + 2] - bgB;
+            const distSq = dr * dr + dg * dg + db * db;
+            if (distSq <= tolSq || data[idx + 3] < 40) {
+              data[idx + 3] = distSq < innerSq ? 0 : Math.round(((Math.sqrt(distSq) - 26) / 22) * 140);
+              const x = p % w;
+              const y = (p - x) / w;
+              if (x > 0) enqueue(p - 1);
+              if (x < w - 1) enqueue(p + 1);
+              if (y > 0) enqueue(p - w);
+              if (y < h - 1) enqueue(p + w);
+            }
+          }
+        }
+        const rowCounts = new Uint16Array(h);
+        const colCounts = new Uint16Array(w);
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (data[(y * w + x) * 4 + 3] > 95) {
+              rowCounts[y]++;
+              colCounts[x]++;
+            }
+          }
+        }
+        let minX = 0, maxX = w - 1, minY = 0, maxY = h - 1;
+        while (minY < h && rowCounts[minY] < 2) minY++;
+        while (maxY > minY && rowCounts[maxY] < 2) maxY--;
+        while (minX < w && colCounts[minX] < 2) minX++;
+        while (maxX > minX && colCounts[maxX] < 2) maxX--;
+
+        ctx.putImageData(imgData, 0, 0);
+
+        if (maxX > minX + 4 && maxY > minY + 4) {
+          const cropW = maxX - minX + 1;
+          const cropH = maxY - minY + 1;
+          const outCanvas = document.createElement("canvas");
+          outCanvas.width = cropW;
+          outCanvas.height = cropH;
+          outCanvas.getContext("2d").drawImage(c, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+          resolve(outCanvas.toDataURL("image/webp", 0.82));
+        } else {
+          resolve(c.toDataURL("image/webp", 0.82));
+        }
+      };
+      img.onerror = () => resolve(srcDataUrl);
+      img.src = srcDataUrl;
+    });
+  }
+
+  function autoTrimAndRemoveBg(file) {
+    return new Promise((resolve, reject) => {
+      if (!file || !file.type.startsWith("image/")) {
+        reject(new Error("Invalid image"));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          const trimmed = await autoTrimDataUrl(ev.target.result);
+          resolve(trimmed);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function ensureAllPhotosTightlyTrimmed() {
+    let changed = false;
+    for (const it of (cloudData.items || [])) {
+      if (it.photo && !it.photoTrimmedV7) {
+        if (it.id === "v6_shoes_photo") {
+          it.photoTrimmedV7 = true;
+          continue;
+        }
+        await new Promise(r => setTimeout(r, 16));
+        it.photo = await autoTrimDataUrl(it.photo);
+        it.photoTrimmedV7 = true;
+        changed = true;
+      }
+    }
+    if (changed) {
+      await persistCloudData();
+    }
+  }
+
+  
+  function renderGarmentShapeOnMannequin(typeId, hexColor = "#1c1d24", isOpenOuter = false) {
+    const c = hexColor || "#1c1d24";
+    const uid = "gm_" + typeId + "_" + (isOpenOuter ? "o_" : "c_") + c.replace(/[^a-zA-Z0-9]/g, "");
+    const st = "rgba(255,255,255,0.44)";
+    const seam = "rgba(255,255,255,0.22)";
+    const shade = "rgba(0,0,0,0.24)";
+    const deepShade = "rgba(0,0,0,0.38)";
+    const defs = `
+      <defs>
+        <linearGradient id="${uid}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+          <stop offset="48%" stop-color="rgba(255,255,255,0)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0.26)"/>
+        </linearGradient>
+      </defs>
+    `;
+
+    if (isOpenOuter && (typeId === "zip_hoodie" || typeId === "jacket" || typeId === "coat")) {
+      const isHooded = typeId === "zip_hoodie";
+      const isCoat = typeId === "coat";
+      const botY = isCoat ? 252 : 225;
+      return `${defs}
+        ${isHooded ? `
+          <path d="M144 82 C140 54, 220 54, 216 82 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 78 C158 61, 202 61, 208 78 C198 86, 162 86, 152 78 Z" fill="${deepShade}" stroke="${st}" stroke-width="1.4"/>
+        ` : `
+          <path d="M150 78 C164 86, 196 86, 210 78 C200 71, 160 71, 150 78 Z" fill="${deepShade}" stroke="${st}" stroke-width="1.8" stroke-linejoin="round"/>
+        `}
+        <path d="M152 79 L122 87 L86 192 L110 200 L126 130 L126 ${botY} L168 ${botY} L169 86 Q160 84 152 79 Z"
+              fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M152 79 L122 87 L86 192 L110 200 L126 130 L126 ${botY} L168 ${botY} L169 86 Q160 84 152 79 Z"
+              fill="url(#${uid})"/>
+        <path d="M208 79 L238 87 L274 192 L250 200 L234 130 L234 ${botY} L192 ${botY} L191 86 Q200 84 208 79 Z"
+              fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M208 79 L238 87 L274 192 L250 200 L234 130 L234 ${botY} L192 ${botY} L191 86 Q200 84 208 79 Z"
+              fill="url(#${uid})"/>
+        ${isCoat ? `
+          <path d="M152 79 L142 110 L152 116 L169 144 L169 86 Z M208 79 L218 110 L208 116 L191 144 L191 86 Z" fill="${shade}" stroke="${st}" stroke-width="1.5" stroke-linejoin="round"/>
+        ` : `
+          <rect x="126" y="${botY - 7}" width="42" height="7" rx="1.5" fill="${shade}" stroke="${st}" stroke-width="1.2"/>
+          <rect x="192" y="${botY - 7}" width="42" height="7" rx="1.5" fill="${shade}" stroke="${st}" stroke-width="1.2"/>
+          <line x1="168" y1="87" x2="167" y2="${botY}" stroke="rgba(255,255,255,0.62)" stroke-width="1.6" stroke-dasharray="3 3"/>
+          <line x1="192" y1="87" x2="193" y2="${botY}" stroke="rgba(255,255,255,0.62)" stroke-width="1.6" stroke-dasharray="3 3"/>
+        `}
+        ${isHooded ? `
+          <line x1="164" y1="87" x2="164" y2="118" stroke="rgba(255,255,255,0.78)" stroke-width="1.9" stroke-linecap="round"/>
+          <line x1="196" y1="87" x2="196" y2="118" stroke="rgba(255,255,255,0.78)" stroke-width="1.9" stroke-linecap="round"/>
+        ` : ""}
+      `;
+    }
+
+    switch (typeId) {
+      case "hoodie":
+        return `${defs}
+          <path d="M144 82 C140 54, 220 54, 216 82 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 78 C158 61, 202 61, 208 78 C198 86, 162 86, 152 78 Z" fill="${deepShade}" stroke="${st}" stroke-width="1.4"/>
+          <path d="M152 79 Q180 91 208 79 L238 87 L274 192 L250 200 L234 130 L234 225 L126 225 L126 130 L110 200 L86 192 L122 87 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 79 Q180 91 208 79 L238 87 L274 192 L250 200 L234 130 L234 225 L126 225 L126 130 L110 200 L86 192 L122 87 Z"
+                fill="url(#${uid})"/>
+          <path d="M122 87 L126 130 M238 87 L234 130" stroke="${seam}" stroke-width="1.4"/>
+          <path d="M146 172 L214 172 L220 212 L140 212 Z" fill="${shade}" stroke="${st}" stroke-width="1.5" stroke-linejoin="round"/>
+          <rect x="126" y="217" width="108" height="8" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.3"/>
+          <line x1="171" y1="86" x2="171" y2="120" stroke="rgba(255,255,255,0.78)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="189" y1="86" x2="189" y2="120" stroke="rgba(255,255,255,0.78)" stroke-width="2" stroke-linecap="round"/>
+        `;
+      case "zip_hoodie":
+        return `${defs}
+          <path d="M144 82 C140 54, 220 54, 216 82 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 78 C158 61, 202 61, 208 78 C198 86, 162 86, 152 78 Z" fill="${deepShade}" stroke="${st}" stroke-width="1.4"/>
+          <path d="M152 79 Q180 91 208 79 L238 87 L274 192 L250 200 L234 130 L234 225 L126 225 L126 130 L110 200 L86 192 L122 87 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 79 Q180 91 208 79 L238 87 L274 192 L250 200 L234 130 L234 225 L126 225 L126 130 L110 200 L86 192 L122 87 Z"
+                fill="url(#${uid})"/>
+          <path d="M144 172 L175 172 L175 212 L138 212 Z M185 172 L216 172 L222 212 L185 212 Z" fill="${shade}" stroke="${st}" stroke-width="1.4" stroke-linejoin="round"/>
+          <rect x="126" y="217" width="108" height="8" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.3"/>
+          <line x1="180" y1="86" x2="180" y2="225" stroke="rgba(255,255,255,0.68)" stroke-width="2"/>
+          <line x1="170" y1="86" x2="170" y2="118" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="190" y1="86" x2="190" y2="118" stroke="rgba(255,255,255,0.75)" stroke-width="1.8" stroke-linecap="round"/>
+        `;
+      case "jacket":
+        return `${defs}
+          <path d="M152 79 Q180 90 208 79 L238 87 L274 192 L250 200 L234 130 L234 224 L126 224 L126 130 L110 200 L86 192 L122 87 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 79 Q180 90 208 79 L238 87 L274 192 L250 200 L234 130 L234 224 L126 224 L126 130 L110 200 L86 192 L122 87 Z"
+                fill="url(#${uid})"/>
+          <path d="M150 78 C164 89, 196 89, 210 78 C200 71, 160 71, 150 78 Z" fill="${deepShade}" stroke="${st}" stroke-width="1.8" stroke-linejoin="round"/>
+          <rect x="126" y="216" width="108" height="8" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.3"/>
+          <line x1="180" y1="86" x2="180" y2="224" stroke="rgba(255,255,255,0.65)" stroke-width="2"/>
+          <line x1="142" y1="166" x2="154" y2="196" stroke="${st}" stroke-width="2" stroke-linecap="round"/>
+          <line x1="218" y1="166" x2="206" y2="196" stroke="${st}" stroke-width="2" stroke-linecap="round"/>
+        `;
+      case "coat":
+        return `${defs}
+          <path d="M152 77 Q180 86 208 77 L238 86 L272 192 L248 199 L234 130 L236 252 L124 252 L126 130 L112 199 L88 192 L122 86 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M152 77 Q180 86 208 77 L238 86 L272 192 L248 199 L234 130 L236 252 L124 252 L126 130 L112 199 L88 192 L122 86 Z"
+                fill="url(#${uid})"/>
+          <path d="M152 77 L142 112 L153 118 L180 152 L180 83 Z M208 77 L218 112 L207 118 L180 152 L180 83 Z"
+                fill="${shade}" stroke="${st}" stroke-width="1.6" stroke-linejoin="round"/>
+          <line x1="180" y1="150" x2="180" y2="252" stroke="${st}" stroke-width="1.6"/>
+          <rect x="134" y="182" width="24" height="7" rx="1.5" fill="${shade}" stroke="${st}" stroke-width="1.2"/>
+          <rect x="202" y="182" width="24" height="7" rx="1.5" fill="${shade}" stroke="${st}" stroke-width="1.2"/>
+          <circle cx="173" cy="168" r="2.6" fill="${st}"/>
+          <circle cx="173" cy="192" r="2.6" fill="${st}"/>
+        `;
+      case "shirt":
+        return `${defs}
+          <path d="M154 79 Q180 89 206 79 L234 86 L268 192 L246 198 L231 128 L231 224 L129 224 L129 128 L114 198 L92 192 L126 86 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M154 79 Q180 89 206 79 L234 86 L268 192 L246 198 L231 128 L231 224 L129 224 L129 128 L114 198 L92 192 L126 86 Z"
+                fill="url(#${uid})"/>
+          <path d="M154 76 L168 100 L180 87 L192 100 L206 76 Q180 70 154 76 Z" fill="${shade}" stroke="${st}" stroke-width="1.7" stroke-linejoin="round"/>
+          <rect x="176" y="87" width="8" height="137" fill="rgba(255,255,255,0.08)" stroke="${seam}" stroke-width="1.1"/>
+          <circle cx="180" cy="110" r="2" fill="${st}"/>
+          <circle cx="180" cy="136" r="2" fill="${st}"/>
+          <circle cx="180" cy="162" r="2" fill="${st}"/>
+          <circle cx="180" cy="188" r="2" fill="${st}"/>
+          <path d="M194 120 L214 120 L214 142 L204 146 L194 142 Z" fill="${shade}" stroke="${st}" stroke-width="1.3" stroke-linejoin="round"/>
+        `;
+      case "sweater":
+        return `${defs}
+          <path d="M154 79 Q180 91 206 79 L235 87 L270 192 L247 199 L231 128 L231 224 L129 224 L129 128 L113 199 L90 192 L125 87 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M154 79 Q180 91 206 79 L235 87 L270 192 L247 199 L231 128 L231 224 L129 224 L129 128 L113 199 L90 192 L125 87 Z"
+                fill="url(#${uid})"/>
+          <path d="M152 79 Q180 96 208 79 Q180 85 152 79 Z" fill="${shade}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="152" y1="81" x2="129" y2="128" stroke="${seam}" stroke-width="1.4"/>
+          <line x1="208" y1="81" x2="231" y2="128" stroke="${seam}" stroke-width="1.4"/>
+          <rect x="129" y="216" width="102" height="8" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.3"/>
+        `;
+      case "polo":
+        return `${defs}
+          <path d="M154 79 Q180 90 206 79 L235 87 L262 136 L239 149 L231 124 L231 224 L129 224 L129 124 L121 149 L98 136 L125 87 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M154 79 Q180 90 206 79 L235 87 L262 136 L239 149 L231 124 L231 224 L129 224 L129 124 L121 149 L98 136 L125 87 Z"
+                fill="url(#${uid})"/>
+          <path d="M154 76 L168 99 L180 86 L192 99 L206 76 Q180 70 154 76 Z" fill="${shade}" stroke="${st}" stroke-width="1.7" stroke-linejoin="round"/>
+          <rect x="176" y="86" width="8" height="36" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.4"/>
+          <circle cx="180" cy="96" r="1.8" fill="${st}"/>
+          <circle cx="180" cy="110" r="1.8" fill="${st}"/>
+        `;
+      case "undershirt":
+        return `${defs}
+          <path d="M156 82 Q180 97 204 82 L227 88 L248 130 L231 140 L224 121 L224 217 L136 217 L136 121 L129 140 L112 130 L133 88 Z"
+                fill="${c}" stroke="${st}" stroke-width="1.9" stroke-linejoin="round"/>
+          <path d="M156 82 Q180 97 204 82 L227 88 L248 130 L231 140 L224 121 L224 217 L136 217 L136 121 L129 140 L112 130 L133 88 Z"
+                fill="url(#${uid})"/>
+        `;
+      case "tank":
+        return `${defs}
+          <path d="M148 81 L161 81 C164 107, 196 107, 199 81 L212 81 C212 103, 219 117, 223 125 L223 217 L137 217 L137 125 C141 117, 148 103, 148 81 Z"
+                fill="${c}" stroke="${st}" stroke-width="1.9" stroke-linejoin="round"/>
+          <path d="M148 81 L161 81 C164 107, 196 107, 199 81 L212 81 C212 103, 219 117, 223 125 L223 217 L137 217 L137 125 C141 117, 148 103, 148 81 Z"
+                fill="url(#${uid})"/>
+          <line x1="162" y1="110" x2="162" y2="215" stroke="${seam}" stroke-width="1.2"/>
+          <line x1="180" y1="112" x2="180" y2="215" stroke="${seam}" stroke-width="1.2"/>
+          <line x1="198" y1="110" x2="198" y2="215" stroke="${seam}" stroke-width="1.2"/>
+        `;
+      case "jeans":
+        return `${defs}
+          <path d="M128 221 L232 221 L235 385 L184 385 L181 266 Q180 263 179 266 L176 385 L125 385 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M128 221 L232 221 L235 385 L184 385 L181 266 Q180 263 179 266 L176 385 L125 385 Z"
+                fill="url(#${uid})"/>
+          <rect x="128" y="221" width="104" height="10" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.6"/>
+          <line x1="180" y1="231" x2="180" y2="263" stroke="${st}" stroke-width="1.6"/>
+          <path d="M128 235 Q144 247 152 231 M232 235 Q216 247 208 231" stroke="${st}" stroke-width="1.6" fill="none"/>
+          <line x1="148" y1="221" x2="148" y2="231" stroke="${st}" stroke-width="2"/>
+          <line x1="212" y1="221" x2="212" y2="231" stroke="${st}" stroke-width="2"/>
+        `;
+      case "sweatpants":
+        return `${defs}
+          <path d="M129 221 L231 221 C237 272, 236 336, 230 377 L186 377 L181 266 Q180 263 179 266 L174 377 L130 377 C124 336, 123 272, 129 221 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M129 221 L231 221 C237 272, 236 336, 230 377 L186 377 L181 266 Q180 263 179 266 L174 377 L130 377 C124 336, 123 272, 129 221 Z"
+                fill="url(#${uid})"/>
+          <rect x="129" y="220" width="102" height="11" rx="4" fill="${shade}" stroke="${st}" stroke-width="1.6"/>
+          <rect x="131" y="376" width="42" height="9" rx="3.5" fill="${shade}" stroke="${st}" stroke-width="1.5"/>
+          <rect x="187" y="376" width="42" height="9" rx="3.5" fill="${shade}" stroke="${st}" stroke-width="1.5"/>
+          <path d="M175 226 C173 239, 173 247, 174 256 M185 226 C187 239, 187 247, 186 256" stroke="rgba(255,255,255,0.82)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M130 236 L142 260 M230 236 L218 260" stroke="${seam}" stroke-width="1.6" stroke-linecap="round"/>
+        `;
+      case "cargo":
+        return `${defs}
+          <path d="M127 221 L233 221 L237 385 L184 385 L181 266 Q180 263 179 266 L176 385 L123 385 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M127 221 L233 221 L237 385 L184 385 L181 266 Q180 263 179 266 L176 385 L123 385 Z"
+                fill="url(#${uid})"/>
+          <rect x="127" y="221" width="106" height="10" rx="2" fill="${shade}" stroke="${st}" stroke-width="1.6"/>
+          <rect x="117" y="280" width="14" height="32" rx="2.5" fill="${c}" stroke="${st}" stroke-width="1.8"/>
+          <rect x="229" y="280" width="14" height="32" rx="2.5" fill="${c}" stroke="${st}" stroke-width="1.8"/>
+          <line x1="117" y1="288" x2="131" y2="288" stroke="${st}" stroke-width="1.5"/>
+          <line x1="229" y1="288" x2="243" y2="288" stroke="${st}" stroke-width="1.5"/>
+        `;
+      case "shorts":
+        return `${defs}
+          <path d="M128 221 L232 221 L236 314 L184 314 L181 264 Q180 261 179 264 L176 314 L124 314 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M128 221 L232 221 L236 314 L184 314 L181 264 Q180 261 179 264 L176 314 L124 314 Z"
+                fill="url(#${uid})"/>
+          <rect x="128" y="221" width="104" height="10" rx="2.5" fill="${shade}" stroke="${st}" stroke-width="1.6"/>
+          <line x1="180" y1="231" x2="180" y2="261" stroke="${st}" stroke-width="1.5"/>
+        `;
+      case "briefs":
+        return `${defs}
+          <path d="M135 215 L225 215 L226 233 C213 243, 196 255, 186 264 L174 264 C164 255, 147 243, 134 233 Z"
+                fill="${c}" stroke="${st}" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M135 215 L225 215 L226 233 C213 243, 196 255, 186 264 L174 264 C164 255, 147 243, 134 233 Z"
+                fill="url(#${uid})"/>
+          <rect x="135" y="215" width="90" height="7.5" rx="2" fill="rgba(255,255,255,0.24)" stroke="${st}" stroke-width="1.5"/>
+          <rect x="171" y="216.8" width="18" height="4" rx="1" fill="rgba(255,255,255,0.75)"/>
+        `;
+      case "boxers":
+        return `${defs}
+          <path d="M135 215 L225 215 L227 264 L184 264 L180 249 L176 264 L133 264 Z"
+                fill="${c}" stroke="${st}" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M135 215 L225 215 L227 264 L184 264 L180 249 L176 264 L133 264 Z"
+                fill="url(#${uid})"/>
+          <rect x="135" y="215" width="90" height="7.5" rx="2" fill="rgba(255,255,255,0.24)" stroke="${st}" stroke-width="1.5"/>
+          <rect x="171" y="216.8" width="18" height="4" rx="1" fill="rgba(255,255,255,0.75)"/>
+        `;
+      case "tee":
+      default:
+        return `${defs}
+          <path d="M154 79 Q180 90 206 79 L235 87 L262 136 L239 149 L231 124 L231 224 L129 224 L129 124 L121 149 L98 136 L125 87 Z"
+                fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M154 79 Q180 90 206 79 L235 87 L262 136 L239 149 L231 124 L231 224 L129 224 L129 124 L121 149 L98 136 L125 87 Z"
+                fill="url(#${uid})"/>
+          <path d="M152 79 Q180 95 208 79 Q180 85 152 79 Z" fill="${shade}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+          <line x1="125" y1="87" x2="129" y2="124" stroke="${seam}" stroke-width="1.3"/>
+          <line x1="235" y1="87" x2="231" y2="124" stroke="${seam}" stroke-width="1.3"/>
+        `;
+    }
+  }
+
+  const __cardSvgCache = new Map();
+  function renderCardGarmentSvg(typeId, hexColor = "#1c1d24") {
+    const c = hexColor || "#1c1d24";
+    const cacheKey = typeId + "|" + c;
+    if (__cardSvgCache.has(cacheKey)) return __cardSvgCache.get(cacheKey);
+    const res = _renderCardGarmentSvgUncached(typeId, c);
+    __cardSvgCache.set(cacheKey, res);
+    return res;
+  }
+  function _renderCardGarmentSvgUncached(typeId, c) {
+    const uid = "gc_" + typeId + "_" + c.replace(/[^a-zA-Z0-9]/g, "");
+    const st = "rgba(255,255,255,0.44)";
+    const seam = "rgba(255,255,255,0.22)";
+    const shade = "rgba(0,0,0,0.24)";
+    const deepShade = "rgba(0,0,0,0.38)";
+    const defs = `
+      <defs>
+        <linearGradient id="${uid}" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+          <stop offset="48%" stop-color="rgba(255,255,255,0)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0.26)"/>
+        </linearGradient>
+      </defs>
+    `;
+
+    if (["hoodie", "zip_hoodie", "jacket"].includes(typeId)) {
+      return `<svg viewBox="76 52 208 182" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (typeId === "coat") {
+      return `<svg viewBox="76 66 208 196" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (["tee", "polo", "shirt", "sweater"].includes(typeId)) {
+      return `<svg viewBox="80 64 200 170" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (["undershirt", "tank"].includes(typeId)) {
+      return `<svg viewBox="96 66 168 164" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (["jeans", "sweatpants", "cargo"].includes(typeId)) {
+      return `<svg viewBox="104 210 152 184" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (typeId === "shorts") {
+      return `<svg viewBox="110 206 140 122" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (["boxers", "briefs"].includes(typeId)) {
+      return `<svg viewBox="118 198 124 82" fill="none">${renderGarmentShapeOnMannequin(typeId, c, false)}</svg>`;
+    }
+    if (typeId === "crewsocks" || typeId === "anklesocks") {
+      const topY = typeId === "anklesocks" ? 36 : 18;
+      return `<svg viewBox="0 0 100 100" fill="none">${defs}
+        <path d="M35 ${topY} L53 ${topY} L53 54 C53 58, 58 61, 72 65 C79 67, 79 78, 70 79 L35 79 C29 79, 29 72, 33 63 L35 52 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M35 ${topY} L53 ${topY} L53 54 C53 58, 58 61, 72 65 C79 67, 79 78, 70 79 L35 79 C29 79, 29 72, 33 63 L35 52 Z" fill="url(#${uid})"/>
+        ${typeId === "crewsocks" ? `
+          <line x1="35" y1="25" x2="53" y2="25" stroke="rgba(108,92,231,0.78)" stroke-width="2.4"/>
+          <line x1="35" y1="30" x2="53" y2="30" stroke="rgba(108,92,231,0.78)" stroke-width="2.4"/>
+        ` : ""}
+      </svg>`;
+    }
+    if (typeId === "boot") {
+      return `<svg viewBox="0 0 100 100" fill="none">${defs}
+        <path d="M20 26 L46 26 L49 42 C54 48, 63 51, 80 53 C86 54, 88 60, 86 66 L16 66 L18 44 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M20 26 L46 26 L49 42 C54 48, 63 51, 80 53 C86 54, 88 60, 86 66 L16 66 L18 44 Z" fill="url(#${uid})"/>
+        <rect x="27" y="30" width="11" height="18" rx="2.5" fill="${deepShade}" stroke="${st}" stroke-width="1.3"/>
+        <rect x="14" y="64" width="74" height="8" rx="3" fill="#252834" stroke="${st}" stroke-width="1.5"/>
+      </svg>`;
+    }
+    if (typeId === "sneaker") {
+      return `<svg viewBox="0 0 100 100" fill="none">${defs}
+        <path d="M18 40 L38 40 C44 46, 55 51, 81 53 C87 54, 89 60, 86 66 L15 66 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M18 40 L38 40 C44 46, 55 51, 81 53 C87 54, 89 60, 86 66 L15 66 Z" fill="url(#${uid})"/>
+        <path d="M28 51 C38 56, 50 58, 63 54" stroke="${st}" stroke-width="2.2" stroke-linecap="round"/>
+        <rect x="13" y="64" width="75" height="8" rx="3.5" fill="#f4f5f7" stroke="${st}" stroke-width="1.5"/>
+      </svg>`;
+    }
+    if (typeId === "beanie") {
+      return `<svg viewBox="0 0 100 100" fill="none">${defs}
+        <path d="M23 56 C23 28, 77 28, 77 56 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M23 56 C23 28, 77 28, 77 56 Z" fill="url(#${uid})"/>
+        <rect x="20" y="50" width="60" height="12" rx="4" fill="${c}" stroke="${st}" stroke-width="1.9"/>
+        <rect x="20" y="50" width="60" height="12" rx="4" fill="${shade}"/>
+      </svg>`;
+    }
+    if (typeId === "cap") {
+      return `<svg viewBox="0 0 100 100" fill="none">${defs}
+        <path d="M22 55 C22 28, 74 28, 76 55 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M22 55 C22 28, 74 28, 76 55 Z" fill="url(#${uid})"/>
+        <path d="M20 54 C38 50, 72 52, 89 60 C75 65, 42 62, 20 54 Z" fill="${c}" stroke="${st}" stroke-width="2" stroke-linejoin="round"/>
+      </svg>`;
+    }
+    return `<svg viewBox="80 64 200 170" fill="none">${renderGarmentShapeOnMannequin("tee", c, false)}</svg>`;
+  }
+
+  const STARTER_ITEMS = [
+    {
+      id: "v6_cap",
+      name: "Midnight Navy Dad Cap",
+      category: "accessory",
+      type: "cap",
+      color: "#1d2f52",
+      cycle: "black",
+      scenarios: ["streetwear", "sporty", "warm", "mild"],
+      maxWears: 1,
+      currentWears: 0,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_jacket",
+      name: "Forest Olive MA-1 Bomber Jacket",
+      category: "outerwear",
+      type: "jacket",
+      color: "#3d5a45",
+      cycle: "mix",
+      scenarios: ["streetwear", "cool", "rain"],
+      maxWears: 5,
+      currentWears: 2,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_hoodie",
+      name: "Heather Grey Pullover Hoodie",
+      category: "outerwear",
+      type: "hoodie",
+      color: "#c5cad4",
+      cycle: "white",
+      scenarios: ["cozy", "streetwear", "cool", "cold"],
+      maxWears: 4,
+      currentWears: 1,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_coat",
+      name: "Charcoal Wool Tailored Overcoat",
+      category: "outerwear",
+      type: "coat",
+      color: "#363b47",
+      cycle: "black",
+      scenarios: ["formal", "cold", "rain"],
+      maxWears: 6,
+      currentWears: 0,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_tee",
+      name: "Uniqlo U Airism Boxy White Tee",
+      category: "top",
+      type: "tee",
+      color: "#f5f6f8",
+      cycle: "white",
+      scenarios: ["streetwear", "cozy", "mild", "warm", "cool"],
+      maxWears: 2,
+      currentWears: 1,
+      totalQty: 3,
+      laundryQty: 1,
+      photo: ""
+    },
+    {
+      id: "v6_shirt",
+      name: "Sky Chambray Oxford Button-Down",
+      category: "top",
+      type: "shirt",
+      color: "#5a9bd5",
+      cycle: "mix",
+      scenarios: ["formal", "mild", "cool"],
+      maxWears: 2,
+      currentWears: 0,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_undertee",
+      name: "White Ribbed Tank Undershirt",
+      category: "underclothes",
+      type: "tank",
+      color: "#f5f6f8",
+      cycle: "white",
+      scenarios: ["cool", "cold", "formal", "streetwear"],
+      maxWears: 1,
+      currentWears: 0,
+      totalQty: 4,
+      laundryQty: 1,
+      photo: ""
+    },
+    {
+      id: "v6_jeans",
+      name: "Raw Indigo Straight Selvedge Jeans",
+      category: "bottom",
+      type: "jeans",
+      color: "#2e4f8f",
+      cycle: "black",
+      scenarios: ["streetwear", "formal", "cool", "mild"],
+      maxWears: 4,
+      currentWears: 2,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_sweatpants",
+      name: "Heather Grey Fleece Sweatpants",
+      category: "bottom",
+      type: "sweatpants",
+      color: "#c5cad4",
+      cycle: "white",
+      scenarios: ["cozy", "streetwear", "sporty", "cool", "cold"],
+      maxWears: 3,
+      currentWears: 1,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_cargo",
+      name: "Obsidian Black Utility Cargo Pants",
+      category: "bottom",
+      type: "cargo",
+      color: "#1c1d24",
+      cycle: "black",
+      scenarios: ["streetwear", "cozy", "cool", "cold", "rain"],
+      maxWears: 3,
+      currentWears: 1,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_shorts",
+      name: "Oatmeal Cream Athletic Shorts",
+      category: "bottom",
+      type: "shorts",
+      color: "#ebe2ce",
+      cycle: "white",
+      scenarios: ["sporty", "warm", "cozy"],
+      maxWears: 2,
+      currentWears: 0,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    },
+    {
+      id: "v6_boxers",
+      name: "Black Modal Stretch Boxer Briefs",
+      category: "underwear",
+      type: "boxers",
+      color: "#1c1d24",
+      cycle: "black",
+      scenarios: ["streetwear", "formal", "cozy", "sporty"],
+      maxWears: 1,
+      currentWears: 0,
+      totalQty: 7,
+      laundryQty: 2,
+      photo: ""
+    },
+    {
+      id: "v6_socks",
+      name: "White Ribbed Athletic Crew Socks",
+      category: "socks",
+      type: "crewsocks",
+      color: "#f5f6f8",
+      cycle: "white",
+      scenarios: ["streetwear", "sporty", "cozy", "cool", "cold"],
+      maxWears: 1,
+      currentWears: 0,
+      totalQty: 6,
+      laundryQty: 2,
+      photo: ""
+    },
+    {
+      id: "v6_shoes_photo",
+      name: "Nike Air Zoom Pegasus (Uploaded Photo)",
+      category: "footwear",
+      type: "sneaker",
+      color: "#f5f6f8",
+      cycle: "white",
+      scenarios: ["streetwear", "sporty", "mild", "cool", "warm"],
+      maxWears: 1,
+      currentWears: 0,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: EMBEDDED_SHOES1_PHOTO
+    },
+    {
+      id: "v6_boots",
+      name: "Obsidian Black Weatherproof Chelsea Boots",
+      category: "footwear",
+      type: "boot",
+      color: "#1c1d24",
+      cycle: "black",
+      scenarios: ["rain", "cold", "formal", "streetwear"],
+      maxWears: 1,
+      currentWears: 0,
+      totalQty: 1,
+      laundryQty: 0,
+      photo: ""
+    }
+  ];
+
+  const DEFAULT_CYCLE_BUCKETS = [
+    { id: "black_1", type: "black" },
+    { id: "white_1", type: "white" },
+    { id: "mix_1",   type: "mix" }
+  ];
+
+  
+  const state = {
+    editingId: null,
+    formCat: "top",
+    formType: "tee",
+    formColor: "#1c1d24",
+    formCycle: "black",
+    formMaxWears: 2,
+    formScenarios: ["streetwear", "mild"],
+    formPhoto: "",
+    catFilter: "all",
+    statusFilter: "all",
+    searchQuery: "",
+    currentPage: 1,
+    jacketOpen: true,
+    stylistMood: "streetwear",
+    stylistWeather: "cool",
+    stylistTone: "contrast",
+    outfit: {
+      accessory: "v6_cap",
+      outerwear: "v6_jacket",
+      top: "v6_tee",
+      underclothes: "v6_undertee",
+      bottom: "v6_jeans",
+      underwear: "v6_boxers",
+      socks: "v6_socks",
+      footwear: "v6_shoes_photo"
+    },
+    syncInFlight: false
+  };
+
+  let directFirestoreBound = false;
+  let cloudData = {
+    items: STARTER_ITEMS.slice(),
+    cycleBuckets: DEFAULT_CYCLE_BUCKETS.slice()
+  };
+
+  function updateGuestBannerUI() {
+    const banner = $("clGuestBanner");
+    if (banner) banner.hidden = !DB.isGuest();
+  }
+
+  async function ensureAccountAccess() {
+    updateGuestBannerUI();
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    updateGuestBannerUI();
+    if (ok) {
+      await initDirectFirestoreSync();
+      renderAll();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, label, .cl-garment-card, .cl-svg-layer, .cl-wear-slot-card");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+  $("clGuestSignInBtn").onclick = () => ensureAccountAccess();
+
+  function getUserDocRef() {
+    if (DB.isGuest() || !window.firebase || !firebase.firestore) return null;
+    const uid = typeof DB.userId === "function" ? DB.userId() : (DB.user && DB.user.uid);
+    if (!uid) return null;
+    return firebase.firestore().collection("users").doc(uid);
+  }
+
+  function normalizeIncoming(d) {
+    if (!d || typeof d !== "object") return;
+    if (Array.isArray(d.items) && d.items.length) {
+      cloudData.items = d.items.map(it => {
+        const cat = it.category || "top";
+        const washable = isCatWashable(cat);
+        const totalQty = washable ? Math.max(1, parseInt(it.totalQty, 10) || 1) : 1;
+        const laundryQty = washable ? Math.min(totalQty, Math.max(0, parseInt(it.laundryQty !== undefined ? it.laundryQty : 0, 10) || 0)) : 0;
+        const cyc = (it.cycle === "white" || it.cycle === "mix") ? it.cycle : "black";
+        return {
+          id: it.id || DB.uid(),
+          name: it.name || "Untitled Piece",
+          category: cat,
+          type: it.type || it.shape || it.cut || "tee",
+          color: it.color || "#1c1d24",
+          cycle: cyc,
+          cycleBucketId: it.cycleBucketId || `${cyc}_1`,
+          scenarios: Array.isArray(it.scenarios) ? it.scenarios : ["mild", "streetwear"],
+          maxWears: washable ? Math.max(1, parseInt(it.maxWears, 10) || 1) : 1,
+          currentWears: washable ? Math.max(0, parseInt(it.currentWears || 0, 10) || 0) : 0,
+          totalQty,
+          laundryQty,
+          photo: it.photo || ""
+        };
+      });
+    }
+    if (Array.isArray(d.cycleBuckets) && d.cycleBuckets.length) {
+      cloudData.cycleBuckets = d.cycleBuckets.filter(b => b && ["black", "white", "mix"].includes(b.type));
+      if (!cloudData.cycleBuckets.length) cloudData.cycleBuckets = DEFAULT_CYCLE_BUCKETS.slice();
+    }
+    if (d.outfit && typeof d.outfit === "object") {
+      state.outfit = { ...state.outfit, ...d.outfit };
+    }
+    if (typeof d.jacketOpen === "boolean") state.jacketOpen = d.jacketOpen;
+    if (d.stylistMood) state.stylistMood = d.stylistMood;
+    if (d.stylistWeather) state.stylistWeather = d.stylistWeather;
+    if (d.stylistTone) state.stylistTone = d.stylistTone;
+  }
+
+  async function initDirectFirestoreSync() {
+    const localStored = DB.get(CL_KEY, null);
+    if (localStored) normalizeIncoming(localStored);
+
+    const userRef = getUserDocRef();
+    if (!userRef || directFirestoreBound) return;
+    directFirestoreBound = true;
+
+    try {
+      const [stateSnap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("closet").get().catch(() => null),
+        userRef.get().catch(() => null)
+      ]);
+      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
+      const remote = (stateSnap && stateSnap.exists && stateSnap.data()) ? stateSnap.data() : userData.closetData;
+      if (remote) normalizeIncoming(remote);
+
+      DB.set(CL_KEY, {
+        ...cloudData,
+        outfit: state.outfit,
+        jacketOpen: state.jacketOpen,
+        stylistMood: state.stylistMood,
+        stylistWeather: state.stylistWeather,
+        stylistTone: state.stylistTone
+      });
+
+      userRef.collection("state").doc("closet").onSnapshot(docSnap => {
+        if (state.syncInFlight) return;
+        if (docSnap && docSnap.exists && docSnap.data()) {
+          const incoming = docSnap.data();
+          if (incoming.updatedAt && incoming.updatedAt === lastLocalSaveTs) return;
+          normalizeIncoming(incoming);
+          renderAll();
+        }
+      }, () => {});
+    } catch {}
+  }
+
+  let persistTimer = null;
+  let lastLocalSaveTs = 0;
+
+  async function persistCloudData() {
+    if (DB.isGuest()) {
+      await ensureAccountAccess();
+      return;
+    }
+    renderAll();
+
+    if (persistTimer) clearTimeout(persistTimer);
+    persistTimer = setTimeout(async () => {
+      persistTimer = null;
+      const nowTs = Date.now();
+      lastLocalSaveTs = nowTs;
+      const payload = {
+        items: cloudData.items,
+        cycleBuckets: cloudData.cycleBuckets,
+        outfit: { ...state.outfit },
+        jacketOpen: Boolean(state.jacketOpen),
+        stylistMood: state.stylistMood,
+        stylistWeather: state.stylistWeather,
+        stylistTone: state.stylistTone,
+        updatedAt: nowTs
+      };
+      DB.set(CL_KEY, payload);
+
+      const userRef = getUserDocRef();
+      if (userRef) {
+        state.syncInFlight = true;
+        try {
+          await userRef.collection("state").doc("closet").set(payload).catch(() => {});
+        } catch {}
+        state.syncInFlight = false;
+      }
+    }, 180);
+  }
+
+  
+  function renderUnifiedMannequin() {
+    const items = cloudData.items || [];
+    const eq = {};
+    let equippedCount = 0;
+
+    for (const cat of CATEGORIES) {
+      const id = state.outfit[cat.id];
+      const found = id ? items.find(x => x.id === id) : null;
+      eq[cat.id] = found || null;
+      if (found) equippedCount++;
+    }
+
+    $("clMirrorEquippedBadge").textContent = `${equippedCount} / 8 Layers`;
+
+    const outerItem = eq.outerwear;
+    const outerMeta = outerItem ? getTypeMeta(outerItem.type) : null;
+    const canOuterUnzip = outerItem ? Boolean(outerMeta && outerMeta.canUnzip) : false;
+    const zipBtn = $("clToggleJacketZipBtn");
+
+    if (!outerItem) {
+      zipBtn.hidden = true;
+      $("clOuterwearStateNote").textContent = "Tap any piece on the mannequin to cycle it";
+    } else if (!canOuterUnzip) {
+      zipBtn.hidden = true;
+      $("clOuterwearStateNote").textContent = `${outerItem.name}: Pullover style (closed front)`;
+    } else {
+      zipBtn.hidden = false;
+      $("clJacketZipLbl").textContent = state.jacketOpen ? "Tap to Zip" : "Tap to Unzip";
+      $("clOuterwearStateNote").textContent = state.jacketOpen
+        ? `${outerItem.name}: Unzipped over ${eq.top ? eq.top.name : "torso"}`
+        : `${outerItem.name}: Zipped closed`;
+    }
+
+    const st = "rgba(255,255,255,0.4)";
+    const shade = "rgba(0,0,0,0.22)";
+    const hasOuterwear = Boolean(outerItem);
+    const hasTopOrOuter = Boolean(eq.top || outerItem);
+    const innerClipAttr = hasOuterwear ? `clip-path="url(#clInnerTorsoClip)"` : "";
+    const underclothesClipAttr = hasTopOrOuter ? `clip-path="url(#clUnderclothesTorsoClip)"` : "";
+    const hasLongPants = Boolean(eq.bottom && eq.bottom.type !== "shorts");
+
+    if (!window.__clCuffCache) window.__clCuffCache = {};
+    let leftCuffX = 148;
+    let rightCuffX = 212;
+    if (eq.bottom) {
+      if (eq.bottom.photo) {
+        const cacheKey = eq.bottom.id + "_" + eq.bottom.photo.length;
+        const cached = window.__clCuffCache[cacheKey];
+        if (cached) {
+          leftCuffX = cached.leftX;
+          rightCuffX = cached.rightX;
+        } else {
+          leftCuffX = 144;
+          rightCuffX = 216;
+          window.__clCuffCache[cacheKey] = { leftX: 144, rightX: 216 };
+          const probeImg = new Image();
+          probeImg.onload = () => {
+            try {
+              const cw = 64, ch = 88;
+              const cv = document.createElement("canvas");
+              cv.width = cw;
+              cv.height = ch;
+              const cctx = cv.getContext("2d");
+              cctx.drawImage(probeImg, 0, 0, cw, ch);
+              const rh = Math.ceil(ch * 0.18);
+              const idata = cctx.getImageData(0, Math.floor(ch * 0.82), cw, rh).data;
+              let lSum = 0, lCnt = 0, rSum = 0, rCnt = 0;
+              for (let y = 0; y < rh; y++) {
+                for (let x = 0; x < cw; x++) {
+                  if (idata[(y * cw + x) * 4 + 3] > 80) {
+                    if (x < cw * 0.5) { lSum += x; lCnt++; }
+                    else { rSum += x; rCnt++; }
+                  }
+                }
+              }
+              const lx = lCnt > 6 ? Math.round(118 + (lSum / lCnt) * (124 / cw)) : 144;
+              const rx = rCnt > 6 ? Math.round(118 + (rSum / rCnt) * (124 / cw)) : 216;
+              window.__clCuffCache[cacheKey] = {
+                leftX: Math.max(132, Math.min(164, lx)),
+                rightX: Math.max(196, Math.min(228, rx))
+              };
+              renderUnifiedMannequin();
+            } catch {}
+          };
+          probeImg.src = eq.bottom.photo;
+        }
+      } else if (eq.bottom.type === "sweatpants") {
+        leftCuffX = 152;
+        rightCuffX = 208;
+      } else {
+        leftCuffX = 150;
+        rightCuffX = 210;
+      }
+    }
+
+    const leftShoeAnkleX = eq.footwear && eq.footwear.photo ? 143 : 147;
+    const rightShoeAnkleX = eq.footwear && eq.footwear.photo ? 201 : 205;
+
+    const svgParts = [];
+
+    svgParts.push(`
+      <defs>
+        <clipPath id="clInnerTorsoClip">
+          <path d="M130 78 L230 78 L230 223 L130 223 Z"/>
+        </clipPath>
+        <clipPath id="clUnderclothesTorsoClip">
+          <path d="M134 81 Q180 92 226 81 L224 218 L136 218 Z"/>
+        </clipPath>
+        <mask id="clNaturalUnzipMask">
+          <rect x="0" y="0" width="360" height="475" fill="white"/>
+          <path d="M172 92 Q180 96 188 92 L193 230 L167 230 Z" fill="black"/>
+        </mask>
+      </defs>
+
+      <ellipse cx="180" cy="448" rx="94" ry="14" fill="rgba(108,92,231,0.28)"/>
+      <ellipse cx="180" cy="448" rx="58" ry="8" fill="rgba(162,155,254,0.22)"/>
+
+      <g class="cl-mannequin-silhouette" pointer-events="none">
+        <path d="M158 37 C158 14, 202 14, 202 37 C202 53, 192 66, 180 68 C168 66, 158 53, 158 37 Z"
+              fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" stroke-width="1.7"/>
+
+        <path d="M170 65 L169 76 C165 81, 152 84, 134 88 C122 91, 115 101, 112 116 C108 136, 101 162, 93 194 L110 200 L123 150 L136 122 C139 144, 144 168, 144 188 C144 202, 136 214, 135 228 ${!hasLongPants ? `C133 258, 132 294, 136 324 C134 348, 137 374, 141 398 L165 398 C168 374, 170 348, 169 324 L175 263 Q180 265 185 263 L191 324 C190 348, 192 374, 195 398 L219 398 C223 374, 226 348, 224 324 C228 294, 227 258, 225 228` : `L168 258 Q180 266 192 258 L225 228`} C224 214, 216 202, 216 188 C216 168, 221 144, 224 122 L237 150 L250 200 L267 194 C259 162, 252 136, 248 116 C245 101, 238 91, 226 88 C208 84, 195 81, 191 76 L190 65"
+              fill="rgba(255,255,255,0.07)" stroke="rgba(255,255,255,0.28)" stroke-width="1.6" stroke-linejoin="round"/>
+
+        <path d="M173 67 L177 83 M187 67 L183 83" stroke="rgba(255,255,255,0.16)" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M153 87 C162 91, 171 92, 178 89 M207 87 C198 91, 189 92, 182 89"
+              stroke="rgba(255,255,255,0.2)" stroke-width="1.3" stroke-linecap="round" fill="none"/>
+
+        <path d="M134 88 C133 100, 134 112, 136 122 M226 88 C227 100, 226 112, 224 122"
+              stroke="rgba(255,255,255,0.16)" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+
+        <path d="M140 117 C144 127, 148 135, 167 130 L169 130"
+              stroke="rgba(255,255,255,0.24)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M220 117 C217 127, 213 135, 193 130 L186 130"
+              stroke="rgba(255,255,255,0.24)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <line x1="180" y1="150" x2="180" y2="180" stroke="rgba(255,255,255,0.2)" stroke-width="1.3" stroke-linecap="round"/>
+
+        
+
+        <path d="M150 142 Q159 145 167 143 M210 142 Q201 145 193 143 M153 163 Q155 166 165 164 M207 163 Q205 166 195 164 M153 184 Q155 187 163 185 M207 184 Q205 187 197 185"
+              stroke="rgba(255,255,255,0.15)" stroke-width="1.15" stroke-linecap="round" fill="none"/>
+
+        <ellipse cx="180" cy="204" rx="2.0" ry="2.2" fill="rgba(255,255,255,0.24)"/>
+
+        
+
+        <path d="M144 202 C152 203, 161 208, 169 213 C173 215, 176 220, 180 220 C184 220, 187 215, 191 213 C199 208, 208 203, 216 202"
+              stroke="rgba(255,255,255,0.24)" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+        <path d="M169 214 C168 236, 172 250, 180 252 C188 250, 192 236, 191 214"
+              stroke="rgba(255,255,255,0.22)" stroke-width="1.3" stroke-linecap="round"/>
+
+        
+      </g>
+    `);
+
+    if (eq.socks) {
+      const sc = eq.socks.color;
+      const isAnkle = eq.socks.type === "anklesocks";
+      const sockTopY = isAnkle ? 380 : 356;
+      const sockBotY = 414;
+      const hw = 13;
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="socks">
+          <title>Socks: ${DB.esc(eq.socks.name)}</title>
+          <path d="M${leftCuffX - hw} ${sockTopY} L${leftCuffX + hw} ${sockTopY} L${leftShoeAnkleX + hw} ${sockBotY} L${leftShoeAnkleX - hw} ${sockBotY} Z"
+                fill="${sc}" stroke="${st}" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M${rightCuffX - hw} ${sockTopY} L${rightCuffX + hw} ${sockTopY} L${rightShoeAnkleX + hw} ${sockBotY} L${rightShoeAnkleX - hw} ${sockBotY} Z"
+                fill="${sc}" stroke="${st}" stroke-width="1.8" stroke-linejoin="round"/>
+          ${!isAnkle ? `
+            <line x1="${leftCuffX - hw + 1}" y1="${sockTopY + 7}" x2="${leftCuffX + hw - 1}" y2="${sockTopY + 7}" stroke="rgba(108,92,231,0.75)" stroke-width="2.3"/>
+            <line x1="${rightCuffX - hw + 1}" y1="${sockTopY + 7}" x2="${rightCuffX + hw - 1}" y2="${sockTopY + 7}" stroke="rgba(108,92,231,0.75)" stroke-width="2.3"/>
+          ` : ""}
+        </g>
+      `);
+    }
+    if (eq.underwear) {
+      const uc = eq.underwear.color;
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="underwear">
+          <title>Underwear: ${DB.esc(eq.underwear.name)}</title>
+          ${eq.underwear.photo ? `
+            <image href="${DB.esc(eq.underwear.photo)}" x="131" y="215" width="98" height="53" preserveAspectRatio="xMidYMid meet"/>
+          ` : renderGarmentShapeOnMannequin(eq.underwear.type || "boxers", uc, false)}
+        </g>
+      `);
+    }
+    if (eq.underclothes) {
+      const bc = eq.underclothes.color;
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="underclothes" ${underclothesClipAttr}>
+          <title>Underclothes: ${DB.esc(eq.underclothes.name)}</title>
+          ${eq.underclothes.photo ? `
+            <image href="${DB.esc(eq.underclothes.photo)}" x="120" y="83" width="120" height="132" preserveAspectRatio="xMidYMid meet"/>
+          ` : renderGarmentShapeOnMannequin(eq.underclothes.type || "tank", bc, false)}
+        </g>
+      `);
+    }
+
+    if (eq.bottom) {
+      const bCol = eq.bottom.color;
+      const isShorts = eq.bottom.type === "shorts";
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="bottom">
+          <title>Bottom: ${DB.esc(eq.bottom.name)}</title>
+          ${eq.bottom.photo ? `
+            <image href="${DB.esc(eq.bottom.photo)}" x="118" y="218" width="124" height="${isShorts ? 100 : 170}" preserveAspectRatio="none"/>
+          ` : renderGarmentShapeOnMannequin(eq.bottom.type || "jeans", bCol, false)}
+        </g>
+      `);
+    }
+
+    if (eq.top) {
+      const tCol = eq.top.color;
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="top" ${innerClipAttr}>
+          <title>Top: ${DB.esc(eq.top.name)}</title>
+          ${eq.top.photo ? `
+            <image href="${DB.esc(eq.top.photo)}" x="94" y="78" width="172" height="148" preserveAspectRatio="none"/>
+          ` : renderGarmentShapeOnMannequin(eq.top.type || "tee", tCol, false)}
+        </g>
+      `);
+    }
+
+    if (outerItem) {
+      const oCol = outerItem.color;
+      const isPulloverHoodie = !canOuterUnzip;
+
+      if (outerItem.photo) {
+        if (!isPulloverHoodie && state.jacketOpen) {
+          svgParts.push(`
+            <g class="cl-svg-layer" data-svg-cat="outerwear">
+              <title>Outerwear (Unzipped): ${DB.esc(outerItem.name)}</title>
+              <g mask="url(#clNaturalUnzipMask)">
+                <image href="${DB.esc(outerItem.photo)}" x="88" y="73" width="184" height="154" preserveAspectRatio="none"/>
+              </g>
+              <line x1="171" y1="94" x2="167" y2="225" stroke="rgba(0,0,0,0.32)" stroke-width="2"/>
+              <line x1="189" y1="94" x2="193" y2="225" stroke="rgba(0,0,0,0.32)" stroke-width="2"/>
+            </g>
+          `);
+        } else {
+          svgParts.push(`
+            <g class="cl-svg-layer" data-svg-cat="outerwear">
+              <title>Outerwear: ${DB.esc(outerItem.name)}</title>
+              <image href="${DB.esc(outerItem.photo)}" x="88" y="73" width="184" height="154" preserveAspectRatio="none"/>
+            </g>
+          `);
+        }
+      } else {
+        const openNow = !isPulloverHoodie && state.jacketOpen;
+        svgParts.push(`
+          <g class="cl-svg-layer" data-svg-cat="outerwear">
+            <title>Outerwear: ${DB.esc(outerItem.name)}</title>
+            ${renderGarmentShapeOnMannequin(outerItem.type || "hoodie", oCol, openNow)}
+          </g>
+        `);
+      }
+    }
+    if (eq.footwear) {
+      const fCol = eq.footwear.color;
+      const fType = eq.footwear.type || "sneaker";
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="footwear">
+          <title>Shoes: ${DB.esc(eq.footwear.name)}</title>
+          ${eq.footwear.photo ? `
+            <image href="${DB.esc(eq.footwear.photo)}" x="82" y="388" width="158" height="63" preserveAspectRatio="xMidYMid meet"/>
+          ` : `
+            <g transform="translate(174, 391) scale(-0.74, 0.74)">
+              <svg x="0" y="0" width="100" height="100" viewBox="0 0 100 100">
+                ${renderCardGarmentSvg(fType, fCol)}
+              </svg>
+            </g>
+            <g transform="translate(178, 391) scale(0.74, 0.74)">
+              <svg x="0" y="0" width="100" height="100" viewBox="0 0 100 100">
+                ${renderCardGarmentSvg(fType, fCol)}
+              </svg>
+            </g>
+          `}
+        </g>
+      `);
+    }
+    if (eq.accessory) {
+      const aCol = eq.accessory.color;
+      svgParts.push(`
+        <g class="cl-svg-layer" data-svg-cat="accessory">
+          <title>Headwear: ${DB.esc(eq.accessory.name)}</title>
+          ${eq.accessory.photo ? `
+            <image href="${DB.esc(eq.accessory.photo)}" x="145" y="4" width="70" height="45" preserveAspectRatio="xMidYMid meet"/>
+          ` : `
+            <svg x="132" y="-2" width="96" height="64" viewBox="0 0 100 100">
+              ${renderCardGarmentSvg(eq.accessory.type || "cap", aCol)}
+            </svg>
+          `}
+        </g>
+      `);
+    }
+
+    const svgEl = $("clMannequinSvg");
+    const nextSvgHtml = svgParts.join("");
+    if (svgEl.__lastHtml !== nextSvgHtml) {
+      svgEl.__lastHtml = nextSvgHtml;
+      svgEl.innerHTML = nextSvgHtml;
+      svgEl.querySelectorAll("[data-svg-cat]").forEach(g => {
+        g.onclick = async () => {
+          if (!(await ensureAccountAccess())) return;
+          await cycleCategoryOnMirror(g.dataset.svgCat);
+        };
+      });
+    }
+    const wearGrid = $("clWearingGrid");
+    const nextWearHtml = CATEGORIES.map(cat => {
+      const item = eq[cat.id];
+      const subText = item
+        ? (cat.washable
+          ? `Worn ${item.currentWears}/${item.maxWears} · ${item.totalQty - item.laundryQty}/${item.totalQty} clean`
+          : `No Wash Needed`)
+        : "Tap to equip";
+
+      return `
+        <div class="cl-wear-slot-card ${item ? "is-equipped" : ""}" data-slot-cat="${DB.esc(cat.id)}" title="${item ? `${DB.esc(item.name)} — Tap to cycle next ${DB.esc(cat.short)}` : `Tap to equip ${DB.esc(cat.short)}`}">
+          <div class="cl-wear-slot-thumb">
+            ${item
+              ? (item.photo
+                ? `<img src="${DB.esc(item.photo)}" alt="${DB.esc(item.name)}">`
+                : renderCardGarmentSvg(item.type, item.color))
+              : `<span style="font-size:0.75rem;color:var(--muted);">+</span>`
+            }
+          </div>
+          <div class="cl-wear-slot-text">
+            <span class="cl-wear-slot-role">${DB.esc(cat.short)}</span>
+            <span class="cl-wear-slot-name">${item ? DB.esc(item.name) : "None Equipped"}</span>
+            <span class="cl-wear-slot-sub">${DB.esc(subText)}</span>
+          </div>
+          ${item ? `
+            <button type="button" class="cl-wear-slot-x" data-unequip-slot="${DB.esc(cat.id)}" title="Take off ${DB.esc(cat.short)}">×</button>
+          ` : `<span></span>`}
+        </div>
+      `;
+    }).join("");
+    if (wearGrid.__lastHtml !== nextWearHtml) {
+      wearGrid.__lastHtml = nextWearHtml;
+      wearGrid.innerHTML = nextWearHtml;
+      wearGrid.querySelectorAll("[data-slot-cat]").forEach(cardEl => {
+        cardEl.onclick = async e => {
+          if (e.target.closest("[data-unequip-slot]")) return;
+          if (!(await ensureAccountAccess())) return;
+          await cycleCategoryOnMirror(cardEl.dataset.slotCat);
+        };
+      });
+      wearGrid.querySelectorAll("[data-unequip-slot]").forEach(btn => {
+        btn.onclick = async e => {
+          e.stopPropagation();
+          if (!(await ensureAccountAccess())) return;
+          state.outfit[btn.dataset.unequipSlot] = null;
+          await persistCloudData();
+        };
+      });
+    }
+  }
+
+  async function cycleCategoryOnMirror(catId) {
+    const items = cloudData.items || [];
+    state.catFilter = catId;
+    state.currentPage = 1;
+    const pool = items.filter(x => x.category === catId && (!isCatWashable(catId) || (x.totalQty - x.laundryQty) > 0));
+    if (!pool.length) {
+      renderClosetGrid();
+      return;
+    }
+    const curId = state.outfit[catId];
+    const curIdx = pool.findIndex(x => x.id === curId);
+    state.outfit[catId] = pool[(curIdx + 1) % pool.length].id;
+    await persistCloudData();
+  }
+
+  
+  function renderStylistControls() {
+    const moodObj = MOOD_OPTIONS.find(m => m.id === state.stylistMood) || MOOD_OPTIONS[0];
+    const weatherObj = WEATHER_OPTIONS.find(w => w.id === state.stylistWeather) || WEATHER_OPTIONS[0];
+    const toneObj = TONE_OPTIONS.find(t => t.id === state.stylistTone) || TONE_OPTIONS[0];
+
+    $("clPickMoodLbl").textContent = moodObj.label;
+    $("clPickWeatherLbl").textContent = weatherObj.label;
+    $("clPickToneLbl").textContent = toneObj.label;
+  }
+
+  async function generateSmartStyledOutfit() {
+    if (!(await ensureAccountAccess())) return;
+    const items = cloudData.items || [];
+    const mood = state.stylistMood;       // "streetwear" | "formal" | "cozy" | "sporty"
+    const weather = state.stylistWeather; // "cool" | "rain" | "cold" | "mild" | "warm"
+    const tone = state.stylistTone;       // "contrast" | "dark" | "light" | "earth" | "monochrome"
+
+    let wornInRotationPicked = 0;
+    let scenarioMatchedCount = 0;
+
+    const needsOuterwear = weather === "cold" || weather === "cool" || weather === "rain";
+    const needsUnderclothes = weather === "cold" || weather === "cool";
+
+    const scoreCandidate = (item, slotCatId) => {
+      let score = 0;
+      const scens = Array.isArray(item.scenarios) ? item.scenarios : [];
+      const itemTone = getToneGroupForHex(item.color);
+      if (scens.includes(weather)) score += 65;
+      if (scens.includes(mood)) score += 55;
+      if (isCatWashable(slotCatId) && item.currentWears > 0 && item.currentWears < item.maxWears) {
+        score += 45 + (item.currentWears * 5);
+      }
+      if (tone === "dark" && itemTone === "dark") score += 35;
+      if (tone === "light" && itemTone === "light") score += 35;
+      if (tone === "earth" && (itemTone === "earth" || itemTone === "light")) score += 35;
+      if (tone === "monochrome" && itemTone === "dark") score += 30;
+      if (tone === "contrast") {
+        if ((slotCatId === "top" || slotCatId === "footwear" || slotCatId === "socks") && itemTone === "light") score += 35;
+        if ((slotCatId === "outerwear" || slotCatId === "bottom" || slotCatId === "accessory") && (itemTone === "dark" || itemTone === "earth")) score += 35;
+      }
+
+      return score;
+    };
+
+    for (const cat of CATEGORIES) {
+      if (cat.id === "outerwear" && !needsOuterwear) {
+        state.outfit.outerwear = null;
+        continue;
+      }
+      if (cat.id === "underclothes" && !needsUnderclothes) {
+        state.outfit.underclothes = null;
+        continue;
+      }
+
+      const wearable = items.filter(x => x.category === cat.id && (!cat.washable || (x.totalQty - x.laundryQty) > 0));
+      if (!wearable.length) {
+        state.outfit[cat.id] = null;
+        continue;
+      }
+
+      const ranked = wearable
+        .map(it => ({ it, sc: scoreCandidate(it, cat.id) }))
+        .sort((a, b) => b.sc - a.sc);
+
+      let chosen = ranked[0].it;
+      if (ranked.length > 1 && chosen.id === state.outfit[cat.id] && ranked[1].sc >= ranked[0].sc - 12) {
+        chosen = ranked[1].it;
+      }
+
+      state.outfit[cat.id] = chosen.id;
+      if (cat.washable && chosen.currentWears > 0) wornInRotationPicked++;
+      if ((chosen.scenarios || []).includes(weather) || (chosen.scenarios || []).includes(mood)) {
+        scenarioMatchedCount++;
+      }
+    }
+
+    state.jacketOpen = (weather !== "cold" && weather !== "rain");
+
+    const moodLbl = MOOD_OPTIONS.find(m => m.id === mood)?.label || mood;
+    const weatherLbl = WEATHER_OPTIONS.find(w => w.id === weather)?.label || weather;
+    const toneLbl = TONE_OPTIONS.find(t => t.id === tone)?.label || tone;
+
+    $("clStylistReason").innerHTML = `Styled for <b>${DB.esc(moodLbl)}</b> · <b>${DB.esc(weatherLbl)}</b> · <b>${DB.esc(toneLbl)}</b> (${scenarioMatchedCount} scenario-matched piece${scenarioMatchedCount === 1 ? "" : "s"}, ${wornInRotationPicked} already-worn in rotation).`;
+
+    await persistCloudData();
+    DB.toast(
+      "Outfit Suggested ✨",
+      `Matched ${scenarioMatchedCount} pieces for ${weatherLbl} & ${moodLbl} (${wornInRotationPicked} already-worn piece${wornInRotationPicked === 1 ? "" : "s"} prioritized).`,
+      2800
+    );
+  }
+
+  
+  function renderClosetGrid() {
+    const items = cloudData.items || [];
+    const totalUnits = items.reduce((acc, x) => acc + (Number(x.totalQty) || 1), 0);
+    $("clClosetCountBadge").textContent = `${items.length} Styles · ${totalUnits} Total Pieces`;
+
+    const catDefs = [
+      { id: "all", label: `All (${items.length})` },
+      ...CATEGORIES.map(c => ({
+        id: c.id,
+        label: `${c.short} (${items.filter(x => x.category === c.id).length})`
+      }))
+    ];
+    const pillsEl = $("clCatPills");
+    const nextPillsHtml = catDefs.map(c => `
+      <button type="button" class="cl-cat-pill ${state.catFilter === c.id ? "active" : ""}" data-cat-pill="${DB.esc(c.id)}">
+        ${DB.esc(c.label)}
+      </button>
+    `).join("");
+    if (pillsEl.__lastHtml !== nextPillsHtml) {
+      pillsEl.__lastHtml = nextPillsHtml;
+      pillsEl.innerHTML = nextPillsHtml;
+      pillsEl.querySelectorAll("[data-cat-pill]").forEach(btn => {
+        btn.onclick = () => {
+          state.catFilter = btn.dataset.catPill;
+          state.currentPage = 1;
+          renderClosetGrid();
+        };
+      });
+    }
+
+    document.querySelectorAll("[data-st-btn]").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.stBtn === state.statusFilter);
+    });
+
+    const q = state.searchQuery.toLowerCase();
+    const filtered = items.filter(it => {
+      if (state.catFilter !== "all" && it.category !== state.catFilter) return false;
+      const washable = isCatWashable(it.category);
+      const avail = washable ? (it.totalQty - it.laundryQty) : 1;
+
+      if (state.statusFilter === "worn" && (!washable || it.currentWears <= 0 || avail <= 0)) return false;
+      if (state.statusFilter === "clean" && (avail <= 0 || (washable && it.currentWears > 0))) return false;
+      if (state.statusFilter === "laundry" && (!washable || it.laundryQty <= 0)) return false;
+
+      if (q) {
+        const scenLabels = (it.scenarios || []).map(sid => SCENARIO_OPTIONS.find(s => s.id === sid)?.label || sid).join(" ");
+        const hay = `${it.name} ${it.type} ${it.cycle} ${scenLabels}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (state.currentPage > totalPages) state.currentPage = totalPages;
+    const startIdx = (state.currentPage - 1) * PAGE_SIZE;
+    const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+
+    const gridEl = $("clCardsGrid");
+    const structSig = pageItems.map(it => `${it.id}:${it.name}:${it.category}:${it.type}:${it.color}:${it.cycle}:${it.totalQty}:${it.laundryQty}:${it.currentWears}:${it.maxWears}:${(it.scenarios || []).join(",")}:${it.photo ? it.photo.length : 0}`).join("|");
+    if (gridEl.__structSig === structSig && pageItems.length > 0) {
+      gridEl.querySelectorAll("[data-card-id]").forEach(cardEl => {
+        const it = items.find(x => x.id === cardEl.dataset.cardId);
+        if (!it) return;
+        const isEq = state.outfit[it.category] === it.id;
+        cardEl.classList.toggle("is-equipped", isEq);
+        const previewEl = cardEl.querySelector(".cl-gc-preview");
+        if (previewEl) {
+          let pill = previewEl.querySelector(".cl-on-mirror-pill");
+          if (isEq && !pill) {
+            pill = document.createElement("span");
+            pill.className = "cl-on-mirror-pill";
+            pill.textContent = "✓ Wearing";
+            previewEl.appendChild(pill);
+          } else if (!isEq && pill) {
+            pill.remove();
+          }
+        }
+        const eqBtnSpan = cardEl.querySelector("[data-equip-btn] span");
+        if (eqBtnSpan) eqBtnSpan.textContent = isEq ? "✓ On Mirror" : "Wear on Mirror";
+      });
+    } else if (!pageItems.length) {
+      gridEl.__structSig = "";
+      gridEl.innerHTML = `
+        <div style="grid-column:1/-1;padding:2.4rem 1rem;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:18px;">
+          No clothes match this filter. Try switching categories above or click <b>+ Add Clothes</b>.
+        </div>
+      `;
+    } else {
+      gridEl.__structSig = structSig;
+      const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+
+      gridEl.innerHTML = pageItems.map(it => {
+        const isEquipped = state.outfit[it.category] === it.id;
+        const washable = isCatWashable(it.category);
+        const avail = washable ? Math.max(0, it.totalQty - it.laundryQty) : 1;
+        const allInLaundry = washable && avail === 0;
+        const wearPct = allInLaundry ? 100 : Math.min(100, Math.round((it.currentWears / Math.max(1, it.maxWears)) * 100));
+        const cycLabel = CYCLE_META[it.cycle]?.label || "Black";
+
+        const scenTagsHtml = (it.scenarios || []).slice(0, 4).map(sid => {
+          const sObj = SCENARIO_OPTIONS.find(s => s.id === sid);
+          return sObj ? `<span class="cl-scen-tag">${DB.esc(sObj.label)}</span>` : "";
+        }).join("");
+
+        return `
+          <article class="cl-garment-card ${isEquipped ? "is-equipped" : ""} ${allInLaundry ? "all-in-laundry" : ""}"
+                   data-card-id="${DB.esc(it.id)}"
+                   title="Click to wear on the Outfit Mirror">
+            <div>
+              <div class="cl-gc-head">
+                ${washable
+                  ? `<span class="cl-cycle-tag ${DB.esc(it.cycle)}">${DB.esc(cycLabel)}</span>`
+                  : `<span class="cl-cycle-tag nowash">✕ Wash</span>`
+                }
+                <span class="cl-qty-badge">
+                  ${!washable
+                    ? "Always Ready"
+                    : (it.totalQty > 1 ? `${avail}/${it.totalQty} Clean` : (allInLaundry ? "In Laundry" : (it.currentWears > 0 ? "In Rotation" : "Clean")))
+                  }
+                </span>
+              </div>
+
+              <div class="cl-gc-preview" style="margin-top:0.45rem;">
+                ${it.photo
+                  ? `<img src="${DB.esc(it.photo)}" alt="${DB.esc(it.name)}">`
+                  : renderCardGarmentSvg(it.type, it.color)
+                }
+                ${isEquipped ? `<span class="cl-on-mirror-pill">✓ Wearing</span>` : ""}
+              </div>
+
+              <div class="cl-gc-info" style="margin-top:0.5rem;">
+                <h4>${DB.esc(it.name)}</h4>
+                ${scenTagsHtml ? `<div class="cl-card-scenarios">${scenTagsHtml}</div>` : ""}
+              </div>
+
+              ${washable ? `
+                <div class="cl-wear-meter">
+                  <div class="cl-wear-row">
+                    <span>Worn: <b>${it.currentWears}/${it.maxWears}</b> before wash</span>
+                    ${it.laundryQty > 0 ? `<span style="color:var(--cl-amber);">${it.laundryQty} in basket</span>` : ""}
+                  </div>
+                  <div class="cl-wear-bar">
+                    <div class="cl-wear-fill" style="width:${wearPct}%"></div>
+                  </div>
+                </div>
+              ` : ""}
+            </div>
+
+            <div class="cl-gc-foot">
+              ${washable ? `
+                <button type="button" class="cl-gc-act-btn" data-send-laundry="${DB.esc(it.id)}">
+                  <span>${allInLaundry ? "↩ Clean" : "→ Laundry"}</span>
+                </button>
+              ` : `
+                <button type="button" class="cl-gc-act-btn" data-equip-btn="${DB.esc(it.id)}">
+                  <span>${isEquipped ? "✓ On Mirror" : "Wear on Mirror"}</span>
+                </button>
+              `}
+              <button type="button" class="cl-gc-ic-btn" data-edit-id="${DB.esc(it.id)}" title="Edit">${editSvg}</button>
+              <button type="button" class="cl-gc-ic-btn" data-del-id="${DB.esc(it.id)}" title="Delete">×</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    gridEl.querySelectorAll("[data-card-id]").forEach(cardEl => {
+      cardEl.onclick = async e => {
+        if (e.target.closest("button")) return;
+        if (!(await ensureAccountAccess())) return;
+        const it = items.find(x => x.id === cardEl.dataset.cardId);
+        if (!it) return;
+        state.outfit[it.category] = state.outfit[it.category] === it.id ? null : it.id;
+        await persistCloudData();
+      };
+    });
+
+    gridEl.querySelectorAll("[data-equip-btn]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        if (!(await ensureAccountAccess())) return;
+        const it = items.find(x => x.id === btn.dataset.equipBtn);
+        if (!it) return;
+        state.outfit[it.category] = state.outfit[it.category] === it.id ? null : it.id;
+        await persistCloudData();
+      };
+    });
+
+    gridEl.querySelectorAll("[data-send-laundry]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        if (!(await ensureAccountAccess())) return;
+        const it = items.find(x => x.id === btn.dataset.sendLaundry);
+        if (!it || !isCatWashable(it.category)) return;
+        if (it.laundryQty >= it.totalQty) {
+          it.laundryQty = 0;
+          it.currentWears = 0;
+          DB.toast("Returned to Clean Closet", `"${it.name}" marked clean.`, 2000);
+        } else {
+          it.laundryQty = Math.min(it.totalQty, (it.laundryQty || 0) + 1);
+          it.currentWears = 0;
+          ensureBucketAssigned(it);
+          DB.toast("Added to Laundry Basket", `1× "${it.name}" placed in ${getBucketDisplayName(it.cycleBucketId)}.`, 2100);
+        }
+        await persistCloudData();
+      };
+    });
+
+    gridEl.querySelectorAll("[data-edit-id]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        if (!(await ensureAccountAccess())) return;
+        const it = items.find(x => x.id === btn.dataset.editId);
+        if (it) openEditor(it);
+      };
+    });
+
+    gridEl.querySelectorAll("[data-del-id]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        if (!(await ensureAccountAccess())) return;
+        const delId = btn.dataset.delId;
+        cloudData.items = items.filter(x => x.id !== delId);
+        for (const k of Object.keys(state.outfit)) {
+          if (state.outfit[k] === delId) state.outfit[k] = null;
+        }
+        await persistCloudData();
+      };
+    });
+
+    const pagBar = $("clPaginationBar");
+    const pageNums = [];
+    for (let p = 1; p <= totalPages; p++) {
+      pageNums.push(`<button type="button" class="cl-page-num ${p === state.currentPage ? "active" : ""}" data-goto-page="${p}">${p}</button>`);
+    }
+    pagBar.innerHTML = `
+      <span class="cl-page-info">Showing ${filtered.length ? startIdx + 1 : 0}–${Math.min(filtered.length, startIdx + PAGE_SIZE)} of ${filtered.length} (Page ${state.currentPage} of ${totalPages})</span>
+      <div class="cl-page-btns">
+        <button type="button" class="cl-page-num" id="clPrevPageBtn" ${state.currentPage <= 1 ? "disabled" : ""}>‹</button>
+        ${pageNums.join("")}
+        <button type="button" class="cl-page-num" id="clNextPageBtn" ${state.currentPage >= totalPages ? "disabled" : ""}>›</button>
+      </div>
+    `;
+
+    const prevBtn = $("clPrevPageBtn");
+    if (prevBtn) prevBtn.onclick = () => { if (state.currentPage > 1) { state.currentPage--; renderClosetGrid(); } };
+    const nextBtn = $("clNextPageBtn");
+    if (nextBtn) nextBtn.onclick = () => { if (state.currentPage < totalPages) { state.currentPage++; renderClosetGrid(); } };
+    pagBar.querySelectorAll("[data-goto-page]").forEach(b => {
+      b.onclick = () => { state.currentPage = Number(b.dataset.gotoPage) || 1; renderClosetGrid(); };
+    });
+  }
+
+  
+  function ensureBucketAssigned(item) {
+    const buckets = cloudData.cycleBuckets || DEFAULT_CYCLE_BUCKETS;
+    const matching = buckets.filter(b => b.type === item.cycle);
+    if (!matching.length) {
+      const newB = { id: `${item.cycle}_${DB.uid()}`, type: item.cycle };
+      cloudData.cycleBuckets.push(newB);
+      item.cycleBucketId = newB.id;
+      return;
+    }
+    if (!item.cycleBucketId || !matching.some(b => b.id === item.cycleBucketId)) {
+      item.cycleBucketId = matching[0].id;
+    }
+  }
+
+  function getComputedBucketsWithTitles() {
+    const buckets = cloudData.cycleBuckets || DEFAULT_CYCLE_BUCKETS;
+    const countsByType = { black: 0, white: 0, mix: 0 };
+    for (const b of buckets) countsByType[b.type] = (countsByType[b.type] || 0) + 1;
+
+    const idxTracker = { black: 0, white: 0, mix: 0 };
+    return buckets.map(b => {
+      idxTracker[b.type] = (idxTracker[b.type] || 0) + 1;
+      const baseLabel = CYCLE_META[b.type]?.label || "Black";
+      const hasMultiple = countsByType[b.type] > 1;
+      const displayTitle = hasMultiple ? `${baseLabel} ${idxTracker[b.type]}` : `${baseLabel} Cycle`;
+      return {
+        ...b,
+        displayTitle,
+        sub: CYCLE_META[b.type]?.sub || "",
+        canDelete: hasMultiple
+      };
+    });
+  }
+
+  function getBucketDisplayName(bucketId) {
+    return getComputedBucketsWithTitles().find(b => b.id === bucketId)?.displayTitle || "Laundry Basket";
+  }
+
+  function renderLaundrySection() {
+    const items = (cloudData.items || []).filter(it => isCatWashable(it.category));
+    for (const it of items) {
+      if (it.laundryQty > 0) ensureBucketAssigned(it);
+    }
+
+    const totalLaundryPieces = items.reduce((sum, it) => sum + (Number(it.laundryQty) || 0), 0);
+    $("clLaundryTotalBadge").textContent = `${totalLaundryPieces} piece${totalLaundryPieces === 1 ? "" : "s"} to wash`;
+
+    const computedBuckets = getComputedBucketsWithTitles();
+    const gridEl = $("clLaundryCyclesGrid");
+    const laundrySig = computedBuckets.map(b => b.id + ":" + b.displayTitle).join("|") + "||" + items.filter(it => it.laundryQty > 0).map(it => `${it.id}:${it.laundryQty}:${it.cycleBucketId}:${it.name}:${it.color}:${it.type}:${it.photo ? it.photo.length : 0}`).join("|");
+    if (gridEl.__laundrySig === laundrySig) return;
+    gridEl.__laundrySig = laundrySig;
+
+    gridEl.innerHTML = computedBuckets.map(bucket => {
+      const bucketItems = items.filter(it => it.laundryQty > 0 && it.cycleBucketId === bucket.id);
+      const pieceCount = bucketItems.reduce((sum, it) => sum + (Number(it.laundryQty) || 0), 0);
+      const sameTypeBuckets = computedBuckets.filter(b => b.type === bucket.type);
+
+      return `
+        <div class="cl-laundry-card type-${DB.esc(bucket.type)}">
+          <div>
+            <div class="cl-lc-head">
+              <div class="cl-lc-title-wrap">
+                <div class="cl-lc-orb ${DB.esc(bucket.type)}">${pieceCount}</div>
+                <div>
+                  <h3>${DB.esc(bucket.displayTitle)}</h3>
+                  <span>${DB.esc(bucket.sub)}</span>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:0.3rem;align-items:center;">
+                <button type="button" class="cl-btn subtle" data-wash-bucket="${DB.esc(bucket.id)}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Wash (${pieceCount})</span>
+                </button>
+                ${bucket.canDelete ? `
+                  <button type="button" class="cl-gc-ic-btn" data-remove-bucket="${DB.esc(bucket.id)}" title="Remove ${DB.esc(bucket.displayTitle)}">×</button>
+                ` : ""}
+              </div>
+            </div>
+
+            <div class="cl-lc-list" style="margin-top:0.75rem;">
+              ${bucketItems.length
+                ? bucketItems.map(it => `
+                  <div class="cl-lc-item">
+                    <div class="cl-lc-thumb">
+                      ${it.photo
+                        ? `<img src="${DB.esc(it.photo)}" alt="${DB.esc(it.name)}">`
+                        : renderCardGarmentSvg(it.type, it.color)
+                      }
+                    </div>
+                    <div class="cl-lc-meta">
+                      <b>${it.laundryQty > 1 ? `${it.laundryQty}× ` : ""}${DB.esc(it.name)}</b>
+                      <span>${DB.esc(CATEGORIES.find(c => c.id === it.category)?.short || it.category)}</span>
+                    </div>
+                    <div style="display:flex;gap:0.25rem;">
+                      ${sameTypeBuckets.length > 1 ? `
+                        <button type="button" class="cl-gc-ic-btn" data-shift-bucket="${DB.esc(it.id)}" title="Move between ${DB.esc(CYCLE_META[bucket.type].label)} 1 / 2">⇄</button>
+                      ` : ""}
+                      <button type="button" class="cl-gc-ic-btn" data-clean-item="${DB.esc(it.id)}" title="Mark clean & return to closet">✓</button>
+                    </div>
+                  </div>
+                `).join("")
+                : `<div style="padding:1.1rem;text-align:center;color:var(--muted);font-size:0.76rem;border:1px dashed var(--line);border-radius:12px;">No clothes waiting in ${DB.esc(bucket.displayTitle)}.</div>`
+              }
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    gridEl.querySelectorAll("[data-clean-item]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const it = cloudData.items.find(x => x.id === btn.dataset.cleanItem);
+        if (it) {
+          it.laundryQty = 0;
+          it.currentWears = 0;
+          await persistCloudData();
+        }
+      };
+    });
+
+    gridEl.querySelectorAll("[data-shift-bucket]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const it = cloudData.items.find(x => x.id === btn.dataset.shiftBucket);
+        if (!it) return;
+        const sameType = computedBuckets.filter(b => b.type === it.cycle);
+        if (sameType.length < 2) return;
+        const curIdx = sameType.findIndex(b => b.id === it.cycleBucketId);
+        const nextB = sameType[(curIdx + 1) % sameType.length];
+        it.cycleBucketId = nextB.id;
+        await persistCloudData();
+        DB.toast("Moved Cycle Batch", `Moved "${it.name}" to ${nextB.displayTitle}.`, 2000);
+      };
+    });
+
+    gridEl.querySelectorAll("[data-wash-bucket]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const bId = btn.dataset.washBucket;
+        const bObj = computedBuckets.find(b => b.id === bId);
+        let washedPieces = 0;
+        for (const it of cloudData.items) {
+          if (it.laundryQty > 0 && it.cycleBucketId === bId) {
+            washedPieces += it.laundryQty;
+            it.laundryQty = 0;
+            it.currentWears = 0;
+          }
+        }
+        if (!washedPieces) {
+          DB.toast(`${bObj ? bObj.displayTitle : "Cycle"} Empty`, "No clothes are waiting in this cycle.", 2000);
+          return;
+        }
+        await persistCloudData();
+        DB.toast(`${bObj ? bObj.displayTitle : "Cycle"} Washed ✨`, `Returned ${washedPieces} clean piece${washedPieces === 1 ? "" : "s"} to your closet!`, 2500);
+      };
+    });
+
+    gridEl.querySelectorAll("[data-remove-bucket]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const remId = btn.dataset.removeBucket;
+        const remObj = computedBuckets.find(b => b.id === remId);
+        cloudData.cycleBuckets = (cloudData.cycleBuckets || []).filter(b => b.id !== remId);
+        const fallback = (cloudData.cycleBuckets || []).find(b => b.type === (remObj ? remObj.type : "black"));
+        for (const it of cloudData.items) {
+          if (it.cycleBucketId === remId && fallback) it.cycleBucketId = fallback.id;
+        }
+        await persistCloudData();
+      };
+    });
+  }
+
+  
+  function hsvToHex(h, s, v) {
+    const c = v * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (h < 60) { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else { r = c; g = 0; b = x; }
+    const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  function openCustomColorPickerPopover(triggerBtn) {
+    closePop();
+    const pop = document.createElement("div");
+    pop.className = "cl-color-popover";
+
+    let curHue = 250, curSat = 0.65, curVal = 0.85;
+
+    pop.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <b style="font-family:var(--display);font-size:0.84rem;color:var(--text);">Custom Color Picker</b>
+        <button type="button" class="cl-gc-ic-btn" id="clCpCloseBtn" style="width:24px;height:24px;min-width:24px;min-height:24px;">×</button>
+      </div>
+      <div class="cl-cp-sv-box" id="clCpSvBox">
+        <canvas class="cl-cp-sv-canvas" id="clCpSvCanvas" width="240" height="135"></canvas>
+        <div class="cl-cp-cursor" id="clCpCursor" style="left:65%;top:15%;"></div>
+      </div>
+      <input type="range" class="cl-cp-hue-slider" id="clCpHueSlider" min="0" max="360" value="250">
+      <div class="cl-cp-hex-row">
+        <div class="cl-cp-swatch-big" id="clCpLiveSwatch" style="background:${DB.esc(state.formColor)}"></div>
+        <input type="text" class="cl-input" id="clCpHexInput" value="${DB.esc(state.formColor.toUpperCase())}" maxlength="7" style="height:34px;font-family:var(--mono);font-size:0.8rem;">
+        <button type="button" class="cl-btn primary subtle" id="clCpApplyBtn" style="height:34px;min-height:34px;">Apply</button>
+      </div>
+    `;
+    document.body.appendChild(pop);
+
+    const r = triggerBtn.getBoundingClientRect();
+    const left = Math.min(window.innerWidth - 280, Math.max(12, r.left));
+    let top = r.bottom + 8;
+    if (top + 270 > window.innerHeight) top = Math.max(12, r.top - 270);
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+
+    const canvas = pop.querySelector("#clCpSvCanvas");
+    const ctx = canvas.getContext("2d");
+    const cursor = pop.querySelector("#clCpCursor");
+    const hueSlider = pop.querySelector("#clCpHueSlider");
+    const hexInput = pop.querySelector("#clCpHexInput");
+    const liveSwatch = pop.querySelector("#clCpLiveSwatch");
+
+    const drawSvPlane = () => {
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = `hsl(${curHue}, 100%, 50%)`;
+      ctx.fillRect(0, 0, w, h);
+
+      const whiteGrad = ctx.createLinearGradient(0, 0, w, 0);
+      whiteGrad.addColorStop(0, "rgba(255,255,255,1)");
+      whiteGrad.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = whiteGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      const blackGrad = ctx.createLinearGradient(0, 0, 0, h);
+      blackGrad.addColorStop(0, "rgba(0,0,0,0)");
+      blackGrad.addColorStop(1, "rgba(0,0,0,1)");
+      ctx.fillStyle = blackGrad;
+      ctx.fillRect(0, 0, w, h);
+    };
+
+    let cpRaf = null;
+    const syncFromHsv = () => {
+      const hex = hsvToHex(curHue, curSat, curVal);
+      state.formColor = hex;
+      hexInput.value = hex.toUpperCase();
+      liveSwatch.style.background = hex;
+      cursor.style.left = `${Math.round(curSat * 100)}%`;
+      cursor.style.top = `${Math.round((1 - curVal) * 100)}%`;
+      if (!cpRaf) {
+        cpRaf = requestAnimationFrame(() => {
+          cpRaf = null;
+          $("clCustomColorDot").style.background = state.formColor;
+          $("clCustomColorHexLbl").textContent = state.formColor.toUpperCase();
+          if (!state.formPhoto) {
+            $("clPhotoStage").innerHTML = renderCardGarmentSvg(state.formType, state.formColor);
+          }
+        });
+      }
+    };
+
+    drawSvPlane();
+
+    const svBox = pop.querySelector("#clCpSvBox");
+    const pickFromPointer = e => {
+      const rect = svBox.getBoundingClientRect();
+      curSat = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      curVal = Math.min(1, Math.max(0, 1 - (e.clientY - rect.top) / rect.height));
+      syncFromHsv();
+    };
+
+    let dragging = false;
+    const onMove = e => { if (dragging) pickFromPointer(e); };
+    const onUp = () => { dragging = false; };
+    svBox.addEventListener("pointerdown", e => {
+      dragging = true;
+      pickFromPointer(e);
+    });
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+
+    hueSlider.oninput = e => {
+      curHue = Number(e.target.value) || 0;
+      drawSvPlane();
+      syncFromHsv();
+    };
+
+    hexInput.oninput = e => {
+      const v = e.target.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+        state.formColor = v.toLowerCase();
+        liveSwatch.style.background = state.formColor;
+        renderEditorFormUI();
+      }
+    };
+
+    pop.querySelector("#clCpCloseBtn").onclick = closePop;
+    pop.querySelector("#clCpApplyBtn").onclick = closePop;
+
+    const onDown = e => { if (!pop.contains(e.target) && !triggerBtn.contains(e.target)) closePop(); };
+    const onKey = e => { if (e.key === "Escape") closePop(); };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePop = { el: pop, triggerBtn, onDown, onKey, onMove, onUp };
+  }
+
+  function renderEditorFormUI() {
+    const stage = $("clPhotoStage");
+    if (state.formPhoto) {
+      stage.innerHTML = `<img src="${DB.esc(state.formPhoto)}" alt="Preview">`;
+      $("clClearPhotoBtn").hidden = false;
+    } else {
+      stage.innerHTML = renderCardGarmentSvg(state.formType, state.formColor);
+      $("clClearPhotoBtn").hidden = true;
+    }
+
+    const catObj = CATEGORIES.find(c => c.id === state.formCat) || CATEGORIES[2];
+    $("clFormCatLbl").textContent = catObj.label;
+    const catTypes = TYPES.filter(t => t.cat === state.formCat);
+    if (!catTypes.some(t => t.id === state.formType) && catTypes.length) {
+      state.formType = catTypes[0].id;
+    }
+    const typeObj = TYPES.find(t => t.id === state.formType) || TYPES[0];
+    $("clFormTypeLbl").textContent = typeObj.label;
+    const washable = isCatWashable(state.formCat);
+    $("clWashableControlsRow").hidden = !washable;
+
+    $("clFormMaxWearsLbl").textContent = `${state.formMaxWears} wear${state.formMaxWears === 1 ? "" : "s"} before wash`;
+    const swEl = $("clFormSwatches");
+    swEl.innerHTML = SWATCHES.map(s => `
+      <button type="button"
+              class="cl-sw-dot ${s.hex.toLowerCase() === state.formColor.toLowerCase() ? "active" : ""}"
+              style="background:${DB.esc(s.hex)}"
+              data-sw-hex="${DB.esc(s.hex)}"
+              data-sw-cyc="${DB.esc(s.cycle)}"
+              title="${DB.esc(s.name)}"></button>
+    `).join("");
+
+    swEl.querySelectorAll("[data-sw-hex]").forEach(btn => {
+      btn.onclick = () => {
+        state.formColor = btn.dataset.swHex;
+        state.formCycle = btn.dataset.swCyc;
+        renderEditorFormUI();
+      };
+    });
+
+    $("clCustomColorDot").style.background = state.formColor;
+    $("clCustomColorHexLbl").textContent = state.formColor.toUpperCase();
+    const scenEl = $("clFormScenarioChips");
+    scenEl.innerHTML = SCENARIO_OPTIONS.map(s => {
+      const isAct = (state.formScenarios || []).includes(s.id);
+      return `
+        <button type="button" class="cl-scen-chip ${isAct ? "active" : ""}" data-scen-id="${DB.esc(s.id)}">
+          ${DB.esc(s.label)}
+        </button>
+      `;
+    }).join("");
+
+    scenEl.querySelectorAll("[data-scen-id]").forEach(btn => {
+      btn.onclick = () => {
+        const sid = btn.dataset.scenId;
+        const cur = Array.isArray(state.formScenarios) ? state.formScenarios.slice() : [];
+        const idx = cur.indexOf(sid);
+        if (idx >= 0) cur.splice(idx, 1);
+        else cur.push(sid);
+        state.formScenarios = cur;
+        renderEditorFormUI();
+      };
+    });
+
+    $("clCycBtnBlack").className = `cl-3cycle-btn ${state.formCycle === "black" ? "act-black" : ""}`;
+    $("clCycBtnWhite").className = `cl-3cycle-btn ${state.formCycle === "white" ? "act-white" : ""}`;
+    $("clCycBtnMix").className   = `cl-3cycle-btn ${state.formCycle === "mix" ? "act-mix" : ""}`;
+  }
+
+  function openEditor(item = null) {
+    const drawer = $("clEditorDrawer");
+    drawer.hidden = false;
+    if (item) {
+      state.editingId = item.id;
+      $("clDrawerHeading").textContent = `Edit "${item.name}"`;
+      $("clSaveFormBtnLbl").textContent = "Save Changes";
+      $("clFormName").value = item.name || "";
+      $("clFormQty").value = String(item.totalQty || 1);
+      state.formCat = item.category || "top";
+      state.formType = item.type || "tee";
+      state.formColor = item.color || "#1c1d24";
+      state.formCycle = item.cycle || "black";
+      state.formMaxWears = item.maxWears || 1;
+      state.formScenarios = Array.isArray(item.scenarios) ? item.scenarios.slice() : ["mild", "streetwear"];
+      state.formPhoto = item.photo || "";
+    } else {
+      state.editingId = null;
+      $("clDrawerHeading").textContent = "Add Clothing Piece";
+      $("clSaveFormBtnLbl").textContent = "Save to Closet";
+      $("clFormName").value = "";
+      $("clFormQty").value = "1";
+      state.formPhoto = "";
+      state.formScenarios = ["mild", "streetwear"];
+      if (state.catFilter !== "all") {
+        state.formCat = state.catFilter;
+        const catObj = CATEGORIES.find(c => c.id === state.formCat);
+        if (catObj) state.formMaxWears = catObj.defaultMaxWears;
+        const tp = TYPES.find(t => t.cat === state.formCat);
+        if (tp) state.formType = tp.id;
+      }
+    }
+    renderEditorFormUI();
+    $("clFormName").focus();
+  }
+
+  let activePop = null;
+  function closePop() {
+    if (!activePop) return;
+    document.removeEventListener("pointerdown", activePop.onDown, true);
+    document.removeEventListener("keydown", activePop.onKey, true);
+    if (activePop.onMove) window.removeEventListener("pointermove", activePop.onMove);
+    if (activePop.onUp) window.removeEventListener("pointerup", activePop.onUp);
+    if (activePop.el && activePop.el.parentNode) activePop.el.parentNode.removeChild(activePop.el);
+    activePop = null;
+  }
+
+  function openPop(triggerBtn, options, curVal, onSelect) {
+    if (activePop && activePop.triggerBtn === triggerBtn) {
+      closePop();
+      return;
+    }
+    closePop();
+    const el = document.createElement("div");
+    el.className = "cl-pop-menu";
+    el.innerHTML = options.map(o => `
+      <button type="button" class="cl-pop-item ${String(o.id) === String(curVal) ? "active" : ""}" data-val="${DB.esc(String(o.id))}">
+        <span>${DB.esc(o.label)}</span>
+        ${String(o.id) === String(curVal) ? "<span>✓</span>" : ""}
+      </button>
+    `).join("");
+    document.body.appendChild(el);
+
+    const r = triggerBtn.getBoundingClientRect();
+    const left = Math.min(window.innerWidth - 235, Math.max(12, r.left));
+    let top = r.bottom + 6;
+    if (top + 280 > window.innerHeight) top = Math.max(12, r.top - 280);
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+
+    el.querySelectorAll("[data-val]").forEach(b => {
+      b.onclick = e => {
+        e.stopPropagation();
+        closePop();
+        onSelect(b.dataset.val);
+      };
+    });
+
+    const onDown = e => { if (!el.contains(e.target) && !triggerBtn.contains(e.target)) closePop(); };
+    const onKey = e => { if (e.key === "Escape") closePop(); };
+    document.addEventListener("pointerdown", onDown, true);
+    document.addEventListener("keydown", onKey, true);
+    activePop = { el, triggerBtn, onDown, onKey };
+  }
+
+  
+  $("clPickMoodBtn").onclick = e => {
+    e.stopPropagation();
+    openPop($("clPickMoodBtn"), MOOD_OPTIONS, state.stylistMood, picked => {
+      state.stylistMood = picked;
+      renderStylistControls();
+    });
+  };
+  $("clPickWeatherBtn").onclick = e => {
+    e.stopPropagation();
+    openPop($("clPickWeatherBtn"), WEATHER_OPTIONS, state.stylistWeather, picked => {
+      state.stylistWeather = picked;
+      renderStylistControls();
+    });
+  };
+  $("clPickToneBtn").onclick = e => {
+    e.stopPropagation();
+    openPop($("clPickToneBtn"), TONE_OPTIONS, state.stylistTone, picked => {
+      state.stylistTone = picked;
+      renderStylistControls();
+    });
+  };
+  $("clSuggestOutfitBtn").onclick = generateSmartStyledOutfit;
+
+  
+  $("clOpenAddBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    openEditor(null);
+  };
+  $("clCloseDrawerBtn").onclick = () => { $("clEditorDrawer").hidden = true; };
+  $("clCancelFormBtn").onclick = () => { $("clEditorDrawer").hidden = true; };
+
+  $("clFormCatBtn").onclick = e => {
+    e.stopPropagation();
+    openPop($("clFormCatBtn"), CATEGORIES, state.formCat, picked => {
+      state.formCat = picked;
+      const catObj = CATEGORIES.find(c => c.id === picked);
+      if (catObj) state.formMaxWears = catObj.defaultMaxWears;
+      const tp = TYPES.find(t => t.cat === picked);
+      if (tp) state.formType = tp.id;
+      renderEditorFormUI();
+    });
+  };
+  $("clFormTypeBtn").onclick = e => {
+    e.stopPropagation();
+    const filteredTypes = TYPES.filter(t => t.cat === state.formCat);
+    openPop($("clFormTypeBtn"), filteredTypes, state.formType, picked => {
+      state.formType = picked;
+      renderEditorFormUI();
+    });
+  };
+
+  $("clFormMaxWearsBtn").onclick = e => {
+    e.stopPropagation();
+    const opts = [1, 2, 3, 4, 5, 6, 8, 10, 15].map(n => ({
+      id: n,
+      label: `${n} wear${n === 1 ? "" : "s"} before wash`
+    }));
+    openPop($("clFormMaxWearsBtn"), opts, state.formMaxWears, picked => {
+      state.formMaxWears = Number(picked) || 1;
+      renderEditorFormUI();
+    });
+  };
+
+  $("clOpenCustomColorBtn").onclick = e => {
+    e.stopPropagation();
+    openCustomColorPickerPopover($("clOpenCustomColorBtn"));
+  };
+
+  document.querySelectorAll("[data-pick-cyc]").forEach(btn => {
+    btn.onclick = () => {
+      state.formCycle = btn.dataset.pickCyc;
+      renderEditorFormUI();
+    };
+  });
+  $("clPhotoInput").onchange = async e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    try {
+      state.formPhoto = await autoTrimAndRemoveBg(file);
+      renderEditorFormUI();
+      DB.toast("Photo Auto-Trimmed ✨", "Removed outer borders/background so it fits tightly on the Outfit Mirror!", 2400);
+    } catch {
+      DB.toast("Image Error", "Could not process that image file.", 2200);
+    }
+  };
+
+  $("clClearPhotoBtn").onclick = () => {
+    state.formPhoto = "";
+    $("clPhotoInput").value = "";
+    renderEditorFormUI();
+  };
+
+  $("clSaveFormBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const name = $("clFormName").value.trim();
+    const washable = isCatWashable(state.formCat);
+    const totalQty = washable ? Math.max(1, parseInt($("clFormQty").value, 10) || 1) : 1;
+
+    if (!name) {
+      $("clFormName").focus();
+      DB.toast("Name Required", "Please enter a name for this clothing piece.", 2200);
+      return;
+    }
+
+    if (state.editingId) {
+      const idx = cloudData.items.findIndex(x => x.id === state.editingId);
+      if (idx >= 0) {
+        const prev = cloudData.items[idx];
+        cloudData.items[idx] = {
+          ...prev,
+          name,
+          totalQty,
+          laundryQty: washable ? Math.min(totalQty, prev.laundryQty || 0) : 0,
+          currentWears: washable ? prev.currentWears : 0,
+          category: state.formCat,
+          type: state.formType,
+          color: state.formColor,
+          cycle: state.formCycle,
+          scenarios: state.formScenarios.slice(),
+          maxWears: washable ? state.formMaxWears : 1,
+          photo: state.formPhoto || "",
+          photoTrimmedV7: true
+        };
+        if (washable) ensureBucketAssigned(cloudData.items[idx]);
+      }
+      DB.toast("Updated Piece", `"${name}" updated in your closet.`, 2100);
+    } else {
+      const newItem = {
+        id: DB.uid(),
+        name,
+        totalQty,
+        laundryQty: 0,
+        currentWears: 0,
+        category: state.formCat,
+        type: state.formType,
+        color: state.formColor,
+        cycle: state.formCycle,
+        cycleBucketId: `${state.formCycle}_1`,
+        scenarios: state.formScenarios.slice(),
+        maxWears: washable ? state.formMaxWears : 1,
+        photo: state.formPhoto || "",
+          photoTrimmedV7: true
+      };
+      if (washable) ensureBucketAssigned(newItem);
+      cloudData.items = [newItem, ...(cloudData.items || [])];
+      state.outfit[newItem.category] = newItem.id;
+      DB.toast("Added to Closet", `"${name}" saved and equipped on the Outfit Mirror!`, 2400);
+    }
+
+    $("clEditorDrawer").hidden = true;
+    await persistCloudData();
+  };
+
+  
+  $("clToggleJacketZipBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    state.jacketOpen = !state.jacketOpen;
+    await persistCloudData();
+  };
+
+  $("clWearOutfitBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const items = cloudData.items || [];
+    let wornCount = 0;
+    let movedToLaundryCount = 0;
+
+    for (const cat of CATEGORIES) {
+      if (!cat.washable) continue;
+      const eqId = state.outfit[cat.id];
+      const it = eqId ? items.find(x => x.id === eqId) : null;
+      if (!it) continue;
+      const avail = it.totalQty - it.laundryQty;
+      if (avail <= 0) continue;
+
+      wornCount++;
+      it.currentWears = (Number(it.currentWears) || 0) + 1;
+      if (it.currentWears >= Math.max(1, Number(it.maxWears) || 1)) {
+        it.laundryQty = Math.min(it.totalQty, (it.laundryQty || 0) + 1);
+        it.currentWears = 0;
+        ensureBucketAssigned(it);
+        movedToLaundryCount++;
+      }
+    }
+
+    await persistCloudData();
+    DB.toast(
+      "Outfit Worn (+1 Logged)",
+      movedToLaundryCount > 0
+        ? `Logged wear on ${wornCount} washable layers (${movedToLaundryCount} reached their wear limit and moved into your Laundry Basket).`
+        : `Logged +1 wear on ${wornCount} washable layers (Shoes & Accessories stay clean).`,
+      2800
+    );
+  };
+
+  $("clClearOutfitBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    for (const k of Object.keys(state.outfit)) state.outfit[k] = null;
+    await persistCloudData();
+  };
+
+  $("clSearchInput").oninput = e => {
+    state.searchQuery = e.target.value.trim();
+    state.currentPage = 1;
+    renderClosetGrid();
+  };
+
+  document.querySelectorAll("[data-st-btn]").forEach(btn => {
+    btn.onclick = () => {
+      state.statusFilter = btn.dataset.stBtn;
+      state.currentPage = 1;
+      renderClosetGrid();
+    };
+  });
+
+  document.querySelectorAll("[data-add-cycle-type]").forEach(btn => {
+    btn.onclick = async () => {
+      if (!(await ensureAccountAccess())) return;
+      const cycType = btn.dataset.addCycleType;
+      const newBucket = { id: `${cycType}_${DB.uid()}`, type: cycType };
+      cloudData.cycleBuckets = [...(cloudData.cycleBuckets || DEFAULT_CYCLE_BUCKETS), newBucket];
+      await persistCloudData();
+      const computed = getComputedBucketsWithTitles();
+      const created = computed.find(b => b.id === newBucket.id);
+      DB.toast("Laundry Cycle Added", `Created "${created ? created.displayTitle : cycType}"!`, 2200);
+    };
+  });
+
+  $("clWashAllBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    let totalWashed = 0;
+    for (const it of cloudData.items) {
+      if (it.laundryQty > 0) {
+        totalWashed += it.laundryQty;
+        it.laundryQty = 0;
+        it.currentWears = 0;
+      }
+    }
+    if (!totalWashed) {
+      DB.toast("Laundry Basket Empty", "All your washable clothes are already clean in your closet.", 2000);
+      return;
+    }
+    await persistCloudData();
+    DB.toast("All Laundry Cycles Washed ✨", `Returned all ${totalWashed} washed piece${totalWashed === 1 ? "" : "s"} clean to your closet.`, 2600);
+  };
+
+  function renderAll() {
+    updateGuestBannerUI();
+    renderStylistControls();
+    if (!$("clEditorDrawer").hidden) {
+      renderEditorFormUI();
+    }
+    renderUnifiedMannequin();
+    renderClosetGrid();
+    renderLaundrySection();
+  }
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(async () => {
+      await initDirectFirestoreSync();
+      renderAll();
+    });
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) renderAll();
+  });
+  try {
+    const prevV5 = DB.get("p23.closet.v5", null);
+    const curV6 = DB.get(CL_KEY, null);
+    if (!curV6 && prevV5 && Array.isArray(prevV5.items) && prevV5.items.length) {
+      normalizeIncoming(prevV5);
+    }
+  } catch {}
+
+  initDirectFirestoreSync().then(async () => {
+    renderAll();
+    await ensureAllPhotosTightlyTrimmed();
+  });
+});
+</script>
+</body>
+</html>

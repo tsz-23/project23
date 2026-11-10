@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snippet | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 90%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --sn-text: #0a84ff;
+    --sn-code: #bf5af2;
+    --sn-link: #30d158;
+    --sn-image: #ff375f;
+    --sn-file: #ff9f0a;
+  }
+
+  main {
+    max-width: 1140px;
+    margin: 0 auto;
+    padding: 1.1rem 1rem 4rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.42rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.3rem, 7.5vw, 4.1rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.92rem, 1.8vw, 1.03rem);
+    max-width: 580px;
+    line-height: 1.5;
+  }
+
+  .sn-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  .apple-panel {
+    position: relative;
+    background:
+      radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent) 0%, transparent 58%),
+      var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 20px 44px -16px rgba(0, 0, 0, 0.4);
+    border-radius: 26px;
+    padding: clamp(1.1rem, 2.5vw, 1.55rem);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .sn-vault-panel {
+    min-height: 360px;
+  }
+
+  .sn-controls-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding-bottom: 0.95rem;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+
+  .sn-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding: 0.1rem 0.35rem 0.1rem 0;
+    flex: 1 1 320px;
+    min-width: 0;
+    -webkit-mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 16px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 0%, #000 calc(100% - 16px), transparent 100%);
+  }
+  .sn-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sn-filter-pill {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.36rem 0.8rem;
+    min-height: 36px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.18s, color 0.18s, border-color 0.18s;
+  }
+  .sn-filter-pill:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .sn-filter-pill[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    border-color: transparent;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  .sn-filter-pill .cnt {
+    font-size: 0.69rem;
+    padding: 0.02rem 0.38rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.18);
+    color: inherit;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sn-search-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 1 300px;
+    min-width: 210px;
+  }
+  .sn-search-box {
+    flex: 1;
+    height: 38px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+    transition: border-color 0.2s;
+  }
+  .sn-search-box:focus-within {
+    border-color: var(--accent);
+  }
+  .sn-search-box svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+    flex: none;
+  }
+  .sn-search-box input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.81rem;
+    color: var(--text);
+  }
+  .sn-search-box input:focus {
+    outline: none;
+  }
+
+  .sn-btn {
+    height: 38px;
+    min-height: 38px;
+    padding: 0 0.9rem;
+    border-radius: 12px;
+    font-size: 0.81rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.15s var(--apple-ease), border-color 0.2s, background 0.2s;
+  }
+  .sn-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .sn-btn.primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: var(--glow);
+  }
+  .sn-btn.danger-red {
+    background: color-mix(in srgb, #ff3b30 14%, var(--glass-elevated));
+    border-color: color-mix(in srgb, #ff3b30 45%, var(--line));
+    color: #ff453a;
+    font-weight: 700;
+  }
+  .sn-btn.danger-red:hover {
+    background: #ff3b30;
+    border-color: #ff3b30;
+    color: #ffffff;
+  }
+  .sn-btn svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+  }
+
+  .sn-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+    gap: 1rem;
+  }
+
+  .sn-card {
+    background: var(--glass-elevated);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 0.95rem 1rem;
+    box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 0.68rem;
+    transition: transform 0.2s var(--apple-ease), border-color 0.2s, box-shadow 0.2s;
+    animation: rise 0.28s var(--apple-ease) both;
+    position: relative;
+    overflow: hidden;
+  }
+  .sn-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+    box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.4);
+  }
+  .sn-card.pinned {
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    background:
+      radial-gradient(110% 100% at 100% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+      var(--glass-elevated);
+  }
+
+  .sn-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .sn-badge-group {
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+    min-width: 0;
+  }
+  .sn-kind-badge {
+    padding: 0.16rem 0.54rem;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    flex: none;
+  }
+  .sn-kind-badge.text { background: color-mix(in srgb, var(--sn-text) 18%, transparent); color: var(--sn-text); }
+  .sn-kind-badge.code { background: color-mix(in srgb, var(--sn-code) 18%, transparent); color: var(--sn-code); }
+  .sn-kind-badge.link { background: color-mix(in srgb, var(--sn-link) 18%, transparent); color: var(--sn-link); }
+  .sn-kind-badge.image { background: color-mix(in srgb, var(--sn-image) 18%, transparent); color: var(--sn-image); }
+  .sn-kind-badge.file { background: color-mix(in srgb, var(--sn-file) 18%, transparent); color: var(--sn-file); }
+
+  .sn-time {
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .sn-head-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.24rem;
+  }
+  .sn-icon-btn {
+    width: 29px;
+    height: 29px;
+    min-width: 29px;
+    min-height: 29px;
+    padding: 0;
+    border-radius: 8px;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: color 0.16s, border-color 0.16s, background 0.16s;
+  }
+  .sn-icon-btn:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .sn-icon-btn.pin.active {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 18%, var(--card-solid));
+    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  }
+  .sn-icon-btn.del:hover {
+    color: #ff453a;
+    border-color: rgba(255, 69, 58, 0.45);
+  }
+  .sn-icon-btn svg {
+    width: 13.5px;
+    height: 13.5px;
+  }
+
+  .sn-card-title {
+    font-family: var(--display);
+    font-size: 0.96rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sn-preview-box {
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    padding: 0.68rem 0.78rem;
+    font-size: 0.83rem;
+    line-height: 1.5;
+    color: var(--text);
+    max-height: 145px;
+    overflow-y: auto;
+    word-break: break-word;
+    white-space: pre-wrap;
+    flex: 1;
+  }
+  .sn-preview-box.code {
+    font-family: "Space Mono", monospace;
+    font-size: 0.76rem;
+    background: color-mix(in srgb, var(--bg) 75%, var(--card-solid));
+  }
+  .sn-preview-box.link a {
+    color: var(--accent3, var(--accent));
+    font-weight: 600;
+    text-decoration: underline;
+    word-break: break-all;
+  }
+
+  .sn-img-wrap {
+    width: 100%;
+    height: 162px;
+    border-radius: 13px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--bg) 70%, var(--card-solid));
+    border: 1px solid var(--line);
+    display: grid;
+    place-items: center;
+    cursor: zoom-in;
+    position: relative;
+  }
+  .sn-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    transition: transform 0.28s var(--apple-ease);
+  }
+  .sn-img-wrap:hover img {
+    transform: scale(1.03);
+  }
+
+  .sn-file-box {
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    border-radius: 13px;
+    padding: 0.75rem 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 0.72rem;
+    flex: 1;
+  }
+  .sn-file-ic {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    background: color-mix(in srgb, var(--sn-file) 18%, var(--card-2));
+    color: var(--sn-file);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .sn-file-ic svg {
+    width: 20px;
+    height: 20px;
+  }
+  .sn-file-meta {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+  }
+  .sn-file-meta b {
+    font-size: 0.85rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sn-file-meta span {
+    font-family: var(--mono);
+    font-size: 0.69rem;
+    color: var(--muted);
+  }
+
+  .sn-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    margin-top: auto;
+    padding-top: 0.12rem;
+  }
+  .sn-meta-sub {
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sn-foot-btns {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+  }
+  .sn-act-btn {
+    min-height: 32px;
+    padding: 0.26rem 0.72rem;
+    border-radius: 10px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    border: 1px solid var(--line);
+    background: var(--card-solid);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .sn-act-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .sn-act-btn.primary {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+    border-color: transparent;
+  }
+  .sn-act-btn.copied {
+    background: color-mix(in srgb, #30d158 20%, var(--card-solid));
+    color: #30d158;
+    border-color: color-mix(in srgb, #30d158 45%, var(--line));
+  }
+  .sn-act-btn svg {
+    width: 13.5px;
+    height: 13.5px;
+  }
+
+  .sn-empty {
+    text-align: center;
+    padding: 2.6rem 1.2rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--card-2) 55%, transparent);
+    border: 1px dashed var(--line);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin: auto 0;
+  }
+  .sn-empty-ic {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    color: var(--accent);
+    display: grid;
+    place-items: center;
+  }
+  .sn-empty-ic svg {
+    width: 22px;
+    height: 22px;
+  }
+  .sn-empty h3 {
+    font-family: var(--display);
+    font-size: 1.08rem;
+    margin: 0.1rem 0 0;
+  }
+  .sn-empty p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 26rem;
+    font-size: 0.84rem;
+    line-height: 1.48;
+  }
+
+  .sn-unified-box {
+    background: var(--glass-elevated);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    position: relative;
+  }
+  .sn-unified-box:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  }
+  .sn-unified-box.dragover {
+    border-color: var(--accent);
+    border-style: dashed;
+    background: color-mix(in srgb, var(--accent) 14%, var(--card-2));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 26%, transparent);
+  }
+
+  .sn-comp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  }
+  .sn-title-inp {
+    flex: 1 1 180px;
+    min-width: 0;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0.1rem 0 !important;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .sn-title-inp:focus {
+    outline: none;
+  }
+
+  .sn-type-pills {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    background: var(--card-solid);
+    padding: 0.2rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
+  .sn-type-opt {
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.71rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .sn-type-opt:hover {
+    color: var(--text);
+    transform: none;
+  }
+  .sn-type-opt.active {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent);
+  }
+
+  .sn-body-inp {
+    width: 100%;
+    min-height: 96px;
+    max-height: 240px;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0.15rem 0 !important;
+    font-family: var(--body);
+    font-size: 0.92rem;
+    line-height: 1.52;
+    color: var(--text);
+    resize: vertical;
+  }
+  .sn-body-inp.mono {
+    font-family: "Space Mono", monospace;
+    font-size: 0.83rem;
+  }
+  .sn-body-inp:focus {
+    outline: none;
+  }
+
+  .sn-staged-list {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .sn-staged-list:empty {
+    display: none;
+  }
+  .sn-staged-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.48rem;
+    padding: 0.32rem 0.6rem 0.32rem 0.4rem;
+    border-radius: 12px;
+    background: var(--card-solid);
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    animation: rise 0.18s var(--apple-ease) both;
+  }
+  .sn-staged-chip img {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    object-fit: cover;
+    display: block;
+  }
+  .sn-staged-chip .chip-ic {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--sn-file) 18%, var(--card-2));
+    color: var(--sn-file);
+    display: grid;
+    place-items: center;
+  }
+  .sn-staged-chip .chip-ic svg {
+    width: 16px;
+    height: 16px;
+  }
+  .sn-staged-chip .chip-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.04rem;
+    max-width: 170px;
+  }
+  .sn-staged-chip .chip-meta b {
+    font-size: 0.76rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sn-staged-chip .chip-meta span {
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    color: var(--muted);
+  }
+  .sn-staged-rm {
+    width: 22px;
+    height: 22px;
+    min-height: 22px;
+    padding: 0;
+    border-radius: 50%;
+    border: 0;
+    background: color-mix(in srgb, var(--muted) 20%, transparent);
+    color: var(--text);
+    font-size: 0.75rem;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .sn-staged-rm:hover {
+    background: #ff3b30;
+    color: #fff;
+    transform: none;
+  }
+
+  .sn-comp-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    flex-wrap: wrap;
+  }
+  .sn-hint-txt {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+  }
+  .sn-comp-btns {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 820px) {
+    .sn-search-right {
+      flex: 1 1 100%;
+    }
+  }
+
+  @media (max-width: 560px) {
+    main {
+      padding: 0.8rem 0.65rem 6.5rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .sn-grid {
+      grid-template-columns: 1fr;
+      gap: 0.8rem;
+    }
+    .sn-comp-foot {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .sn-comp-btns {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .sn-comp-btns .sn-btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
+</head>
+<body data-page="snippet">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>CLIPBOARD SNIPPET</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        Universal Clipboard
+      </span>
+    </div>
+  </div>
+
+  <input type="file" id="snippetFileInput" multiple hidden>
+
+  <div class="sn-shell">
+    <section class="panel apple-panel sn-vault-panel" aria-label="Saved Snippets">
+      <div class="sn-controls-bar">
+        <div class="sn-pills" role="tablist" aria-label="Filter snippets">
+          <button type="button" class="sn-filter-pill" data-filter="all" aria-pressed="true">All <span class="cnt" id="cntAll">0</span></button>
+          <button type="button" class="sn-filter-pill" data-filter="pinned" aria-pressed="false">Pinned <span class="cnt" id="cntPinned">0</span></button>
+          <button type="button" class="sn-filter-pill" data-filter="text" aria-pressed="false">Text &amp; Links <span class="cnt" id="cntText">0</span></button>
+          <button type="button" class="sn-filter-pill" data-filter="code" aria-pressed="false">Code <span class="cnt" id="cntCode">0</span></button>
+          <button type="button" class="sn-filter-pill" data-filter="image" aria-pressed="false">Images <span class="cnt" id="cntImage">0</span></button>
+          <button type="button" class="sn-filter-pill" data-filter="file" aria-pressed="false">Files <span class="cnt" id="cntFile">0</span></button>
+        </div>
+
+        <div class="sn-search-right">
+          <div class="sn-search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="snippetSearchInput" placeholder="Search snippets or files…" autocomplete="off">
+          </div>
+          <button type="button" class="sn-btn danger-red" id="clearSnippetsBtn" title="Clear snippets">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="vaultContainer" aria-live="polite"></div>
+    </section>
+
+    <section class="panel apple-panel sn-composer-panel" aria-label="Paste or Drop Snippet">
+      <div class="sn-unified-box" id="unifiedComposerBox">
+        <div class="sn-comp-head">
+          <input type="text" id="snippetTitleInput" class="sn-title-inp" placeholder="Optional title or label…" maxlength="80" autocomplete="off">
+          <div class="sn-type-pills" role="group" aria-label="Snippet format">
+            <button type="button" class="sn-type-opt active" data-kind="auto">Auto</button>
+            <button type="button" class="sn-type-opt" data-kind="text">Text</button>
+            <button type="button" class="sn-type-opt" data-kind="code">Code</button>
+            <button type="button" class="sn-type-opt" data-kind="link">Link</button>
+          </div>
+        </div>
+
+        <textarea id="snippetBodyInput" class="sn-body-inp" autofocus placeholder="Paste text, code, links, or images right here (⌘V / Ctrl+V), or drag &amp; drop images and files directly into this box…"></textarea>
+
+        <div class="sn-staged-list" id="stagedList"></div>
+
+        <div class="sn-comp-foot">
+          <span class="sn-hint-txt">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            Drop images/files into this box or press <b>⌘ + Enter</b> to save
+          </span>
+          <div class="sn-comp-btns">
+            <button type="button" class="sn-btn" id="pickFilesBtn" title="Attach an image or file from your device">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              <span>Choose Image / File</span>
+            </button>
+            <button type="button" class="sn-btn" id="quickPasteBtn" title="Paste directly from system clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+              <span>Paste Clipboard</span>
+            </button>
+            <button type="button" class="sn-btn primary full-mob" id="saveSnippetBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Save Snippet</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const PRIMARY_KEY = "p23.snippet";
+  const FALLBACK_KEY = "p23.vault";
+  const $ = id => document.getElementById(id);
+
+  const state = {
+    selectedKind: "auto",
+    filter: "all",
+    query: "",
+    stagedFiles: []
+  };
+
+  function focusComposerInput() {
+    if (DB.isGuest()) return;
+    const inp = $("snippetBodyInput");
+    if (inp) {
+      setTimeout(() => {
+        try { inp.focus({ preventScroll: true }); } catch { inp.focus(); }
+      }, 60);
+    }
+  }
+
+  async function ensureAccountAccess() {
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    if (ok) {
+      renderSnippets();
+      focusComposerInput();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, select, textarea");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+    mainEl.addEventListener("focusin", e => {
+      if (!DB.isGuest()) return;
+      const inp = e.target.closest("input, select, textarea");
+      if (inp) {
+        inp.blur();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+
+  function loadSnippets() {
+    if (DB.isGuest()) return [];
+    const s = DB.get(PRIMARY_KEY, null);
+    if (Array.isArray(s) && s.length) return s;
+    const v = DB.get(FALLBACK_KEY, null);
+    if (Array.isArray(v) && v.length) return v;
+    return Array.isArray(s) ? s : [];
+  }
+
+  function saveSnippets(list) {
+    if (DB.isGuest()) {
+      ensureAccountAccess();
+      return;
+    }
+    DB.set(PRIMARY_KEY, list);
+    DB.set(FALLBACK_KEY, list);
+    if (typeof DB.flush === "function") DB.flush();
+    renderSnippets();
+  }
+
+  function fmtBytes(bytes) {
+    const b = Math.max(0, Number(bytes) || 0);
+    if (b < 1024) return `${b} B`;
+    if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+    return `${(b / (1024 * 1024)).toFixed(2)} MB`;
+  }
+
+  function fmtAgo(ts) {
+    if (!ts) return "Just now";
+    const sec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if (sec < 45) return "Just now";
+    const min = Math.floor(sec / 60);
+    if (min < 60) return `${min}m ago`;
+    const hr = Math.floor(min / 60);
+    if (hr < 24) return `${hr}h ago`;
+    const days = Math.floor(hr / 24);
+    if (days < 7) return `${days}d ago`;
+    return new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+
+  function detectTextKind(str) {
+    const s = String(str || "").trim();
+    if (/^https?:\/\/\S+$/i.test(s)) return "link";
+    if (/[{};()=>]|^\s*(function|const|let|var|import|export|class|def|public|private|#include|<[a-zA-Z]+)/m.test(s)) {
+      return "code";
+    }
+    return "text";
+  }
+
+  function autoTitleForText(str, kind) {
+    const firstLine = String(str || "").trim().split(/\r?\n/)[0].trim();
+    if (kind === "link") {
+      try {
+        const u = new URL(firstLine);
+        return u.hostname.replace(/^www\./, "") + (u.pathname !== "/" ? u.pathname.slice(0, 24) : "");
+      } catch {}
+    }
+    if (firstLine.length <= 42) return firstLine || "Untitled Snippet";
+    return firstLine.slice(0, 40) + "…";
+  }
+
+  function compressImageFast(fileOrBlob, maxDim = 1100) {
+    return new Promise((resolve, reject) => {
+      const objUrl = URL.createObjectURL(fileOrBlob);
+      const img = new Image();
+      img.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        reject(new Error("Couldn't decode image"));
+      };
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        let w = img.naturalWidth || img.width || 800;
+        let h = img.naturalHeight || img.height || 600;
+        if (w > maxDim || h > maxDim) {
+          if (w >= h) {
+            h = Math.max(1, Math.round((h * maxDim) / w));
+            w = maxDim;
+          } else {
+            w = Math.max(1, Math.round((w * maxDim) / h));
+            h = maxDim;
+          }
+        }
+        const cv = document.createElement("canvas");
+        cv.width = w;
+        cv.height = h;
+        const ctx = cv.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        let dataUrl = cv.toDataURL("image/jpeg", 0.8);
+        if (dataUrl.length > 720000) {
+          dataUrl = cv.toDataURL("image/jpeg", 0.62);
+        }
+        resolve({
+          dataUrl,
+          width: w,
+          height: h,
+          size: Math.round(dataUrl.length * 0.75)
+        });
+      };
+      img.src = objUrl;
+    });
+  }
+
+  function readFileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function readFileAsTextIfText(file) {
+    return new Promise(resolve => {
+      const isTextLike = /^(text\/|application\/(json|javascript|xml|csv|x-sh))/i.test(file.type || "") ||
+        /\.(txt|md|json|csv|js|ts|py|html|css|xml|yml|yaml|sh|sql|java|c|cpp)$/i.test(file.name || "");
+      if (!isTextLike || file.size > 180000) {
+        resolve("");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onerror = () => resolve("");
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.readAsText(file);
+    });
+  }
+
+  function renderStagedAttachments() {
+    const listEl = $("stagedList");
+    if (!state.stagedFiles.length) {
+      listEl.innerHTML = "";
+      return;
+    }
+    const fileSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>`;
+    listEl.innerHTML = state.stagedFiles.map((att, idx) => `
+      <div class="sn-staged-chip">
+        ${att.kind === "image"
+          ? `<img src="${DB.esc(att.dataUrl)}" alt="">`
+          : `<span class="chip-ic">${fileSvg}</span>`}
+        <div class="chip-meta">
+          <b title="${DB.esc(att.fileName)}">${DB.esc(att.fileName)}</b>
+          <span>${fmtBytes(att.fileSize)}${att.dimensions ? ` • ${att.dimensions}` : ""}</span>
+        </div>
+        <button type="button" class="sn-staged-rm" data-rm-staged="${idx}" aria-label="Remove">✕</button>
+      </div>
+    `).join("");
+
+    listEl.querySelectorAll("[data-rm-staged]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        state.stagedFiles.splice(Number(btn.dataset.rmStaged), 1);
+        renderStagedAttachments();
+      };
+    });
+  }
+
+  async function stageIncomingFiles(fileList) {
+    if (!(await ensureAccountAccess())) return;
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+
+    for (const file of files) {
+      if (file.type && file.type.startsWith("image/")) {
+        try {
+          const comp = await compressImageFast(file);
+          state.stagedFiles.push({
+            kind: "image",
+            fileName: file.name || `image-${Date.now()}.jpg`,
+            mimeType: "image/jpeg",
+            fileSize: comp.size || file.size || 0,
+            dimensions: comp.width && comp.height ? `${comp.width}×${comp.height}` : "",
+            dataUrl: comp.dataUrl,
+            content: ""
+          });
+        } catch {
+          DB.toast("Image Error", `Couldn't process ${file.name || "image"}.`, 3000);
+        }
+      } else {
+        if (file.size > 700 * 1024) {
+          DB.toast("File Too Large", `${file.name} (${fmtBytes(file.size)}) exceeds the 700 KB cloud snippet limit.`, 4000);
+          continue;
+        }
+        try {
+          const [dataUrl, textPreview] = await Promise.all([
+            readFileToDataUrl(file),
+            readFileAsTextIfText(file)
+          ]);
+          state.stagedFiles.push({
+            kind: "file",
+            fileName: file.name || "file",
+            mimeType: file.type || "application/octet-stream",
+            fileSize: file.size || 0,
+            dimensions: "",
+            dataUrl,
+            content: textPreview ? textPreview.slice(0, 10000) : ""
+          });
+        } catch {
+          DB.toast("File Error", `Couldn't read ${file.name}.`, 3000);
+        }
+      }
+    }
+
+    renderStagedAttachments();
+    $("snippetBodyInput").focus();
+  }
+
+  function commitComposerSave() {
+    const rawText = $("snippetBodyInput").value.trim();
+    const customTitle = $("snippetTitleInput").value.trim();
+
+    if (!rawText && !state.stagedFiles.length) {
+      $("snippetBodyInput").focus();
+      return;
+    }
+
+    const cur = loadSnippets();
+    let savedCount = 0;
+
+    if (state.stagedFiles.length) {
+      state.stagedFiles.forEach((att, idx) => {
+        const itemTitle = customTitle
+          ? (state.stagedFiles.length > 1 ? `${customTitle} (${idx + 1})` : customTitle)
+          : att.fileName;
+        cur.unshift({
+          id: DB.uid(),
+          kind: att.kind,
+          title: itemTitle,
+          fileName: att.fileName,
+          mimeType: att.mimeType,
+          fileSize: att.fileSize,
+          dimensions: att.dimensions || "",
+          dataUrl: att.dataUrl,
+          content: rawText && idx === 0 && !att.content ? rawText : (att.content || ""),
+          pinned: false,
+          createdAt: Date.now() + idx
+        });
+        savedCount++;
+      });
+    }
+
+    if (rawText && !state.stagedFiles.length) {
+      const kind = state.selectedKind === "auto" ? detectTextKind(rawText) : state.selectedKind;
+      const title = customTitle || autoTitleForText(rawText, kind);
+      cur.unshift({
+        id: DB.uid(),
+        kind,
+        title,
+        content: rawText,
+        fileSize: new Blob([rawText]).size,
+        pinned: false,
+        createdAt: Date.now()
+      });
+      savedCount++;
+    }
+
+    state.stagedFiles = [];
+    $("snippetTitleInput").value = "";
+    $("snippetBodyInput").value = "";
+    renderStagedAttachments();
+    saveSnippets(cur);
+    DB.toast("Saved to Snippet", `${savedCount} item${savedCount === 1 ? "" : "s"} synced across your devices.`, 2400);
+    focusComposerInput();
+  }
+
+  async function copyImageDataUrlToClipboard(dataUrl) {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((res, rej) => {
+      img.onload = res;
+      img.onerror = rej;
+      img.src = dataUrl;
+    });
+    const cv = document.createElement("canvas");
+    cv.width = img.naturalWidth || img.width;
+    cv.height = img.naturalHeight || img.height;
+    cv.getContext("2d").drawImage(img, 0, 0);
+    const pngBlob = await new Promise(res => cv.toBlob(res, "image/png"));
+    if (pngBlob && navigator.clipboard && window.ClipboardItem) {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+      return true;
+    }
+    return false;
+  }
+
+  function openImageLightbox(item) {
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>${DB.esc(item.title || "Image Preview")}</h2>
+      <div style="background:var(--card-2);border:1px solid var(--line);border-radius:16px;padding:.65rem;display:grid;place-items:center;max-height:65vh;overflow:auto;">
+        <img src="${DB.esc(item.dataUrl)}" alt="${DB.esc(item.title)}" style="max-width:100%;max-height:60vh;border-radius:10px;display:block;">
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost left" id="lbClose">Close</button>
+        <a class="sn-act-btn" href="${DB.esc(item.dataUrl)}" download="${DB.esc(item.fileName || "image.jpg")}">Download</a>
+        <button type="button" class="primary" id="lbCopyImg">Copy Image</button>
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#lbClose").onclick = close;
+    node.querySelector("#lbCopyImg").onclick = async () => {
+      try {
+        const ok = await copyImageDataUrlToClipboard(item.dataUrl);
+        if (ok) DB.toast("Image Copied", "Paste it directly into any app.", 2200);
+        else DB.toast("Copy Not Supported", "Use the Download button on this browser.", 2600);
+      } catch {
+        DB.toast("Copy Failed", "Use the Download button to save this image.", 2600);
+      }
+    };
+  }
+
+  function openEditSnippetModal(item) {
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Edit Snippet</h2>
+      <div class="field">
+        <label for="evTitle">Title</label>
+        <input id="evTitle" type="text" value="${DB.esc(item.title || "")}">
+      </div>
+      ${item.kind !== "image" && item.kind !== "file" ? `
+        <div class="field">
+          <label for="evContent">Content</label>
+          <textarea id="evContent" rows="7" style="font-family:${item.kind === "code" ? "'Space Mono',monospace" : "var(--body)"};">${DB.esc(item.content || "")}</textarea>
+        </div>
+      ` : ""}
+      <div class="actions">
+        <button type="button" class="ghost left" id="evCancel">Cancel</button>
+        <button type="button" class="primary" id="evSave">Save Changes</button>
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#evCancel").onclick = close;
+    node.querySelector("#evSave").onclick = () => {
+      const list = loadSnippets();
+      const target = list.find(x => x.id === item.id);
+      if (target) {
+        target.title = node.querySelector("#evTitle").value.trim() || target.title;
+        const cEl = node.querySelector("#evContent");
+        if (cEl) {
+          target.content = cEl.value;
+          target.fileSize = new Blob([cEl.value]).size;
+        }
+        saveSnippets(list);
+      }
+      close();
+    };
+  }
+
+  function renderSnippets() {
+    const all = loadSnippets();
+
+    $("cntAll").textContent = all.length;
+    $("cntPinned").textContent = all.filter(x => x.pinned).length;
+    $("cntText").textContent = all.filter(x => x.kind === "text" || x.kind === "link").length;
+    $("cntCode").textContent = all.filter(x => x.kind === "code").length;
+    $("cntImage").textContent = all.filter(x => x.kind === "image").length;
+    $("cntFile").textContent = all.filter(x => x.kind === "file").length;
+
+    const q = state.query.toLowerCase();
+    const filtered = all.filter(item => {
+      if (state.filter === "pinned" && !item.pinned) return false;
+      if (state.filter === "text" && item.kind !== "text" && item.kind !== "link") return false;
+      if (state.filter === "code" && item.kind !== "code") return false;
+      if (state.filter === "image" && item.kind !== "image") return false;
+      if (state.filter === "file" && item.kind !== "file") return false;
+      if (q) {
+        const hay = `${item.title || ""} ${item.content || ""} ${item.fileName || ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      if (Boolean(a.pinned) !== Boolean(b.pinned)) return a.pinned ? -1 : 1;
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+    const container = $("vaultContainer");
+    if (!filtered.length) {
+      const guest = DB.isGuest();
+      container.innerHTML = `
+        <div class="sn-empty">
+          <div class="sn-empty-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>${guest ? "Sign In to Access Clipboard Snippet" : (all.length ? "No matching snippets in this category" : "No Snippets Saved Yet")}</h3>
+          <p>${guest
+            ? "Sign in with your Project 23 account to paste text, images, or files and access them across all your devices."
+            : (all.length
+              ? "Switch the category pills above or clear your search filter to see your other saved items."
+              : "Use the input box below to type, paste (⌘V / Ctrl+V), or drop any text, code, link, image, or file.")}</p>
+          ${guest ? `<button type="button" class="sn-btn primary" id="snEmptySignInBtn" style="margin-top:.35rem;">Sign in to continue</button>` : ""}
+        </div>
+      `;
+      const btn = $("snEmptySignInBtn");
+      if (btn) btn.onclick = () => ensureAccountAccess();
+      return;
+    }
+
+    const copySvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+    const dlSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>`;
+    const pinSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 3h6l-1 6 3 3H7l3-3z"/></svg>`;
+    const editSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>`;
+    const delSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+    const fileSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>`;
+    const extSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/></svg>`;
+
+    container.innerHTML = `<div class="sn-grid">
+      ${filtered.map(item => {
+        const kind = item.kind || "text";
+        const kindLabel = kind === "code" ? "Code" : kind === "link" ? "Link" : kind === "image" ? "Image" : kind === "file" ? "File" : "Text";
+
+        let bodyHtml = "";
+        if (kind === "image") {
+          bodyHtml = `
+            <div class="sn-img-wrap" data-zoom="${DB.esc(item.id)}" title="Click to preview full image">
+              <img src="${DB.esc(item.dataUrl)}" alt="${DB.esc(item.title)}" loading="lazy">
+            </div>
+            ${item.content ? `<div class="sn-preview-box">${DB.esc(item.content)}</div>` : ""}
+          `;
+        } else if (kind === "file") {
+          bodyHtml = `
+            <div class="sn-file-box">
+              <div class="sn-file-ic">${fileSvg}</div>
+              <div class="sn-file-meta">
+                <b title="${DB.esc(item.fileName || item.title)}">${DB.esc(item.fileName || item.title)}</b>
+                <span>${DB.esc(item.mimeType || "File")} • ${fmtBytes(item.fileSize)}</span>
+              </div>
+            </div>
+            ${item.content ? `<div class="sn-preview-box code" style="max-height:85px;">${DB.esc(item.content)}</div>` : ""}
+          `;
+        } else if (kind === "link") {
+          bodyHtml = `
+            <div class="sn-preview-box link"><a href="${DB.esc(item.content)}" target="_blank" rel="noopener noreferrer">${DB.esc(item.content)}</a></div>
+          `;
+        } else {
+          bodyHtml = `
+            <div class="sn-preview-box ${kind === "code" ? "code" : ""}">${DB.esc(item.content)}</div>
+          `;
+        }
+
+        const metaInfo = kind === "image"
+          ? `${item.dimensions ? item.dimensions + " • " : ""}${fmtBytes(item.fileSize)}`
+          : kind === "file"
+            ? fmtBytes(item.fileSize)
+            : `${(item.content || "").length} chars`;
+
+        return `
+          <article class="sn-card ${item.pinned ? "pinned" : ""}" data-id="${DB.esc(item.id)}">
+            <div class="sn-card-head">
+              <div class="sn-badge-group">
+                <span class="sn-kind-badge ${kind}">${kindLabel}</span>
+                <span class="sn-time">${fmtAgo(item.createdAt)}</span>
+              </div>
+              <div class="sn-head-actions">
+                <button type="button" class="sn-icon-btn pin ${item.pinned ? "active" : ""}" data-pin="${DB.esc(item.id)}" title="${item.pinned ? "Unpin" : "Pin to top"}" aria-label="Pin">${pinSvg}</button>
+                <button type="button" class="sn-icon-btn" data-edit="${DB.esc(item.id)}" title="Edit" aria-label="Edit">${editSvg}</button>
+                <button type="button" class="sn-icon-btn del" data-del="${DB.esc(item.id)}" title="Delete" aria-label="Delete">${delSvg}</button>
+              </div>
+            </div>
+
+            <h3 class="sn-card-title" title="${DB.esc(item.title)}">${DB.esc(item.title)}</h3>
+            ${bodyHtml}
+
+            <div class="sn-card-foot">
+              <span class="sn-meta-sub">${DB.esc(metaInfo)}</span>
+              <div class="sn-foot-btns">
+                ${kind === "link" ? `<a class="sn-act-btn" href="${DB.esc(item.content)}" target="_blank" rel="noopener noreferrer">${extSvg}<span>Open</span></a>` : ""}
+                ${(kind === "image" || kind === "file") && item.dataUrl ? `
+                  <a class="sn-act-btn ${kind === "file" ? "primary" : ""}" href="${DB.esc(item.dataUrl)}" download="${DB.esc(item.fileName || item.title || "download")}">
+                    ${dlSvg}<span>Download</span>
+                  </a>
+                ` : ""}
+                ${kind === "image" ? `
+                  <button type="button" class="sn-act-btn primary" data-copy-img="${DB.esc(item.id)}">
+                    ${copySvg}<span>Copy Image</span>
+                  </button>
+                ` : ""}
+                ${(kind === "text" || kind === "code" || kind === "link" || (kind === "file" && item.content)) ? `
+                  <button type="button" class="sn-act-btn ${kind === "file" ? "" : "primary"}" data-copy-txt="${DB.esc(item.id)}">
+                    ${copySvg}<span>Copy</span>
+                  </button>
+                ` : ""}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("")}
+    </div>`;
+
+    container.querySelectorAll("[data-copy-txt]").forEach(btn => {
+      btn.onclick = async () => {
+        const it = loadSnippets().find(x => x.id === btn.dataset.copyTxt);
+        if (!it || !it.content) return;
+        try {
+          await navigator.clipboard.writeText(it.content);
+          btn.classList.add("copied");
+          const span = btn.querySelector("span");
+          if (span) span.textContent = "✓ Copied";
+          DB.toast("Copied to Clipboard", `"${it.title}" is ready to paste.`, 2000);
+          setTimeout(() => {
+            btn.classList.remove("copied");
+            if (span) span.textContent = "Copy";
+          }, 1800);
+        } catch {
+          DB.toast("Copy Failed", "Select the text manually to copy.", 2500);
+        }
+      };
+    });
+
+    container.querySelectorAll("[data-copy-img]").forEach(btn => {
+      btn.onclick = async () => {
+        const it = loadSnippets().find(x => x.id === btn.dataset.copyImg);
+        if (!it || !it.dataUrl) return;
+        try {
+          const ok = await copyImageDataUrlToClipboard(it.dataUrl);
+          if (ok) {
+            btn.classList.add("copied");
+            const span = btn.querySelector("span");
+            if (span) span.textContent = "✓ Copied";
+            DB.toast("Image Copied", "Ready to paste into any app.", 2200);
+            setTimeout(() => {
+              btn.classList.remove("copied");
+              if (span) span.textContent = "Copy Image";
+            }, 1800);
+          } else {
+            DB.toast("Use Download on This Device", "Tap Download to save the image on this browser.", 3000);
+          }
+        } catch {
+          DB.toast("Use Download on This Device", "Tap Download to save the image to your device.", 2800);
+        }
+      };
+    });
+
+    container.querySelectorAll("[data-zoom]").forEach(wrap => {
+      wrap.onclick = () => {
+        const it = loadSnippets().find(x => x.id === wrap.dataset.zoom);
+        if (it) openImageLightbox(it);
+      };
+    });
+
+    container.querySelectorAll("[data-pin]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadSnippets();
+        const it = list.find(x => x.id === btn.dataset.pin);
+        if (!it) return;
+        it.pinned = !it.pinned;
+        saveSnippets(list);
+      };
+    });
+
+    container.querySelectorAll("[data-edit]").forEach(btn => {
+      btn.onclick = () => {
+        const it = loadSnippets().find(x => x.id === btn.dataset.edit);
+        if (it) openEditSnippetModal(it);
+      };
+    });
+
+    container.querySelectorAll("[data-del]").forEach(btn => {
+      btn.onclick = () => {
+        const list = loadSnippets();
+        const idx = list.findIndex(x => x.id === btn.dataset.del);
+        if (idx === -1) return;
+        const removed = list[idx];
+        list.splice(idx, 1);
+        saveSnippets(list);
+        DB.toast("Snippet Deleted", `"${removed.title}" was removed.`, 2200);
+      };
+    });
+  }
+
+  document.querySelectorAll(".sn-type-opt").forEach(btn => {
+    btn.onclick = () => {
+      state.selectedKind = btn.dataset.kind;
+      document.querySelectorAll(".sn-type-opt").forEach(b => b.classList.toggle("active", b === btn));
+      $("snippetBodyInput").classList.toggle("mono", state.selectedKind === "code");
+      $("snippetBodyInput").focus();
+    };
+  });
+
+  $("saveSnippetBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    commitComposerSave();
+  };
+
+  $("snippetBodyInput").addEventListener("keydown", async e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      if (!(await ensureAccountAccess())) return;
+      commitComposerSave();
+    }
+  });
+
+  const fileInput = $("snippetFileInput");
+  fileInput.onclick = e => e.stopPropagation();
+
+  $("pickFilesBtn").onclick = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (DB.isGuest()) {
+      ensureAccountAccess();
+      return;
+    }
+    fileInput.value = "";
+    fileInput.click();
+  };
+
+  fileInput.onchange = e => {
+    const selected = e.target.files;
+    if (selected && selected.length) {
+      stageIncomingFiles(selected);
+    }
+  };
+
+  const unifiedBox = $("unifiedComposerBox");
+  ["dragenter", "dragover"].forEach(evName => {
+    unifiedBox.addEventListener(evName, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      unifiedBox.classList.add("dragover");
+    });
+  });
+
+  ["dragleave", "drop"].forEach(evName => {
+    unifiedBox.addEventListener(evName, e => {
+      e.preventDefault();
+      e.stopPropagation();
+      unifiedBox.classList.remove("dragover");
+    });
+  });
+
+  unifiedBox.addEventListener("drop", e => {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+      stageIncomingFiles(e.dataTransfer.files);
+    }
+  });
+
+  document.addEventListener("paste", async e => {
+    const cd = e.clipboardData;
+    if (!cd) return;
+
+    const files = [];
+    if (cd.items) {
+      for (const item of cd.items) {
+        if (item.kind === "file") {
+          const f = item.getAsFile();
+          if (f) files.push(f);
+        }
+      }
+    } else if (cd.files && cd.files.length) {
+      files.push(...cd.files);
+    }
+
+    if (files.length > 0) {
+      e.preventDefault();
+      await stageIncomingFiles(files);
+      return;
+    }
+
+    const activeTag = (document.activeElement || {}).tagName;
+    if (!["INPUT", "TEXTAREA"].includes(activeTag)) {
+      const pastedText = cd.getData("text/plain");
+      if (pastedText && pastedText.trim()) {
+        e.preventDefault();
+        if (!(await ensureAccountAccess())) return;
+        const inp = $("snippetBodyInput");
+        inp.value = inp.value ? (inp.value + "\n" + pastedText) : pastedText;
+        inp.focus();
+      }
+    }
+  });
+
+  $("quickPasteBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    try {
+      if (navigator.clipboard && navigator.clipboard.read) {
+        const items = await navigator.clipboard.read();
+        for (const clipItem of items) {
+          const imgType = clipItem.types.find(t => t.startsWith("image/"));
+          if (imgType) {
+            const blob = await clipItem.getType(imgType);
+            const ext = imgType.split("/")[1] || "png";
+            const file = new File([blob], `clipboard-${Date.now()}.${ext}`, { type: imgType });
+            await stageIncomingFiles([file]);
+            return;
+          }
+        }
+      }
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const txt = await navigator.clipboard.readText();
+        if (txt && txt.trim()) {
+          const inp = $("snippetBodyInput");
+          inp.value = inp.value ? (inp.value + "\n" + txt) : txt;
+          inp.focus();
+          return;
+        }
+      }
+      $("snippetBodyInput").focus();
+      DB.toast("Press ⌘V / Ctrl+V", "Your cursor is in the box—press Paste (⌘V / Ctrl+V).", 2600);
+    } catch {
+      $("snippetBodyInput").focus();
+      DB.toast("Press ⌘V / Ctrl+V", "Your cursor is in the box—press Paste (⌘V / Ctrl+V).", 2600);
+    }
+  };
+
+  document.querySelectorAll("[data-filter]").forEach(btn => {
+    btn.onclick = async () => {
+      if (!(await ensureAccountAccess())) return;
+      state.filter = btn.dataset.filter;
+      document.querySelectorAll("[data-filter]").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+      renderSnippets();
+    };
+  });
+
+  $("snippetSearchInput").oninput = e => {
+    state.query = e.target.value.trim();
+    renderSnippets();
+  };
+
+  $("clearSnippetsBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const cur = loadSnippets();
+    if (!cur.length) {
+      DB.toast("Already Empty", "There are no snippets to clear.", 2200);
+      return;
+    }
+    const pinnedCount = cur.filter(x => x.pinned).length;
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Clear Snippets?</h2>
+      <p>Choose whether to remove only unpinned snippets or clear everything.</p>
+      <div class="actions">
+        <button type="button" class="ghost left" id="snCancelClear">Cancel</button>
+        ${pinnedCount > 0 && pinnedCount < cur.length ? `<button type="button" id="snClearUnpinned">Keep ${pinnedCount} Pinned</button>` : ""}
+        <button type="button" class="danger" id="snClearAll">Clear All (${cur.length})</button>
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#snCancelClear").onclick = close;
+    const unpBtn = node.querySelector("#snClearUnpinned");
+    if (unpBtn) {
+      unpBtn.onclick = () => {
+        saveSnippets(cur.filter(x => x.pinned));
+        close();
+        DB.toast("Cleared Unpinned Snippets", `Kept ${pinnedCount} pinned item${pinnedCount === 1 ? "" : "s"}.`, 2400);
+      };
+    }
+    node.querySelector("#snClearAll").onclick = () => {
+      saveSnippets([]);
+      close();
+      DB.toast("All Snippets Cleared", "All items have been removed.", 2400);
+    };
+  };
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(() => {
+      renderSnippets();
+      focusComposerInput();
+    });
+  }
+  document.addEventListener("p23snippet", renderSnippets);
+  document.addEventListener("p23vault", renderSnippets);
+
+  renderSnippets();
+  focusComposerInput();
+});
+</script>
+</body>
+</html>

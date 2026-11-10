@@ -1,0 +1,3333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vinyl Shelf | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    --glass-elevated: color-mix(in srgb, var(--card-2) 90%, transparent);
+    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    --vn-green: #30d158;
+    --vn-gold: #ff9f0a;
+  }
+
+  main {
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 1.1rem 1rem 4.8rem;
+  }
+
+  .pagetitle {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+    margin: 1.2rem auto 1.35rem;
+    padding: 0 1rem;
+    gap: 0.42rem;
+  }
+  .pagetitle h1 {
+    display: block;
+    width: 100%;
+    font-family: var(--display);
+    font-size: clamp(2.3rem, 7.5vw, 4.1rem);
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    line-height: 1.06;
+    background: linear-gradient(135deg, var(--text) 25%, var(--accent) 68%, var(--accent3, var(--accent2)) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(108, 92, 231, 0.28);
+    margin: 0;
+  }
+  .pagetitle .badge-row-wrap {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .pagetitle .badge-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.9rem;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, transparent);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    color: var(--accent3, var(--accent));
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .pagetitle .badge-sub svg {
+    width: 14px;
+    height: 14px;
+  }
+  .pagetitle p {
+    margin: 0.15rem auto 0;
+    color: var(--muted);
+    font-size: clamp(0.9rem, 1.7vw, 1.02rem);
+    max-width: 620px;
+    line-height: 1.5;
+  }
+
+  .vn-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .apple-panel {
+    background: var(--glass-surface);
+    backdrop-filter: blur(28px) saturate(185%);
+    -webkit-backdrop-filter: blur(28px) saturate(185%);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-spec), 0 18px 42px -18px rgba(0, 0, 0, 0.38);
+    border-radius: 26px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: hidden;
+  }
+
+  .vn-btn {
+    border: 1px solid var(--glass-border);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.81rem;
+    font-weight: 600;
+    padding: 0 0.92rem;
+    height: 38px;
+    min-height: 38px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    box-shadow: var(--glass-spec);
+    transition: all 0.18s var(--apple-ease);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .vn-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, var(--card-solid));
+    transform: translateY(-1px);
+  }
+  .vn-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: var(--on-accent, #fff);
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: 0 8px 20px -6px color-mix(in srgb, var(--accent) 48%, transparent);
+  }
+  .vn-btn.primary:hover {
+    filter: brightness(1.06);
+  }
+  .vn-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  .vn-search-panel {
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .vn-search-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .vn-search-top b {
+    font-family: var(--display);
+    font-size: 0.96rem;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .vn-wax-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .vn-wax-lbl {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-right: 0.15rem;
+  }
+  .vn-wax-chip {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 0.6rem 0 0.38rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--card-solid) 70%, transparent);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .vn-wax-chip:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .vn-wax-chip.active {
+    background: color-mix(in srgb, var(--accent) 18%, var(--card-solid));
+    border-color: var(--accent);
+    color: var(--text);
+    font-weight: 700;
+  }
+  .vn-wax-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--wax-bg, #18181c);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .vn-wax-dot::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--card-solid);
+  }
+
+  .vn-search-input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .vn-search-input-wrap {
+    flex: 1;
+    height: 44px;
+    background: var(--card-solid);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 0 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    transition: border-color 0.16s;
+  }
+  .vn-search-input-wrap:focus-within {
+    border-color: var(--accent);
+  }
+  .vn-search-input-wrap svg {
+    width: 17px;
+    height: 17px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .vn-search-input-wrap input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+  .vn-search-input-wrap input:focus {
+    outline: none;
+  }
+
+  .vn-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+    gap: 0.65rem;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 0.15rem 0.1rem;
+  }
+  .vn-results-grid[hidden] {
+    display: none !important;
+  }
+  .vn-res-card {
+    background: color-mix(in srgb, var(--card-solid) 85%, transparent);
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    padding: 0.58rem 0.68rem;
+    display: flex;
+    align-items: center;
+    gap: 0.68rem;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .vn-res-card:hover {
+    border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+    transform: translateY(-1px);
+  }
+  .vn-res-art-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #14141f;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+  }
+  .vn-res-art-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .vn-res-play-ov {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .vn-res-art-wrap:hover .vn-res-play-ov {
+    opacity: 1;
+  }
+  .vn-res-play-ov svg {
+    width: 20px;
+    height: 20px;
+  }
+  .vn-res-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+  .vn-res-meta b {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .vn-res-meta span {
+    font-size: 0.73rem;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .vn-res-meta small {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--accent3, var(--accent));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .vn-res-add-btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.68rem;
+    border-radius: 999px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-solid));
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .vn-res-add-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+    transform: none;
+  }
+  .vn-res-add-btn.is-saved {
+    background: color-mix(in srgb, var(--vn-green) 18%, transparent);
+    border-color: color-mix(in srgb, var(--vn-green) 42%, transparent);
+    color: var(--vn-green);
+    cursor: default;
+  }
+
+  .vn-shelf-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .vn-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 0.15rem 0.2rem;
+    flex: 1 1 100%;
+  }
+  .vn-pills::-webkit-scrollbar {
+    display: none;
+  }
+  .vn-pill {
+    flex: none;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.77rem;
+    font-weight: 600;
+    padding: 0.32rem 0.76rem;
+    min-height: 34px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.16s;
+  }
+  .vn-pill:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .vn-pill[aria-pressed="true"] {
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
+    color: var(--on-accent, #fff);
+    border-color: transparent;
+  }
+
+  .vn-shelf-right-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+  }
+  .vn-filter-box {
+    height: 35px;
+    min-width: 195px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.72rem;
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+  }
+  .vn-filter-box svg {
+    width: 13.5px;
+    height: 13.5px;
+    color: var(--muted);
+  }
+  .vn-filter-box input {
+    flex: 1;
+    min-width: 0;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    font-size: 0.78rem;
+    color: var(--text);
+  }
+  .vn-filter-box input:focus {
+    outline: none;
+  }
+
+  .vn-dd {
+    position: relative;
+  }
+  .vn-dd-btn {
+    height: 35px;
+    min-height: 35px;
+    padding: 0 0.72rem 0 0.82rem;
+    border-radius: 999px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-size: 0.76rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.36rem;
+    cursor: pointer;
+  }
+  .vn-dd-btn:hover,
+  .vn-dd.open .vn-dd-btn {
+    border-color: var(--accent);
+    transform: none;
+  }
+  .vn-dd-btn svg {
+    width: 13px;
+    height: 13px;
+    color: var(--muted);
+    transition: transform 0.2s var(--apple-ease);
+  }
+  .vn-dd.open .vn-dd-btn svg {
+    transform: rotate(180deg);
+    color: var(--accent);
+  }
+  .vn-dd-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 175px;
+    padding: 0.34rem;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--card-solid) 95%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    box-shadow: 0 16px 38px -10px rgba(0, 0, 0, 0.45), var(--glass-spec);
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .vn-dd-menu[hidden] {
+    display: none !important;
+  }
+  .vn-dd-opt {
+    width: 100%;
+    height: 32px;
+    min-height: 32px;
+    padding: 0 0.65rem;
+    border-radius: 9px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.76rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .vn-dd-opt:hover {
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    transform: none;
+  }
+  .vn-dd-opt.active {
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .vn-dd-opt svg {
+    width: 13px;
+    height: 13px;
+    color: var(--accent);
+  }
+
+  .vn-bookshelf-cabinet {
+    --wood-back-1: #1d130e;
+    --wood-back-2: #120b08;
+    --wood-frame: #362218;
+    --wood-ledge-top: #523424;
+    --wood-ledge-front: #3b2418;
+    --wood-ledge-bot: #1f120b;
+    --shelf-glow: rgba(255, 198, 130, 0.16);
+    position: relative;
+    border-radius: 24px;
+    padding: 1.15rem 1.2rem 1.35rem;
+    background:
+      linear-gradient(90deg, rgba(0,0,0,0.45) 0%, transparent 3%, transparent 97%, rgba(0,0,0,0.45) 100%),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 2px, transparent 2px, transparent 9px),
+      linear-gradient(180deg, var(--wood-back-1) 0%, var(--wood-back-2) 100%);
+    border: 10px solid var(--wood-frame);
+    box-shadow:
+      inset 0 22px 48px rgba(0, 0, 0, 0.78),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+      0 26px 56px -18px rgba(0, 0, 0, 0.65);
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+    perspective: 1200px;
+  }
+  .vn-bookshelf-cabinet[data-finish="obsidian"] {
+    --wood-back-1: #12131c;
+    --wood-back-2: #090a10;
+    --wood-frame: #1e2030;
+    --wood-ledge-top: #32364f;
+    --wood-ledge-front: #222538;
+    --wood-ledge-bot: #11131d;
+    --shelf-glow: rgba(140, 122, 230, 0.18);
+  }
+  .vn-bookshelf-cabinet[data-finish="oak"] {
+    --wood-back-1: #2b1f16;
+    --wood-back-2: #1c130d;
+    --wood-frame: #593e2b;
+    --wood-ledge-top: #7c583e;
+    --wood-ledge-front: #61432e;
+    --wood-ledge-bot: #362418;
+    --shelf-glow: rgba(255, 214, 153, 0.2);
+  }
+
+  .vn-shelf-tier {
+    position: relative;
+    padding: 1.35rem 0.9rem 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .vn-shelf-tier::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 4%;
+    right: 4%;
+    height: 110px;
+    background:
+      radial-gradient(ellipse 28% 90% at 18% 0%, var(--shelf-glow), transparent 75%),
+      radial-gradient(ellipse 28% 90% at 50% 0%, var(--shelf-glow), transparent 75%),
+      radial-gradient(ellipse 28% 90% at 82% 0%, var(--shelf-glow), transparent 75%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .vn-shelf-row {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));
+    gap: 1.5rem 1.35rem;
+    align-items: end;
+    padding: 0.4rem 0.5rem 0;
+  }
+
+  .vn-shelf-plank {
+    position: relative;
+    z-index: 3;
+    height: 24px;
+    margin: -2px -0.9rem 0;
+    border-radius: 4px;
+    background: linear-gradient(180deg, var(--wood-ledge-top) 0%, var(--wood-ledge-front) 32%, var(--wood-ledge-bot) 100%);
+    box-shadow:
+      inset 0 2px 1px rgba(255, 255, 255, 0.18),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.65),
+      0 14px 24px rgba(0, 0, 0, 0.68);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .vn-shelf-plank::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 16px;
+    right: 16px;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+  .vn-shelf-brass-tag {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 232, 195, 0.78);
+    background: linear-gradient(180deg, rgba(70, 52, 34, 0.9), rgba(38, 26, 16, 0.95));
+    border: 1px solid rgba(255, 215, 150, 0.28);
+    padding: 0.08rem 0.55rem;
+    border-radius: 4px;
+    margin-top: 3px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  }
+
+  .vn-record-slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    perspective: 900px;
+    cursor: grab;
+    user-select: none;
+    padding-bottom: 2px;
+    border-radius: 14px;
+    transition: transform 0.2s var(--apple-ease), opacity 0.2s, box-shadow 0.2s;
+  }
+  .vn-record-slot:active {
+    cursor: grabbing;
+  }
+  .vn-record-slot.is-dragging {
+    opacity: 0.42;
+    transform: scale(0.94);
+  }
+  .vn-record-slot.is-drop-target {
+    box-shadow: 0 0 0 2.5px var(--accent), 0 0 24px color-mix(in srgb, var(--accent) 55%, transparent);
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    transform: translateY(-4px) scale(1.03);
+  }
+  .vn-source-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.14rem 0.55rem;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .vn-source-pill:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  .vn-source-pill.is-full {
+    border-color: color-mix(in srgb, var(--vn-green) 55%, transparent);
+    background: color-mix(in srgb, var(--vn-green) 16%, transparent);
+    color: var(--vn-green);
+  }
+  .vn-yt-hidden-host {
+    position: fixed;
+    width: 200px;
+    height: 200px;
+    bottom: 0;
+    left: 0;
+    opacity: 0.002;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: -1;
+  }
+
+  .vn-record-3d {
+    position: relative;
+    width: 148px;
+    height: 148px;
+    transform-style: preserve-3d;
+    transition: transform 0.36s var(--apple-spring);
+  }
+  .vn-record-slot:hover .vn-record-3d {
+    transform: translateY(-10px) rotateY(-11deg) rotateX(4deg);
+  }
+  .vn-record-slot.is-on-turntable .vn-record-3d {
+    transform: translateY(-6px) rotateY(-7deg);
+  }
+
+  .vn-peek-disc {
+    position: absolute;
+    top: 4px;
+    right: -20px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, transparent 0%, transparent 31%, rgba(255,255,255,0.06) 32%, transparent 33%),
+      repeating-radial-gradient(circle at center, rgba(255,255,255,0.035) 0px, rgba(0,0,0,0.18) 1.5px, rgba(255,255,255,0.02) 3px),
+      conic-gradient(from 35deg, transparent 0deg, rgba(255,255,255,0.18) 25deg, transparent 55deg, transparent 180deg, rgba(255,255,255,0.16) 205deg, transparent 240deg),
+      var(--wax-surface, radial-gradient(circle, #23232b 0%, #0d0d12 100%));
+    box-shadow:
+      0 8px 20px rgba(0, 0, 0, 0.65),
+      inset 0 0 0 1.5px rgba(255, 255, 255, 0.14);
+    display: grid;
+    place-items: center;
+    transition: transform 0.42s var(--apple-spring), opacity 0.25s;
+    z-index: 1;
+  }
+  .vn-record-slot:hover .vn-peek-disc {
+    transform: translateX(24px) rotate(32deg);
+  }
+  .vn-record-slot.is-on-turntable .vn-peek-disc {
+    opacity: 0.22;
+    transform: translateX(-8px) scale(0.92);
+  }
+  .vn-peek-label {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.45);
+    position: relative;
+  }
+  .vn-peek-label::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #14100e;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.35);
+  }
+
+  .vn-sleeve {
+    position: relative;
+    z-index: 2;
+    width: 148px;
+    height: 148px;
+    border-radius: 6px;
+    background: #181824;
+    box-shadow:
+      -5px 8px 18px rgba(0, 0, 0, 0.72),
+      0 10px 24px rgba(0, 0, 0, 0.6),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    overflow: hidden;
+  }
+  .vn-sleeve::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 8px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 45%, rgba(0,0,0,0.42) 85%, transparent 100%);
+    z-index: 3;
+    pointer-events: none;
+  }
+  .vn-sleeve::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 61%, rgba(255,255,255,0.05) 63%, transparent 65%),
+      linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 38%, transparent 75%, rgba(0,0,0,0.32) 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .vn-sleeve img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s var(--apple-ease);
+  }
+  .vn-record-slot:hover .vn-sleeve img {
+    transform: scale(1.03);
+  }
+
+  .vn-sleeve-actions {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding: 3px 4px;
+    border-radius: 11px;
+    background: rgba(10, 10, 18, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 0.18s var(--apple-ease), transform 0.18s var(--apple-ease);
+  }
+  .vn-record-slot:hover .vn-sleeve-actions,
+  .vn-record-slot:focus-within .vn-sleeve-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .vn-mini-act {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 0.16s var(--apple-spring), background 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .vn-mini-act:hover {
+    background: var(--accent);
+    border-color: rgba(255, 255, 255, 0.45);
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 2;
+  }
+  .vn-mini-act.fav-on {
+    color: #ff375f;
+    border-color: rgba(255, 55, 95, 0.45);
+  }
+  .vn-mini-act.link-on {
+    color: var(--vn-green);
+    border-color: rgba(48, 209, 88, 0.45);
+  }
+  .vn-mini-act.del:hover {
+    background: #ff453a;
+  }
+  .vn-mini-act svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .vn-now-badge {
+    position: absolute;
+    bottom: 7px;
+    left: 10px;
+    right: 7px;
+    z-index: 4;
+    padding: 0.2rem 0.45rem;
+    border-radius: 7px;
+    background: rgba(12, 12, 20, 0.84);
+    backdrop-filter: blur(10px);
+    border: 1px solid color-mix(in srgb, var(--vn-green) 55%, transparent);
+    color: var(--vn-green);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+  .vn-now-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--vn-green);
+    box-shadow: 0 0 8px var(--vn-green);
+    animation: vnPulse 1.2s infinite ease-in-out;
+  }
+  @keyframes vnPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.8); }
+  }
+
+  .vn-slot-caption {
+    margin-top: 0.48rem;
+    width: 158px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.06rem;
+    padding: 0 0.2rem;
+  }
+  .vn-slot-caption b {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #f6efe8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  }
+  .vn-slot-caption span {
+    font-size: 0.69rem;
+    color: rgba(240, 226, 212, 0.68);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vn-turntable-section {
+    position: relative;
+    overflow: hidden;
+  }
+  .vn-deck-chassis {
+    background:
+      radial-gradient(circle at 24% 50%, rgba(108, 92, 231, 0.14), transparent 55%),
+      linear-gradient(145deg, color-mix(in srgb, var(--card-solid) 95%, #161824), color-mix(in srgb, var(--card-2) 96%, #0b0c14));
+    border: 1.5px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    border-radius: 26px;
+    padding: 1.45rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -8px 20px rgba(0, 0, 0, 0.45),
+      0 24px 52px -16px rgba(0, 0, 0, 0.55);
+    display: grid;
+    grid-template-columns: 390px 1fr;
+    gap: 1.65rem;
+    align-items: center;
+  }
+
+  .vn-platter-well {
+    position: relative;
+    width: 360px;
+    height: 330px;
+    margin: 0 auto;
+    border-radius: 22px;
+    background:
+      radial-gradient(circle at 42% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.55) 78%),
+      linear-gradient(160deg, #1a1b26 0%, #101119 100%);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    box-shadow:
+      inset 0 10px 26px rgba(0, 0, 0, 0.72),
+      0 8px 24px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    padding-left: 18px;
+    user-select: none;
+  }
+
+  .vn-deck-corner-led {
+    position: absolute;
+    bottom: 14px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    z-index: 6;
+  }
+  .vn-power-lamp {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #555;
+    transition: all 0.25s;
+  }
+  .vn-power-lamp.on {
+    background: #ff6b35;
+    box-shadow: 0 0 12px #ff6b35, 0 0 22px rgba(255, 107, 53, 0.65);
+  }
+  .vn-rpm-switch {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 7px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .vn-rpm-btn {
+    height: 20px;
+    min-height: 20px;
+    padding: 0 0.42rem;
+    border-radius: 5px;
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-family: var(--mono);
+    font-size: 0.61rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .vn-rpm-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .vn-platter-ring {
+    position: relative;
+    width: 266px;
+    height: 266px;
+    border-radius: 50%;
+    padding: 8px;
+    background:
+      repeating-conic-gradient(from 0deg, rgba(255,255,255,0.35) 0deg 1.2deg, #1b1c26 1.2deg 3deg),
+      radial-gradient(circle, #2d3042 0%, #14151e 100%);
+    box-shadow:
+      0 14px 32px rgba(0, 0, 0, 0.78),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+    display: grid;
+    place-items: center;
+  }
+
+  .vn-platter-sheen {
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: conic-gradient(
+      from 28deg,
+      transparent 0deg,
+      rgba(255, 255, 255, 0.16) 22deg,
+      transparent 46deg,
+      transparent 162deg,
+      rgba(255, 255, 255, 0.14) 198deg,
+      transparent 224deg
+    );
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .vn-turntable-disc {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, transparent 0%, transparent 32%, rgba(255,255,255,0.07) 32.5%, transparent 33.2%),
+      radial-gradient(circle at center, transparent 0%, transparent 58%, rgba(255,255,255,0.05) 58.4%, transparent 59%),
+      repeating-radial-gradient(circle at center, rgba(255,255,255,0.04) 0px, rgba(0,0,0,0.22) 1.6px, rgba(255,255,255,0.018) 3.2px),
+      var(--active-wax-bg, radial-gradient(circle, #22232c 0%, #090a0f 100%));
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 255, 255, 0.12),
+      0 4px 14px rgba(0, 0, 0, 0.6);
+    display: grid;
+    place-items: center;
+    cursor: grab;
+    z-index: 2;
+  }
+  .vn-turntable-disc:active {
+    cursor: grabbing;
+  }
+
+  .vn-disc-center-label {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background-color: #262235;
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+      0 0 0 3px rgba(10, 10, 16, 0.8),
+      inset 0 0 12px rgba(0, 0, 0, 0.45);
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+  .vn-spindle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #b8bec9 55%, #414654 100%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.75);
+    z-index: 6;
+  }
+
+  .vn-tonearm-base {
+    position: absolute;
+    top: 26px;
+    right: 20px;
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #3c4054 0%, #181a24 78%);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65);
+    z-index: 8;
+    display: grid;
+    place-items: center;
+  }
+  .vn-tonearm-pivot {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #d6dbe6 0%, #686e80 75%, #2b2e3b 100%);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.6);
+    transform-origin: 50% 50%;
+    transform: rotate(0deg);
+    transition: transform 0.68s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .vn-tonearm-counterweight {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 20px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #4b5063, #aeb5c4, #3d4152);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.55);
+  }
+  .vn-tonearm-rod {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5px;
+    height: 178px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #6e7587, #eef2f7, #595f70);
+    box-shadow: -3px 6px 10px rgba(0, 0, 0, 0.55);
+  }
+  .vn-tonearm-headshell {
+    position: absolute;
+    bottom: -18px;
+    left: -5px;
+    width: 15px;
+    height: 26px;
+    border-radius: 3px 3px 5px 5px;
+    background: linear-gradient(180deg, #2b2e3d, #12131c);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    transform: rotate(18deg);
+    box-shadow: -3px 6px 10px rgba(0, 0, 0, 0.6);
+  }
+  .vn-tonearm-headshell::after {
+    content: "";
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--vn-gold);
+    box-shadow: 0 0 8px var(--vn-gold);
+  }
+
+  .vn-deck-console {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+    min-width: 0;
+  }
+
+  .vn-oled-screen {
+    background: linear-gradient(150deg, rgba(10, 12, 22, 0.92), rgba(18, 20, 34, 0.88));
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 20px;
+    padding: 1rem 1.15rem;
+    box-shadow: inset 0 4px 18px rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .vn-now-playing-info {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+    flex: 1;
+  }
+  .vn-now-cover {
+    width: 68px;
+    height: 68px;
+    border-radius: 13px;
+    overflow: hidden;
+    background: #1a1b28;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    flex-shrink: 0;
+  }
+  .vn-now-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .vn-now-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.16rem;
+    min-width: 0;
+  }
+  .vn-now-status-tag {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent3, var(--accent));
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .vn-now-text h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.22rem;
+    font-weight: 800;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .vn-now-text p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: rgba(255, 255, 255, 0.68);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vn-eq-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 36px;
+    padding: 0 0.25rem;
+    flex-shrink: 0;
+  }
+  .vn-eq-bar {
+    width: 4px;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--vn-green), var(--accent));
+    transition: height 0.15s ease;
+  }
+  .vn-eq-bars.playing .vn-eq-bar:nth-child(1) { animation: vnEq 0.55s infinite ease-in-out 0.05s; }
+  .vn-eq-bars.playing .vn-eq-bar:nth-child(2) { animation: vnEq 0.48s infinite ease-in-out 0.18s; }
+  .vn-eq-bars.playing .vn-eq-bar:nth-child(3) { animation: vnEq 0.62s infinite ease-in-out 0.08s; }
+  .vn-eq-bars.playing .vn-eq-bar:nth-child(4) { animation: vnEq 0.44s infinite ease-in-out 0.24s; }
+  .vn-eq-bars.playing .vn-eq-bar:nth-child(5) { animation: vnEq 0.52s infinite ease-in-out 0.12s; }
+  @keyframes vnEq {
+    0%, 100% { height: 6px; }
+    50% { height: 32px; }
+  }
+
+  .vn-scrubber-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .vn-scrubber-slider {
+    width: 100%;
+    accent-color: var(--accent);
+    cursor: pointer;
+    height: 6px;
+  }
+  .vn-time-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .vn-transport-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .vn-main-transport {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .vn-tr-circle {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .vn-tr-circle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .vn-tr-circle.play-main {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    min-height: 50px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .vn-tr-circle.play-main:hover {
+    filter: brightness(1.08);
+    transform: scale(1.04);
+  }
+  .vn-tr-circle svg {
+    width: 18px;
+    height: 18px;
+  }
+  .vn-tr-circle.play-main svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .vn-aux-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .vn-toggle-chip {
+    height: 34px;
+    min-height: 34px;
+    padding: 0 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .vn-toggle-chip:hover {
+    color: var(--text);
+    border-color: var(--accent);
+    transform: none;
+  }
+  .vn-toggle-chip.on {
+    background: color-mix(in srgb, var(--accent) 20%, var(--card-solid));
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .vn-toggle-chip svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+  }
+
+  .vn-vol-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 0.68rem;
+    height: 34px;
+  }
+  .vn-vol-wrap svg {
+    width: 14px;
+    height: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .vn-vol-slider {
+    width: 74px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  .vn-empty-shelf {
+    text-align: center;
+    padding: 2.5rem 1.2rem 1.9rem;
+    color: rgba(246, 239, 232, 0.85);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+  }
+  .vn-empty-shelf h3 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.15rem;
+  }
+  .vn-empty-shelf p {
+    margin: 0;
+    font-size: 0.84rem;
+    color: rgba(240, 226, 212, 0.65);
+    max-width: 28rem;
+  }
+
+  @media (max-width: 960px) {
+    .vn-deck-chassis {
+      grid-template-columns: 1fr;
+      justify-items: center;
+    }
+    .vn-deck-console {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .vn-shelf-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.6rem;
+      width: 100%;
+      overflow: hidden;
+    }
+    .vn-pills {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      flex-wrap: nowrap;
+    }
+    .vn-shelf-right-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      width: 100%;
+    }
+    .vn-filter-box {
+      grid-column: 1 / -1;
+      width: 100%;
+      min-width: 0;
+      height: 38px;
+    }
+    .vn-dd {
+      width: 100%;
+      min-width: 0;
+    }
+    .vn-dd-btn {
+      width: 100%;
+      min-width: 0;
+      height: 38px;
+      justify-content: space-between;
+      padding: 0 0.7rem;
+    }
+    .vn-dd-btn span {
+      min-width: 0;
+      flex: 1;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vn-deck-chassis {
+      padding: 1.05rem;
+      gap: 1.15rem;
+    }
+    .vn-oled-screen {
+      padding: 0.85rem 0.95rem;
+      gap: 0.65rem;
+    }
+    .vn-now-cover {
+      width: 56px;
+      height: 56px;
+      border-radius: 11px;
+    }
+    .vn-now-status-tag {
+      font-size: 0.6rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .vn-now-text h2 {
+      font-size: 1.05rem;
+    }
+    .vn-now-text p {
+      font-size: 0.78rem;
+    }
+    .vn-time-row {
+      font-size: 0.68rem;
+      gap: 0.35rem;
+    }
+    #vnWaxEditionLbl {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 62%;
+      text-align: center;
+    }
+    .vn-transport-row {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    .vn-main-transport {
+      justify-content: center;
+      width: 100%;
+      gap: 0.85rem;
+    }
+    .vn-aux-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      width: 100%;
+    }
+    .vn-toggle-chip {
+      width: 100%;
+      justify-content: center;
+      padding: 0 0.55rem;
+      font-size: 0.72rem;
+    }
+    .vn-vol-wrap {
+      width: 100%;
+      justify-content: center;
+      padding: 0 0.65rem;
+    }
+    .vn-vol-slider {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
+    main {
+      padding: 0.8rem 0.65rem 6.5rem;
+    }
+    .apple-panel {
+      padding: 0.95rem;
+      border-radius: 22px;
+    }
+    .vn-search-input-row {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .vn-search-input-row .vn-btn {
+      width: 100%;
+      justify-content: center;
+    }
+    .vn-bookshelf-cabinet {
+      padding: 0.85rem 0.65rem 1.1rem;
+      border-width: 6px;
+    }
+    .vn-shelf-row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.1rem 0.75rem;
+    }
+    .vn-record-3d,
+    .vn-sleeve {
+      width: 132px;
+      height: 132px;
+    }
+    .vn-peek-disc {
+      width: 122px;
+      height: 122px;
+      right: -14px;
+    }
+    .vn-slot-caption {
+      width: 136px;
+    }
+    .vn-sleeve-actions {
+      opacity: 1;
+      transform: none;
+      padding: 2px 3px;
+    }
+    .vn-mini-act {
+      width: 27px;
+      height: 27px;
+      min-width: 27px;
+      min-height: 27px;
+    }
+    .vn-platter-well {
+      width: 100%;
+      max-width: 315px;
+      height: 295px;
+      padding-left: 10px;
+    }
+    .vn-platter-ring {
+      width: 228px;
+      height: 228px;
+    }
+    .vn-turntable-disc {
+      width: 212px;
+      height: 212px;
+    }
+    .vn-tonearm-rod {
+      height: 152px;
+    }
+  }
+</style>
+</head>
+<body data-page="vinyl">
+<header id="topbar"></header>
+<main>
+  <div class="pagetitle">
+    <h1>VINYL SHELF</h1>
+    <div class="badge-row-wrap">
+      <span class="badge-sub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Digital Vinyl Catalog
+      </span>
+    </div>
+  </div>
+
+  <div class="vn-shell">
+    <section class="panel apple-panel" aria-label="Search Songs and Press to Vinyl">
+      <div class="vn-search-panel">
+        <div class="vn-search-top">
+          <b>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="17" height="17"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            Search Songs &amp; Press to Vinyl
+          </b>
+          <div class="vn-wax-picker" id="vnWaxPicker" aria-label="Choose Vinyl Wax Edition">
+            <span class="vn-wax-lbl">Vinyl Wax:</span>
+            <button type="button" class="vn-wax-chip active" data-wax="obsidian" style="--wax-bg:radial-gradient(circle,#2a2b36,#0c0d12)">
+              <i class="vn-wax-dot"></i><span>Obsidian Black</span>
+            </button>
+            <button type="button" class="vn-wax-chip" data-wax="violet" style="--wax-bg:radial-gradient(circle,#8c7ae6,#3c2c8c)">
+              <i class="vn-wax-dot"></i><span>Cosmic Violet</span>
+            </button>
+            <button type="button" class="vn-wax-chip" data-wax="ruby" style="--wax-bg:radial-gradient(circle,#ff4d6d,#7a1428)">
+              <i class="vn-wax-dot"></i><span>Ruby Red</span>
+            </button>
+            <button type="button" class="vn-wax-chip" data-wax="gold" style="--wax-bg:radial-gradient(circle,#ffd166,#8f5b00)">
+              <i class="vn-wax-dot"></i><span>Liquid Gold</span>
+            </button>
+            <button type="button" class="vn-wax-chip" data-wax="cyan" style="--wax-bg:radial-gradient(circle,#48cae4,#023e8a)">
+              <i class="vn-wax-dot"></i><span>Electric Cyan</span>
+            </button>
+            <button type="button" class="vn-wax-chip" data-wax="emerald" style="--wax-bg:radial-gradient(circle,#52b788,#1b4332)">
+              <i class="vn-wax-dot"></i><span>Emerald Glass</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="vn-search-input-row">
+          <div class="vn-search-input-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="vnSearchInput" placeholder="Search any song, artist, or album (e.g. Stray Kids, &Team, Tomorrow X Together)" autocomplete="off">
+          </div>
+          <button type="button" class="vn-btn primary" id="vnSearchBtn" style="height:44px;padding:0 1.25rem;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <span>Search Songs</span>
+          </button>
+        </div>
+
+        <div class="vn-results-grid" id="vnSearchResultsGrid" hidden aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="panel apple-panel" aria-label="3D Vinyl Bookshelf">
+      <div class="vn-shelf-controls">
+        <div class="vn-pills" id="vnShelfPills" role="tablist" aria-label="Filter shelf"></div>
+
+        <div class="vn-shelf-right-tools">
+          <div class="vn-filter-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="vnShelfFilterInput" placeholder="Filter your shelf…" autocomplete="off">
+          </div>
+
+          <div class="vn-dd" id="vnFinishDd">
+            <button type="button" class="vn-dd-btn" id="vnFinishBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span id="vnFinishLbl">Shelf: Walnut Wood</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="vn-dd-menu" id="vnFinishMenu" role="listbox" hidden></div>
+          </div>
+
+          <div class="vn-dd" id="vnSortDd">
+            <button type="button" class="vn-dd-btn" id="vnSortBtn" aria-haspopup="listbox" aria-expanded="false">
+              <span id="vnSortLbl">Order: Custom (Drag)</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="vn-dd-menu" id="vnSortMenu" role="listbox" hidden></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vn-bookshelf-cabinet" id="vnBookshelfCabinet" data-finish="walnut" aria-live="polite"></div>
+    </section>
+
+    <section class="panel apple-panel vn-turntable-section" aria-label="3D Vinyl Turntable Player">
+      <div class="vn-deck-chassis">
+        <div class="vn-platter-well">
+          <div class="vn-platter-ring">
+            <div class="vn-platter-sheen"></div>
+            <div class="vn-turntable-disc" id="vnActiveDisc" title="Click or drag to scrub vinyl">
+              <div class="vn-disc-center-label" id="vnActiveLabel">
+                <div class="vn-spindle"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vn-tonearm-base">
+            <div class="vn-tonearm-pivot" id="vnTonearmPivot">
+              <div class="vn-tonearm-counterweight"></div>
+              <div class="vn-tonearm-rod">
+                <div class="vn-tonearm-headshell"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="vn-deck-corner-led">
+            <i class="vn-power-lamp" id="vnPowerLamp"></i>
+            <div class="vn-rpm-switch" role="group" aria-label="Turntable speed">
+              <button type="button" class="vn-rpm-btn active" data-rpm="33">33⅓</button>
+              <button type="button" class="vn-rpm-btn" data-rpm="45">45 RPM</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="vn-deck-console">
+          <div class="vn-oled-screen">
+            <div class="vn-now-playing-info">
+              <div class="vn-now-cover" id="vnNowCoverWrap">
+                <img id="vnNowCoverImg" src="assets/logo.png" alt="Album Cover">
+              </div>
+              <div class="vn-now-text">
+                <div class="vn-now-status-tag" id="vnNowStatusTag">
+                  <span>TURNTABLE READY · SELECT A VINYL</span>
+                </div>
+                <h2 id="vnNowTitle">No Vinyl on the Platter</h2>
+                <p id="vnNowArtist">Click any vinyl on your bookshelf above to drop the needle</p>
+              </div>
+            </div>
+
+            <div class="vn-eq-bars" id="vnEqBars" aria-hidden="true">
+              <span class="vn-eq-bar"></span>
+              <span class="vn-eq-bar"></span>
+              <span class="vn-eq-bar"></span>
+              <span class="vn-eq-bar"></span>
+              <span class="vn-eq-bar"></span>
+            </div>
+          </div>
+
+          <div class="vn-scrubber-box">
+            <input type="range" class="vn-scrubber-slider" id="vnSeekSlider" min="0" max="100" step="0.1" value="0" aria-label="Track progress">
+            <div class="vn-time-row">
+              <span id="vnCurTimeLbl">0:00</span>
+              <span id="vnWaxEditionLbl">33⅓ RPM · Analog Stereo</span>
+              <span id="vnDurTimeLbl">--:--</span>
+            </div>
+          </div>
+
+          <div class="vn-transport-row">
+            <div class="vn-main-transport">
+              <button type="button" class="vn-tr-circle" id="vnPrevBtn" title="Previous Vinyl on Shelf" aria-label="Previous vinyl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+              </button>
+              <button type="button" class="vn-tr-circle play-main" id="vnPlayPauseBtn" title="Play / Pause Turntable" aria-label="Play or pause">
+                <svg id="vnPlayIcon" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+              </button>
+              <button type="button" class="vn-tr-circle" id="vnNextBtn" title="Next Vinyl on Shelf" aria-label="Next vinyl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+              </button>
+            </div>
+
+            <div class="vn-aux-controls">
+              <button type="button" class="vn-toggle-chip on" id="vnCrackleBtn" title="Toggle warm analog vinyl surface crackle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>
+                <span>Vinyl Crackle: On</span>
+              </button>
+
+              <button type="button" class="vn-toggle-chip on" id="vnAutoNextBtn" title="Automatically spin the next vinyl on your shelf when track ends">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                <span>Auto-Spin Shelf</span>
+              </button>
+
+              <button type="button" class="vn-toggle-chip" id="vnSourceBtn" title="Choose or link full-length song source (Full Stream, YouTube, or Audio File)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span id="vnSourceBtnLbl">Full Track Source</span>
+              </button>
+
+              <div class="vn-vol-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                <input type="range" class="vn-vol-slider" id="vnVolSlider" min="0" max="1" step="0.02" value="0.85" aria-label="Turntable volume">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="vn-yt-hidden-host" aria-hidden="true"><div id="vnYtPlayerMount"></div></div>
+</main>
+
+<script>
+DB.whenReady(() => {
+  const VN_KEY = "p23.vinyl";
+  const $ = id => document.getElementById(id);
+
+  const WAX_STYLES = {
+    obsidian: {
+      name: "Obsidian Black",
+      bg: "radial-gradient(circle, #282934 0%, #090a0f 100%)"
+    },
+    violet: {
+      name: "Cosmic Violet",
+      bg: "radial-gradient(circle, #8c7ae6 0%, #2f1e6e 72%, #130b33 100%)"
+    },
+    ruby: {
+      name: "Ruby Red",
+      bg: "radial-gradient(circle, #ff4d6d 0%, #7a1428 74%, #2b050d 100%)"
+    },
+    gold: {
+      name: "Liquid Gold",
+      bg: "radial-gradient(circle, #ffd166 0%, #8f5b00 72%, #331f00 100%)"
+    },
+    cyan: {
+      name: "Electric Cyan",
+      bg: "radial-gradient(circle, #48cae4 0%, #023e8a 74%, #03152e 100%)"
+    },
+    emerald: {
+      name: "Emerald Glass",
+      bg: "radial-gradient(circle, #52b788 0%, #1b4332 74%, #091c14 100%)"
+    }
+  };
+
+  const FINISH_OPTIONS = [
+    { id: "walnut", label: "Walnut Wood" },
+    { id: "obsidian", label: "Obsidian Studio" },
+    { id: "oak", label: "Warm Teak & Oak" }
+  ];
+
+  const SORT_OPTIONS = [
+    { id: "custom", label: "Custom Order (Drag)" },
+    { id: "newest", label: "Newest Added" },
+    { id: "title", label: "Song Title (A–Z)" },
+    { id: "artist", label: "Artist (A–Z)" },
+    { id: "plays", label: "Most Played" }
+  ];
+
+  const state = {
+    selectedWax: "obsidian",
+    shelfFilter: "all",
+    shelfFinish: "walnut",
+    sortBy: "custom",
+    searchShelfQuery: "",
+    lastSearchResults: [],
+    activeVinylId: null,
+    activeVinylObj: null,
+    playbackEngine: "audio",
+    isPlaying: false,
+    rpm: 33,
+    crackleOn: true,
+    autoNextOn: true,
+    volume: 0.85,
+    discAngle: 0,
+    draggedVinylId: null,
+    syncInFlight: false
+  };
+
+  const audioEl = new Audio();
+  audioEl.preload = "auto";
+  audioEl.volume = state.volume;
+
+  let ytPlayer = null;
+  let ytReady = false;
+  let pendingYtAction = null;
+
+  function ensureYouTubeApiLoaded() {
+    if (window.YT && window.YT.Player) {
+      initYtPlayerInstance();
+      return;
+    }
+    if (document.getElementById("vnYtApiScript")) return;
+    const prevCb = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = function() {
+      if (typeof prevCb === "function") prevCb();
+      initYtPlayerInstance();
+    };
+    const s = document.createElement("script");
+    s.id = "vnYtApiScript";
+    s.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(s);
+  }
+
+  function initYtPlayerInstance() {
+    if (ytPlayer || !window.YT || !window.YT.Player) return;
+    ytPlayer = new YT.Player("vnYtPlayerMount", {
+      height: "200",
+      width: "200",
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        playsinline: 1,
+        rel: 0,
+        origin: window.location.origin
+      },
+      events: {
+        onReady: () => {
+          ytReady = true;
+          try { ytPlayer.setVolume(Math.round(state.volume * 100)); } catch {}
+          if (pendingYtAction) {
+            const act = pendingYtAction;
+            pendingYtAction = null;
+            playOrCueYtVideo(act.videoId, act.autoPlay);
+          }
+        },
+        onStateChange: ev => {
+          if (state.playbackEngine !== "yt") return;
+          const dur = Number(ytPlayer.getDuration && ytPlayer.getDuration()) || 0;
+          if (dur > 0 && state.activeVinylObj) {
+            state.activeVinylObj.fullDurationSec = Math.round(dur);
+            $("vnDurTimeLbl").textContent = fmtSec(dur);
+          }
+          if (ev.data === YT.PlayerState.PLAYING) {
+            state.isPlaying = true;
+            startVinylCrackle();
+            updateTurntableUI();
+            renderBookshelf(loadVinyls());
+          } else if (ev.data === YT.PlayerState.PAUSED) {
+            state.isPlaying = false;
+            stopVinylCrackle();
+            updateTurntableUI();
+            renderBookshelf(loadVinyls());
+          } else if (ev.data === YT.PlayerState.CUED) {
+            if (dur > 0) {
+              $("vnDurTimeLbl").textContent = fmtSec(dur);
+            }
+            updateTurntableUI();
+          } else if (ev.data === YT.PlayerState.ENDED) {
+            state.isPlaying = false;
+            stopVinylCrackle();
+            updateTurntableUI();
+            renderBookshelf(loadVinyls());
+            if (state.autoNextOn && loadVinyls().length > 1) {
+              setTimeout(() => stepShelfVinyl(1), 450);
+            }
+          }
+        },
+        onError: () => {
+          if (state.playbackEngine === "yt" && state.isPlaying) {
+            state.isPlaying = false;
+            stopVinylCrackle();
+            DB.toast("YouTube Video Unavailable", "This YouTube video cannot be embedded. Click 'Full Track Source' to link another video.", 3600);
+            updateTurntableUI();
+          }
+        }
+      }
+    });
+  }
+  ensureYouTubeApiLoaded();
+
+  function playOrCueYtVideo(videoId, autoPlay = false) {
+    if (!videoId) return;
+    ensureYouTubeApiLoaded();
+    if (!ytReady || !ytPlayer || typeof ytPlayer.loadVideoById !== "function") {
+      pendingYtAction = { videoId, autoPlay };
+      return;
+    }
+    try {
+      ytPlayer.setVolume(Math.round(state.volume * 100));
+      if (autoPlay) {
+        ytPlayer.loadVideoById(videoId);
+        ytPlayer.playVideo();
+      } else {
+        ytPlayer.cueVideoById(videoId);
+      }
+    } catch {}
+  }
+
+  function extractYouTubeId(input) {
+    const s = String(input || "").trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+    const m = s.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : "";
+  }
+
+  async function verifyYouTubeVideoExists(videoId) {
+    const vid = extractYouTubeId(videoId);
+    if (!vid) return { ok: false, videoId: "" };
+    try {
+      const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v=" + vid)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && !data.error && data.title) {
+          return { ok: true, videoId: vid, title: data.title, author: data.author_name || "" };
+        }
+      }
+    } catch {}
+    return { ok: true, videoId: vid };
+  }
+
+  let crackleCtx = null;
+  let crackleGain = null;
+  let crackleNode = null;
+
+  function startVinylCrackle() {
+    if (!state.crackleOn || !state.isPlaying) {
+      stopVinylCrackle();
+      return;
+    }
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!crackleCtx) crackleCtx = new AC();
+      if (crackleCtx.state === "suspended") crackleCtx.resume().catch(() => {});
+      if (crackleNode) return;
+
+      const bufferSize = crackleCtx.sampleRate * 3;
+      const buffer = crackleCtx.createBuffer(1, bufferSize, crackleCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        const r = Math.random();
+        if (r > 0.9988) {
+          data[i] = (Math.random() * 2 - 1) * 0.42;
+        } else if (r > 0.992) {
+          data[i] = (Math.random() * 2 - 1) * 0.09;
+        } else {
+          data[i] = (Math.random() * 2 - 1) * 0.012;
+        }
+      }
+
+      const src = crackleCtx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+
+      const bandpass = crackleCtx.createBiquadFilter();
+      bandpass.type = "bandpass";
+      bandpass.frequency.value = 1750;
+      bandpass.Q.value = 0.85;
+
+      crackleGain = crackleCtx.createGain();
+      crackleGain.gain.value = 0.06 * state.volume;
+
+      src.connect(bandpass);
+      bandpass.connect(crackleGain);
+      crackleGain.connect(crackleCtx.destination);
+      src.start();
+      crackleNode = src;
+    } catch {}
+  }
+
+  function stopVinylCrackle() {
+    if (crackleNode) {
+      try { crackleNode.stop(); crackleNode.disconnect(); } catch {}
+      crackleNode = null;
+    }
+  }
+
+  let lastSpinFrameTs = 0;
+  function animatePlatterSpin(ts) {
+    requestAnimationFrame(animatePlatterSpin);
+    if (!lastSpinFrameTs) lastSpinFrameTs = ts;
+    const dt = Math.min(64, ts - lastSpinFrameTs);
+    lastSpinFrameTs = ts;
+
+    if (state.isPlaying) {
+      const degPerMs = state.rpm === 45 ? 0.27 : 0.2;
+      state.discAngle = (state.discAngle + dt * degPerMs) % 360;
+      const disc = $("vnActiveDisc");
+      if (disc) {
+        disc.style.transform = `rotate(${state.discAngle.toFixed(2)}deg)`;
+      }
+
+      if (state.playbackEngine === "yt" && ytReady && ytPlayer && typeof ytPlayer.getCurrentTime === "function") {
+        const cur = Number(ytPlayer.getCurrentTime()) || 0;
+        const dur = Number(ytPlayer.getDuration()) || (state.activeVinylObj?.fullDurationSec || 210);
+        if (dur > 0) {
+          $("vnSeekSlider").value = String(((cur / dur) * 100).toFixed(1));
+          $("vnCurTimeLbl").textContent = fmtSec(cur);
+          $("vnDurTimeLbl").textContent = fmtSec(dur);
+          updateTonearmAngle(cur, dur);
+        }
+      }
+    }
+  }
+  requestAnimationFrame(animatePlatterSpin);
+
+  async function ensureAccountAccess() {
+    if (!DB.isGuest()) return true;
+    const ok = await DB.requireAuth();
+    if (ok) {
+      await initDirectFirestoreSync();
+      renderAll();
+    }
+    return Boolean(ok);
+  }
+
+  const mainEl = document.querySelector("main");
+  if (mainEl) {
+    mainEl.addEventListener("click", e => {
+      if (!DB.isGuest()) return;
+      const interactive = e.target.closest("button, a, input, select, textarea, .vn-record-slot, .vn-res-art-wrap");
+      if (interactive) {
+        e.preventDefault();
+        e.stopPropagation();
+        ensureAccountAccess();
+      }
+    }, true);
+    mainEl.addEventListener("focusin", e => {
+      if (!DB.isGuest()) return;
+      const inp = e.target.closest("input, select, textarea");
+      if (inp) {
+        inp.blur();
+        ensureAccountAccess();
+      }
+    }, true);
+  }
+
+  let directFirestoreBound = false;
+  let localVinylCache = null;
+
+  function getUserDocRef() {
+    if (DB.isGuest() || !window.firebase || !firebase.firestore) return null;
+    const uid = typeof DB.userId === "function" ? DB.userId() : (DB.user && DB.user.uid);
+    if (!uid) return null;
+    return firebase.firestore().collection("users").doc(uid);
+  }
+
+  async function initDirectFirestoreSync() {
+    const userRef = getUserDocRef();
+    if (!userRef || directFirestoreBound) return;
+    directFirestoreBound = true;
+
+    try {
+      const [stateSnap, colSnap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("vinyl").get().catch(() => null),
+        userRef.collection("vinyl").get().catch(() => null),
+        userRef.get().catch(() => null)
+      ]);
+
+      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
+      let cloudList = null;
+
+      if (stateSnap && stateSnap.exists) {
+        const d = stateSnap.data() || {};
+        if (d.shelfFinish) state.shelfFinish = d.shelfFinish;
+        if (Array.isArray(d.items) && d.items.length) cloudList = d.items;
+      }
+      if (!cloudList && colSnap && colSnap.docs && colSnap.docs.length) {
+        cloudList = colSnap.docs.map(d => d.data());
+      }
+      if (!cloudList && Array.isArray(userData.vinylShelf) && userData.vinylShelf.length) {
+        cloudList = userData.vinylShelf;
+      }
+
+      if (Array.isArray(cloudList) && cloudList.length) {
+        localVinylCache = cloudList;
+        DB.set(VN_KEY, localVinylCache);
+      }
+
+      userRef.collection("state").doc("vinyl").onSnapshot(docSnap => {
+        if (state.syncInFlight) return;
+        if (docSnap && docSnap.exists) {
+          const data = docSnap.data() || {};
+          if (data.shelfFinish) state.shelfFinish = data.shelfFinish;
+          if (Array.isArray(data.items) && (data.items.length > 0 || !localVinylCache || localVinylCache.length === 0)) {
+            localVinylCache = data.items;
+            try { localStorage.setItem(VN_KEY, JSON.stringify(data.items)); } catch {}
+            renderAll();
+          }
+        }
+      }, () => {});
+    } catch {}
+  }
+
+  function loadVinyls() {
+    if (DB.isGuest()) return [];
+    if (Array.isArray(localVinylCache)) return localVinylCache.slice();
+    const raw = DB.get(VN_KEY, []);
+    return Array.isArray(raw) ? raw.slice() : [];
+  }
+
+  async function saveVinyls(list) {
+    if (DB.isGuest()) {
+      await ensureAccountAccess();
+      return;
+    }
+    localVinylCache = list.slice();
+    DB.set(VN_KEY, localVinylCache);
+    if (typeof DB.flush === "function") DB.flush();
+
+    renderAll();
+
+    const userRef = getUserDocRef();
+    if (userRef) {
+      state.syncInFlight = true;
+      try {
+        const cleanList = JSON.parse(JSON.stringify(localVinylCache));
+        await Promise.all([
+          userRef.collection("state").doc("vinyl").set({
+            items: cleanList,
+            shelfFinish: state.shelfFinish,
+            updatedAt: Date.now()
+          }).catch(() => {}),
+          userRef.set({ vinylShelf: cleanList }, { merge: true }).catch(() => {})
+        ]);
+      } catch {}
+      state.syncInFlight = false;
+    }
+  }
+
+  function searchSongsJsonp(query) {
+    return new Promise((resolve, reject) => {
+      const cb = "p23vn_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+      const script = document.createElement("script");
+      let done = false;
+      const cleanup = () => {
+        try { delete window[cb]; } catch { window[cb] = undefined; }
+        if (script.parentNode) script.remove();
+      };
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        cleanup();
+        reject(new Error("Search timed out"));
+      }, 9000);
+
+      window[cb] = data => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        cleanup();
+        resolve((data && data.results) || []);
+      };
+      script.onerror = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        cleanup();
+        reject(new Error("Search request failed"));
+      };
+      script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=16&callback=${cb}`;
+      document.head.appendChild(script);
+    });
+  }
+
+  async function searchSongsCatalog(query) {
+    const q = String(query || "").trim();
+    if (!q) return [];
+    try {
+      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=16`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.results)) return data.results;
+      }
+    } catch {}
+    return searchSongsJsonp(q);
+  }
+
+  function mapTrackResult(raw) {
+    const rawArt = String(raw.artworkUrl100 || raw.artworkUrl60 || "").replace(/^http:/, "https:");
+    const hiResArt = rawArt ? rawArt.replace(/100x100bb/i, "600x600bb") : "assets/logo.png";
+    const year = raw.releaseDate ? String(raw.releaseDate).slice(0, 4) : "";
+    const durMs = Number(raw.trackTimeMillis) || 210000;
+    return {
+      trackId: String(raw.trackId || DB.uid()),
+      title: raw.trackName || "Untitled Track",
+      artist: raw.artistName || "Unknown Artist",
+      album: raw.collectionName || "Single",
+      cover: hiResArt,
+      previewUrl: raw.previewUrl ? String(raw.previewUrl).replace(/^http:/, "https:") : "",
+      fullAudioUrl: "",
+      ytVideoId: "",
+      genre: raw.primaryGenreName || "Music",
+      year,
+      durationMs: durMs,
+      fullDurationSec: Math.round(durMs / 1000)
+    };
+  }
+
+  function renderSearchResults() {
+    const grid = $("vnSearchResultsGrid");
+    if (!state.lastSearchResults.length) {
+      grid.hidden = true;
+      return;
+    }
+    grid.hidden = false;
+    const savedList = loadVinyls();
+    const savedIds = new Set(savedList.map(x => String(x.trackId)));
+
+    grid.innerHTML = state.lastSearchResults.map((tr, idx) => {
+      const isSaved = savedIds.has(String(tr.trackId));
+      const durLbl = fmtSec(Math.round((tr.durationMs || 210000) / 1000));
+      return `
+        <div class="vn-res-card">
+          <div class="vn-res-art-wrap" data-preview-idx="${idx}" title="Click to spin on turntable">
+            <img src="${DB.esc(tr.cover)}" alt="${DB.esc(tr.title)}" loading="lazy">
+            <div class="vn-res-play-ov">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+            </div>
+          </div>
+          <div class="vn-res-meta">
+            <b>${DB.esc(tr.title)}</b>
+            <span>${DB.esc(tr.artist)}</span>
+            <small>${DB.esc(tr.album)} · ${durLbl}</small>
+          </div>
+          <button type="button" class="vn-res-add-btn ${isSaved ? "is-saved" : ""}" data-save-idx="${idx}" ${isSaved ? "disabled" : ""}>
+            ${isSaved ? "✓ On Shelf" : "+ Press Vinyl"}
+          </button>
+        </div>
+      `;
+    }).join("");
+
+    grid.querySelectorAll("[data-preview-idx]").forEach(el => {
+      el.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const tr = state.lastSearchResults[Number(el.dataset.previewIdx)];
+        if (tr) {
+          const tempVinyl = Object.assign({ id: "preview-" + tr.trackId, wax: state.selectedWax }, tr);
+          loadVinylOntoTurntable(tempVinyl, true);
+        }
+      };
+    });
+
+    grid.querySelectorAll("[data-save-idx]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        const tr = state.lastSearchResults[Number(btn.dataset.saveIdx)];
+        if (!tr) return;
+        const list = loadVinyls();
+        if (list.some(x => String(x.trackId) === String(tr.trackId))) return;
+
+        const newVinyl = {
+          id: DB.uid(),
+          trackId: String(tr.trackId),
+          title: tr.title,
+          artist: tr.artist,
+          album: tr.album,
+          cover: tr.cover,
+          previewUrl: tr.previewUrl,
+          fullAudioUrl: tr.fullAudioUrl || "",
+          ytVideoId: tr.ytVideoId || "",
+          fullDurationSec: tr.fullDurationSec || Math.round((tr.durationMs || 210000) / 1000),
+          durationMs: tr.durationMs || 210000,
+          genre: tr.genre,
+          year: tr.year,
+          wax: state.selectedWax || "obsidian",
+          favorite: false,
+          plays: 0,
+          addedAt: Date.now()
+        };
+
+        list.unshift(newVinyl);
+        await saveVinyls(list);
+        renderSearchResults();
+        DB.toast("Pressed to Vinyl Shelf", `"${newVinyl.title}" was added to your bookshelf. Click it on the shelf whenever you want to play it.`, 2800);
+
+
+      };
+    });
+  }
+
+  async function reorderVinylShelf(fromId, toId) {
+    if (!fromId || !toId || fromId === toId) return;
+    const list = loadVinyls();
+    const fromIdx = list.findIndex(x => x.id === fromId);
+    const toIdx = list.findIndex(x => x.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
+
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+    state.sortBy = "custom";
+    await saveVinyls(list);
+  }
+
+  function renderBookshelf(list) {
+    const favCount = list.filter(x => x.favorite).length;
+    const pillsEl = $("vnShelfPills");
+    const pillDefs = [
+      { id: "all", label: `All Records (${list.length})` },
+      { id: "fav", label: `Favorites (${favCount})` },
+      ...Object.entries(WAX_STYLES)
+        .map(([k, v]) => ({ id: `wax:${k}`, label: `${v.name} (${list.filter(x => (x.wax || "obsidian") === k).length})`, cnt: list.filter(x => (x.wax || "obsidian") === k).length }))
+        .filter(p => p.cnt > 0)
+    ];
+
+    pillsEl.innerHTML = pillDefs.map(p => `
+      <button type="button" class="vn-pill" data-sfilter="${p.id}" aria-pressed="${state.shelfFilter === p.id}">${DB.esc(p.label)}</button>
+    `).join("");
+
+    pillsEl.querySelectorAll("[data-sfilter]").forEach(btn => {
+      btn.onclick = async () => {
+        if (!(await ensureAccountAccess())) return;
+        state.shelfFilter = btn.dataset.sfilter;
+        renderBookshelf(loadVinyls());
+      };
+    });
+
+    const chkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+    const curFin = FINISH_OPTIONS.find(x => x.id === state.shelfFinish) || FINISH_OPTIONS[0];
+    $("vnFinishLbl").textContent = `Shelf: ${curFin.label}`;
+    $("vnFinishMenu").innerHTML = FINISH_OPTIONS.map(f => `
+      <button type="button" class="vn-dd-opt ${f.id === state.shelfFinish ? "active" : ""}" data-finish-pick="${f.id}">
+        <span>${DB.esc(f.label)}</span>
+        ${f.id === state.shelfFinish ? chkSvg : ""}
+      </button>
+    `).join("");
+    $("vnFinishMenu").querySelectorAll("[data-finish-pick]").forEach(opt => {
+      opt.onclick = e => {
+        e.stopPropagation();
+        state.shelfFinish = opt.dataset.finishPick;
+        $("vnFinishMenu").hidden = true;
+        $("vnFinishDd").classList.remove("open");
+        saveVinyls(loadVinyls());
+      };
+    });
+
+    const curSort = SORT_OPTIONS.find(x => x.id === state.sortBy) || SORT_OPTIONS[0];
+    $("vnSortLbl").textContent = `Order: ${curSort.label}`;
+    $("vnSortMenu").innerHTML = SORT_OPTIONS.map(s => `
+      <button type="button" class="vn-dd-opt ${s.id === state.sortBy ? "active" : ""}" data-sort-pick="${s.id}">
+        <span>${DB.esc(s.label)}</span>
+        ${s.id === state.sortBy ? chkSvg : ""}
+      </button>
+    `).join("");
+    $("vnSortMenu").querySelectorAll("[data-sort-pick]").forEach(opt => {
+      opt.onclick = e => {
+        e.stopPropagation();
+        state.sortBy = opt.dataset.sortPick;
+        $("vnSortMenu").hidden = true;
+        $("vnSortDd").classList.remove("open");
+        renderBookshelf(loadVinyls());
+      };
+    });
+
+    const cabinet = $("vnBookshelfCabinet");
+    cabinet.dataset.finish = state.shelfFinish || "walnut";
+
+    const q = state.searchShelfQuery.toLowerCase();
+    const filtered = list.filter(v => {
+      if (state.shelfFilter === "fav" && !v.favorite) return false;
+      if (state.shelfFilter.startsWith("wax:") && (v.wax || "obsidian") !== state.shelfFilter.slice(4)) return false;
+      if (q) {
+        const hay = `${v.title || ""} ${v.artist || ""} ${v.album || ""} ${v.genre || ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if (state.sortBy !== "custom") {
+      filtered.sort((a, b) => {
+        if (state.sortBy === "title") return String(a.title || "").localeCompare(String(b.title || ""));
+        if (state.sortBy === "artist") return String(a.artist || "").localeCompare(String(b.artist || ""));
+        if (state.sortBy === "plays") return (Number(b.plays) || 0) - (Number(a.plays) || 0);
+        return (b.addedAt || 0) - (a.addedAt || 0);
+      });
+    }
+
+    if (!filtered.length) {
+      const guest = DB.isGuest();
+      cabinet.innerHTML = `
+        <div class="vn-shelf-tier">
+          <div class="vn-empty-shelf">
+            <h3>${guest ? "Sign In to Build Your 3D Vinyl Bookshelf" : (list.length ? "No Matching Vinyls on This Shelf" : "Your Vinyl Bookshelf Is Ready")}</h3>
+            <p>
+              ${guest
+                ? "Sign in with your Project 23 account to search songs, press custom vinyl records to your shelf, and spin them on the turntable below."
+                : (list.length
+                  ? "Try clearing your shelf search filter above."
+                  : "Search for any song or artist above and click '+ Press Vinyl' to place your first record onto the bookshelf.")}
+            </p>
+            ${guest ? `<button type="button" class="vn-btn primary" id="vnEmptySignInBtn" style="margin-top:.35rem;">Sign in to continue</button>` : ""}
+          </div>
+          <div class="vn-shelf-plank"><span class="vn-shelf-brass-tag">SHELF TIER 01 · ANALOG ARCHIVE</span></div>
+        </div>
+      `;
+      const signBtn = $("vnEmptySignInBtn");
+      if (signBtn) signBtn.onclick = () => ensureAccountAccess();
+      return;
+    }
+
+    const perTier = window.innerWidth <= 560 ? 2 : (window.innerWidth <= 920 ? 3 : 5);
+    const tiers = [];
+    for (let i = 0; i < filtered.length; i += perTier) {
+      tiers.push(filtered.slice(i, i + perTier));
+    }
+
+    const heartSvg = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    const paletteSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const linkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+    const delSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+
+    cabinet.innerHTML = tiers.map((tierItems, tIdx) => `
+      <div class="vn-shelf-tier">
+        <div class="vn-shelf-row">
+          ${tierItems.map(v => {
+            const waxObj = WAX_STYLES[v.wax] || WAX_STYLES.obsidian;
+            const isOnDeck = state.activeVinylId === v.id;
+            return `
+              <div class="vn-record-slot ${isOnDeck ? "is-on-turntable" : ""}" draggable="true" data-vinyl-slot="${DB.esc(v.id)}" title="Click to spin '${DB.esc(v.title)}' · Drag to reorder on shelf">
+                <div class="vn-record-3d">
+                  <div class="vn-peek-disc" style="--wax-surface:${waxObj.bg}">
+                    <div class="vn-peek-label" style="background-image:url('${DB.esc(v.cover)}')"></div>
+                  </div>
+                  <div class="vn-sleeve">
+                    <img src="${DB.esc(v.cover)}" alt="${DB.esc(v.title)}" loading="lazy" draggable="false">
+                    <div class="vn-sleeve-actions">
+                      <button type="button" class="vn-mini-act ${v.favorite ? "fav-on" : ""}" data-fav-vinyl="${DB.esc(v.id)}" title="Favorite" aria-label="Favorite">${heartSvg}</button>
+                      <button type="button" class="vn-mini-act" data-wax-cycle="${DB.esc(v.id)}" title="Cycle Vinyl Wax Color (${DB.esc(waxObj.name)})" aria-label="Change wax color">${paletteSvg}</button>
+                      <button type="button" class="vn-mini-act ${(v.ytVideoId || v.fullAudioUrl) ? "link-on" : ""}" data-src-vinyl="${DB.esc(v.id)}" title="${(v.ytVideoId || v.fullAudioUrl) ? "Full Song Linked (Click to edit)" : "Link Full YouTube / Audio Song"}" aria-label="Set full song source">${linkSvg}</button>
+                      <button type="button" class="vn-mini-act del" data-del-vinyl="${DB.esc(v.id)}" title="Remove from shelf" aria-label="Remove">${delSvg}</button>
+                    </div>
+                    ${isOnDeck ? `
+                      <div class="vn-now-badge">
+                        <i class="vn-now-dot"></i>
+                        <span>${state.isPlaying ? "Spinning" : "On Deck"}</span>
+                      </div>
+                    ` : ""}
+                  </div>
+                </div>
+                <div class="vn-slot-caption">
+                  <b>${DB.esc(v.title)}</b>
+                  <span>${DB.esc(v.artist)}</span>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+        <div class="vn-shelf-plank">
+          <span class="vn-shelf-brass-tag">SHELF TIER ${String(tIdx + 1).padStart(2, "0")} · ${tierItems.length} RECORD${tierItems.length === 1 ? "" : "S"} · DRAG TO REORDER</span>
+        </div>
+      </div>
+    `).join("");
+
+    let touchDragId = null;
+    let touchTargetId = null;
+
+    cabinet.querySelectorAll("[data-vinyl-slot]").forEach(slot => {
+      const vId = slot.dataset.vinylSlot;
+
+      slot.onclick = async e => {
+        if (e.target.closest("button")) return;
+        if (!(await ensureAccountAccess())) return;
+        const listNow = loadVinyls();
+        const found = listNow.find(x => x.id === vId);
+        if (!found) return;
+
+        if (state.activeVinylId === found.id) {
+          toggleTurntablePlayPause();
+        } else {
+          found.plays = (Number(found.plays) || 0) + 1;
+          await saveVinyls(listNow);
+          loadVinylOntoTurntable(found, true);
+        }
+      };
+
+      slot.addEventListener("dragstart", e => {
+        if (e.target.closest("button")) {
+          e.preventDefault();
+          return;
+        }
+        state.draggedVinylId = vId;
+        slot.classList.add("is-dragging");
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = "move";
+          try { e.dataTransfer.setData("text/plain", vId); } catch {}
+        }
+      });
+
+      slot.addEventListener("dragend", () => {
+        state.draggedVinylId = null;
+        slot.classList.remove("is-dragging");
+        cabinet.querySelectorAll(".vn-record-slot.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+      });
+
+      slot.addEventListener("dragover", e => {
+        if (!state.draggedVinylId || state.draggedVinylId === vId) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        slot.classList.add("is-drop-target");
+      });
+
+      slot.addEventListener("dragleave", () => {
+        slot.classList.remove("is-drop-target");
+      });
+
+      slot.addEventListener("drop", async e => {
+        e.preventDefault();
+        e.stopPropagation();
+        slot.classList.remove("is-drop-target");
+        const fromId = state.draggedVinylId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+        state.draggedVinylId = null;
+        if (fromId && fromId !== vId) {
+          await reorderVinylShelf(fromId, vId);
+        }
+      });
+
+      let pressTimer = null;
+      slot.addEventListener("touchstart", e => {
+        if (e.target.closest("button")) return;
+        pressTimer = setTimeout(() => {
+          touchDragId = vId;
+          slot.classList.add("is-dragging");
+        }, 240);
+      }, { passive: true });
+
+      slot.addEventListener("touchmove", e => {
+        if (!touchDragId) {
+          clearTimeout(pressTimer);
+          return;
+        }
+        const t = e.touches[0];
+        if (!t) return;
+        e.preventDefault();
+        const overEl = document.elementFromPoint(t.clientX, t.clientY);
+        const overSlot = overEl && overEl.closest && overEl.closest("[data-vinyl-slot]");
+        cabinet.querySelectorAll(".vn-record-slot.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+        if (overSlot && overSlot.dataset.vinylSlot !== touchDragId) {
+          overSlot.classList.add("is-drop-target");
+          touchTargetId = overSlot.dataset.vinylSlot;
+        } else {
+          touchTargetId = null;
+        }
+      }, { passive: false });
+
+      const finishTouchDrag = async () => {
+        clearTimeout(pressTimer);
+        if (!touchDragId) return;
+        slot.classList.remove("is-dragging");
+        cabinet.querySelectorAll(".vn-record-slot.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+        const fromId = touchDragId;
+        const toId = touchTargetId;
+        touchDragId = null;
+        touchTargetId = null;
+        if (fromId && toId && fromId !== toId) {
+          await reorderVinylShelf(fromId, toId);
+        }
+      };
+      slot.addEventListener("touchend", finishTouchDrag);
+      slot.addEventListener("touchcancel", finishTouchDrag);
+    });
+
+    cabinet.querySelectorAll("[data-fav-vinyl]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        const listNow = loadVinyls();
+        const target = listNow.find(x => x.id === btn.dataset.favVinyl);
+        if (!target) return;
+        target.favorite = !target.favorite;
+        await saveVinyls(listNow);
+      };
+    });
+
+    cabinet.querySelectorAll("[data-wax-cycle]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        const listNow = loadVinyls();
+        const target = listNow.find(x => x.id === btn.dataset.waxCycle);
+        if (!target) return;
+        const keys = Object.keys(WAX_STYLES);
+        const curIdx = keys.indexOf(target.wax || "obsidian");
+        target.wax = keys[(curIdx + 1) % keys.length];
+        await saveVinyls(listNow);
+        if (state.activeVinylId === target.id) {
+          updateTurntableUI(target);
+        }
+        DB.toast("Vinyl Wax Updated", `Changed "${target.title}" to ${WAX_STYLES[target.wax].name} wax.`, 2000);
+      };
+    });
+
+    cabinet.querySelectorAll("[data-src-vinyl]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        const target = loadVinyls().find(x => x.id === btn.dataset.srcVinyl);
+        if (target) openFullTrackSourceModal(target);
+      };
+    });
+
+    cabinet.querySelectorAll("[data-del-vinyl]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        const listNow = loadVinyls();
+        const idx = listNow.findIndex(x => x.id === btn.dataset.delVinyl);
+        if (idx === -1) return;
+        const removed = listNow[idx];
+        listNow.splice(idx, 1);
+        if (state.activeVinylId === removed.id) {
+          stopAllPlayback();
+          state.activeVinylId = listNow[0]?.id || null;
+          state.activeVinylObj = listNow[0] || null;
+        }
+        await saveVinyls(listNow);
+        DB.toast("Removed from Shelf", `"${removed.title}" was removed from your bookshelf.`, 2200);
+      };
+    });
+  }
+
+  function openFullTrackSourceModal(vinyl) {
+    const node = document.createElement("div");
+    const curYt = vinyl.ytVideoId ? `https://www.youtube.com/watch?v=${vinyl.ytVideoId}` : "";
+    const curAudio = vinyl.fullAudioUrl || "";
+    const hasFull = Boolean(vinyl.fullAudioUrl || vinyl.ytVideoId);
+    const ytSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent((vinyl.title || "") + " " + (vinyl.artist || "") + " official audio")}`;
+
+    node.innerHTML = `
+      <h2>Full-Length Song Source — ${DB.esc(vinyl.title)}</h2>
+      <p class="muted" style="margin-top:-.35rem;margin-bottom:.8rem;font-size:.82rem;">
+        Apple Music's catalog only provides 30-second previews without a paid subscription. To play the <b>entire full-length song</b> on your turntable, paste its YouTube URL (or a direct audio stream URL) below.
+      </p>
+
+      <div class="hint" style="margin-bottom:.8rem;font-size:.79rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
+        <div>
+          <b>Status:</b>
+          <span id="vnModalSrcStatus" style="color:${hasFull ? "var(--vn-green)" : "var(--vn-gold)"};font-weight:700;">
+            ${hasFull ? `✓ Full-Length Song Linked (${DB.esc(vinyl.sourceName || "Full YouTube Audio")})` : "30s Preview Only (Link YouTube below for Full Song)"}
+          </span>
+        </div>
+        <a href="${DB.esc(ytSearchUrl)}" target="_blank" rel="noopener noreferrer" class="vn-btn" style="height:28px;min-height:28px;padding:0 .68rem;font-size:.73rem;">
+          Find on YouTube ↗
+        </a>
+      </div>
+
+      <div class="field">
+        <label for="vnModalYtInput">YouTube Song URL or Video ID (Plays Full Song on Turntable)</label>
+        <input id="vnModalYtInput" type="text" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." value="${DB.esc(curYt)}" style="width:100%">
+      </div>
+
+      <div class="field">
+        <label for="vnModalAudioInput">Or Direct Full Audio URL (.mp3 / .m4a / .mp4)</label>
+        <input id="vnModalAudioInput" type="url" placeholder="https://example.com/full-song.mp3" value="${DB.esc(curAudio)}" style="width:100%">
+      </div>
+
+      <div class="actions">
+        ${hasFull ? `<button type="button" class="danger left" id="vnModalClear">Remove Link</button>` : `<button type="button" class="ghost left" id="vnModalCancel">Cancel</button>`}
+        ${hasFull ? `<button type="button" class="ghost" id="vnModalCancel">Cancel</button>` : ""}
+        <button type="button" class="primary" id="vnModalSave">Verify &amp; Save Full Song</button>
+      </div>
+    `;
+
+    const close = DB.modal(node);
+
+    const cancelBtn = node.querySelector("#vnModalCancel");
+    if (cancelBtn) cancelBtn.onclick = close;
+
+    const clearBtn = node.querySelector("#vnModalClear");
+    if (clearBtn) {
+      clearBtn.onclick = async () => {
+        const list = loadVinyls();
+        const target = list.find(x => x.id === vinyl.id) || vinyl;
+        target.ytVideoId = "";
+        target.fullAudioUrl = "";
+        target.sourceName = "";
+        await saveVinyls(list);
+        close();
+        await prepareVinylOnDeck(target, false);
+        DB.toast("Full Song Link Removed", `Reverted "${target.title}" to standard preview.`, 2200);
+      };
+    }
+
+    node.querySelector("#vnModalSave").onclick = async () => {
+      const ytVal = node.querySelector("#vnModalYtInput").value.trim();
+      const audioVal = node.querySelector("#vnModalAudioInput").value.trim();
+      const saveBtn = node.querySelector("#vnModalSave");
+      const statusEl = node.querySelector("#vnModalSrcStatus");
+
+      let verifiedVid = "";
+      if (ytVal) {
+        const extracted = extractYouTubeId(ytVal);
+        if (!extracted) {
+          node.querySelector("#vnModalYtInput").focus();
+          DB.toast("Invalid YouTube Link", "Please paste a valid YouTube watch URL (youtube.com/watch?v=... or youtu.be/...).", 3000);
+          return;
+        }
+        saveBtn.textContent = "Verifying YouTube Video…";
+        saveBtn.disabled = true;
+        const check = await verifyYouTubeVideoExists(extracted);
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Verify & Save Full Song";
+        if (!check.ok) {
+          statusEl.style.color = "#ff453a";
+          statusEl.textContent = "Could not verify that YouTube video ID.";
+          return;
+        }
+        verifiedVid = check.videoId;
+      }
+
+      const list = loadVinyls();
+      const target = list.find(x => x.id === vinyl.id) || vinyl;
+      target.ytVideoId = verifiedVid;
+      target.fullAudioUrl = audioVal || "";
+      target.sourceName = target.fullAudioUrl
+        ? "Full Audio Stream"
+        : (target.ytVideoId ? "Full YouTube Audio" : "");
+      if (target.ytVideoId || target.fullAudioUrl) {
+        target.fullDurationSec = Math.max(60, Number(target.fullDurationSec) || Math.round((Number(target.durationMs) || 210000) / 1000));
+      }
+
+      await saveVinyls(list);
+      close();
+      await prepareVinylOnDeck(target, false);
+      DB.toast("Full Song Linked", `"${target.title}" is verified and ready on the platter.`, 2600);
+    };
+  }
+
+  function fmtSec(sec) {
+    const s = Math.max(0, Math.floor(Number(sec) || 0));
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${String(r).padStart(2, "0")}`;
+  }
+
+  function stopAllPlayback() {
+    try { audioEl.pause(); } catch {}
+    if (ytReady && ytPlayer && typeof ytPlayer.pauseVideo === "function") {
+      try { ytPlayer.pauseVideo(); } catch {}
+    }
+    state.isPlaying = false;
+    stopVinylCrackle();
+  }
+
+  function getExpectedDurationSec(v) {
+    if (!v) return 0;
+    const hasFull = Boolean(v.ytVideoId || v.fullAudioUrl);
+    if (hasFull) {
+      if (v.ytVideoId && ytReady && ytPlayer && state.activeVinylId === v.id && typeof ytPlayer.getDuration === "function") {
+        const ytDur = Number(ytPlayer.getDuration()) || 0;
+        if (ytDur > 0) return Math.round(ytDur);
+      }
+      if (Number(v.fullDurationSec) > 35) return Number(v.fullDurationSec);
+      if (Number(v.durationMs) > 35000) return Math.round(Number(v.durationMs) / 1000);
+      return 210;
+    }
+    if (audioEl.duration && Number.isFinite(audioEl.duration) && audioEl.duration > 0) {
+      return Math.round(audioEl.duration);
+    }
+    return 30;
+  }
+
+  function updateTonearmAngle(curOverride, durOverride) {
+    const pivot = $("vnTonearmPivot");
+    if (!pivot) return;
+    if (!state.activeVinylId || !state.isPlaying) {
+      pivot.style.transform = state.activeVinylId ? "rotate(16deg)" : "rotate(0deg)";
+      return;
+    }
+    const dur = durOverride || getExpectedDurationSec(state.activeVinylObj) || 210;
+    const cur = curOverride !== undefined ? curOverride : (audioEl.currentTime || 0);
+    const progress = Math.max(0, Math.min(1, cur / Math.max(1, dur)));
+    const deg = 23 + progress * 15;
+    pivot.style.transform = `rotate(${deg.toFixed(2)}deg)`;
+  }
+
+  function updateTurntableUI(vinylObj) {
+    const v = vinylObj || loadVinyls().find(x => x.id === state.activeVinylId) || state.activeVinylObj || null;
+    const disc = $("vnActiveDisc");
+    const label = $("vnActiveLabel");
+    const lamp = $("vnPowerLamp");
+    const eq = $("vnEqBars");
+    const playIcon = $("vnPlayIcon");
+    const srcBtnLbl = $("vnSourceBtnLbl");
+    const srcBtn = $("vnSourceBtn");
+
+    if (v) {
+      const waxObj = WAX_STYLES[v.wax] || WAX_STYLES.obsidian;
+      const hasFull = Boolean(v.ytVideoId || v.fullAudioUrl);
+      const modeBadge = hasFull ? (v.sourceName || "FULL YOUTUBE AUDIO") : "30S PREVIEW · LINK YOUTUBE FOR FULL SONG";
+      disc.style.setProperty("--active-wax-bg", waxObj.bg);
+      label.style.backgroundImage = `url('${v.cover}')`;
+      $("vnNowCoverImg").src = v.cover || "assets/logo.png";
+      $("vnNowTitle").textContent = v.title;
+      $("vnNowArtist").textContent = `${v.artist} — ${v.album}${v.year ? " (" + v.year + ")" : ""}`;
+      $("vnNowStatusTag").innerHTML = state.isPlaying
+        ? `<i class="vn-now-dot"></i><span>SPINNING · ${DB.esc(modeBadge.toUpperCase())}</span>`
+        : `<span>ON PLATTER · ${DB.esc(modeBadge.toUpperCase())}</span>`;
+      $("vnWaxEditionLbl").textContent = `${waxObj.name} Wax · ${state.rpm === 45 ? "45" : "33⅓"} RPM · ${hasFull ? "Full Song" : "30s Preview"}`;
+
+      const expDur = getExpectedDurationSec(v);
+      if (!state.isPlaying) {
+        $("vnDurTimeLbl").textContent = expDur > 0 ? fmtSec(expDur) : "--:--";
+      }
+
+      if (srcBtnLbl) {
+        srcBtnLbl.textContent = hasFull ? "✓ Track Linked" : "Link Track";
+      }
+      if (srcBtn) {
+        srcBtn.classList.toggle("on", hasFull);
+      }
+    } else {
+      disc.style.setProperty("--active-wax-bg", WAX_STYLES.obsidian.bg);
+      label.style.backgroundImage = "none";
+      $("vnNowCoverImg").src = "assets/logo.png";
+      $("vnNowTitle").textContent = "No Vinyl on the Platter";
+      $("vnNowArtist").textContent = "Click any vinyl on your bookshelf above to drop the needle";
+      $("vnNowStatusTag").innerHTML = `<span>TURNTABLE READY · SELECT A VINYL</span>`;
+      $("vnWaxEditionLbl").textContent = `${state.rpm === 45 ? "45" : "33⅓"} RPM · Analog Stereo`;
+      $("vnDurTimeLbl").textContent = "--:--";
+      if (srcBtnLbl) srcBtnLbl.textContent = "Full Track Source";
+      if (srcBtn) srcBtn.classList.remove("on");
+    }
+
+    lamp.classList.toggle("on", state.isPlaying);
+    eq.classList.toggle("playing", state.isPlaying);
+    playIcon.innerHTML = state.isPlaying
+      ? `<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>`
+      : `<polygon points="6 4 20 12 6 20 6 4"/>`;
+
+    updateTonearmAngle();
+  }
+
+  async function prepareVinylOnDeck(vinylObj, autoPlay = false) {
+    if (!vinylObj) return;
+    stopAllPlayback();
+
+    state.activeVinylId = vinylObj.id;
+    state.activeVinylObj = vinylObj;
+    $("vnCurTimeLbl").textContent = "0:00";
+    $("vnSeekSlider").value = "0";
+
+    const ytId = extractYouTubeId(vinylObj.ytVideoId || "");
+    if (ytId) {
+      vinylObj.ytVideoId = ytId;
+      state.playbackEngine = "yt";
+      audioEl.removeAttribute("src");
+      $("vnDurTimeLbl").textContent = fmtSec(getExpectedDurationSec(vinylObj));
+      updateTurntableUI(vinylObj);
+      renderBookshelf(loadVinyls());
+
+      const check = await verifyYouTubeVideoExists(ytId);
+      if (check.ok) {
+        playOrCueYtVideo(ytId, autoPlay);
+        if (autoPlay) {
+          state.isPlaying = true;
+          startVinylCrackle();
+        }
+      }
+      updateTurntableUI(vinylObj);
+      renderBookshelf(loadVinyls());
+      return;
+    }
+
+    if (vinylObj.fullAudioUrl) {
+      state.playbackEngine = "audio";
+      audioEl.src = vinylObj.fullAudioUrl;
+      audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+      $("vnDurTimeLbl").textContent = fmtSec(getExpectedDurationSec(vinylObj));
+      if (autoPlay) {
+        try {
+          await audioEl.play();
+          state.isPlaying = true;
+          startVinylCrackle();
+        } catch {
+          state.isPlaying = false;
+        }
+      }
+      updateTurntableUI(vinylObj);
+      renderBookshelf(loadVinyls());
+      return;
+    }
+
+    state.playbackEngine = "audio";
+    if (vinylObj.previewUrl) {
+      audioEl.src = vinylObj.previewUrl;
+      audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+      $("vnDurTimeLbl").textContent = "0:30";
+      if (autoPlay) {
+        try {
+          await audioEl.play();
+          state.isPlaying = true;
+          startVinylCrackle();
+        } catch {
+          state.isPlaying = false;
+        }
+      }
+    } else {
+      audioEl.removeAttribute("src");
+      $("vnDurTimeLbl").textContent = "--:--";
+    }
+
+    updateTurntableUI(vinylObj);
+    renderBookshelf(loadVinyls());
+  }
+
+  function loadVinylOntoTurntable(vinylObj, autoPlay = true) {
+    return prepareVinylOnDeck(vinylObj, autoPlay);
+  }
+
+  async function toggleTurntablePlayPause() {
+    if (!(await ensureAccountAccess())) return;
+    const list = loadVinyls();
+    let cur = list.find(x => x.id === state.activeVinylId) || state.activeVinylObj;
+    if (!cur && list.length) {
+      cur = list[0];
+      await prepareVinylOnDeck(cur, true);
+      return;
+    }
+    if (!cur) {
+      DB.toast("No Vinyl Loaded", "Search and add a song to your bookshelf first, then click it to play.", 2600);
+      return;
+    }
+
+    if (state.isPlaying) {
+      stopAllPlayback();
+      updateTurntableUI(cur);
+      renderBookshelf(list);
+      return;
+    }
+
+    const ytId = extractYouTubeId(cur.ytVideoId || "");
+    if (ytId) {
+      state.playbackEngine = "yt";
+      audioEl.removeAttribute("src");
+      if (ytReady && ytPlayer && typeof ytPlayer.playVideo === "function") {
+        const videoData = (typeof ytPlayer.getVideoData === "function") ? ytPlayer.getVideoData() : null;
+        if (videoData && videoData.video_id === ytId) {
+          ytPlayer.playVideo();
+        } else {
+          playOrCueYtVideo(ytId, true);
+        }
+        state.isPlaying = true;
+        startVinylCrackle();
+      } else {
+        playOrCueYtVideo(ytId, true);
+        state.isPlaying = true;
+      }
+      updateTurntableUI(cur);
+      renderBookshelf(list);
+      return;
+    }
+
+    state.playbackEngine = "audio";
+    const targetSrc = cur.fullAudioUrl || cur.previewUrl || "";
+    if (!audioEl.src && targetSrc) audioEl.src = targetSrc;
+    try {
+      await audioEl.play();
+      state.isPlaying = true;
+      startVinylCrackle();
+    } catch {
+      state.isPlaying = false;
+    }
+    updateTurntableUI(cur);
+    renderBookshelf(list);
+  }
+
+  function stepShelfVinyl(dir = 1) {
+    const list = loadVinyls();
+    if (!list.length) return;
+    const idx = list.findIndex(x => x.id === state.activeVinylId);
+    const nextIdx = idx === -1 ? 0 : (idx + dir + list.length) % list.length;
+    prepareVinylOnDeck(list[nextIdx], true);
+  }
+
+  audioEl.addEventListener("loadedmetadata", () => {
+    if (state.playbackEngine !== "audio") return;
+    if (state.activeVinylObj && state.activeVinylObj.ytVideoId) return;
+    const dur = audioEl.duration || 30;
+    $("vnDurTimeLbl").textContent = fmtSec(dur);
+  });
+
+  audioEl.addEventListener("timeupdate", () => {
+    if (state.playbackEngine !== "audio") return;
+    if (state.activeVinylObj && state.activeVinylObj.ytVideoId) return;
+    const dur = audioEl.duration || 30;
+    const cur = audioEl.currentTime || 0;
+    $("vnSeekSlider").value = String(((cur / dur) * 100).toFixed(1));
+    $("vnCurTimeLbl").textContent = fmtSec(cur);
+    $("vnDurTimeLbl").textContent = fmtSec(dur);
+    updateTonearmAngle(cur, dur);
+  });
+
+  audioEl.addEventListener("ended", () => {
+    if (state.playbackEngine !== "audio") return;
+    state.isPlaying = false;
+    stopVinylCrackle();
+    updateTurntableUI();
+    renderBookshelf(loadVinyls());
+    if (state.autoNextOn && loadVinyls().length > 1) {
+      setTimeout(() => stepShelfVinyl(1), 450);
+    }
+  });
+
+  $("vnSeekSlider").oninput = e => {
+    const pct = parseFloat(e.target.value) || 0;
+    if (state.playbackEngine === "yt" && ytReady && ytPlayer && typeof ytPlayer.getDuration === "function") {
+      const dur = Number(ytPlayer.getDuration()) || getExpectedDurationSec(state.activeVinylObj) || 210;
+      const targetSec = (pct / 100) * dur;
+      try { ytPlayer.seekTo(targetSec, true); } catch {}
+      updateTonearmAngle(targetSec, dur);
+    } else {
+      const dur = audioEl.duration || 30;
+      audioEl.currentTime = (pct / 100) * dur;
+      updateTonearmAngle(audioEl.currentTime, dur);
+    }
+  };
+
+  $("vnPlayPauseBtn").onclick = toggleTurntablePlayPause;
+  $("vnPrevBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    stepShelfVinyl(-1);
+  };
+  $("vnNextBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    stepShelfVinyl(1);
+  };
+  $("vnActiveDisc").onclick = toggleTurntablePlayPause;
+
+  $("vnSourceBtn").onclick = async () => {
+    if (!(await ensureAccountAccess())) return;
+    const list = loadVinyls();
+    const cur = list.find(x => x.id === state.activeVinylId) || state.activeVinylObj || list[0];
+    if (!cur) {
+      DB.toast("Select a Vinyl First", "Add or select a vinyl on your shelf to configure its audio source.", 2500);
+      return;
+    }
+    openFullTrackSourceModal(cur);
+  };
+
+  document.querySelectorAll("[data-rpm]").forEach(btn => {
+    btn.onclick = () => {
+      state.rpm = parseInt(btn.dataset.rpm, 10) || 33;
+      document.querySelectorAll("[data-rpm]").forEach(b => b.classList.toggle("active", b === btn));
+      audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+      if (ytReady && ytPlayer && typeof ytPlayer.setPlaybackRate === "function") {
+        try { ytPlayer.setPlaybackRate(state.rpm === 45 ? 1.25 : 1.0); } catch {}
+      }
+      updateTurntableUI();
+    };
+  });
+
+  $("vnCrackleBtn").onclick = () => {
+    state.crackleOn = !state.crackleOn;
+    $("vnCrackleBtn").classList.toggle("on", state.crackleOn);
+    $("vnCrackleBtn").querySelector("span").textContent = `Vinyl Crackle: ${state.crackleOn ? "On" : "Off"}`;
+    if (state.crackleOn && state.isPlaying) startVinylCrackle();
+    else stopVinylCrackle();
+  };
+
+  $("vnAutoNextBtn").onclick = () => {
+    state.autoNextOn = !state.autoNextOn;
+    $("vnAutoNextBtn").classList.toggle("on", state.autoNextOn);
+  };
+
+  $("vnVolSlider").oninput = e => {
+    state.volume = parseFloat(e.target.value) || 0;
+    audioEl.volume = state.volume;
+    if (ytReady && ytPlayer && typeof ytPlayer.setVolume === "function") {
+      try { ytPlayer.setVolume(Math.round(state.volume * 100)); } catch {}
+    }
+    if (crackleGain) crackleGain.gain.value = 0.06 * state.volume;
+  };
+
+  document.querySelectorAll("#vnWaxPicker [data-wax]").forEach(chip => {
+    chip.onclick = () => {
+      state.selectedWax = chip.dataset.wax;
+      document.querySelectorAll("#vnWaxPicker [data-wax]").forEach(c => c.classList.toggle("active", c === chip));
+    };
+  });
+
+  async function runSongSearch() {
+    if (!(await ensureAccountAccess())) return;
+    const q = $("vnSearchInput").value.trim();
+    if (!q) {
+      $("vnSearchInput").focus();
+      return;
+    }
+    const btn = $("vnSearchBtn");
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = `<span>Searching…</span>`;
+    try {
+      const rawResults = await searchSongsCatalog(q);
+      state.lastSearchResults = rawResults.map(mapTrackResult);
+      renderSearchResults();
+      if (!state.lastSearchResults.length) {
+        DB.toast("No Songs Found", `Couldn't find matches for "${q}". Try another song or artist.`, 2500);
+      }
+    } catch {
+      DB.toast("Search Error", "Could not reach the song catalog. Please try again.", 2800);
+    } finally {
+      btn.innerHTML = origHtml;
+    }
+  }
+
+  $("vnSearchBtn").onclick = runSongSearch;
+  $("vnSearchInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      runSongSearch();
+    }
+  });
+
+  $("vnShelfFilterInput").oninput = e => {
+    state.searchShelfQuery = e.target.value.trim();
+    renderBookshelf(loadVinyls());
+  };
+
+  function bindDropdown(ddId, btnId, menuId) {
+    const dd = $(ddId), btn = $(btnId), menu = $(menuId);
+    btn.onclick = async e => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!(await ensureAccountAccess())) return;
+      const open = menu.hidden;
+      $("vnFinishMenu").hidden = true;
+      $("vnSortMenu").hidden = true;
+      $("vnFinishDd").classList.remove("open");
+      $("vnSortDd").classList.remove("open");
+      menu.hidden = !open;
+      dd.classList.toggle("open", open);
+    };
+  }
+  bindDropdown("vnFinishDd", "vnFinishBtn", "vnFinishMenu");
+  bindDropdown("vnSortDd", "vnSortBtn", "vnSortMenu");
+
+  document.addEventListener("pointerdown", e => {
+    if (!$("vnFinishDd").contains(e.target)) {
+      $("vnFinishMenu").hidden = true;
+      $("vnFinishDd").classList.remove("open");
+    }
+    if (!$("vnSortDd").contains(e.target)) {
+      $("vnSortMenu").hidden = true;
+      $("vnSortDd").classList.remove("open");
+    }
+  }, true);
+
+  window.addEventListener("resize", () => {
+    renderBookshelf(loadVinyls());
+  });
+
+  let initialDeckPrepared = false;
+  function renderAll() {
+    const list = loadVinyls();
+    if (!state.activeVinylId && list.length) {
+      state.activeVinylId = list[0].id;
+      state.activeVinylObj = list[0];
+      if (!initialDeckPrepared) {
+        initialDeckPrepared = true;
+        prepareVinylOnDeck(list[0], false);
+        return;
+      }
+    } else if (state.activeVinylId) {
+      const fresh = list.find(x => x.id === state.activeVinylId);
+      if (fresh) {
+        state.activeVinylObj = fresh;
+        if (fresh.ytVideoId) state.playbackEngine = "yt";
+      }
+    }
+    renderBookshelf(list);
+    updateTurntableUI();
+    if (!$("vnSearchResultsGrid").hidden) {
+      renderSearchResults();
+    }
+  }
+
+  if (typeof DB.onLogin === "function") {
+    DB.onLogin(async () => {
+      await initDirectFirestoreSync();
+      renderAll();
+    });
+  }
+
+  initDirectFirestoreSync().then(() => {
+    renderAll();
+  });
+});
+</script>
+</body>
+</html>
