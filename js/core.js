@@ -683,18 +683,34 @@ DB.requireAuth = ()=>{
 async function startGoogle(code){
   if(!auth){ gate("error",{dismiss:cancelAuth}); return; }
   pendingCode=code||null;
-  const prov=new firebase.auth.GoogleAuthProvider(); prov.setCustomParameters({prompt:"select_account"});
-  gate("loading",{text:"Opening Google…"});
-  const standalone=window.navigator.standalone===true || matchMedia("(display-mode: standalone)").matches;
   try{
-    if(standalone && /iPhone|iPad|iPod/.test(navigator.userAgent)){ await auth.signInWithRedirect(prov); return; }
-    await auth.signInWithPopup(prov);
+    if(pendingCode) sessionStorage.setItem("p23.pendingCode", pendingCode);
+    else sessionStorage.removeItem("p23.pendingCode");
+  }catch{}
+  const prov=new firebase.auth.GoogleAuthProvider();
+  prov.setCustomParameters({prompt:"select_account"});
+  try{
+    // Call signInWithPopup synchronously in the tap gesture before replacing DOM so iOS Home Screen PWA allows the auth sheet
+    const popPromise = auth.signInWithPopup(prov);
+    gate("loading",{text:"Opening Google…"});
+    const cred = await popPromise;
+    if(cred && cred.user && !uid){
+      await handleAuth(cred.user);
+    }
   }catch(e){
     dbg("sign-in",e);
-    if(["auth/popup-blocked","auth/operation-not-supported-in-this-environment"].includes(e.code)){ try{ await auth.signInWithRedirect(prov); return; }catch(e2){ e=e2; dbg(e2); } }
+    if(["auth/popup-blocked","auth/operation-not-supported-in-this-environment","auth/web-storage-unsupported"].includes(e&&e.code)){
+      try{
+        try{ sessionStorage.setItem("p23.redirectPending", "1"); }catch{}
+        gate("loading",{text:"Opening Google…"});
+        await auth.signInWithRedirect(prov);
+        return;
+      }catch(e2){ e=e2; dbg(e2); }
+    }
     const back=code?"create":"signin";
-    if(["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(e.code)) gate(back,{dismiss:cancelAuth});
-    else if(e.code==="auth/network-request-failed") gate(back,{dismiss:cancelAuth,error:"We couldn't reach Google. Check your connection and try again."});
+    if(["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(e&&e.code)) gate(back,{dismiss:cancelAuth});
+    else if(e&&e.code==="auth/network-request-failed") gate(back,{dismiss:cancelAuth,error:"We couldn't reach Google. Check your connection and try again."});
+    else if(e&&e.code==="auth/unauthorized-domain") gate(back,{dismiss:cancelAuth,error:"This domain isn't authorized in Firebase Auth settings yet."});
     else gate(back,{dismiss:cancelAuth,error:GENERIC_ERR});
   }
 }
@@ -702,7 +718,9 @@ DB.signOut = async()=>{ try{ await flush(); await auth.signOut(); }catch{} locat
 
 async function createAccount(user,base){
   const prof={...base, username:user.displayName || (user.email||"traveller").split("@")[0], createdAt:base.lastLoginAt};
-  let code=pendingCode, err="", tries=0; pendingCode=null;
+  let savedCode=null;
+  try{ savedCode=sessionStorage.getItem("p23.pendingCode"); sessionStorage.removeItem("p23.pendingCode"); }catch{}
+  let code=pendingCode||savedCode, err="", tries=0; pendingCode=null;
   for(;;){
     if(code==null){ code=await askPassword(err); if(code===null) throw {code:"cancelled"}; }
     gate("loading",{text:"Creating your account…"});
@@ -876,12 +894,37 @@ function initFirebase(){
   const cfg=window.FIREBASE_CONFIG;
   if(!cfg || !cfg.apiKey || /YOUR_/.test(cfg.apiKey) || !window.firebase){ dbg("Firebase is not configured or failed to load"); finishReady(); return; }
   try{
-    firebase.initializeApp(cfg); auth=firebase.auth(); fdb=firebase.firestore();
+    if(!firebase.apps || !firebase.apps.length) firebase.initializeApp(cfg);
+    auth=firebase.auth(); fdb=firebase.firestore();
     try{ firebase.firestore.setLogLevel("silent"); }catch{}
+    if(firebase.auth.Auth && firebase.auth.Auth.Persistence && firebase.auth.Auth.Persistence.LOCAL){
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+    }
     fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   }catch(e){ dbg(e); finishReady(); return; }
-  auth.getRedirectResult().catch(e=>{ dbg(e); gate("signin",{dismiss:cancelAuth,error:GENERIC_ERR}); });
-  auth.onAuthStateChanged(handleAuth);
+  let redirectChecking = false;
+  try{
+    if(sessionStorage.getItem("p23.redirectPending")==="1"){
+      redirectChecking = true;
+      sessionStorage.removeItem("p23.redirectPending");
+    }
+  }catch{}
+  auth.getRedirectResult().then(res=>{
+    redirectChecking = false;
+    if(res && res.user){
+      handleAuth(res.user);
+    } else if(!auth.currentUser && !uid){
+      handleAuth(null);
+    }
+  }).catch(e=>{
+    redirectChecking = false;
+    dbg(e);
+    gate("signin",{dismiss:cancelAuth,error:GENERIC_ERR});
+  });
+  auth.onAuthStateChanged(user=>{
+    if(!user && redirectChecking) return;
+    handleAuth(user);
+  });
 }
 Object.defineProperty(DB, "userId", { value: ()=>uid, writable: false, configurable: false });
 let projectAssetsCache = null;
