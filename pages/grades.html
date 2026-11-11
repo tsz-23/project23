@@ -922,6 +922,7 @@
   .gr-filter-bar {
     display: flex;
     align-items: center;
+    margin-top: .75rem;
     justify-content: space-between;
     gap: 0.6rem;
     flex-wrap: wrap;
@@ -1165,6 +1166,76 @@
     border-color: var(--gr-blue) !important;
   }
 
+  .gr-items-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.55rem;
+    margin-top: 0.15rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+  .gr-items-pager[hidden] {
+    display: none !important;
+  }
+  .gr-pager-info {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+  .gr-pager-info b {
+    color: var(--text);
+    font-weight: 700;
+  }
+  .gr-pager-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: color-mix(in srgb, var(--card-solid) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+    border-radius: 999px;
+    padding: 0.2rem 0.28rem;
+  }
+  .gr-pg-btn {
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+    padding: 0 0.5rem !important;
+    margin: 0 !important;
+    border-radius: 999px !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--muted) !important;
+    font-family: var(--mono) !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+  }
+  .gr-pg-btn svg {
+    width: 13px;
+    height: 13px;
+  }
+  .gr-pg-btn:hover:not(:disabled) {
+    color: var(--text) !important;
+    background: color-mix(in srgb, var(--card-2) 90%, transparent) !important;
+    transform: none !important;
+  }
+  .gr-pg-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px -3px rgba(108, 92, 231, 0.55);
+  }
+  .gr-pg-btn:disabled {
+    opacity: 0.35 !important;
+    cursor: not-allowed;
+  }
+
   .gr-pop-menu {
     position: absolute;
     z-index: 9999;
@@ -1344,7 +1415,7 @@
           </div>
           <div class="gr-field">
             <label for="grCourseGoalInput">Target Goal (%)</label>
-            <input type="number" class="gr-input" id="grCourseGoalInput" min="1" max="100" step="0.5" value="85">
+            <input type="number" class="gr-input" id="grCourseGoalInput" min="1" max="100" step="0.5" value="90">
           </div>
           <div class="gr-field">
             <label>Starting Setup</label>
@@ -1509,12 +1580,10 @@
 
         <div class="gr-filter-bar">
           <div class="gr-cat-pills" id="grFilterPills" role="tablist"></div>
-          <span style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);">
-            Tip: Enter <b>%</b> directly or type <b>earned / total</b> (e.g. 42 / 50)
-          </span>
         </div>
 
         <div class="gr-items-list" id="grItemsList" aria-live="polite"></div>
+        <div class="gr-items-pager" id="grItemsPager" hidden></div>
       </section>
     </div>
   </div>
@@ -1544,7 +1613,7 @@ DB.whenReady(() => {
   const TYPE_META = {
     test:       { label: "Test",       short: "Test",       defaultPrefix: "Test" },
     lab:        { label: "Lab",        short: "Lab",        defaultPrefix: "Lab" },
-    assignment: { label: "Assignment", short: "Assignment", defaultPrefix: "Assignment" },
+    assignment: { label: "Assignment", short: "Assgn", defaultPrefix: "Assignment" },
     exam:       { label: "Exam",       short: "Exam",       defaultPrefix: "Exam" },
     quiz:       { label: "Quiz",       short: "Quiz",       defaultPrefix: "Quiz" },
     project:    { label: "Project",    short: "Project",    defaultPrefix: "Project" }
@@ -1611,6 +1680,8 @@ DB.whenReady(() => {
     batchType: "test",
     batchMode: "each",
     itemFilter: "all",
+    itemsPage: 1,
+    itemsPerPage: 6,
     syncInFlight: false
   };
 
@@ -1724,7 +1795,7 @@ DB.whenReady(() => {
           id: c.id || DB.uid(),
           code: String(c.code || "COURSE").slice(0, 20),
           name: String(c.name || "Untitled Course").slice(0, 65),
-          goal: Math.min(100, Math.max(1, Number(c.goal) || 85)),
+          goal: Math.min(100, Math.max(1, Number(c.goal) || 90)),
           color: c.color || "#6c5ce7",
           items: Array.isArray(c.items) ? c.items.map(it => ({
             id: it.id || DB.uid(),
@@ -1879,7 +1950,7 @@ DB.whenReady(() => {
 
     const remainingWeight = Math.max(0, totalWeight - gradedWeight);
     const currentAverage = gradedWeight > 0 ? (earnedPoints / gradedWeight) * 100 : null;
-    const goal = Number(course.goal) || 85;
+    const goal = Number(course.goal) || 90;
     const pointsStillNeeded = Math.max(0, goal - earnedPoints);
     const requiredOnRemaining = remainingWeight > 0
       ? ((goal - earnedPoints) / remainingWeight) * 100
@@ -2050,6 +2121,7 @@ DB.whenReady(() => {
           if (!(await ensureAccountAccess())) return;
           state.activeCourseId = btn.dataset.courseTab;
           state.itemFilter = "all";
+          state.itemsPage = 1;
           await persistCloudData();
         };
       });
@@ -2093,7 +2165,7 @@ DB.whenReady(() => {
       $("grCourseDrawerTitle").textContent = "Add New Course";
       $("grCourseCodeInput").value = "";
       $("grCourseNameInput").value = "";
-      $("grCourseGoalInput").value = "85";
+      $("grCourseGoalInput").value = "90";
       $("grCourseTemplateBtn").disabled = false;
       state.courseFormTemplate = "blank";
       $("grDeleteCourseBtn").hidden = true;
@@ -2281,6 +2353,7 @@ DB.whenReady(() => {
       pillsEl.querySelectorAll("[data-item-filter]").forEach(btn => {
         btn.onclick = () => {
           state.itemFilter = btn.dataset.itemFilter;
+          state.itemsPage = 1;
           renderSyllabusAndMarksPanel();
         };
       });
@@ -2294,8 +2367,15 @@ DB.whenReady(() => {
       return true;
     });
 
+    const perPage = state.itemsPerPage || 6;
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    if (state.itemsPage > totalPages) state.itemsPage = totalPages;
+    if (state.itemsPage < 1) state.itemsPage = 1;
+    const startIdx = (state.itemsPage - 1) * perPage;
+    const pageItems = filtered.slice(startIdx, startIdx + perPage);
+
     const listEl = $("grItemsList");
-    const structSig = `${course.id}|${state.itemFilter}|` + filtered.map(it => `${it.id}:${it.type}:${it.isWhatIf}`).join(",");
+    const structSig = `${course.id}|${state.itemFilter}|${state.itemsPage}|` + pageItems.map(it => `${it.id}:${it.type}:${it.isWhatIf}`).join(",");
 
     if (listEl.__structSig !== structSig) {
       listEl.__structSig = structSig;
@@ -2306,7 +2386,7 @@ DB.whenReady(() => {
           </div>
         `;
       } else {
-        listEl.innerHTML = filtered.map(it => {
+        listEl.innerHTML = pageItems.map(it => {
           const meta = TYPE_META[it.type] || TYPE_META.test;
           const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
           return `
@@ -2475,7 +2555,7 @@ DB.whenReady(() => {
       }
     }
 
-    filtered.forEach(it => {
+    pageItems.forEach(it => {
       const row = listEl.querySelector(`[data-row-id="${it.id}"]`);
       if (!row) return;
       const hasScore = it.score !== null && it.score !== undefined && it.score !== "" && !isNaN(Number(it.score));
@@ -2514,6 +2594,65 @@ DB.whenReady(() => {
         }
       }
     });
+
+    const pagerEl = $("grItemsPager");
+    if (filtered.length <= perPage) {
+      pagerEl.hidden = true;
+      pagerEl.__lastHtml = "";
+      pagerEl.innerHTML = "";
+    } else {
+      pagerEl.hidden = false;
+      const fromNum = startIdx + 1;
+      const toNum = Math.min(filtered.length, startIdx + pageItems.length);
+      const pageBtns = [];
+      for (let p = 1; p <= totalPages; p++) {
+        pageBtns.push(`
+          <button type="button" class="gr-pg-btn ${p === state.itemsPage ? "active" : ""}" data-gr-page="${p}" aria-label="Page ${p}">
+            ${p}
+          </button>
+        `);
+      }
+      const nextPagerHtml = `
+        <span class="gr-pager-info">Showing <b>${fromNum}–${toNum}</b> of <b>${filtered.length}</b> assessments · Page <b>${state.itemsPage}</b> of <b>${totalPages}</b></span>
+        <div class="gr-pager-controls" role="navigation" aria-label="Syllabus Assessment Pages">
+          <button type="button" class="gr-pg-btn" id="grPrevPageBtn" ${state.itemsPage <= 1 ? "disabled" : ""} aria-label="Previous Page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          ${pageBtns.join("")}
+          <button type="button" class="gr-pg-btn" id="grNextPageBtn" ${state.itemsPage >= totalPages ? "disabled" : ""} aria-label="Next Page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      `;
+      if (pagerEl.__lastHtml !== nextPagerHtml) {
+        pagerEl.__lastHtml = nextPagerHtml;
+        pagerEl.innerHTML = nextPagerHtml;
+        const prevBtn = $("grPrevPageBtn");
+        if (prevBtn) {
+          prevBtn.onclick = () => {
+            if (state.itemsPage > 1) {
+              state.itemsPage--;
+              renderSyllabusAndMarksPanel();
+            }
+          };
+        }
+        const nextBtn = $("grNextPageBtn");
+        if (nextBtn) {
+          nextBtn.onclick = () => {
+            if (state.itemsPage < totalPages) {
+              state.itemsPage++;
+              renderSyllabusAndMarksPanel();
+            }
+          };
+        }
+        pagerEl.querySelectorAll("[data-gr-page]").forEach(btn => {
+          btn.onclick = () => {
+            state.itemsPage = Number(btn.dataset.grPage) || 1;
+            renderSyllabusAndMarksPanel();
+          };
+        });
+      }
+    }
   }
 
   $("grOpenAddCourseBtn").onclick = async () => {
@@ -2660,6 +2799,8 @@ DB.whenReady(() => {
       });
     }
 
+    state.itemFilter = "all";
+    state.itemsPage = Math.max(1, Math.ceil(course.items.length / (state.itemsPerPage || 6)));
     $("grItemsList").__structSig = "";
     await persistCloudData();
     DB.toast(
