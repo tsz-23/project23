@@ -142,7 +142,7 @@
 
   .hero-lead {
     margin: 0;
-    max-width: 66ch;
+    max-width: 68ch;
     font-size: clamp(1rem, 1.9vw, 1.15rem);
     line-height: 1.65;
     color: var(--muted);
@@ -186,63 +186,13 @@
     transform: translateY(-1px);
   }
 
-  .bento-metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.9rem;
-    width: 100%;
-    margin-top: 0.35rem;
-  }
-
-  .metric-card {
-    background: var(--glass-elevated);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-xl);
-    padding: 1.1rem 1.15rem;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 0.28rem;
-    transition: transform 0.2s var(--apple-ease), border-color 0.2s;
-  }
-
-  .metric-card:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  }
-
-  .metric-num {
-    font-family: var(--display);
-    font-size: clamp(1.5rem, 2.8vw, 2rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, var(--text) 20%, var(--accent) 85%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    line-height: 1.1;
-  }
-
-  .metric-title {
-    font-family: var(--display);
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--text);
-  }
-
-  .metric-sub {
-    font-size: 0.78rem;
-    color: var(--muted);
-    line-height: 1.4;
-  }
-
   .section-header-row {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 1.35rem;
+    margin-bottom: 1.1rem;
     padding-bottom: 0.95rem;
     border-bottom: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
   }
@@ -295,6 +245,7 @@
   .filter-pill-btn:hover {
     color: var(--text);
     border-color: var(--accent);
+    transform: none;
   }
 
   .filter-pill-btn.active {
@@ -304,29 +255,106 @@
     box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent);
   }
 
+  .suite-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .suite-page-meta {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .suite-pager-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .suite-pg-btn {
+    height: 32px;
+    min-width: 32px;
+    padding: 0 0.65rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+    background: var(--glass-elevated);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    transition: all 0.18s var(--apple-ease);
+  }
+  .suite-pg-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .suite-pg-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .suite-pg-btn.active {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: var(--on-accent, #fff);
+    border-color: transparent;
+    box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent);
+  }
+  .suite-pg-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
   .suite-bento-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.95rem;
+    min-height: 390px;
+    align-content: start;
   }
 
   .suite-module-card {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 0.85rem;
-    padding: 1.25rem;
+    gap: 0.8rem;
+    padding: 1.2rem;
     border-radius: var(--radius-xl);
     background: var(--glass-elevated);
     border: 1px solid var(--line);
     color: var(--text);
     text-decoration: none;
     transition: all 0.22s var(--apple-ease);
+    animation: cardFadeIn 0.26s var(--apple-spring) both;
+  }
+
+  @keyframes cardFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
   .suite-module-card:hover {
     transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    border-color: color-mix(in srgb, var(--mod-c, var(--accent)) 60%, var(--line));
     box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.45);
   }
 
@@ -337,21 +365,29 @@
   }
 
   .module-icon-box {
-    width: 2.85rem;
-    height: 2.85rem;
+    width: 2.95rem;
+    height: 2.95rem;
     border-radius: 14px;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, transparent), color-mix(in srgb, var(--accent2) 14%, transparent));
-    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
-    color: var(--accent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--mod-c, var(--accent)) 26%, var(--card-solid)), color-mix(in srgb, var(--mod-c, var(--accent)) 12%, var(--card-solid)));
+    border: 1px solid color-mix(in srgb, var(--mod-c, var(--accent)) 45%, var(--line));
+    color: var(--mod-c, var(--accent));
     display: grid;
     place-items: center;
     flex-shrink: 0;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
   }
 
   .module-icon-box svg {
     width: 1.4rem;
     height: 1.4rem;
+  }
+
+  .module-icon-box .ic-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
   }
 
   .module-title-wrap {
@@ -368,27 +404,29 @@
 
   .module-title-row b {
     font-family: var(--display);
-    font-size: 1.08rem;
+    font-size: 1.06rem;
     font-weight: 800;
     color: var(--text);
   }
 
   .module-cat-tag {
     font-family: var(--mono);
-    font-size: 0.66rem;
+    font-size: 0.64rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    padding: 0.16rem 0.5rem;
+    padding: 0.15rem 0.5rem;
     border-radius: var(--radius-pill);
-    background: color-mix(in srgb, var(--text) 8%, transparent);
-    color: var(--muted);
+    background: color-mix(in srgb, var(--mod-c, var(--accent)) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--mod-c, var(--accent)) 32%, transparent);
+    color: var(--mod-c, var(--accent));
+    white-space: nowrap;
   }
 
   .module-desc {
-    margin: 0.35rem 0 0;
-    font-size: 0.88rem;
-    line-height: 1.55;
+    margin: 0.32rem 0 0;
+    font-size: 0.86rem;
+    line-height: 1.52;
     color: var(--muted);
     display: block;
   }
@@ -397,19 +435,55 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
-    padding-top: 0.65rem;
+    padding-top: 0.6rem;
     border-top: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
   }
 
   .module-chip {
     font-family: var(--mono);
-    font-size: 0.68rem;
-    padding: 0.18rem 0.52rem;
+    font-size: 0.66rem;
+    padding: 0.15rem 0.5rem;
     border-radius: 6px;
     background: color-mix(in srgb, var(--card-solid) 85%, transparent);
     border: 1px solid var(--line);
     color: var(--text);
     opacity: 0.88;
+  }
+
+  .suite-bottom-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.15rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+  }
+
+  .suite-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .suite-dot {
+    width: 0.52rem;
+    height: 0.52rem;
+    padding: 0;
+    border-radius: 999px;
+    border: 0;
+    background: color-mix(in srgb, var(--muted) 40%, transparent);
+    cursor: pointer;
+    transition: width 0.2s var(--apple-ease), background 0.2s;
+  }
+  .suite-dot:hover {
+    transform: none;
+    background: var(--muted);
+  }
+  .suite-dot.active {
+    width: 1.45rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
   }
 
   .patch-toolbar {
@@ -438,29 +512,6 @@
   .patch-search-input:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
-  }
-
-  .patch-expand-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-  }
-
-  .patch-action-btn {
-    padding: 0.42rem 0.82rem;
-    border-radius: 10px;
-    border: 1px solid var(--line);
-    background: var(--glass-elevated);
-    color: var(--text);
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.18s var(--apple-ease);
-  }
-
-  .patch-action-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
   }
 
   .patch-list {
@@ -500,6 +551,7 @@
 
   .patch-header-btn:hover {
     background: color-mix(in srgb, var(--accent) 8%, transparent);
+    transform: none;
   }
 
   .patch-header-left {
@@ -614,6 +666,94 @@
     font-size: 0.92rem;
     color: var(--muted);
     line-height: 1.55;
+  }
+
+  .patch-subhead {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--accent);
+    margin: 1rem 0 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .patch-pages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .patch-page-intro-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.68rem;
+    padding: 0.72rem 0.85rem;
+    border-radius: 13px;
+    background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+    border: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.18s, transform 0.18s;
+  }
+  .patch-page-intro-card:hover {
+    border-color: var(--mod-c, var(--accent));
+    transform: translateY(-1px);
+  }
+  .patch-page-ic {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--mod-c, var(--accent)) 18%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--mod-c, var(--accent)) 40%, transparent);
+    color: var(--mod-c, var(--accent));
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-top: 0.08rem;
+  }
+  .patch-page-ic svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+  .patch-page-ic .ic-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .patch-page-copy {
+    min-width: 0;
+    flex: 1;
+  }
+  .patch-page-copy b {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    font-family: var(--display);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.12rem;
+  }
+  .patch-page-copy b small {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--mod-c, var(--accent));
+  }
+  .patch-page-copy span {
+    display: block;
+    font-size: 0.78rem;
+    line-height: 1.42;
+    color: var(--muted);
   }
 
   .patch-items {
@@ -790,8 +930,9 @@
   }
 
   @media (max-width: 860px) {
-    .bento-metrics-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    .suite-bento-grid {
+      grid-template-columns: 1fr;
+      min-height: 0;
     }
 
     .specs-and-guide-grid {
@@ -803,15 +944,6 @@
     .apple-panel {
       padding: 1.25rem 1.05rem;
       border-radius: 20px;
-    }
-
-    .bento-metrics-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 0.65rem;
-    }
-
-    .metric-card {
-      padding: 0.9rem;
     }
 
     .kv {
@@ -852,8 +984,7 @@
   <div class="about-shell">
     <section class="panel apple-panel about-hero-card" id="overview">
       <h1 id="aboutH">Project 23</h1>
-      <!-- <div class="hero-badge-row"><span class="status-pill live-pill"><span class="status-dot"></span> PW0226 v1.0</span></div> --> 
-      <p class="hero-lead">Your personal digital cockpit bringing <strong>Calendar, Reminders, Focus Sessions, Notes, Countdowns, Live Weather, World News, AI Assistance, and more</strong> together in one cohesive workspace.</p>
+      <p class="hero-lead">Your all-in-one personal digital cockpit bringing <strong>Calendar, Schedule Planner, Spending Tracker, Grade Calculator, Fashion Stylist, Vinyl Shelf, Focus Flights, Watchlist, Agent PICO AI, Downforce, Between Us, and more</strong> together in one cohesive workspace.</p>
 
       <nav class="section-jump-nav" aria-label="About Page Sections">
         <a class="jump-pill" href="pages/about.html#insideSection">
@@ -880,116 +1011,27 @@
         <div>
           <span class="section-eyebrow">Explore the Site</span>
           <h2>What's Inside Project 23</h2>
-          <p class="section-header-desc">Explore every integrated application in the suite.</p>
+          <p class="section-header-desc">Browse all 20 integrated applications and games across pages below.</p>
         </div>
-        <div class="filter-pill-bar" role="tablist" aria-label="Filter modules by category">
-          <button type="button" class="filter-pill-btn active" onclick="filterSuite('all', this)">All (10)</button>
-          <button type="button" class="filter-pill-btn" onclick="filterSuite('Productivity', this)">Productivity</button>
-          <button type="button" class="filter-pill-btn" onclick="filterSuite('Utility', this)">Utility</button>
-          <button type="button" class="filter-pill-btn" onclick="filterSuite('Discovery', this)">Discovery</button>
+        <div class="filter-pill-bar" id="suiteFilterBar" role="tablist" aria-label="Filter modules by category">
+          <button type="button" class="filter-pill-btn active" onclick="filterSuite('all', this)">All (20)</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Productivity', this)">Productivity (7)</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Lifestyle & Media', this)">Lifestyle &amp; Media (5)</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Utility', this)">Utility (3)</button>
+          <button type="button" class="filter-pill-btn" onclick="filterSuite('Discovery & Games', this)">Discovery &amp; Games (5)</button>
         </div>
       </div>
 
-      <div class="suite-bento-grid" id="suiteGrid">
-        <a href="pages/calendar.html" class="suite-module-card" data-cat="Productivity">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i1"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>Calendar</b><span class="module-cat-tag">Productivity</span></div>
-              <span class="module-desc">Import your iPhone `.ics` calendar, customize event colors, manage recurring schedules, and view daily agendas.</span>
-            </div>
-          </div>
-        </a>
+      <div class="suite-top-bar">
+        <span class="suite-page-meta" id="suitePageMeta">Showing 1–6 of 20 Pages · Page 1 of 4</span>
+        <div class="suite-pager-controls" id="suiteTopPager"></div>
+      </div>
 
-        <a href="pages/todo.html" class="suite-module-card" data-cat="Productivity">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i2"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>To-do List</b><span class="module-cat-tag">Productivity</span></div>
-              <span class="module-desc">Bring in your iPhone Reminders and organize tasks with due dates, priority flags, categories, and custom tags.</span>
-            </div>
-          </div>
-        </a>
+      <div class="suite-bento-grid" id="suiteGrid" aria-live="polite"></div>
 
-        <a href="pages/focus.html" class="suite-module-card" data-cat="Utility">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i3"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>Focus Flight</b><span class="module-cat-tag">Utility</span></div>
-              <span class="module-desc">Book a focus flight by destination or target flight time, pick a cabin seat, and fly with live telemetry, map, and airplane window views.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/notes.html" class="suite-module-card" data-cat="Productivity">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i4"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>Notes</b><span class="module-cat-tag">Productivity</span></div>
-              <span class="module-desc">Write and format rich documents with headings, checklists, callout blocks, links, highlights, and pinned notes.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/timeUntil.html" class="suite-module-card" data-cat="Utility">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i5"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>Time Until</b><span class="module-cat-tag">Utility</span></div>
-              <span class="module-desc">Count down to the milestones and dates that matter most, with live second-by-second timers and calendar event linking.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/weather.html" class="suite-module-card" data-cat="Utility">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i6"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>Weather</b><span class="module-cat-tag">Utility</span></div>
-              <span class="module-desc">Track hourly and 7-day forecasts, UV index, wind telemetry, air quality (AQI), and solar/lunar cycles for saved cities.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/so-thats-how.html" class="suite-module-card" data-cat="Discovery">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i7"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>So That's How</b><span class="module-cat-tag">Discovery</span></div>
-              <span class="module-desc">Explore 353 interactive 5-stage mechanism workbenches and 6-chapter engineering deep dives into how the physical world works.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/news.html" class="suite-module-card" data-cat="Discovery">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i8"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>World News</b><span class="module-cat-tag">Discovery</span></div>
-              <span class="module-desc">Read live breaking global stories, science dispatches, and technology briefings powered by zero-key Open-CORS APIs.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/project.html" class="suite-module-card" data-cat="Discovery">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i9"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>Project Library</b><span class="module-cat-tag">Discovery</span></div>
-              <span class="module-desc">Browse the complete historical archive of Project Web, Project Notes, and Project Medley leading up to Project 23.</span>
-            </div>
-          </div>
-        </a>
-
-        <a href="pages/pico.html" class="suite-module-card" data-cat="Discovery">
-          <div class="module-card-top">
-            <span class="module-icon-box" id="i10"></span>
-            <div class="module-title-wrap">
-              <div class="module-title-row"><b>PICO AI</b><span class="module-cat-tag">Discovery</span></div>
-              <span class="module-desc">Consult your built-in conversational AI operator for brainstorming, quick explanations, and workspace assistance.</span>
-            </div>
-          </div>
-        </a>
+      <div class="suite-bottom-pager">
+        <div class="suite-dots" id="suiteDots" role="tablist" aria-label="Grid Pages"></div>
+        <div class="suite-pager-controls" id="suiteBottomPager"></div>
       </div>
     </section>
 
@@ -998,7 +1040,7 @@
         <div>
           <span class="section-eyebrow">Release History</span>
           <h2>Update Patch Notes</h2>
-          <p class="section-header-desc">Click any version card to expand or collapse its detailed release notes.</p>
+          <p class="section-header-desc">Click any version card to expand or collapse its detailed release notes and page introductions.</p>
         </div>
       </div>
 
@@ -1009,7 +1051,7 @@
           <button type="button" class="filter-pill-btn" onclick="filterPatches('design', this)">Redesign</button>
           <button type="button" class="filter-pill-btn" onclick="filterPatches('fix', this)">Fixes &amp; Performance</button>
         </div>
-        <input type="search" id="patchSearchInput" class="patch-search-input" placeholder="Search version, feature, or fix..." oninput="renderPatchNotes()">
+        <input type="search" id="patchSearchInput" class="patch-search-input" placeholder="Search version, page, or feature..." oninput="renderPatchNotes()">
       </div>
 
       <div class="patch-list" id="patchList"></div>
@@ -1040,11 +1082,11 @@
           </li>
           <li class="pwa-step-item">
             <span class="pwa-step-num">2</span>
-            <div><strong>Tap Share → "Add to Home Screen"</strong><br><span class="muted">Launches directly from your iPhone Home Screen without browser.</span></div>
+            <div><strong>Tap Share → "Add to Home Screen"</strong><br><span class="muted">Launches directly from your iPhone Home Screen without browser toolbars.</span></div>
           </li>
           <li class="pwa-step-item">
             <span class="pwa-step-num">3</span>
-            <div><strong>Sign In with Google for Cloud Sync</strong><br><span class="muted">Your events, reminders, notes, countdowns, and flight logs sync automatically across all your signed-in devices.</span></div>
+            <div><strong>Sign In with Google for Cloud Sync</strong><br><span class="muted">Your events, reminders, notes, vinyl records, watchlists, and PICO chats sync automatically across all your devices.</span></div>
           </li>
         </ul>
       </section>
@@ -1065,47 +1107,325 @@
 </main>
 
 <script>
-const PATCH_NOTES = [
-  /*{
+const SUITE_MODULES = [
   {
-    version: "v1.0.1",
-    title: "Project Library Suite & Project Web Continuous Timeline",
-    date: "Jan 23, 2027",
-    tag: "Archive Overhaul",
-    categories: ["design", "feature", "fix"],
-    defaultOpen: false,
-    summary: "Redesigned the Project Library suite (library.html, projectWeb.html, projectNotes.html, projectMedley.html) with Apple Bento grids, embedded YouTube medleys, and a precision version timeline.",
-    changes: [
-      { type: "design", text: "Rebuilt Project Web (projectWeb.html) as a continuous vertical timeline enclosed in a frosted glass panel, integrating the 'Explore Zentral-Web v6.2.3' launch action into the hero header." },
-      { type: "new", text: "Updated Project Medley PM0225_Kpop to an embedded YouTube player with direct watch fallback and responsive 16:9 framing." },
-      { type: "fixed", text: "Centered all timeline nodes dynamically from the first version dot to the last dot and removed CSS scaling transforms that caused Moiré dot artifacts on animated GIF previews." },
-      { type: "improved", text: "Streamlined timeline cards by removing redundant footer captions for a cleaner visual hierarchy." }
-    ]
-  },*/
+    id: "calendar",
+    name: "Calendar",
+    href: "pages/calendar.html",
+    icon: "cal",
+    color: "#ff453a",
+    category: "Productivity",
+    desc: "Import your iPhone .ics calendar, customize event colors, manage recurring schedules, and view daily agendas.",
+    chips: ["ICS Import/Export", "Recurring Events", "Alerts"]
+  },
+  {
+    id: "planner",
+    name: "Schedule Planner",
+    href: "pages/schedule.html",
+    icon: "grid",
+    color: "#00b8c8",
+    category: "Productivity",
+    desc: "Build your weekly timetable with color-coded time blocks, custom course/activity labels, and export as a high-res PDF or image.",
+    chips: ["Weekly Grid", "Color Blocks", "PDF & PNG Export"]
+  },
+  {
+    id: "todo",
+    name: "To-Do List",
+    href: "pages/todo.html",
+    icon: "todo",
+    color: "#0a84ff",
+    category: "Productivity",
+    desc: "Bring in your iPhone Reminders and organize tasks with due dates, priority flags, categories, and custom tags.",
+    chips: ["Priority Flags", "Due Alerts", "Category Tags"]
+  },
+  {
+    id: "notes",
+    name: "Notes",
+    href: "pages/notes.html",
+    icon: "note",
+    color: "#ff9f0a",
+    category: "Productivity",
+    desc: "Write and format rich documents with headings, interactive checklists, callout blocks, links, highlights, and pinned notes.",
+    chips: ["Rich Formatting", "Checklists", "Pinned Notes"]
+  },
+  {
+    id: "snippet",
+    name: "Clipboard Snippet",
+    href: "pages/snippet.html",
+    icon: "bookmark",
+    color: "#5e5ce6",
+    category: "Productivity",
+    desc: "Paste text, code snippets, images, and files on one device and instantly copy or download them across any signed-in device.",
+    chips: ["Cross-Device Vault", "Code & Files", "1-Click Copy"]
+  },
+  {
+    id: "grades",
+    name: "Grade Calculator",
+    href: "pages/grades.html",
+    icon: "grad",
+    color: "#0a84ff",
+    category: "Productivity",
+    desc: "Calculate course standings, weighted syllabus breakdowns, and exact target scores needed on upcoming finals and labs.",
+    chips: ["Weighted Syllabi", "Target Finals", "GPA & Standing"]
+  },
+  {
+    id: "tracker",
+    name: "Goal Tracker",
+    href: "pages/goals.html",
+    icon: "target",
+    color: "#30d158",
+    category: "Productivity",
+    desc: "Track daily habits, consistency streaks, completion rings, and long-term personal or academic milestones.",
+    chips: ["Habit Streaks", "Progress Rings", "Milestones"]
+  },
+  {
+    id: "finance",
+    name: "Spending Tracker",
+    href: "pages/finance.html",
+    icon: "wallet",
+    color: "#30d158",
+    category: "Lifestyle & Media",
+    desc: "Track expenses, category budgets, monthly spending trend graphs, and synchronize your ledger with Google Sheets.",
+    chips: ["Budget Analytics", "Trend Graphs", "Sheets Sync"]
+  },
+  {
+    id: "stylist",
+    name: "Fashion Stylist",
+    href: "pages/stylist.html",
+    icon: "shirt",
+    color: "#ff5c9d",
+    category: "Lifestyle & Media",
+    desc: "Curate your digital closet, piece outfits together on the interactive mannequin mirror, and manage weekly laundry cycles.",
+    chips: ["Outfit Mirror", "Digital Closet", "Laundry Cycles"]
+  },
+  {
+    id: "vinyl",
+    name: "Vinyl Shelf",
+    href: "pages/vinyl.html",
+    icon: "music",
+    color: "#bf5af2",
+    category: "Lifestyle & Media",
+    desc: "Press songs to colored vinyl wax on a 3D wooden bookshelf, organize desktop-style folders, and spin full tracks with synced lyrics.",
+    chips: ["3D Turntable", "Full Studio Audio", "Synced Lyrics"]
+  },
+  {
+    id: "watchlist",
+    name: "Watchlist",
+    href: "pages/watchlist.html",
+    icon: "film",
+    color: "#ff375f",
+    category: "Lifestyle & Media",
+    desc: "Search and save movies, dramas, and anime with IMDb integration, episode trackers, total hours watched, and average ratings.",
+    chips: ["IMDb Search", "Hours & Ratings", "Episode Tracker"]
+  },
+  {
+    id: "birthday",
+    name: "Birthday Alert",
+    href: "pages/birthday.html",
+    icon: "gift",
+    color: "#ff5c9d",
+    category: "Lifestyle & Media",
+    desc: "Never miss an upcoming friend or family birthday with GMT timezone-aware countdowns, turning-age badges, and gift notes.",
+    chips: ["Timezone Aware", "Countdown Cards", "Gift Notes"]
+  },
+  {
+    id: "focus",
+    name: "Focus Flight",
+    href: "pages/focus.html",
+    icon: "plane",
+    color: "#5e5ce6",
+    category: "Utility",
+    desc: "Book a focus flight by destination or target duration, pick a cabin seat, and fly with live telemetry, map, and airplane window views.",
+    chips: ["Boarding Pass", "Live Flight Map", "Cabin Audio"]
+  },
+  {
+    id: "timeUntil",
+    name: "Time Until",
+    href: "pages/timeUntil.html",
+    icon: "timer",
+    color: "#ff375f",
+    category: "Utility",
+    desc: "Count down to the milestones, exams, and trips that matter most with live second-by-second timers and calendar linking.",
+    chips: ["Live Second Timers", "Event Linking", "Custom Themes"]
+  },
+  {
+    id: "weather",
+    name: "Weather",
+    href: "pages/weather.html",
+    icon: "cloud",
+    color: "#30b0c7",
+    category: "Utility",
+    desc: "Track hourly and 7-day forecasts, UV index, wind telemetry, air quality (AQI), and solar/lunar cycles for saved cities.",
+    chips: ["7-Day Forecast", "AQI & UV Index", "Sun & Moon Path"]
+  },
+  {
+    id: "pico",
+    name: "PICO AI",
+    href: "pages/pico.html",
+    icon: "sparkle",
+    color: "#bf5af2",
+    category: "Discovery & Games",
+    desc: "Consult Agent PICO inside a VALORANT-inspired tactical comms HUD powered by Gemini Flash with web recon and cloud sync.",
+    chips: ["VALORANT HUD", "Gemini Flash", "Web Search Recon"]
+  },
+  {
+    id: "so-thats-how",
+    name: "So That's How",
+    href: "pages/so-thats-how.html",
+    icon: "lightbulb",
+    color: "#ffd60a",
+    category: "Discovery & Games",
+    desc: "Explore 353 interactive 5-stage mechanism workbenches and 6-chapter engineering deep dives into how everyday technology works.",
+    chips: ["353 Workbenches", "5-Stage Diagrams", "Engineering Deep Dives"]
+  },
+  {
+    id: "project",
+    name: "Project Library",
+    href: "pages/project.html",
+    icon: "library",
+    color: "#64d2ff",
+    category: "Discovery & Games",
+    desc: "Browse the complete historical archive of Project Web, Project Notes, and Project Medley leading up to Project 23.",
+    chips: ["Project Web", "Project Notes", "Project Medley"]
+  },
+  {
+    id: "downforce",
+    name: "Downforce",
+    href: "../downforce/index.html",
+    icon: "car",
+    logo: "../downforce/downforce.png",
+    color: "#ff9f0a",
+    category: "Discovery & Games",
+    desc: "High-speed 3D Formula 1 web racing game built with Three.js featuring 10 international circuits, tyre physics, pitstops, and multiplayer.",
+    chips: ["3D F1 Racing", "10 Circuits", "Live Multiplayer"]
+  },
+  {
+    id: "between-us",
+    name: "Between Us",
+    href: "../between-us/index.html",
+    icon: "users",
+    logo: "../between-us/assets/between_us.png",
+    color: "#ff6b8b",
+    category: "Discovery & Games",
+    desc: "Two-player interactive web visual novel synchronized in real time via Firebase featuring dual narrative perspectives.",
+    chips: ["2-Player Co-Op", "Interactive Story", "Realtime Sync"]
+  }
+];
+
+const PATCH_NOTES = [
   {
     version: "v1.0.0",
-    title: "Project 23 Foundation — Downforce, Between Us, PICO AI, & More!",
+    title: "Project 23 Foundation — Complete 20-Page Suite, Downforce, Between Us & Agent PICO",
     date: "Dec 26, 2026",
     tag: "Initial Launch",
-    categories: ["feature"],
-    defaultOpen: false,
-    summary: "Initial release of Project 23 (PW0226) with 23 different features, games, and functions.",
+    categories: ["feature", "design"],
+    defaultOpen: true,
+    showAllPagesIntro: true,
+    summary: "Initial launch of Project 23 (PW0226), uniting 20 specialized web applications, productivity tools, lifestyle catalogs, and multiplayer games into a single adaptive Progressive Web App with real-time Google Firebase synchronization.",
     changes: [
-      { type: "new", text: "Launched Calendar with RFC-compliant .ics file import/export and recurring event expansion." },
-      { type: "new", text: "Launched To-Do List, Rich Text Notes, Time Until countdown timers, and Open-Meteo Weather & Air Quality dashboard." },
-      { type: "new", text: "Added Progressive Web App (PWA) manifest and iOS Home Screen installation support." }
+      { type: "new", text: "Productivity Suite: Launched Calendar (.ics import/export & recurrence engine), Schedule Planner (weekly block timetable with PDF/PNG export), To-Do List, Rich Text Notes, Clipboard Snippet Vault, Grade Calculator, and Goal Tracker." },
+      { type: "new", text: "Lifestyle & Media Suite: Launched Spending Tracker (with Google Sheets sync & trend graphs), Fashion Stylist (interactive mannequin outfit mirror & laundry tracker), Vinyl Shelf (3D turntable, desktop-style shelf folders, full studio audio & synced lyrics), Watchlist (IMDb integration & stats), and Birthday Alert." },
+      { type: "new", text: "Utility & Telemetry Suite: Launched Focus Flight (virtual boarding pass, cabin seat picker & live flight telemetry), Time Until (live second-by-second countdowns), and Weather & Air Quality dashboard." },
+      { type: "new", text: "AI, Discovery & Games: Launched Agent PICO AI (VALORANT-inspired tactical comms HUD + site-wide quick chat popup), So That's How (353 interactive engineering workbenches), Project Library archive, Downforce (3D Three.js F1 racing game), and Between Us (2-player co-op visual novel)." },
+      { type: "design", text: "Engineered adaptive Light, Dark, and Deep Cosmos Space themes, customizable navigation bar pinning, glassmorphic notification banners, and iOS Home Screen PWA support." }
     ]
   }
 ];
 
+let activeSuiteCategory = "all";
+let currentSuitePage = 1;
+const SUITE_ITEMS_PER_PAGE = 6;
 let activePatchFilter = "all";
 
+function getFilteredSuiteModules() {
+  if (activeSuiteCategory === "all") return SUITE_MODULES;
+  return SUITE_MODULES.filter(m => m.category === activeSuiteCategory);
+}
+
 function filterSuite(cat, btnEl) {
-  document.querySelectorAll("#insideSection .filter-pill-btn").forEach(b => b.classList.toggle("active", b === btnEl));
-  document.querySelectorAll("#suiteGrid .suite-module-card").forEach(card => {
-    const match = cat === "all" || card.dataset.cat === cat;
-    card.style.display = match ? "flex" : "none";
-  });
+  activeSuiteCategory = cat;
+  currentSuitePage = 1;
+  document.querySelectorAll("#suiteFilterBar .filter-pill-btn").forEach(b => b.classList.toggle("active", b === btnEl));
+  renderSuiteGrid();
+}
+
+function goToSuitePage(pageNum) {
+  const mods = getFilteredSuiteModules();
+  const totalPages = Math.max(1, Math.ceil(mods.length / SUITE_ITEMS_PER_PAGE));
+  currentSuitePage = Math.max(1, Math.min(totalPages, pageNum));
+  renderSuiteGrid();
+}
+
+function renderSuiteGrid() {
+  const gridEl = document.getElementById("suiteGrid");
+  const metaEl = document.getElementById("suitePageMeta");
+  const topPagerEl = document.getElementById("suiteTopPager");
+  const botPagerEl = document.getElementById("suiteBottomPager");
+  const dotsEl = document.getElementById("suiteDots");
+  if (!gridEl) return;
+
+  const mods = getFilteredSuiteModules();
+  const totalItems = mods.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / SUITE_ITEMS_PER_PAGE));
+  if (currentSuitePage > totalPages) currentSuitePage = totalPages;
+
+  const startIdx = (currentSuitePage - 1) * SUITE_ITEMS_PER_PAGE;
+  const slice = mods.slice(startIdx, startIdx + SUITE_ITEMS_PER_PAGE);
+  const endIdx = startIdx + slice.length;
+
+  if (metaEl) {
+    metaEl.textContent = totalItems
+      ? `Showing ${startIdx + 1}–${endIdx} of ${totalItems} Pages · Page ${currentSuitePage} of ${totalPages}`
+      : "No matching pages";
+  }
+
+  gridEl.innerHTML = slice.map(m => `
+    <a href="${DB.esc(m.href)}" class="suite-module-card" style="--mod-c:${DB.esc(m.color)}">
+      <div class="module-card-top">
+        <span class="module-icon-box">${DB.icon(m.icon, "ic", m.logo || "")}</span>
+        <div class="module-title-wrap">
+          <div class="module-title-row">
+            <b>${DB.esc(m.name)}</b>
+            <span class="module-cat-tag">${DB.esc(m.category)}</span>
+          </div>
+          <span class="module-desc">${DB.esc(m.desc)}</span>
+        </div>
+      </div>
+      <div class="module-highlights">
+        ${(m.chips || []).map(ch => `<span class="module-chip">${DB.esc(ch)}</span>`).join("")}
+      </div>
+    </a>
+  `).join("");
+
+  const buildPagerHtml = () => {
+    if (totalPages <= 1) return "";
+    const pageBtns = [];
+    for (let p = 1; p <= totalPages; p++) {
+      pageBtns.push(`<button type="button" class="suite-pg-btn ${p === currentSuitePage ? "active" : ""}" onclick="goToSuitePage(${p})" aria-label="Page ${p}">${p}</button>`);
+    }
+    return `
+      <button type="button" class="suite-pg-btn" onclick="goToSuitePage(${currentSuitePage - 1})" ${currentSuitePage <= 1 ? "disabled" : ""} aria-label="Previous page">
+        ${DB.icon("left")}<span>Prev</span>
+      </button>
+      ${pageBtns.join("")}
+      <button type="button" class="suite-pg-btn" onclick="goToSuitePage(${currentSuitePage + 1})" ${currentSuitePage >= totalPages ? "disabled" : ""} aria-label="Next page">
+        <span>Next</span>${DB.icon("left").replace("<svg", '<svg style="transform:rotate(180deg)"')}
+      </button>
+    `;
+  };
+
+  const pagerHtml = buildPagerHtml();
+  if (topPagerEl) topPagerEl.innerHTML = pagerHtml;
+  if (botPagerEl) botPagerEl.innerHTML = pagerHtml;
+
+  if (dotsEl) {
+    dotsEl.innerHTML = totalPages > 1
+      ? Array.from({ length: totalPages }, (_, i) => {
+          const p = i + 1;
+          return `<button type="button" class="suite-dot ${p === currentSuitePage ? "active" : ""}" onclick="goToSuitePage(${p})" aria-label="Go to page ${p}"></button>`;
+        }).join("")
+      : "";
+  }
 }
 
 function filterPatches(cat, btnEl) {
@@ -1130,7 +1450,8 @@ function renderPatchNotes() {
   const filtered = PATCH_NOTES.filter(p => {
     if (activePatchFilter !== "all" && !p.categories.includes(activePatchFilter)) return false;
     if (!q) return true;
-    const hay = `${p.version} ${p.title} ${p.tag} ${p.summary} ${p.changes.map(c => c.text).join(" ")}`.toLowerCase();
+    const pagesText = p.showAllPagesIntro ? SUITE_MODULES.map(m => `${m.name} ${m.category} ${m.desc}`).join(" ") : "";
+    const hay = `${p.version} ${p.title} ${p.tag} ${p.summary} ${p.changes.map(c => c.text).join(" ")} ${pagesText}`.toLowerCase();
     return hay.includes(q);
   });
 
@@ -1143,6 +1464,33 @@ function renderPatchNotes() {
     const isOpen = q ? true : !!p.defaultOpen;
     const isLatest = idx === 0 && activePatchFilter === "all" && !q;
     const badgeLabels = { new: "New", design: "Redesign", improved: "Improved", fixed: "Fixed" };
+
+    const matchingModules = p.showAllPagesIntro
+      ? (q
+          ? SUITE_MODULES.filter(m => `${m.name} ${m.category} ${m.desc} ${(m.chips || []).join(" ")}`.toLowerCase().includes(q))
+          : SUITE_MODULES)
+      : [];
+
+    const pagesIntroHtml = (p.showAllPagesIntro && matchingModules.length) ? `
+      <div class="patch-subhead">
+        <span>All ${matchingModules.length} Launch Pages &amp; Experiences Introduced in ${DB.esc(p.version)}</span>
+      </div>
+      <div class="patch-pages-grid">
+        ${matchingModules.map(m => `
+          <a href="${DB.esc(m.href)}" class="patch-page-intro-card" style="--mod-c:${DB.esc(m.color)}">
+            <span class="patch-page-ic">${DB.icon(m.icon, "ic", m.logo || "")}</span>
+            <span class="patch-page-copy">
+              <b><span>${DB.esc(m.name)}</span><small>${DB.esc(m.category)}</small></b>
+              <span>${DB.esc(m.desc)}</span>
+            </span>
+          </a>
+        `).join("")}
+      </div>
+      <div class="patch-subhead">
+        <span>Core Platform Highlights</span>
+      </div>
+    ` : "";
+
     return `
       <article class="patch-card ${isOpen ? "open" : ""} ${isLatest ? "latest" : ""}" data-ver="${p.version}">
         <button type="button" class="patch-header-btn" onclick="togglePatchCard('${p.version}')" aria-expanded="${isOpen}">
@@ -1152,7 +1500,7 @@ function renderPatchNotes() {
             <span class="patch-tag-pill">${p.tag}</span>
           </div>
           <div class="patch-header-right">
-            <span class="patch-count-pill">${p.changes.length} updates</span>
+            <span class="patch-count-pill">${p.showAllPagesIntro ? "20 pages + " : ""}${p.changes.length} updates</span>
             <span class="patch-date">${p.date}</span>
             <span class="patch-chevron" aria-hidden="true">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -1161,6 +1509,7 @@ function renderPatchNotes() {
         </button>
         <div class="patch-body">
           <p class="patch-summary-lead">${p.summary}</p>
+          ${pagesIntroHtml}
           <ul class="patch-items">
             ${p.changes.map(c => `
               <li class="patch-item">
@@ -1182,30 +1531,16 @@ document.addEventListener("DOMContentLoaded", () => {
   if ($("heroVersionBadge")) $("heroVersionBadge").textContent = `Release ${C.version || "v1.0"}`;
   if ($("heroCodeBadge")) $("heroCodeBadge").textContent = `Code ${C.code || "PW0226"}`;
 
-  const iconMap = {
-    i1: "cal",
-    i2: "todo",
-    i3: "plane",
-    i4: "note",
-    i5: "timer",
-    i6: "cloud",
-    i7: "lightbulb",
-    i8: "book",
-    i9: "folder",
-    i10: "sparkle"
-  };
-  Object.entries(iconMap).forEach(([id, key]) => {
-    const el = $(id);
-    if (el) el.innerHTML = DB.icon(key);
-  });
+  renderSuiteGrid();
 
   const rows = [
     ["Project name", C.name || "Project 23"],
     ["Project code", C.code || "PW0226"],
     ["Current version", `${C.version || "v1.0"}`],
+    ["Integrated pages", "20 Applications & Games"],
     ["Application type", "Progressive Web App (iPhone Home Screen & Desktop ready)"],
-    ["Design system", "Adaptive Glassmorphism"],
-    ["Cloud & offline sync", "Google Account Auth"]
+    ["Design system", "Adaptive Glassmorphism & Tactical HUD"],
+    ["Cloud & offline sync", "Google Account Auth & Firestore"]
   ];
   if (C.creator) rows.splice(1, 0, ["Created by", C.creator]);
   $("kv").innerHTML = rows.map(([k, v]) => `<dt>${DB.esc(k)}</dt><dd>${DB.esc(v)}</dd>`).join("");
@@ -1213,8 +1548,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const credits = [
     { i: "sparkle", n: "Kenney", r: "Created 3D assets and models for Downforce. (www.kenney.nl)" },
     { i: "db", n: "Google Firebase", r: "Provides secure Google authentication and real-time Firestore cloud synchronization across devices." },
-    { i: "cloud", n: "Open-Meteo & Live Open APIs", r: "Powers real-time weather forecasts, Wikimedia news, and Spaceflight feeds." },
-    { i: "type", n: "Google Fonts Typography", r: "Bricolage Grotesque, Outfit, and Space Mono typefaces used for display headers, body copy, and telemetry." }
+    { i: "cloud", n: "Open-Meteo & Live Open APIs", r: "Powers real-time weather forecasts, IMDb media lookups, LRCLIB synced lyrics, and full-track audio streams." },
+    { i: "type", n: "Google Fonts Typography", r: "Bricolage Grotesque, Outfit, Rajdhani, and Space Mono typefaces used for display headers, body copy, and telemetry." }
   ].concat((C.credits || []).map(c => ({ i: "user", n: c.name, r: c.role || "" })));
 
   $("credits").innerHTML = credits.map(c =>
