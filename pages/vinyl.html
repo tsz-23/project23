@@ -4,7 +4,7 @@
 <base href="../">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Vinyl Shelf | Project 23</title>
+<title>Vinyl | Project 23</title>
 <meta name="theme-color" content="#05030f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -404,21 +404,22 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.65rem;
-    flex-wrap: wrap;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
+    padding: 0.15rem 0;
   }
   .vn-pills {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    width: 100%;
+    width: auto;
     max-width: 100%;
     min-width: 0;
-    padding: 0.15rem 0.2rem;
-    flex: 1 1 100%;
+    padding: 0.1rem 0;
+    flex: 0 1 auto;
   }
   .vn-pills::-webkit-scrollbar {
     display: none;
@@ -428,17 +429,23 @@
     border: 1px solid var(--line);
     background: var(--glass-elevated);
     color: var(--muted);
-    font-size: 0.77rem;
+    font-size: 0.76rem;
     font-weight: 600;
-    padding: 0.32rem 0.76rem;
-    min-height: 34px;
+    padding: 0 0.82rem;
+    height: 35px;
+    min-height: 35px;
     border-radius: 999px;
     display: inline-flex;
     align-items: center;
-    gap: 0.32rem;
+    gap: 0.36rem;
     cursor: pointer;
     white-space: nowrap;
-    transition: all 0.16s;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .vn-pill svg {
+    width: 13.5px;
+    height: 13.5px;
+    flex-shrink: 0;
   }
   .vn-pill:hover {
     color: var(--text);
@@ -449,13 +456,33 @@
     background: linear-gradient(120deg, var(--accent), var(--accent2));
     color: var(--on-accent, #fff);
     border-color: transparent;
+    box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--accent) 55%, transparent);
   }
 
   .vn-shelf-right-tools {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.45rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    flex: 0 0 auto;
+  }
+  @media (max-width: 980px) {
+    .vn-shelf-controls {
+      flex-wrap: wrap;
+    }
+    .vn-pills {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+    .vn-shelf-right-tools {
+      width: 100%;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+    .vn-filter-box {
+      flex: 1 1 180px;
+    }
   }
   .vn-filter-box {
     height: 35px;
@@ -741,12 +768,12 @@
     position: fixed;
     width: 200px;
     height: 200px;
-    bottom: 0;
-    left: 0;
-    opacity: 0.002;
+    bottom: 6px;
+    right: 6px;
+    opacity: 0.015;
     pointer-events: none;
     overflow: hidden;
-    z-index: -1;
+    z-index: 1;
   }
 
   .vn-record-3d {
@@ -859,17 +886,17 @@
 
   .vn-sleeve-actions {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    right: 6px;
+    top: 5px;
+    left: 5px;
+    right: 5px;
     z-index: 6;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 4px;
+    gap: 2px;
     padding: 3px 4px;
-    border-radius: 11px;
-    background: rgba(10, 10, 18, 0.78);
+    border-radius: 10px;
+    background: rgba(10, 10, 18, 0.82);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.16);
@@ -883,12 +910,12 @@
     transform: translateY(0);
   }
   .vn-mini-act {
-    width: 30px;
-    height: 30px;
-    min-width: 30px;
-    min-height: 30px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
     padding: 0;
-    border-radius: 8px;
+    border-radius: 7px;
     border: 1px solid rgba(255, 255, 255, 0.18);
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
@@ -900,13 +927,17 @@
   .vn-mini-act:hover {
     background: var(--accent);
     border-color: rgba(255, 255, 255, 0.45);
-    transform: scale(1.2);
+    transform: scale(1.16);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     z-index: 2;
   }
   .vn-mini-act.fav-on {
     color: #ff375f;
     border-color: rgba(255, 55, 95, 0.45);
+  }
+  .vn-mini-act.folder-on {
+    color: #64d2ff;
+    border-color: rgba(100, 210, 255, 0.5);
   }
   .vn-mini-act.link-on {
     color: var(--vn-green);
@@ -916,8 +947,8 @@
     background: #ff453a;
   }
   .vn-mini-act svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 
   .vn-now-badge {
@@ -1019,12 +1050,146 @@
     align-items: center;
     padding-left: 18px;
     user-select: none;
+    perspective: 1100px;
+    overflow: hidden;
+  }
+
+  .vn-platter-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    transform-style: preserve-3d;
+    transition:
+      transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+    z-index: 2;
+  }
+  .vn-platter-well.lyrics-mode .vn-platter-stage {
+    transform: rotateY(-85deg) scale(0.82);
+    opacity: 0;
+    filter: blur(8px);
+    pointer-events: none;
+  }
+
+  .vn-lyrics-stage {
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    padding: 0.78rem 0.85rem 0.72rem;
+    background:
+      radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 68%),
+      linear-gradient(165deg, rgba(16, 18, 30, 0.96) 0%, rgba(10, 11, 18, 0.98) 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    transform-style: preserve-3d;
+    transition:
+      transform 0.62s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.48s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: rotateY(85deg) scale(0.84);
+    opacity: 0;
+    filter: blur(8px);
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+  }
+  .vn-platter-well.lyrics-mode .vn-lyrics-stage {
+    transform: rotateY(0deg) scale(1);
+    opacity: 1;
+    filter: blur(0px);
+    pointer-events: auto;
+  }
+  .vn-lyrics-stage-bg {
+    position: absolute;
+    inset: -24px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(28px) saturate(150%) brightness(0.32);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+    transition: background-image 0.4s ease;
+  }
+  .vn-lyrics-stage-head {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    padding-bottom: 0.42rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+  }
+  .vn-lyrics-stage-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--display);
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #fff;
+    min-width: 0;
+  }
+  .vn-lyrics-stage-title svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .vn-drawer-badge {
+    font-family: var(--mono);
+    font-size: 0.56rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.12rem 0.44rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
+    color: var(--accent3, #fff);
+    white-space: nowrap;
+  }
+  .vn-lyrics-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+  }
+  .vn-lyrics-mini-btn {
+    height: 24px;
+    min-height: 24px;
+    padding: 0 0.52rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.07);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.15s;
+  }
+  .vn-lyrics-mini-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
+    color: #fff;
+    transform: none;
   }
 
   .vn-deck-corner-led {
     position: absolute;
     bottom: 14px;
-    left: 16px;
+    left: 0px;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -1341,44 +1506,51 @@
 
   .vn-transport-row {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.8rem;
+    width: 100%;
   }
   .vn-main-transport {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.85rem;
+    width: 100%;
+    margin: 0 auto;
   }
   .vn-tr-circle {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-    padding: 0;
-    border-radius: 50%;
-    border: 1px solid var(--line);
-    background: var(--glass-elevated);
-    color: var(--text);
-    display: grid;
-    place-items: center;
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 50% !important;
+    border: 1px solid var(--line) !important;
+    background: var(--glass-elevated) !important;
+    color: var(--text) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 0 !important;
     cursor: pointer;
     transition: all 0.16s var(--apple-ease);
   }
   .vn-tr-circle:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
     transform: translateY(-1px);
   }
   .vn-tr-circle.play-main {
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-    min-height: 50px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-    border-color: transparent;
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    min-height: 52px !important;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)) !important;
+    color: #fff !important;
+    border-color: transparent !important;
     box-shadow: 0 10px 24px -6px color-mix(in srgb, var(--accent) 55%, transparent);
   }
   .vn-tr-circle.play-main:hover {
@@ -1388,22 +1560,29 @@
   .vn-tr-circle svg {
     width: 18px;
     height: 18px;
+    display: block;
+    margin: 0 auto;
+    flex-shrink: 0;
   }
   .vn-tr-circle.play-main svg {
     width: 21px;
     height: 21px;
+    display: block;
+    margin: 0 auto;
   }
 
   .vn-aux-controls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    width: 100%;
   }
   .vn-toggle-chip {
     height: 34px;
     min-height: 34px;
-    padding: 0 0.75rem;
+    padding: 0 0.78rem;
     border-radius: 999px;
     border: 1px solid var(--line);
     background: var(--glass-elevated);
@@ -1454,6 +1633,152 @@
     cursor: pointer;
   }
 
+  .vn-folder-slot {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    perspective: 900px;
+    cursor: pointer;
+    user-select: none;
+    padding-bottom: 2px;
+    border-radius: 14px;
+    transition: transform 0.22s var(--apple-ease), box-shadow 0.22s;
+  }
+  .vn-folder-slot.is-folder-drop {
+    box-shadow: 0 0 0 2.5px var(--vn-green), 0 0 26px rgba(48, 209, 88, 0.55);
+    background: color-mix(in srgb, var(--vn-green) 16%, transparent);
+    transform: translateY(-6px) scale(1.04);
+  }
+  .vn-folder-3d {
+    position: relative;
+    width: 148px;
+    height: 148px;
+    transform-style: preserve-3d;
+    transition: transform 0.36s var(--apple-spring);
+  }
+  .vn-folder-slot:hover .vn-folder-3d {
+    transform: translateY(-10px) rotateY(-8deg) rotateX(4deg);
+  }
+  .vn-folder-tab {
+    position: absolute;
+    top: -9px;
+    left: 10px;
+    width: 64px;
+    height: 18px;
+    border-radius: 7px 7px 0 0;
+    background: linear-gradient(135deg, var(--folder-c, #bf5af2), color-mix(in srgb, var(--folder-c, #bf5af2) 55%, #12131f));
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    z-index: 1;
+  }
+  .vn-folder-peek-disc {
+    position: absolute;
+    top: 4px;
+    right: -14px;
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at center, transparent 0%, transparent 31%, rgba(255,255,255,0.08) 32%, transparent 33%),
+      repeating-radial-gradient(circle at center, rgba(255,255,255,0.04) 0px, rgba(0,0,0,0.22) 1.6px, rgba(255,255,255,0.02) 3.2px),
+      radial-gradient(circle, color-mix(in srgb, var(--folder-c, #bf5af2) 65%, #1d1e2c) 0%, #090a10 78%);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.65), inset 0 0 0 1.5px rgba(255, 255, 255, 0.16);
+    transition: transform 0.42s var(--apple-spring);
+    z-index: 1;
+  }
+  .vn-folder-slot:hover .vn-folder-peek-disc {
+    transform: translateX(18px) rotate(28deg);
+  }
+  .vn-folder-body {
+    position: relative;
+    z-index: 2;
+    width: 148px;
+    height: 148px;
+    border-radius: 10px 12px 10px 10px;
+    background:
+      linear-gradient(155deg,
+        color-mix(in srgb, var(--folder-c, #bf5af2) 32%, #232538) 0%,
+        color-mix(in srgb, var(--folder-c, #bf5af2) 14%, #141522) 100%);
+    border: 1.5px solid color-mix(in srgb, var(--folder-c, #bf5af2) 52%, rgba(255, 255, 255, 0.18));
+    box-shadow:
+      -5px 8px 18px rgba(0, 0, 0, 0.72),
+      0 10px 24px rgba(0, 0, 0, 0.58),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+  }
+  .vn-folder-grid {
+    width: 100%;
+    height: 102px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 4px;
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(8, 9, 15, 0.55);
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .vn-folder-grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+  }
+  .vn-folder-grid-empty {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+  }
+  .vn-folder-grid-empty svg {
+    width: 24px;
+    height: 24px;
+    color: var(--folder-c, #bf5af2);
+    opacity: 0.85;
+  }
+  .vn-folder-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.3rem;
+    padding: 0 2px;
+  }
+  .vn-folder-badge {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff;
+    background: color-mix(in srgb, var(--folder-c, #bf5af2) 42%, rgba(0, 0, 0, 0.6));
+    border: 1px solid color-mix(in srgb, var(--folder-c, #bf5af2) 68%, transparent);
+    padding: 0.1rem 0.42rem;
+    border-radius: 999px;
+  }
+  .vn-folder-open-lbl {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .vn-folder-slot:hover .vn- sleeve-actions,
+  .vn-folder-slot:hover .vn-sleeve-actions {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   .vn-empty-shelf {
     text-align: center;
     padding: 2.5rem 1.2rem 1.9rem;
@@ -1473,6 +1798,185 @@
     font-size: 0.84rem;
     color: rgba(240, 226, 212, 0.65);
     max-width: 28rem;
+  }
+
+  .vn-pill.vn-add-folder-pill {
+    border-style: dashed;
+    border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+    color: var(--accent3, var(--accent));
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    font-weight: 700;
+  }
+  .vn-pill.vn-add-folder-pill:hover {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: #fff;
+  }
+  .vn-pill.is-folder-drop {
+    box-shadow: 0 0 0 2px var(--vn-green), 0 0 16px rgba(48, 209, 88, 0.45);
+    border-color: var(--vn-green) !important;
+    transform: scale(1.05);
+  }
+  .vn-folder-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--folder-c, var(--accent));
+    box-shadow: 0 0 6px var(--folder-c, var(--accent));
+    flex-shrink: 0;
+  }
+
+  .vn-folder-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.65rem 0.95rem;
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--accent) 12%, var(--glass-elevated));
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+  }
+  .vn-folder-bar[hidden] {
+    display: none !important;
+  }
+  .vn-folder-bar-info {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.84rem;
+  }
+  .vn-folder-bar-info b {
+    font-family: var(--display);
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .vn-folder-bar-info span {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+  .vn-folder-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .vn-folder-bar-actions .vn-btn {
+    height: 31px;
+    min-height: 31px;
+    padding: 0 0.72rem;
+    font-size: 0.74rem;
+  }
+
+  .vn-lyrics-Viewport {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    padding: 4.5rem 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.38rem;
+    scroll-behavior: smooth;
+    mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  }
+  .vn-lyrics-Viewport::-webkit-scrollbar {
+    width: 4px;
+  }
+  .vn-lyrics-Viewport::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+  .vn-lyric-line {
+    border: 0;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.42);
+    font-family: var(--font);
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.42;
+    text-align: left;
+    padding: 0.38rem 0.62rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    transition:
+      color 0.25s var(--apple-ease),
+      background 0.25s var(--apple-ease),
+      transform 0.25s var(--apple-ease),
+      font-size 0.22s var(--apple-ease);
+    width: 100%;
+    flex-shrink: 0;
+  }
+  .vn-lyric-line:hover {
+    color: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.06);
+    transform: none;
+  }
+  .vn-lyric-line.active {
+    color: #ffffff;
+    font-size: 0.96rem;
+    font-weight: 800;
+    background: color-mix(in srgb, var(--accent) 26%, rgba(255, 255, 255, 0.08));
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.55);
+    transform: scale(1.01);
+  }
+  .vn-lyric-line .vn-lyric-ts {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.34);
+    flex-shrink: 0;
+  }
+  .vn-lyric-line.active .vn-lyric-ts {
+    color: var(--accent3, #fff);
+  }
+  .vn-lyrics-empty {
+    margin: auto;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.8rem;
+    padding: 1rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .vn-folder-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 0.5rem 0 0.85rem;
+  }
+  .vn-folder-check-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.52rem 0.75rem;
+    border-radius: 12px;
+    background: var(--glass-elevated);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .vn-folder-check-item:hover {
+    border-color: var(--accent);
+  }
+  .vn-folder-check-item input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--accent);
+    cursor: pointer;
   }
 
   @media (max-width: 960px) {
@@ -1591,6 +2095,7 @@
       font-size: 0.72rem;
     }
     .vn-vol-wrap {
+      grid-column: 1 / -1;
       width: 100%;
       justify-content: center;
       padding: 0 0.65rem;
@@ -1627,11 +2132,17 @@
       gap: 1.1rem 0.75rem;
     }
     .vn-record-3d,
-    .vn-sleeve {
+    .vn-sleeve,
+    .vn-folder-3d,
+    .vn-folder-body {
       width: 132px;
       height: 132px;
     }
-    .vn-peek-disc {
+    .vn-folder-grid {
+      height: 86px;
+    }
+    .vn-peek-disc,
+    .vn-folder-peek-disc {
       width: 122px;
       height: 122px;
       right: -14px;
@@ -1645,10 +2156,14 @@
       padding: 2px 3px;
     }
     .vn-mini-act {
-      width: 27px;
-      height: 27px;
-      min-width: 27px;
-      min-height: 27px;
+      width: 21px;
+      height: 21px;
+      min-width: 21px;
+      min-height: 21px;
+    }
+    .vn-mini-act svg {
+      width: 11.5px;
+      height: 11.5px;
     }
     .vn-platter-well {
       width: 100%;
@@ -1757,35 +2272,59 @@
         </div>
       </div>
 
+      <div class="vn-folder-bar" id="vnFolderToolbar" hidden></div>
       <div class="vn-bookshelf-cabinet" id="vnBookshelfCabinet" data-finish="walnut" aria-live="polite"></div>
     </section>
 
     <section class="panel apple-panel vn-turntable-section" aria-label="3D Vinyl Turntable Player">
       <div class="vn-deck-chassis">
-        <div class="vn-platter-well">
-          <div class="vn-platter-ring">
-            <div class="vn-platter-sheen"></div>
-            <div class="vn-turntable-disc" id="vnActiveDisc" title="Click or drag to scrub vinyl">
-              <div class="vn-disc-center-label" id="vnActiveLabel">
-                <div class="vn-spindle"></div>
+        <div class="vn-platter-well" id="vnPlatterWell">
+          <div class="vn-platter-stage" id="vnPlatterStage">
+            <div class="vn-platter-ring">
+              <div class="vn-platter-sheen"></div>
+              <div class="vn-turntable-disc" id="vnActiveDisc" title="Click to play or pause vinyl">
+                <div class="vn-disc-center-label" id="vnActiveLabel">
+                  <div class="vn-spindle"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="vn-tonearm-base">
+              <div class="vn-tonearm-pivot" id="vnTonearmPivot">
+                <div class="vn-tonearm-counterweight"></div>
+                <div class="vn-tonearm-rod">
+                  <div class="vn-tonearm-headshell"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="vn-deck-corner-led">
+              <i class="vn-power-lamp" id="vnPowerLamp"></i>
+              <div class="vn-rpm-switch" role="group" aria-label="Turntable speed">
+                <button type="button" class="vn-rpm-btn active" data-rpm="33">33⅓</button>
+                <button type="button" class="vn-rpm-btn" data-rpm="45">45 RPM</button>
               </div>
             </div>
           </div>
 
-          <div class="vn-tonearm-base">
-            <div class="vn-tonearm-pivot" id="vnTonearmPivot">
-              <div class="vn-tonearm-counterweight"></div>
-              <div class="vn-tonearm-rod">
-                <div class="vn-tonearm-headshell"></div>
+          <div class="vn-lyrics-stage" id="vnLyricsStage" aria-label="Time-Synced Lyrics View">
+            <div class="vn-lyrics-stage-bg" id="vnLyricsStageBg"></div>
+            <div class="vn-lyrics-stage-head">
+              <div class="vn-lyrics-stage-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span>Synced Lyrics</span>
+                <span class="vn-drawer-badge" id="vnLyricsStatusBadge">READY</span>
+              </div>
+              <div class="vn-lyrics-head-actions">
+                <button type="button" class="vn-lyrics-mini-btn" id="vnEditLyricsBtn" title="Paste or edit custom synced/plain lyrics for this vinyl">✎ Edit</button>
+                <button type="button" class="vn-lyrics-mini-btn" id="vnCloseLyricsStageBtn" title="Switch back to spinning vinyl platter">✕ Vinyl</button>
               </div>
             </div>
-          </div>
 
-          <div class="vn-deck-corner-led">
-            <i class="vn-power-lamp" id="vnPowerLamp"></i>
-            <div class="vn-rpm-switch" role="group" aria-label="Turntable speed">
-              <button type="button" class="vn-rpm-btn active" data-rpm="33">33⅓</button>
-              <button type="button" class="vn-rpm-btn" data-rpm="45">45 RPM</button>
+            <div class="vn-lyrics-Viewport" id="vnLyricsViewport">
+              <div class="vn-lyrics-empty">
+                <span>Select and spin any vinyl record to load time-synced scrolling lyrics.</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1839,15 +2378,20 @@
             <div class="vn-aux-controls">
               <button type="button" class="vn-toggle-chip on" id="vnCrackleBtn" title="Toggle warm analog vinyl surface crackle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>
-                <span>Vinyl Crackle: On</span>
+                <span>Crackle: On</span>
+              </button>
+
+              <button type="button" class="vn-toggle-chip" id="vnLyricsToggleBtn" title="Flip between Spinning Vinyl Platter and Time-Synced Lyrics">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                <span id="vnLyricsToggleLbl">Lyrics: Off</span>
               </button>
 
               <button type="button" class="vn-toggle-chip on" id="vnAutoNextBtn" title="Automatically spin the next vinyl on your shelf when track ends">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                <span>Auto-Spin Shelf</span>
+                <span>Auto-Spin</span>
               </button>
 
-              <button type="button" class="vn-toggle-chip" id="vnSourceBtn" title="Choose or link full-length song source (Full Stream, YouTube, or Audio File)">
+              <button type="button" class="vn-toggle-chip" id="vnSourceBtn" title="Choose or link full-length song source">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                 <span id="vnSourceBtnLbl">Full Track Source</span>
               </button>
@@ -1911,9 +2455,23 @@ DB.whenReady(() => {
     { id: "plays", label: "Most Played" }
   ];
 
+  const VN_YT_MAP_KEY = "p23.vinyl.ytmap.v2";
+  const VN_FOLDERS_KEY = "p23.vinyl.folders";
+  const VN_LYRICS_KEY = "p23.vinyl.lyrics.v3";
+
+  const FOLDER_COLORS = [
+    { id: "#bf5af2", name: "Cosmic Purple" },
+    { id: "#0a84ff", name: "Electric Blue" },
+    { id: "#30d158", name: "Emerald Green" },
+    { id: "#ff9f0a", name: "Warm Amber" },
+    { id: "#ff375f", name: "Neon Rose" },
+    { id: "#64d2ff", name: "Ice Cyan" }
+  ];
+
   const state = {
     selectedWax: "obsidian",
     shelfFilter: "all",
+    openFolderId: null,
     shelfFinish: "walnut",
     sortBy: "custom",
     searchShelfQuery: "",
@@ -1922,18 +2480,139 @@ DB.whenReady(() => {
     activeVinylObj: null,
     playbackEngine: "audio",
     isPlaying: false,
+    wantAutoPlay: false,
+    desiredYtVideoId: "",
     rpm: 33,
     crackleOn: true,
+    lyricsOpen: false,
     autoNextOn: true,
     volume: 0.85,
     discAngle: 0,
     draggedVinylId: null,
-    syncInFlight: false
+    syncInFlight: false,
+    activeLyricsLines: [],
+    activeLyricsSynced: false,
+    activeLyricIdx: -1
   };
+
+  let deckLoadSeq = 0;
+
+  function loadYtMap() {
+    try {
+      const raw = localStorage.getItem(VN_YT_MAP_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") return parsed;
+      }
+    } catch {}
+    return {};
+  }
+
+  let ytLinkCacheMap = loadYtMap();
+
+  function saveYtMap() {
+    try {
+      localStorage.setItem(VN_YT_MAP_KEY, JSON.stringify(ytLinkCacheMap));
+    } catch {}
+  }
+
+  function normKeyStr(s) {
+    return String(s || "")
+      .toLowerCase()
+      .replace(/\(.*?\)|\[.*?\]/g, " ")
+      .replace(/feat\.?|ft\.?/g, " ")
+      .replace(/[^a-z0-9\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function getTrackKeys(v) {
+    if (!v) return [];
+    const keys = [];
+    if (v.trackId) keys.push("tid:" + String(v.trackId).trim());
+    const t = normKeyStr(v.title);
+    const a = normKeyStr(v.artist);
+    if (t && a) keys.push("ta:" + t + "|" + a);
+    if (t) keys.push("t:" + t);
+    return keys;
+  }
+
+  function rememberFullTrack(v, { fullAudioUrl = "", ytVideoId = "", ytCandidates = [], fullDurationSec = 0, sourceName = "" } = {}) {
+    if (!v) return;
+    const cleanAudio = String(fullAudioUrl || v.fullAudioUrl || "").trim();
+    const cleanYt = extractYouTubeId(ytVideoId || v.ytVideoId || "");
+    if (!cleanAudio && !cleanYt) return;
+    const dur = Number(fullDurationSec) || Number(v.fullDurationSec) || Math.round((Number(v.durationMs) || 210000) / 1000);
+    const entry = {
+      fullAudioUrl: cleanAudio,
+      ytVideoId: cleanYt,
+      ytCandidates: Array.isArray(ytCandidates) ? ytCandidates.slice(0, 5) : [],
+      fullDurationSec: dur,
+      sourceName: sourceName || (cleanAudio ? "Full Studio Audio" : "Full YouTube Audio")
+    };
+    const keys = getTrackKeys(v);
+    for (const k of keys) {
+      if (k.startsWith("tid:") || k.startsWith("ta:")) {
+        ytLinkCacheMap[k] = entry;
+      }
+    }
+    saveYtMap();
+  }
+
+  function hydrateVinylYt(v) {
+    if (!v || typeof v !== "object") return v;
+    const existingAudio = String(v.fullAudioUrl || "").trim();
+    const existingVid = extractYouTubeId(v.ytVideoId || "");
+    if (existingAudio) {
+      v.fullAudioUrl = existingAudio;
+      if (!v.sourceName) v.sourceName = "Full Studio Audio";
+      rememberFullTrack(v, { fullAudioUrl: existingAudio, ytVideoId: existingVid, fullDurationSec: v.fullDurationSec, sourceName: v.sourceName });
+      return v;
+    }
+    if (existingVid) {
+      v.ytVideoId = existingVid;
+      if (!v.sourceName) v.sourceName = "Full YouTube Audio";
+      rememberFullTrack(v, { ytVideoId: existingVid, ytCandidates: v.ytCandidates, fullDurationSec: v.fullDurationSec, sourceName: v.sourceName });
+      return v;
+    }
+    for (const k of getTrackKeys(v)) {
+      if (!k.startsWith("tid:") && !k.startsWith("ta:")) continue;
+      const hit = ytLinkCacheMap[k];
+      if (hit) {
+        if (hit.fullAudioUrl) {
+          v.fullAudioUrl = hit.fullAudioUrl;
+          v.sourceName = hit.sourceName || "Full Studio Audio";
+        }
+        if (hit.ytVideoId) {
+          v.ytVideoId = hit.ytVideoId;
+          if (!v.fullAudioUrl) v.sourceName = hit.sourceName || "Full YouTube Audio";
+        }
+        if (Array.isArray(hit.ytCandidates) && hit.ytCandidates.length) {
+          v.ytCandidates = hit.ytCandidates.slice();
+        }
+        if (hit.fullDurationSec && (!v.fullDurationSec || v.fullDurationSec <= 35)) {
+          v.fullDurationSec = hit.fullDurationSec;
+        }
+        break;
+      }
+    }
+    return v;
+  }
 
   const audioEl = new Audio();
   audioEl.preload = "auto";
   audioEl.volume = state.volume;
+
+  function hardStopHtmlAudio() {
+    try {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      if (audioEl.getAttribute("src") || audioEl.src) {
+        audioEl.removeAttribute("src");
+        audioEl.load();
+      }
+    } catch {}
+  }
 
   let ytPlayer = null;
   let ytReady = false;
@@ -1958,9 +2637,11 @@ DB.whenReady(() => {
 
   function initYtPlayerInstance() {
     if (ytPlayer || !window.YT || !window.YT.Player) return;
+    const initialVid = extractYouTubeId(state.desiredYtVideoId || state.activeVinylObj?.ytVideoId || "") || "jfKfPfyJRdk";
     ytPlayer = new YT.Player("vnYtPlayerMount", {
       height: "200",
       width: "200",
+      videoId: initialVid,
       playerVars: {
         autoplay: 0,
         controls: 0,
@@ -1968,13 +2649,15 @@ DB.whenReady(() => {
         fs: 0,
         modestbranding: 1,
         playsinline: 1,
-        rel: 0,
-        origin: window.location.origin
+        rel: 0
       },
       events: {
         onReady: () => {
           ytReady = true;
-          try { ytPlayer.setVolume(Math.round(state.volume * 100)); } catch {}
+          try {
+            if (typeof ytPlayer.unMute === "function") ytPlayer.unMute();
+            ytPlayer.setVolume(Math.round(state.volume * 100));
+          } catch {}
           if (pendingYtAction) {
             const act = pendingYtAction;
             pendingYtAction = null;
@@ -1983,63 +2666,152 @@ DB.whenReady(() => {
         },
         onStateChange: ev => {
           if (state.playbackEngine !== "yt") return;
+          const vData = (ytPlayer && typeof ytPlayer.getVideoData === "function") ? ytPlayer.getVideoData() : null;
+          const loadedVid = vData && vData.video_id ? String(vData.video_id) : "";
+
+          if (!state.desiredYtVideoId) {
+            if (ev.data === YT.PlayerState.PLAYING || ev.data === YT.PlayerState.BUFFERING) {
+              try { ytPlayer.pauseVideo(); } catch {}
+            }
+            return;
+          }
+
+          if (loadedVid && loadedVid !== state.desiredYtVideoId) {
+            if (ev.data === YT.PlayerState.PLAYING || ev.data === YT.PlayerState.BUFFERING || ev.data === YT.PlayerState.CUED) {
+              try {
+                if (state.wantAutoPlay) {
+                  ytPlayer.loadVideoById(state.desiredYtVideoId, 0);
+                } else {
+                  ytPlayer.cueVideoById(state.desiredYtVideoId, 0);
+                }
+              } catch {}
+            }
+            return;
+          }
+
           const dur = Number(ytPlayer.getDuration && ytPlayer.getDuration()) || 0;
           if (dur > 0 && state.activeVinylObj) {
             state.activeVinylObj.fullDurationSec = Math.round(dur);
             $("vnDurTimeLbl").textContent = fmtSec(dur);
           }
+
           if (ev.data === YT.PlayerState.PLAYING) {
+            hardStopHtmlAudio();
             state.isPlaying = true;
+            state.wantAutoPlay = true;
             startVinylCrackle();
             updateTurntableUI();
-            renderBookshelf(loadVinyls());
+            syncBookshelfPlaybackIndicators();
           } else if (ev.data === YT.PlayerState.PAUSED) {
-            state.isPlaying = false;
-            stopVinylCrackle();
-            updateTurntableUI();
-            renderBookshelf(loadVinyls());
+            if (!state.wantAutoPlay) {
+              state.isPlaying = false;
+              stopVinylCrackle();
+              updateTurntableUI();
+              syncBookshelfPlaybackIndicators();
+            }
           } else if (ev.data === YT.PlayerState.CUED) {
             if (dur > 0) {
               $("vnDurTimeLbl").textContent = fmtSec(dur);
             }
-            updateTurntableUI();
+            if (state.wantAutoPlay && (!loadedVid || loadedVid === state.desiredYtVideoId)) {
+              try { ytPlayer.playVideo(); } catch {}
+            } else {
+              updateTurntableUI();
+            }
           } else if (ev.data === YT.PlayerState.ENDED) {
             state.isPlaying = false;
+            state.wantAutoPlay = false;
             stopVinylCrackle();
             updateTurntableUI();
-            renderBookshelf(loadVinyls());
+            syncBookshelfPlaybackIndicators();
             if (state.autoNextOn && loadVinyls().length > 1) {
               setTimeout(() => stepShelfVinyl(1), 450);
             }
           }
         },
-        onError: () => {
-          if (state.playbackEngine === "yt" && state.isPlaying) {
+        onError: async () => {
+          if (state.playbackEngine !== "yt") return;
+          const v = state.activeVinylObj;
+          const shouldAutoPlay = Boolean(state.wantAutoPlay || state.isPlaying);
+          if (v && v.fullAudioUrl) {
+            state.playbackEngine = "audio";
+            audioEl.src = v.fullAudioUrl;
+            audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+            if (shouldAutoPlay) {
+              try {
+                await audioEl.play();
+                state.isPlaying = true;
+                startVinylCrackle();
+              } catch {}
+            }
+            updateTurntableUI(v);
+            syncBookshelfPlaybackIndicators();
+            return;
+          }
+          if (state.isPlaying || state.wantAutoPlay) {
             state.isPlaying = false;
+            state.wantAutoPlay = false;
             stopVinylCrackle();
-            DB.toast("YouTube Video Unavailable", "This YouTube video cannot be embedded. Click 'Full Track Source' to link another video.", 3600);
             updateTurntableUI();
           }
         }
       }
     });
   }
-  ensureYouTubeApiLoaded();
 
+  let ytSwitchVerifyTimer = null;
   function playOrCueYtVideo(videoId, autoPlay = false) {
-    if (!videoId) return;
+    const vid = extractYouTubeId(videoId);
+    if (!vid) return;
+    clearTimeout(ytSwitchVerifyTimer);
+    hardStopHtmlAudio();
+    state.playbackEngine = "yt";
+    state.desiredYtVideoId = vid;
+    state.wantAutoPlay = Boolean(autoPlay);
     ensureYouTubeApiLoaded();
     if (!ytReady || !ytPlayer || typeof ytPlayer.loadVideoById !== "function") {
-      pendingYtAction = { videoId, autoPlay };
+      pendingYtAction = { videoId: vid, autoPlay: Boolean(autoPlay) };
       return;
     }
     try {
+      if (typeof ytPlayer.unMute === "function") {
+        try { ytPlayer.unMute(); } catch {}
+      }
       ytPlayer.setVolume(Math.round(state.volume * 100));
+      if (ytPlayer.setPlaybackRate) {
+        try { ytPlayer.setPlaybackRate(state.rpm === 45 ? 1.25 : 1.0); } catch {}
+      }
+      const vd = typeof ytPlayer.getVideoData === "function" ? ytPlayer.getVideoData() : null;
+      const curVid = vd && vd.video_id ? String(vd.video_id) : "";
+      const pState = typeof ytPlayer.getPlayerState === "function" ? ytPlayer.getPlayerState() : -1;
+
       if (autoPlay) {
-        ytPlayer.loadVideoById(videoId);
-        ytPlayer.playVideo();
+        if (curVid === vid && (pState === YT.PlayerState.CUED || pState === YT.PlayerState.PAUSED)) {
+          ytPlayer.playVideo();
+        } else {
+          ytPlayer.loadVideoById(vid, 0);
+          try { ytPlayer.playVideo(); } catch {}
+        }
+        ytSwitchVerifyTimer = setTimeout(() => {
+          if (!ytReady || !ytPlayer || state.desiredYtVideoId !== vid || !state.wantAutoPlay) return;
+          try {
+            if (typeof ytPlayer.unMute === "function") ytPlayer.unMute();
+            ytPlayer.setVolume(Math.round(state.volume * 100));
+            const vd2 = typeof ytPlayer.getVideoData === "function" ? ytPlayer.getVideoData() : null;
+            const curVid2 = vd2 && vd2.video_id ? String(vd2.video_id) : "";
+            const pState2 = typeof ytPlayer.getPlayerState === "function" ? ytPlayer.getPlayerState() : -1;
+            if (curVid2 && curVid2 !== vid) {
+              ytPlayer.loadVideoById(vid, 0);
+              ytPlayer.playVideo();
+            } else if (pState2 !== YT.PlayerState.PLAYING && pState2 !== YT.PlayerState.BUFFERING) {
+              ytPlayer.playVideo();
+            }
+          } catch {}
+        }, 280);
       } else {
-        ytPlayer.cueVideoById(videoId);
+        if (curVid !== vid) {
+          ytPlayer.cueVideoById(vid, 0);
+        }
       }
     } catch {}
   }
@@ -2047,7 +2819,7 @@ DB.whenReady(() => {
   function extractYouTubeId(input) {
     const s = String(input || "").trim();
     if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
-    const m = s.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    const m = s.match(/(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     return m ? m[1] : "";
   }
 
@@ -2055,10 +2827,11 @@ DB.whenReady(() => {
     const vid = extractYouTubeId(videoId);
     if (!vid) return { ok: false, videoId: "" };
     try {
-      const res = await fetch(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v=" + vid)}`);
+      const res = await fetchWithTimeout(`https://noembed.com/embed?url=${encodeURIComponent("https://www.youtube.com/watch?v=" + vid)}`, 3000);
       if (res.ok) {
         const data = await res.json();
-        if (data && !data.error && data.title) {
+        if (data && data.error) return { ok: false, videoId: "" };
+        if (data && data.title) {
           return { ok: true, videoId: vid, title: data.title, author: data.author_name || "" };
         }
       }
@@ -2066,12 +2839,365 @@ DB.whenReady(() => {
     return { ok: true, videoId: vid };
   }
 
+  function fetchWithTimeout(url, ms = 3400) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+  }
+
+  function decodeHtmlEntities(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;|&#39;|&apos;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">");
+  }
+
+  function extractSaavnStreamUrl(song) {
+    if (!song || typeof song !== "object") return "";
+    if (typeof song.media_url === "string" && song.media_url.startsWith("http")) {
+      return song.media_url.replace(/^http:/, "https:").replace(/_(96|160)\./, "_320.");
+    }
+    const dl = song.downloadUrl || song.download_url;
+    if (typeof dl === "string" && dl.startsWith("http")) {
+      return dl.replace(/^http:/, "https:");
+    }
+    if (Array.isArray(dl) && dl.length > 0) {
+      const best =
+        dl.find(x => x && /320/.test(String(x.quality || x.bitrate || ""))) ||
+        dl.find(x => x && /160/.test(String(x.quality || x.bitrate || ""))) ||
+        dl[dl.length - 1];
+      const url = best && (best.url || best.link || best);
+      if (typeof url === "string" && url.startsWith("http")) {
+        return url.replace(/^http:/, "https:");
+      }
+    }
+    return "";
+  }
+
+  function normalizeSaavnSong(song) {
+    const streamUrl = extractSaavnStreamUrl(song);
+    if (!streamUrl) return null;
+    const title = decodeHtmlEntities(song.name || song.title || song.song || "Untitled Track");
+    let artist = "";
+    if (typeof song.primaryArtists === "string" && song.primaryArtists) {
+      artist = decodeHtmlEntities(song.primaryArtists);
+    } else if (song.artists && Array.isArray(song.artists.primary) && song.artists.primary.length) {
+      artist = decodeHtmlEntities(song.artists.primary.map(a => a.name).filter(Boolean).join(", "));
+    } else if (typeof song.singers === "string" && song.singers) {
+      artist = decodeHtmlEntities(song.singers);
+    } else if (typeof song.music === "string" && song.music) {
+      artist = decodeHtmlEntities(song.music);
+    } else {
+      artist = "Unknown Artist";
+    }
+    const album = decodeHtmlEntities(
+      (song.album && typeof song.album === "object" ? song.album.name : song.album) || "Single"
+    );
+    let cover = "assets/logo.png";
+    if (Array.isArray(song.image) && song.image.length) {
+      const hi = song.image[song.image.length - 1];
+      const imgUrl = hi && (hi.url || hi.link || hi);
+      if (typeof imgUrl === "string" && imgUrl.startsWith("http")) {
+        cover = imgUrl.replace(/^http:/, "https:").replace(/150x150|50x50/, "500x500");
+      }
+    } else if (typeof song.image === "string" && song.image.startsWith("http")) {
+      cover = song.image.replace(/^http:/, "https:").replace(/150x150|50x50/, "500x500");
+    }
+    const durSec = Math.max(45, parseInt(song.duration, 10) || 210);
+    const year = song.year ? String(song.year).slice(0, 4) : "";
+    const mapped = {
+      trackId: "saavn-" + String(song.id || DB.uid()),
+      title,
+      artist,
+      album,
+      cover,
+      previewUrl: streamUrl,
+      fullAudioUrl: streamUrl,
+      ytVideoId: "",
+      sourceName: "Full Studio Audio",
+      genre: decodeHtmlEntities(song.language ? (song.language.charAt(0).toUpperCase() + song.language.slice(1)) : "Music"),
+      year,
+      durationMs: durSec * 1000,
+      fullDurationSec: durSec
+    };
+    rememberFullTrack(mapped, { fullAudioUrl: streamUrl, fullDurationSec: durSec, sourceName: "Full Studio Audio" });
+    return mapped;
+  }
+
+  function parseSaavnSearchPayload(json) {
+    if (!json) return [];
+    let rawList = [];
+    if (Array.isArray(json)) {
+      rawList = json;
+    } else if (json.data && Array.isArray(json.data.results)) {
+      rawList = json.data.results;
+    } else if (Array.isArray(json.results)) {
+      rawList = json.results;
+    } else if (json.data && Array.isArray(json.data)) {
+      rawList = json.data;
+    }
+    return rawList.map(normalizeSaavnSong).filter(Boolean);
+  }
+
+  function requireNonEmptyArray(promise) {
+    return promise.then(arr => {
+      if (Array.isArray(arr) && arr.length > 0) return arr;
+      throw new Error("Empty");
+    });
+  }
+
+  const saavnQueryCache = new Map();
+  async function searchFullAudioCatalog(query) {
+    if (navigator.onLine === false) return [];
+    const q = String(query || "").replace(/&/g, " ").replace(/\s+/g, " ").trim();
+    if (!q) return [];
+    const cacheKey = q.toLowerCase();
+    if (saavnQueryCache.has(cacheKey)) return saavnQueryCache.get(cacheKey).slice();
+
+    const endpoints = [
+      `https://jiosaavn-api-privatecvc2.vercel.app/search/songs?query=${encodeURIComponent(q)}&limit=16`,
+      `https://jiosaavn-api2-eight.vercel.app/api/search/songs?query=${encodeURIComponent(q)}&limit=16`,
+      `https://saavn.dev/api/search/songs?query=${encodeURIComponent(q)}&limit=16`,
+      `https://saavnapi-nine.vercel.app/result/?query=${encodeURIComponent(q)}`
+    ];
+
+    try {
+      const winner = await Promise.any(
+        endpoints.map(url =>
+          requireNonEmptyArray(
+            fetchWithTimeout(url, 3600)
+              .then(r => (r.ok ? r.json() : null))
+              .then(parseSaavnSearchPayload)
+          )
+        )
+      );
+      if (Array.isArray(winner) && winner.length > 0) {
+        saavnQueryCache.set(cacheKey, winner);
+        return winner.slice();
+      }
+    } catch {}
+    return [];
+  }
+
+  function pickBestFullTrackMatch(candidates, title, artist, expectedDurSec = 0) {
+    if (!Array.isArray(candidates) || !candidates.length) return null;
+    const wantTitle = normKeyStr(title);
+    const wantArtist = normKeyStr(artist);
+    const artistTokens = wantArtist.split(" ").filter(w => w.length >= 2);
+
+    let best = null;
+    let bestScore = -999;
+
+    for (const c of candidates) {
+      if (!c || !c.fullAudioUrl) continue;
+      const cTitle = normKeyStr(c.title);
+      const cArtist = normKeyStr(c.artist);
+      let score = 0;
+
+      if (wantTitle && cTitle === wantTitle) score += 50;
+      else if (wantTitle && (cTitle.includes(wantTitle) || wantTitle.includes(cTitle))) score += 30;
+      else {
+        const tWords = wantTitle.split(" ").filter(w => w.length >= 2);
+        const matchedWords = tWords.filter(w => cTitle.includes(w)).length;
+        score += matchedWords * 10;
+      }
+
+      if (wantArtist && cArtist === wantArtist) score += 40;
+      else if (wantArtist && (cArtist.includes(wantArtist) || wantArtist.includes(cArtist))) score += 28;
+      else if (artistTokens.length) {
+        const matchedArtist = artistTokens.filter(w => cArtist.includes(w)).length;
+        score += matchedArtist * 12;
+      }
+
+      if (expectedDurSec > 45 && c.fullDurationSec > 45) {
+        const diff = Math.abs(expectedDurSec - c.fullDurationSec);
+        if (diff <= 4) score += 20;
+        else if (diff <= 12) score += 10;
+        else if (diff > 60) score -= 15;
+      }
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+
+    return best || candidates[0];
+  }
+
+  async function resolveFastSaavnDirect(title, artist) {
+    if (navigator.onLine === false || !title) return "";
+    try {
+      const url = `https://fast-saavn.vercel.app/?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist || "")}`;
+      const res = await fetchWithTimeout(url, 3400);
+      if (!res.ok) return "";
+      const txt = (await res.text()).trim();
+      if (/^\d+\/[a-zA-Z0-9_-]+$/.test(txt)) {
+        return `https://aac.saavncdn.com/${txt}_320.mp4`;
+      }
+    } catch {}
+    return "";
+  }
+
+  const inFlightAutoLinkMap = new Map();
+
+  async function autoLinkVinylYouTube(vinylObj, persistToShelf = true) {
+    if (!vinylObj) return "";
+    hydrateVinylYt(vinylObj);
+    if (vinylObj.fullAudioUrl) return vinylObj.fullAudioUrl;
+    const existingYt = extractYouTubeId(vinylObj.ytVideoId || "");
+    if (existingYt) return existingYt;
+
+    const dedupKey = getTrackKeys(vinylObj)[0] || (vinylObj.id || `${vinylObj.title}|${vinylObj.artist}`);
+    if (inFlightAutoLinkMap.has(dedupKey)) {
+      const shared = await inFlightAutoLinkMap.get(dedupKey);
+      hydrateVinylYt(vinylObj);
+      return shared || "";
+    }
+
+    const lookupPromise = (async () => {
+      const baseTitle = String(vinylObj.title || "").trim();
+      const baseArtist = String(vinylObj.artist || "").trim();
+      const expDur = Math.round((Number(vinylObj.durationMs) || 210000) / 1000);
+
+      const [catalogHits, fastDirectUrl] = await Promise.all([
+        searchFullAudioCatalog(`${baseTitle} ${baseArtist}`.trim()),
+        resolveFastSaavnDirect(baseTitle, baseArtist)
+      ]);
+
+      let streamUrl = "";
+      let streamDur = expDur > 45 ? expDur : 210;
+
+      const bestMatch = pickBestFullTrackMatch(catalogHits, baseTitle, baseArtist, expDur);
+      if (bestMatch && bestMatch.fullAudioUrl) {
+        streamUrl = bestMatch.fullAudioUrl;
+        streamDur = bestMatch.fullDurationSec || streamDur;
+      } else if (fastDirectUrl) {
+        streamUrl = fastDirectUrl;
+      } else if (baseTitle) {
+        const titleOnlyHits = await searchFullAudioCatalog(baseTitle);
+        const match2 = pickBestFullTrackMatch(titleOnlyHits, baseTitle, baseArtist, expDur);
+        if (match2 && match2.fullAudioUrl) {
+          streamUrl = match2.fullAudioUrl;
+          streamDur = match2.fullDurationSec || streamDur;
+        }
+      }
+
+      if (!streamUrl) return "";
+
+      vinylObj.fullAudioUrl = streamUrl;
+      vinylObj.sourceName = "Full Studio Audio";
+      vinylObj.fullDurationSec = streamDur;
+      rememberFullTrack(vinylObj, { fullAudioUrl: streamUrl, fullDurationSec: streamDur, sourceName: "Full Studio Audio" });
+
+      for (const sr of state.lastSearchResults) {
+        if (String(sr.trackId) === String(vinylObj.trackId) || (normKeyStr(sr.title) === normKeyStr(vinylObj.title) && normKeyStr(sr.artist) === normKeyStr(vinylObj.artist))) {
+          sr.fullAudioUrl = streamUrl;
+          sr.sourceName = "Full Studio Audio";
+          sr.fullDurationSec = streamDur;
+        }
+      }
+
+      if (persistToShelf && !String(vinylObj.id || "").startsWith("preview-")) {
+        const list = loadVinyls();
+        let changed = false;
+        for (const item of list) {
+          if (item.id === vinylObj.id || (vinylObj.trackId && String(item.trackId) === String(vinylObj.trackId))) {
+            item.fullAudioUrl = streamUrl;
+            item.sourceName = "Full Studio Audio";
+            item.fullDurationSec = streamDur;
+            changed = true;
+          }
+        }
+        if (changed) {
+          await saveVinyls(list);
+        }
+      }
+      return streamUrl;
+    })();
+
+    inFlightAutoLinkMap.set(dedupKey, lookupPromise);
+    try {
+      return await lookupPromise;
+    } finally {
+      inFlightAutoLinkMap.delete(dedupKey);
+    }
+  }
+
+  let backfillRunning = false;
+  async function backfillMissingYouTubeLinks() {
+    if (backfillRunning || DB.isGuest() || navigator.onLine === false) return;
+    const list = loadVinyls();
+    list.forEach(hydrateVinylYt);
+    const missing = list.filter(v => v && !v.fullAudioUrl && !extractYouTubeId(v.ytVideoId));
+    if (!missing.length) return;
+    backfillRunning = true;
+    try {
+      let updatedAny = false;
+      for (const v of missing) {
+        const resolved = await autoLinkVinylYouTube(v, false);
+        if (resolved) {
+          updatedAny = true;
+          const latestList = loadVinyls();
+          const target = latestList.find(x => x.id === v.id);
+          if (target) {
+            target.fullAudioUrl = v.fullAudioUrl || target.fullAudioUrl;
+            target.sourceName = v.sourceName || "Full Studio Audio";
+            target.fullDurationSec = v.fullDurationSec || target.fullDurationSec;
+          }
+          if (state.activeVinylId === v.id) {
+            state.activeVinylObj = target || v;
+            if (state.activeVinylObj.fullAudioUrl && audioEl.src !== state.activeVinylObj.fullAudioUrl) {
+              const wasPlaying = state.isPlaying;
+              state.playbackEngine = "audio";
+              audioEl.src = state.activeVinylObj.fullAudioUrl;
+              audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+              if (wasPlaying) {
+                audioEl.play().catch(() => {});
+              }
+            }
+            updateTurntableUI(state.activeVinylObj);
+            syncBookshelfPlaybackIndicators();
+          }
+        }
+        await new Promise(r => setTimeout(r, 200));
+      }
+      if (updatedAny) {
+        const finalList = loadVinyls();
+        finalList.forEach(hydrateVinylYt);
+        await saveVinyls(finalList);
+      }
+    } finally {
+      backfillRunning = false;
+    }
+  }
+
   let crackleCtx = null;
   let crackleGain = null;
   let crackleNode = null;
+  let crackleFilter = null;
+
+  function applyPlaybackRate() {
+    const rate = state.rpm === 45 ? 1.15 : 1.0;
+    try {
+      audioEl.playbackRate = rate;
+    } catch {}
+    if (ytReady && ytPlayer && typeof ytPlayer.setPlaybackRate === "function") {
+      try {
+        ytPlayer.setPlaybackRate(state.rpm === 45 ? 1.25 : 1.0);
+      } catch {}
+    }
+    audioEl.volume = Math.max(0, Math.min(1, state.volume));
+    if (crackleGain) {
+      crackleGain.gain.value = state.crackleOn ? Math.max(0, 0.055 * state.volume) : 0;
+    }
+  }
 
   function startVinylCrackle() {
-    if (!state.crackleOn || !state.isPlaying) {
+    if (!state.isPlaying || !state.crackleOn) {
       stopVinylCrackle();
       return;
     }
@@ -2080,39 +3206,41 @@ DB.whenReady(() => {
       if (!AC) return;
       if (!crackleCtx) crackleCtx = new AC();
       if (crackleCtx.state === "suspended") crackleCtx.resume().catch(() => {});
-      if (crackleNode) return;
 
-      const bufferSize = crackleCtx.sampleRate * 3;
-      const buffer = crackleCtx.createBuffer(1, bufferSize, crackleCtx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        const r = Math.random();
-        if (r > 0.9988) {
-          data[i] = (Math.random() * 2 - 1) * 0.42;
-        } else if (r > 0.992) {
-          data[i] = (Math.random() * 2 - 1) * 0.09;
-        } else {
-          data[i] = (Math.random() * 2 - 1) * 0.012;
+      if (!crackleNode) {
+        const bufferSize = crackleCtx.sampleRate * 3;
+        const buffer = crackleCtx.createBuffer(1, bufferSize, crackleCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          const r = Math.random();
+          if (r > 0.9988) {
+            data[i] = (Math.random() * 2 - 1) * 0.42;
+          } else if (r > 0.992) {
+            data[i] = (Math.random() * 2 - 1) * 0.09;
+          } else {
+            data[i] = (Math.random() * 2 - 1) * 0.012;
+          }
         }
+
+        const src = crackleCtx.createBufferSource();
+        src.buffer = buffer;
+        src.loop = true;
+
+        crackleFilter = crackleCtx.createBiquadFilter();
+        crackleFilter.type = "bandpass";
+        crackleFilter.frequency.value = 1750;
+        crackleFilter.Q.value = 0.85;
+
+        crackleGain = crackleCtx.createGain();
+        crackleGain.gain.value = 0.055 * state.volume;
+
+        src.connect(crackleFilter);
+        crackleFilter.connect(crackleGain);
+        crackleGain.connect(crackleCtx.destination);
+        src.start();
+        crackleNode = src;
       }
-
-      const src = crackleCtx.createBufferSource();
-      src.buffer = buffer;
-      src.loop = true;
-
-      const bandpass = crackleCtx.createBiquadFilter();
-      bandpass.type = "bandpass";
-      bandpass.frequency.value = 1750;
-      bandpass.Q.value = 0.85;
-
-      crackleGain = crackleCtx.createGain();
-      crackleGain.gain.value = 0.06 * state.volume;
-
-      src.connect(bandpass);
-      bandpass.connect(crackleGain);
-      crackleGain.connect(crackleCtx.destination);
-      src.start();
-      crackleNode = src;
+      applyPlaybackRate();
     } catch {}
   }
 
@@ -2120,6 +3248,7 @@ DB.whenReady(() => {
     if (crackleNode) {
       try { crackleNode.stop(); crackleNode.disconnect(); } catch {}
       crackleNode = null;
+      crackleFilter = null;
     }
   }
 
@@ -2146,6 +3275,7 @@ DB.whenReady(() => {
           $("vnCurTimeLbl").textContent = fmtSec(cur);
           $("vnDurTimeLbl").textContent = fmtSec(dur);
           updateTonearmAngle(cur, dur);
+          syncActiveLyricLine(cur);
         }
       }
     }
@@ -2166,7 +3296,7 @@ DB.whenReady(() => {
   if (mainEl) {
     mainEl.addEventListener("click", e => {
       if (!DB.isGuest()) return;
-      const interactive = e.target.closest("button, a, input, select, textarea, .vn-record-slot, .vn-res-art-wrap");
+      const interactive = e.target.closest("button, a, input, select, textarea, .vn-record-slot, .vn-folder-slot, .vn-res-art-wrap");
       if (interactive) {
         e.preventDefault();
         e.stopPropagation();
@@ -2181,6 +3311,672 @@ DB.whenReady(() => {
         ensureAccountAccess();
       }
     }, true);
+  }
+
+  let localFoldersCache = null;
+
+  function loadFolders() {
+    if (DB.isGuest()) return [];
+    if (Array.isArray(localFoldersCache)) return localFoldersCache.slice();
+    try {
+      const raw = localStorage.getItem(VN_FOLDERS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          localFoldersCache = parsed;
+          return parsed.slice();
+        }
+      }
+    } catch {}
+    return [];
+  }
+
+  async function saveFolders(foldersList) {
+    if (DB.isGuest()) return;
+    localFoldersCache = Array.isArray(foldersList) ? foldersList.slice() : [];
+    try {
+      localStorage.setItem(VN_FOLDERS_KEY, JSON.stringify(localFoldersCache));
+    } catch {}
+    renderAll();
+
+    const userRef = getUserDocRef();
+    if (userRef) {
+      state.syncInFlight = true;
+      try {
+        const cleanFolders = JSON.parse(JSON.stringify(localFoldersCache));
+        await Promise.all([
+          userRef.collection("state").doc("vinyl").set({
+            folders: cleanFolders,
+            updatedAt: Date.now()
+          }, { merge: true }).catch(() => {}),
+          userRef.set({ vinylFolders: cleanFolders }, { merge: true }).catch(() => {})
+        ]);
+      } catch {}
+      state.syncInFlight = false;
+    }
+  }
+
+  function getVinylFolderIds(v) {
+    if (!v) return [];
+    if (Array.isArray(v.folderIds)) return v.folderIds;
+    if (v.folderId) return [v.folderId];
+    return [];
+  }
+
+  function isVinylInFolder(v, folderId) {
+    return getVinylFolderIds(v).includes(folderId);
+  }
+
+  async function toggleVinylInFolder(vinylId, folderId, forceAdd = false) {
+    const list = loadVinyls();
+    const target = list.find(x => x.id === vinylId);
+    if (!target || !folderId) return false;
+    const set = new Set(getVinylFolderIds(target));
+    let added = false;
+    if (forceAdd || !set.has(folderId)) {
+      set.add(folderId);
+      added = true;
+    } else {
+      set.delete(folderId);
+    }
+    target.folderIds = [...set];
+    await saveVinyls(list);
+    return added;
+  }
+
+  function openCreateOrRenameFolderModal(existingFolder = null, autoAssignVinylId = null) {
+    const node = document.createElement("div");
+    let pickedColor = (existingFolder && existingFolder.color) || FOLDER_COLORS[0].id;
+    node.innerHTML = `
+      <h2>${existingFolder ? "Rename Folder / Playlist" : "New Vinyl Folder / Playlist"}</h2>
+      <p class="muted" style="margin-top:-.35rem;margin-bottom:.8rem;font-size:.82rem;">
+        Group your vinyl records into custom crates or playlists (e.g. Late Night Lo-Fi, K-Pop Favorites, Study Session).
+      </p>
+      <div class="field">
+        <label for="vnFolderNameInp">Folder / Playlist Name</label>
+        <input id="vnFolderNameInp" type="text" maxlength="32" placeholder="e.g. Late Night Lo-Fi" value="${DB.esc(existingFolder ? existingFolder.name : "")}" style="width:100%">
+      </div>
+      <div class="field">
+        <label>Crate Accent Color</label>
+        <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.25rem;" id="vnFolderColorRow">
+          ${FOLDER_COLORS.map(c => `
+            <button type="button" class="vn-wax-chip ${c.id === pickedColor ? "active" : ""}" data-fcol="${c.id}">
+              <span class="vn-folder-dot" style="--folder-c:${c.id}"></span>
+              <span>${DB.esc(c.name)}</span>
+            </button>
+          `).join("")}
+        </div>
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost left" id="vnFolderCancelBtn">Cancel</button>
+        <button type="button" class="primary" id="vnFolderSaveBtn">${existingFolder ? "Save Changes" : "Create Playlist"}</button>
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#vnFolderCancelBtn").onclick = close;
+    node.querySelectorAll("[data-fcol]").forEach(btn => {
+      btn.onclick = () => {
+        pickedColor = btn.dataset.fcol;
+        node.querySelectorAll("[data-fcol]").forEach(b => b.classList.toggle("active", b === btn));
+      };
+    });
+    const inp = node.querySelector("#vnFolderNameInp");
+    const submit = async () => {
+      const name = inp.value.trim();
+      if (!name) {
+        inp.focus();
+        return;
+      }
+      const folders = loadFolders();
+      if (existingFolder) {
+        const f = folders.find(x => x.id === existingFolder.id);
+        if (f) {
+          f.name = name;
+          f.color = pickedColor;
+        }
+        await saveFolders(folders);
+        close();
+        DB.toast("Playlist Updated", `Renamed to "${name}".`, 2000);
+      } else {
+        const newF = {
+          id: "fld-" + DB.uid(),
+          name,
+          color: pickedColor,
+          createdAt: Date.now()
+        };
+        folders.push(newF);
+        await saveFolders(folders);
+        if (autoAssignVinylId) {
+          await toggleVinylInFolder(autoAssignVinylId, newF.id, true);
+        }
+        state.shelfFilter = "all";
+        state.openFolderId = null;
+        renderAll();
+        close();
+        DB.toast("Folder Created on Shelf", `Added "${name}" folder to your bookshelf. Click it to open or drag songs onto it!`, 2400);
+      }
+    };
+    node.querySelector("#vnFolderSaveBtn").onclick = submit;
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submit();
+      }
+    });
+  }
+
+  function openAssignVinylFoldersModal(vinyl) {
+    const folders = loadFolders();
+    const node = document.createElement("div");
+    const curSet = new Set(getVinylFolderIds(vinyl));
+
+    node.innerHTML = `
+      <h2>Add "${DB.esc(vinyl.title)}" to Playlist</h2>
+      <p class="muted" style="margin-top:-.35rem;margin-bottom:.65rem;font-size:.82rem;">
+        Check any folder/playlist below to group this record, or create a new playlist.
+      </p>
+      ${folders.length ? `
+        <div class="vn-folder-check-list">
+          ${folders.map(f => `
+            <label class="vn-folder-check-item">
+              <span style="display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:.84rem;">
+                <i class="vn-folder-dot" style="--folder-c:${DB.esc(f.color || "#bf5af2")}"></i>
+                <span>${DB.esc(f.name)}</span>
+              </span>
+              <input type="checkbox" data-assign-fid="${DB.esc(f.id)}" ${curSet.has(f.id) ? "checked" : ""}>
+            </label>
+          `).join("")}
+        </div>
+      ` : `
+        <div class="hint" style="margin-bottom:.85rem;">
+          You don't have any folders/playlists yet. Click <b>+ New Playlist</b> below to create your first one!
+        </div>
+      `}
+      <div class="actions">
+        <button type="button" class="ghost left" id="vnAssignCancel">Cancel</button>
+        <button type="button" class="vn-btn" id="vnAssignNewFolder">+ New Playlist</button>
+        ${folders.length ? `<button type="button" class="primary" id="vnAssignSave">Save</button>` : ""}
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#vnAssignCancel").onclick = close;
+    node.querySelector("#vnAssignNewFolder").onclick = () => {
+      close();
+      openCreateOrRenameFolderModal(null, vinyl.id);
+    };
+    const saveBtn = node.querySelector("#vnAssignSave");
+    if (saveBtn) {
+      saveBtn.onclick = async () => {
+        const picked = [...node.querySelectorAll("[data-assign-fid]:checked")].map(cb => cb.dataset.assignFid);
+        const list = loadVinyls();
+        const target = list.find(x => x.id === vinyl.id);
+        if (target) {
+          target.folderIds = picked;
+          await saveVinyls(list);
+        }
+        close();
+        DB.toast("Playlists Updated", `Updated folder assignments for "${vinyl.title}".`, 2000);
+      };
+    }
+  }
+
+  function openManageFolderRecordsModal(folder) {
+    const list = loadVinyls();
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Manage Records in "${DB.esc(folder.name)}"</h2>
+      <p class="muted" style="margin-top:-.35rem;margin-bottom:.65rem;font-size:.82rem;">
+        Select which vinyl records from your collection belong in this playlist.
+      </p>
+      ${list.length ? `
+        <div class="vn-folder-check-list">
+          ${list.map(v => `
+            <label class="vn-folder-check-item">
+              <span style="display:flex;align-items:center;gap:.6rem;min-width:0;">
+                <img src="${DB.esc(v.cover)}" alt="" style="width:32px;height:32px;border-radius:6px;object-fit:cover;flex-shrink:0;">
+                <span style="display:flex;flex-direction:column;min-width:0;">
+                  <b style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${DB.esc(v.title)}</b>
+                  <small class="muted" style="font-size:.71rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${DB.esc(v.artist)}</small>
+                </span>
+              </span>
+              <input type="checkbox" data-manage-vid="${DB.esc(v.id)}" ${isVinylInFolder(v, folder.id) ? "checked" : ""}>
+            </label>
+          `).join("")}
+        </div>
+      ` : `<div class="hint" style="margin-bottom:.85rem;">Press some songs to your shelf first!</div>`}
+      <div class="actions">
+        <button type="button" class="ghost left" id="vnManageCancel">Cancel</button>
+        <button type="button" class="primary" id="vnManageSave">Save Playlist</button>
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#vnManageCancel").onclick = close;
+    node.querySelector("#vnManageSave").onclick = async () => {
+      const checkedIds = new Set([...node.querySelectorAll("[data-manage-vid]:checked")].map(cb => cb.dataset.manageVid));
+      const latest = loadVinyls();
+      for (const v of latest) {
+        const set = new Set(getVinylFolderIds(v));
+        if (checkedIds.has(v.id)) set.add(folder.id);
+        else set.delete(folder.id);
+        v.folderIds = [...set];
+      }
+      await saveVinyls(latest);
+      close();
+      DB.toast("Playlist Updated", `Saved records in "${folder.name}".`, 2000);
+    };
+  }
+
+  function loadLyricsCache() {
+    try {
+      const raw = localStorage.getItem(VN_LYRICS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") return parsed;
+      }
+    } catch {}
+    return {};
+  }
+  let lyricsCacheMap = loadLyricsCache();
+  function saveLyricsCache() {
+    try {
+      localStorage.setItem(VN_LYRICS_KEY, JSON.stringify(lyricsCacheMap));
+    } catch {}
+  }
+
+  const NATIVE_SCRIPT_RE = /[\u1100-\u11ff\u3040-\u30ff\u3130-\u318f\u3400-\u4dbf\u4e00-\u9fff\uac00-\ud7af\u0400-\u04ff\u0600-\u06ff\u0e00-\u0e7f]/g;
+
+  function countNativeScriptChars(str) {
+    if (!str) return 0;
+    const m = String(str).match(NATIVE_SCRIPT_RE);
+    return m ? m.length : 0;
+  }
+
+  function cleanLyricTextLine(text, songHasNativeScript) {
+    let t = String(text || "").trim();
+    if (!t) return "";
+    if (!songHasNativeScript) return t;
+
+    if (t.includes(" / ") || t.includes(" | ")) {
+      const parts = t.split(/\s+(?:\/|\|)\s+/).map(p => p.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        const nativeParts = parts.filter(p => countNativeScriptChars(p) > 0);
+        const asciiOnlyParts = parts.filter(p => countNativeScriptChars(p) === 0);
+        if (nativeParts.length > 0 && asciiOnlyParts.length > 0) {
+          t = nativeParts.join(" ");
+        }
+      }
+    }
+    return t;
+  }
+
+  function parseLrcLyrics(rawLrc) {
+    if (!rawLrc || typeof rawLrc !== "string") return { synced: false, lines: [] };
+    const songHasNativeScript = countNativeScriptChars(rawLrc) >= 6;
+    const rawLines = rawLrc.split(/\r?\n/);
+    const syncedLines = [];
+    const timeRe = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+
+    for (const line of rawLines) {
+      const matches = [...line.matchAll(timeRe)];
+      if (matches.length > 0) {
+        const rawTextPart = line.replace(timeRe, "").trim();
+        if (!rawTextPart && line.trim().length > matches.length * 10) continue;
+        const cleanedText = cleanLyricTextLine(rawTextPart, songHasNativeScript);
+        for (const m of matches) {
+          const mins = parseInt(m[1], 10) || 0;
+          const secs = parseInt(m[2], 10) || 0;
+          const fracStr = m[3] ? m[3].padEnd(3, "0").slice(0, 3) : "0";
+          const frac = parseInt(fracStr, 10) / 1000;
+          const totalSec = +(mins * 60 + secs + frac).toFixed(2);
+          syncedLines.push({
+            timeSec: totalSec,
+            timeLbl: fmtSec(totalSec),
+            text: cleanedText || "♪",
+            hasNative: countNativeScriptChars(cleanedText) > 0
+          });
+        }
+      }
+    }
+
+    if (syncedLines.length >= 2) {
+      syncedLines.sort((a, b) => a.timeSec - b.timeSec);
+
+      const deduped = [];
+      for (let i = 0; i < syncedLines.length; i++) {
+        const cur = syncedLines[i];
+        if (deduped.length > 0) {
+          const prev = deduped[deduped.length - 1];
+          if (Math.abs(cur.timeSec - prev.timeSec) <= 0.08) {
+            if (songHasNativeScript) {
+              if (cur.hasNative && !prev.hasNative) {
+                deduped[deduped.length - 1] = cur;
+                continue;
+              }
+              if (prev.hasNative && !cur.hasNative) {
+                continue;
+              }
+            }
+            if (cur.text === prev.text || (cur.text === "♪" && prev.text !== "♪")) {
+              continue;
+            }
+            if (prev.text === "♪" && cur.text !== "♪") {
+              deduped[deduped.length - 1] = cur;
+              continue;
+            }
+          }
+        }
+        deduped.push(cur);
+      }
+
+      return { synced: true, lines: deduped };
+    }
+
+    let plainLines = rawLines.map(l => cleanLyricTextLine(l.trim(), songHasNativeScript)).filter(Boolean);
+    if (songHasNativeScript && plainLines.length >= 8) {
+      const nativeLineCount = plainLines.filter(l => countNativeScriptChars(l) > 0).length;
+      if (nativeLineCount >= Math.floor(plainLines.length * 0.35)) {
+        const filteredPlain = [];
+        for (let i = 0; i < plainLines.length; i++) {
+          const ln = plainLines[i];
+          const prevHasNative = i > 0 && countNativeScriptChars(plainLines[i - 1]) > 0;
+          const nextHasNative = i + 1 < plainLines.length && countNativeScriptChars(plainLines[i + 1]) > 0;
+          if (countNativeScriptChars(ln) === 0 && (prevHasNative && nextHasNative) && /^[a-zA-Z\s',.-]+$/.test(ln)) {
+            continue;
+          }
+          filteredPlain.push(ln);
+        }
+        if (filteredPlain.length >= 4) plainLines = filteredPlain;
+      }
+    }
+
+    return {
+      synced: false,
+      lines: plainLines.map(text => ({
+        timeSec: null,
+        timeLbl: "",
+        text
+      }))
+    };
+  }
+
+  const ASIAN_ARTIST_HINT_RE = /(&team|stray kids|enhypen|tws|txt|tomorrow x together|ateez|bts|seventeen|newjeans|ive|le sserafim|aespa|twice|blackpink|itzy|nmixx|zerobaseone|zb1|riize|boynextdoor|nct|exo|day6|treasure|keshi|yoasobi|ado|kenshi yonezu|fujii kaze|mrs\.? green apple|official hige dandism|vaundy|radwimps|lisa|aimyon|king gnu|back number|yuuri|imase|creepy nuts|babymonster|illit|kiss of life|stayc|g-idle|\(g\)i-dle|red velvet|shinee|iu|taeyeon|akmu|bigbang|xg)/i;
+
+  function scoreLrcCandidate(it, wantTitle, wantArtist, expDurSec, poolHasNativeScript, preferNativeArtist) {
+    if (!it || typeof it !== "object") return -9999;
+    const synced = typeof it.syncedLyrics === "string" ? it.syncedLyrics.trim() : "";
+    const plain = typeof it.plainLyrics === "string" ? it.plainLyrics.trim() : "";
+    const body = synced || plain;
+    if (body.length < 20) return -9999;
+
+    let score = 0;
+    if (synced.length > 20) score += 140;
+
+    const metaStr = `${it.trackName || ""} ${it.artistName || ""} ${it.albumName || ""}`.toLowerCase();
+    const wantMeta = `${wantTitle} ${wantArtist}`.toLowerCase();
+
+    if (/romanized|romaji|pinyin|transliterat/i.test(metaStr) && !/romanized|romaji/i.test(wantMeta)) {
+      score -= 320;
+    }
+    if (/\bromanized\b|\bromaji\b/i.test(body.slice(0, 220))) {
+      score -= 240;
+    }
+
+    const nativeChars = countNativeScriptChars(body);
+    if (nativeChars >= 10) {
+      score += 240 + Math.min(120, Math.floor(nativeChars / 4));
+    } else if (poolHasNativeScript || preferNativeArtist) {
+      score -= 220;
+    }
+
+    const cTitle = normKeyStr(it.trackName || it.name || "");
+    const cArtist = normKeyStr(it.artistName || "");
+    const nTitle = normKeyStr(wantTitle);
+    const nArtist = normKeyStr(wantArtist);
+
+    if (nTitle && cTitle === nTitle) score += 55;
+    else if (nTitle && (cTitle.includes(nTitle) || nTitle.includes(cTitle))) score += 30;
+
+    if (nArtist && cArtist === nArtist) score += 50;
+    else if (nArtist && (cArtist.includes(nArtist) || nArtist.includes(cArtist))) score += 28;
+
+    const candDur = Number(it.duration) || 0;
+    if (expDurSec > 40 && candDur > 40) {
+      const diff = Math.abs(candDur - expDurSec);
+      if (diff <= 2) score += 75;
+      else if (diff <= 5) score += 50;
+      else if (diff <= 12) score += 20;
+      else if (diff > 25) score -= Math.min(140, Math.round(diff * 2));
+    }
+
+    return score;
+  }
+
+  async function fetchLyricsForVinyl(vinylObj) {
+    if (!vinylObj) return { synced: false, lines: [] };
+    if (vinylObj.customLyrics) {
+      return parseLrcLyrics(vinylObj.customLyrics);
+    }
+    const key = `lyr:${normKeyStr(vinylObj.title)}|${normKeyStr(vinylObj.artist)}`;
+    if (lyricsCacheMap[key]) {
+      return parseLrcLyrics(lyricsCacheMap[key]);
+    }
+    if (navigator.onLine === false) return { synced: false, lines: [] };
+
+    const rawTitle = String(vinylObj.title || "").trim();
+    const rawArtist = String(vinylObj.artist || "").trim();
+    if (!rawTitle) return { synced: false, lines: [] };
+
+    const cleanTitle = rawTitle.replace(/\s*\((?:feat\.|ft\.|prod\.|from|official|ver\.|version).*?\)/gi, "").trim() || rawTitle;
+    const primaryArtist = rawArtist.split(/[,&/]/)[0].trim() || rawArtist;
+    const expDurSec = getExpectedDurationSec(vinylObj) || Math.round((Number(vinylObj.durationMs) || 210000) / 1000);
+    const preferNativeArtist =
+      ASIAN_ARTIST_HINT_RE.test(rawArtist) ||
+      ASIAN_ARTIST_HINT_RE.test(rawTitle) ||
+      countNativeScriptChars(rawTitle + rawArtist) > 0 ||
+      /k-pop|j-pop|korean|japanese|chinese|mandopop|cantopop/i.test(String(vinylObj.genre || ""));
+
+    const urls = [
+      `https://lrclib.net/api/search?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(rawArtist)}`,
+      `https://lrclib.net/api/search?q=${encodeURIComponent(cleanTitle + " " + primaryArtist)}`
+    ];
+
+    const allCandidates = [];
+    const results = await Promise.all(
+      urls.map(url =>
+        fetchWithTimeout(url, 4200)
+          .then(r => (r.ok ? r.json() : []))
+          .catch(() => [])
+      )
+    );
+    for (const arr of results) {
+      if (Array.isArray(arr)) {
+        for (const item of arr) {
+          if (item && (item.syncedLyrics || item.plainLyrics)) {
+            allCandidates.push(item);
+          }
+        }
+      }
+    }
+
+    if (!allCandidates.length) {
+      return { synced: false, lines: [] };
+    }
+
+    const poolHasNativeScript = allCandidates.some(
+      it => countNativeScriptChars((it.syncedLyrics || "") + (it.plainLyrics || "")) >= 10
+    );
+
+    let bestCand = null;
+    let bestScore = -99999;
+    for (const cand of allCandidates) {
+      const sc = scoreLrcCandidate(cand, cleanTitle, rawArtist, expDurSec, poolHasNativeScript, preferNativeArtist);
+      if (sc > bestScore) {
+        bestScore = sc;
+        bestCand = cand;
+      }
+    }
+
+    if (bestCand) {
+      const rawText = (bestCand.syncedLyrics && bestCand.syncedLyrics.trim()) || (bestCand.plainLyrics && bestCand.plainLyrics.trim()) || "";
+      if (rawText) {
+        lyricsCacheMap[key] = rawText;
+        saveLyricsCache();
+        return parseLrcLyrics(rawText);
+      }
+    }
+    return { synced: false, lines: [] };
+  }
+
+  let lyricsLoadSeq = 0;
+  async function loadAndRenderLyricsForVinyl(vinylObj) {
+    const vp = $("vnLyricsViewport");
+    const badge = $("vnLyricsStatusBadge");
+    const stageBg = $("vnLyricsStageBg");
+    if (!vp) return;
+
+    if (stageBg) {
+      stageBg.style.backgroundImage = vinylObj && vinylObj.cover ? `url('${vinylObj.cover}')` : "none";
+    }
+
+    if (!vinylObj) {
+      state.activeLyricsLines = [];
+      state.activeLyricsSynced = false;
+      state.activeLyricIdx = -1;
+      if (badge) badge.textContent = "READY";
+      vp.innerHTML = `<div class="vn-lyrics-empty"><span>Select and spin any vinyl record to load time-synced scrolling lyrics.</span></div>`;
+      return;
+    }
+
+    const mySeq = ++lyricsLoadSeq;
+    if (badge) badge.textContent = "LOADING…";
+    vp.innerHTML = `<div class="vn-lyrics-empty"><span>Loading lyrics for "${DB.esc(vinylObj.title)}"…</span></div>`;
+
+    const parsed = await fetchLyricsForVinyl(vinylObj);
+    if (mySeq !== lyricsLoadSeq || state.activeVinylId !== vinylObj.id) return;
+
+    state.activeLyricsLines = parsed.lines || [];
+    state.activeLyricsSynced = Boolean(parsed.synced);
+    state.activeLyricIdx = -1;
+
+    if (!state.activeLyricsLines.length) {
+      if (badge) badge.textContent = "NO LYRICS";
+      vp.innerHTML = `
+        <div class="vn-lyrics-empty">
+          <span>No synced lyrics found for "${DB.esc(vinylObj.title)}".</span>
+          <button type="button" class="vn-btn" id="vnEmptyPasteLyricsBtn" style="height:28px;min-height:28px;font-size:.72rem;margin-top:.25rem;">+ Paste Lyrics</button>
+        </div>
+      `;
+      const pasteBtn = $("vnEmptyPasteLyricsBtn");
+      if (pasteBtn) pasteBtn.onclick = () => openEditLyricsModal(vinylObj);
+      return;
+    }
+
+    if (badge) {
+      badge.textContent = state.activeLyricsSynced ? "SYNCED" : "PLAIN LYRICS";
+    }
+
+    vp.innerHTML = state.activeLyricsLines.map((ln, idx) => `
+      <button type="button" class="vn-lyric-line" data-lyric-idx="${idx}" ${ln.timeSec !== null ? `data-lyric-sec="${ln.timeSec}"` : ""}>
+        <span>${DB.esc(ln.text)}</span>
+        ${ln.timeLbl ? `<span class="vn-lyric-ts">${DB.esc(ln.timeLbl)}</span>` : ""}
+      </button>
+    `).join("");
+
+    vp.querySelectorAll("[data-lyric-sec]").forEach(btn => {
+      btn.onclick = () => {
+        const sec = parseFloat(btn.dataset.lyricSec);
+        if (!Number.isFinite(sec)) return;
+        if (state.playbackEngine === "yt" && ytReady && ytPlayer && typeof ytPlayer.seekTo === "function") {
+          try { ytPlayer.seekTo(sec, true); } catch {}
+        } else {
+          try { audioEl.currentTime = sec; } catch {}
+        }
+        syncActiveLyricLine(sec, true);
+      };
+    });
+
+    const curTime = (state.playbackEngine === "yt" && ytReady && ytPlayer && typeof ytPlayer.getCurrentTime === "function")
+      ? (Number(ytPlayer.getCurrentTime()) || 0)
+      : (audioEl.currentTime || 0);
+    syncActiveLyricLine(curTime, true);
+  }
+
+  function syncActiveLyricLine(curSec, forceScroll = false) {
+    if (!state.activeLyricsSynced || !state.activeLyricsLines.length) return;
+    const lines = state.activeLyricsLines;
+    let activeIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].timeSec !== null && curSec + 0.12 >= lines[i].timeSec) {
+        activeIdx = i;
+      } else {
+        break;
+      }
+    }
+    if (activeIdx === state.activeLyricIdx && !forceScroll) return;
+    state.activeLyricIdx = activeIdx;
+
+    const vp = $("vnLyricsViewport");
+    if (!vp) return;
+    const nodes = vp.querySelectorAll(".vn-lyric-line");
+    nodes.forEach((el, idx) => el.classList.toggle("active", idx === activeIdx));
+
+    if (!state.lyricsOpen) return;
+
+    if (activeIdx >= 0 && nodes[activeIdx]) {
+      const targetEl = nodes[activeIdx];
+      const vpRect = vp.getBoundingClientRect();
+      const targetRect = targetEl.getBoundingClientRect();
+      if (vpRect.height > 0) {
+        const delta = (targetRect.top - vpRect.top) - (vpRect.height / 2) + (targetRect.height / 2);
+        vp.scrollTo({
+          top: Math.max(0, vp.scrollTop + delta),
+          behavior: forceScroll ? "auto" : "smooth"
+        });
+      }
+    } else if (activeIdx === -1 && forceScroll) {
+      vp.scrollTo({ top: 0, behavior: "auto" });
+    }
+  }
+
+  function openEditLyricsModal(vinyl) {
+    if (!vinyl) return;
+    const key = `lyr:${normKeyStr(vinyl.title)}|${normKeyStr(vinyl.artist)}`;
+    const existingRaw = vinyl.customLyrics || lyricsCacheMap[key] || "";
+    const node = document.createElement("div");
+    node.innerHTML = `
+      <h2>Lyrics — ${DB.esc(vinyl.title)}</h2>
+      <p class="muted" style="margin-top:-.35rem;margin-bottom:.75rem;font-size:.81rem;">
+        Paste time-synced <code>[mm:ss.xx]</code> LRC lyrics or plain lyrics below. Leave empty and click Save to re-fetch original-language lyrics automatically.
+      </p>
+      <div class="field">
+        <textarea id="vnLyricsModalTa" rows="10" placeholder="[00:12.40] First line of lyrics..." style="width:100%;font-family:var(--mono);font-size:.78rem;">${DB.esc(existingRaw)}</textarea>
+      </div>
+      <div class="actions">
+        <button type="button" class="ghost left" id="vnLyricsModalCancel">Cancel</button>
+        <button type="button" class="primary" id="vnLyricsModalSave">Save Lyrics</button>
+      </div>
+    `;
+    const close = DB.modal(node);
+    node.querySelector("#vnLyricsModalCancel").onclick = close;
+    node.querySelector("#vnLyricsModalSave").onclick = async () => {
+      const val = node.querySelector("#vnLyricsModalTa").value.trim();
+      vinyl.customLyrics = val;
+      if (val) {
+        lyricsCacheMap[key] = val;
+      } else {
+        delete lyricsCacheMap[key];
+      }
+      saveLyricsCache();
+      const list = loadVinyls();
+      const target = list.find(x => x.id === vinyl.id);
+      if (target) {
+        target.customLyrics = val;
+        await saveVinyls(list);
+      }
+      close();
+      loadAndRenderLyricsForVinyl(vinyl);
+      DB.toast("Lyrics Updated", `Updated lyrics for "${vinyl.title}".`, 2000);
+    };
   }
 
   let directFirestoreBound = false;
@@ -2212,6 +4008,14 @@ DB.whenReady(() => {
         const d = stateSnap.data() || {};
         if (d.shelfFinish) state.shelfFinish = d.shelfFinish;
         if (Array.isArray(d.items) && d.items.length) cloudList = d.items;
+        if (Array.isArray(d.folders) && d.folders.length) {
+          localFoldersCache = d.folders;
+          try { localStorage.setItem(VN_FOLDERS_KEY, JSON.stringify(d.folders)); } catch {}
+        }
+      }
+      if (!localFoldersCache && Array.isArray(userData.vinylFolders) && userData.vinylFolders.length) {
+        localFoldersCache = userData.vinylFolders;
+        try { localStorage.setItem(VN_FOLDERS_KEY, JSON.stringify(userData.vinylFolders)); } catch {}
       }
       if (!cloudList && colSnap && colSnap.docs && colSnap.docs.length) {
         cloudList = colSnap.docs.map(d => d.data());
@@ -2221,6 +4025,7 @@ DB.whenReady(() => {
       }
 
       if (Array.isArray(cloudList) && cloudList.length) {
+        cloudList.forEach(hydrateVinylYt);
         localVinylCache = cloudList;
         DB.set(VN_KEY, localVinylCache);
       }
@@ -2231,8 +4036,9 @@ DB.whenReady(() => {
           const data = docSnap.data() || {};
           if (data.shelfFinish) state.shelfFinish = data.shelfFinish;
           if (Array.isArray(data.items) && (data.items.length > 0 || !localVinylCache || localVinylCache.length === 0)) {
-            localVinylCache = data.items;
-            try { localStorage.setItem(VN_KEY, JSON.stringify(data.items)); } catch {}
+            const incoming = data.items.map(item => hydrateVinylYt(Object.assign({}, item)));
+            localVinylCache = incoming;
+            try { localStorage.setItem(VN_KEY, JSON.stringify(incoming)); } catch {}
             renderAll();
           }
         }
@@ -2242,9 +4048,9 @@ DB.whenReady(() => {
 
   function loadVinyls() {
     if (DB.isGuest()) return [];
-    if (Array.isArray(localVinylCache)) return localVinylCache.slice();
-    const raw = DB.get(VN_KEY, []);
-    return Array.isArray(raw) ? raw.slice() : [];
+    const list = Array.isArray(localVinylCache) ? localVinylCache.slice() : (Array.isArray(DB.get(VN_KEY, [])) ? DB.get(VN_KEY, []).slice() : []);
+    list.forEach(hydrateVinylYt);
+    return list;
   }
 
   async function saveVinyls(list) {
@@ -2252,6 +4058,7 @@ DB.whenReady(() => {
       await ensureAccountAccess();
       return;
     }
+    list.forEach(hydrateVinylYt);
     localVinylCache = list.slice();
     DB.set(VN_KEY, localVinylCache);
     if (typeof DB.flush === "function") DB.flush();
@@ -2290,7 +4097,7 @@ DB.whenReady(() => {
         done = true;
         cleanup();
         reject(new Error("Search timed out"));
-      }, 9000);
+      }, 6500);
 
       window[cb] = data => {
         if (done) return;
@@ -2311,38 +4118,83 @@ DB.whenReady(() => {
     });
   }
 
-  async function searchSongsCatalog(query) {
-    const q = String(query || "").trim();
-    if (!q) return [];
+  async function fetchItunesCatalog(query) {
     try {
-      const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&entity=song&limit=16`);
+      const res = await fetchWithTimeout(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=16`, 4500);
       if (res.ok) {
         const data = await res.json();
         if (data && Array.isArray(data.results)) return data.results;
       }
     } catch {}
-    return searchSongsJsonp(q);
+    try {
+      return await searchSongsJsonp(query);
+    } catch {
+      return [];
+    }
   }
 
   function mapTrackResult(raw) {
+    if (raw && raw.fullAudioUrl && String(raw.trackId || "").startsWith("saavn-")) {
+      return hydrateVinylYt(raw);
+    }
     const rawArt = String(raw.artworkUrl100 || raw.artworkUrl60 || "").replace(/^http:/, "https:");
     const hiResArt = rawArt ? rawArt.replace(/100x100bb/i, "600x600bb") : "assets/logo.png";
     const year = raw.releaseDate ? String(raw.releaseDate).slice(0, 4) : "";
     const durMs = Number(raw.trackTimeMillis) || 210000;
-    return {
+    return hydrateVinylYt({
       trackId: String(raw.trackId || DB.uid()),
       title: raw.trackName || "Untitled Track",
       artist: raw.artistName || "Unknown Artist",
       album: raw.collectionName || "Single",
       cover: hiResArt,
       previewUrl: raw.previewUrl ? String(raw.previewUrl).replace(/^http:/, "https:") : "",
-      fullAudioUrl: "",
-      ytVideoId: "",
+      fullAudioUrl: raw.fullAudioUrl || "",
+      ytVideoId: raw.ytVideoId || "",
+      sourceName: raw.fullAudioUrl ? "Full Studio Audio" : "",
       genre: raw.primaryGenreName || "Music",
       year,
       durationMs: durMs,
       fullDurationSec: Math.round(durMs / 1000)
-    };
+    });
+  }
+
+  async function searchSongsCatalog(query) {
+    const q = String(query || "").trim();
+    if (!q) return [];
+    const [saavnTracks, itunesRaw] = await Promise.all([
+      searchFullAudioCatalog(q).catch(() => []),
+      fetchItunesCatalog(q).catch(() => [])
+    ]);
+
+    const itunesTracks = itunesRaw.map(mapTrackResult);
+
+    if (saavnTracks.length > 0 && itunesTracks.length > 0) {
+      for (const it of itunesTracks) {
+        const match = pickBestFullTrackMatch(saavnTracks, it.title, it.artist, it.fullDurationSec);
+        if (match && match.fullAudioUrl) {
+          const wantT = normKeyStr(it.title);
+          const gotT = normKeyStr(match.title);
+          if (wantT && gotT && (gotT === wantT || gotT.includes(wantT) || wantT.includes(gotT))) {
+            it.fullAudioUrl = match.fullAudioUrl;
+            it.sourceName = "Full Studio Audio";
+            it.fullDurationSec = match.fullDurationSec || it.fullDurationSec;
+            rememberFullTrack(it, { fullAudioUrl: it.fullAudioUrl, fullDurationSec: it.fullDurationSec, sourceName: "Full Studio Audio" });
+          }
+        }
+      }
+      const seenKeys = new Set(itunesTracks.map(x => `${normKeyStr(x.title)}|${normKeyStr(x.artist)}`));
+      for (const st of saavnTracks) {
+        const k = `${normKeyStr(st.title)}|${normKeyStr(st.artist)}`;
+        if (!seenKeys.has(k)) {
+          seenKeys.add(k);
+          itunesTracks.push(st);
+        }
+      }
+      return itunesTracks.slice(0, 18);
+    }
+
+    if (saavnTracks.length > 0) return saavnTracks.slice(0, 16);
+    return itunesTracks;
   }
 
   function renderSearchResults() {
@@ -2357,10 +4209,10 @@ DB.whenReady(() => {
 
     grid.innerHTML = state.lastSearchResults.map((tr, idx) => {
       const isSaved = savedIds.has(String(tr.trackId));
-      const durLbl = fmtSec(Math.round((tr.durationMs || 210000) / 1000));
+      const durLbl = fmtSec(tr.fullDurationSec || Math.round((tr.durationMs || 210000) / 1000));
       return `
         <div class="vn-res-card">
-          <div class="vn-res-art-wrap" data-preview-idx="${idx}" title="Click to spin on turntable">
+          <div class="vn-res-art-wrap" data-preview-idx="${idx}" title="Click to spin full song on turntable">
             <img src="${DB.esc(tr.cover)}" alt="${DB.esc(tr.title)}" loading="lazy">
             <div class="vn-res-play-ov">
               <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
@@ -2380,24 +4232,34 @@ DB.whenReady(() => {
 
     grid.querySelectorAll("[data-preview-idx]").forEach(el => {
       el.onclick = async () => {
-        if (!(await ensureAccountAccess())) return;
+        if (DB.isGuest() && !(await ensureAccountAccess())) return;
         const tr = state.lastSearchResults[Number(el.dataset.previewIdx)];
         if (tr) {
-          const tempVinyl = Object.assign({ id: "preview-" + tr.trackId, wax: state.selectedWax }, tr);
-          loadVinylOntoTurntable(tempVinyl, true);
+          hydrateVinylYt(tr);
+          const existingShelf = loadVinyls().find(x => String(x.trackId) === String(tr.trackId));
+          if (existingShelf) {
+            loadVinylOntoTurntable(existingShelf, true);
+          } else {
+            const tempVinyl = hydrateVinylYt(Object.assign({ id: "preview-" + tr.trackId, wax: state.selectedWax }, tr));
+            loadVinylOntoTurntable(tempVinyl, true);
+          }
         }
       };
     });
 
     grid.querySelectorAll("[data-save-idx]").forEach(btn => {
       btn.onclick = async () => {
-        if (!(await ensureAccountAccess())) return;
+        if (DB.isGuest() && !(await ensureAccountAccess())) return;
         const tr = state.lastSearchResults[Number(btn.dataset.saveIdx)];
         if (!tr) return;
+        hydrateVinylYt(tr);
         const list = loadVinyls();
         if (list.some(x => String(x.trackId) === String(tr.trackId))) return;
 
-        const newVinyl = {
+        const wasPreviewingThisTrack = state.activeVinylId === ("preview-" + tr.trackId);
+        const shouldPlaceOnDeck = !state.activeVinylId || !state.isPlaying || wasPreviewingThisTrack;
+
+        const newVinyl = hydrateVinylYt({
           id: DB.uid(),
           trackId: String(tr.trackId),
           title: tr.title,
@@ -2407,6 +4269,8 @@ DB.whenReady(() => {
           previewUrl: tr.previewUrl,
           fullAudioUrl: tr.fullAudioUrl || "",
           ytVideoId: tr.ytVideoId || "",
+          ytCandidates: tr.ytCandidates || [],
+          sourceName: tr.fullAudioUrl ? "Full Studio Audio" : (tr.ytVideoId ? "Full YouTube Audio" : ""),
           fullDurationSec: tr.fullDurationSec || Math.round((tr.durationMs || 210000) / 1000),
           durationMs: tr.durationMs || 210000,
           genre: tr.genre,
@@ -2415,14 +4279,31 @@ DB.whenReady(() => {
           favorite: false,
           plays: 0,
           addedAt: Date.now()
-        };
+        });
 
         list.unshift(newVinyl);
-        await saveVinyls(list);
+        if (shouldPlaceOnDeck) {
+          state.activeVinylId = newVinyl.id;
+          state.activeVinylObj = newVinyl;
+        }
+        saveVinyls(list);
         renderSearchResults();
-        DB.toast("Pressed to Vinyl Shelf", `"${newVinyl.title}" was added to your bookshelf. Click it on the shelf whenever you want to play it.`, 2800);
 
+        if (shouldPlaceOnDeck) {
+          prepareVinylOnDeck(newVinyl, state.isPlaying && wasPreviewingThisTrack);
+        } else if (!newVinyl.fullAudioUrl && !extractYouTubeId(newVinyl.ytVideoId)) {
+          autoLinkVinylYouTube(newVinyl, true).then(resUrl => {
+            if (resUrl) syncBookshelfPlaybackIndicators();
+          });
+        }
 
+        DB.toast(
+          "Pressed to Vinyl Shelf",
+          newVinyl.fullAudioUrl
+            ? `"${newVinyl.title}" is on your shelf with Full Studio Audio ready to play immediately.`
+            : `"${newVinyl.title}" was added to your shelf.`,
+          2400
+        );
       };
     });
   }
@@ -2442,26 +4323,134 @@ DB.whenReady(() => {
 
   function renderBookshelf(list) {
     const favCount = list.filter(x => x.favorite).length;
+    const folders = loadFolders();
     const pillsEl = $("vnShelfPills");
-    const pillDefs = [
-      { id: "all", label: `All Records (${list.length})` },
-      { id: "fav", label: `Favorites (${favCount})` },
-      ...Object.entries(WAX_STYLES)
-        .map(([k, v]) => ({ id: `wax:${k}`, label: `${v.name} (${list.filter(x => (x.wax || "obsidian") === k).length})`, cnt: list.filter(x => (x.wax || "obsidian") === k).length }))
-        .filter(p => p.cnt > 0)
+
+    if (state.openFolderId && !folders.some(f => f.id === state.openFolderId)) {
+      state.openFolderId = null;
+    }
+
+    const shelfActive = state.shelfFilter === "all" && !state.openFolderId;
+    const allSongsActive = state.shelfFilter === "all-songs";
+    const favActive = state.shelfFilter === "fav";
+
+    const folderIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
+    const discIconSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>`;
+
+    const basePillsHtml = [
+      `<button type="button" class="vn-pill" id="vnShelfHomePill" data-sfilter="all" aria-pressed="${shelfActive}" title="View desktop-style shelf with Folders and Records">${folderIconSvg}<span>Shelf (${folders.length ? `${folders.length} Folder${folders.length === 1 ? "" : "s"} · ` : ""}${list.length})</span></button>`,
+      `<button type="button" class="vn-pill" data-sfilter="all-songs" aria-pressed="${allSongsActive}" title="View all vinyl records flat">${discIconSvg}<span>All Songs (${list.length})</span></button>`,
+      `<button type="button" class="vn-pill" data-sfilter="fav" aria-pressed="${favActive}" title="View favorite vinyl records"><span>Favorites (${favCount})</span></button>`,
+      `<button type="button" class="vn-pill vn-add-folder-pill" id="vnNewFolderPillBtn" title="Create a new Folder on your shelf">+ New Folder</button>`
     ];
 
-    pillsEl.innerHTML = pillDefs.map(p => `
-      <button type="button" class="vn-pill" data-sfilter="${p.id}" aria-pressed="${state.shelfFilter === p.id}">${DB.esc(p.label)}</button>
-    `).join("");
+    pillsEl.innerHTML = basePillsHtml.join("");
 
     pillsEl.querySelectorAll("[data-sfilter]").forEach(btn => {
       btn.onclick = async () => {
-        if (!(await ensureAccountAccess())) return;
+        if (DB.isGuest() && !(await ensureAccountAccess())) return;
         state.shelfFilter = btn.dataset.sfilter;
+        state.openFolderId = null;
         renderBookshelf(loadVinyls());
       };
     });
+
+    const shelfHomePill = $("vnShelfHomePill");
+    if (shelfHomePill && state.openFolderId) {
+      const activeFid = state.openFolderId;
+      shelfHomePill.addEventListener("dragover", e => {
+        if (!state.draggedVinylId) return;
+        e.preventDefault();
+        shelfHomePill.classList.add("is-folder-drop");
+      });
+      shelfHomePill.addEventListener("dragleave", () => shelfHomePill.classList.remove("is-folder-drop"));
+      shelfHomePill.addEventListener("drop", async e => {
+        e.preventDefault();
+        e.stopPropagation();
+        shelfHomePill.classList.remove("is-folder-drop");
+        const vId = state.draggedVinylId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+        state.draggedVinylId = null;
+        if (vId && activeFid) {
+          await toggleVinylInFolder(vId, activeFid, false);
+          const vObj = loadVinyls().find(x => x.id === vId);
+          if (vObj) DB.toast("Moved to Main Shelf", `Moved "${vObj.title}" out of folder onto the main shelf.`, 2200);
+        }
+      });
+    }
+
+    const newFolderBtn = $("vnNewFolderPillBtn");
+    if (newFolderBtn) {
+      newFolderBtn.onclick = async () => {
+        if (DB.isGuest() && !(await ensureAccountAccess())) return;
+        openCreateOrRenameFolderModal(null);
+      };
+    }
+
+    const folderBar = $("vnFolderToolbar");
+    const activeFolder = state.openFolderId ? folders.find(f => f.id === state.openFolderId) : null;
+    if (folderBar) {
+      if (activeFolder) {
+        const folderRecords = list.filter(v => isVinylInFolder(v, activeFolder.id));
+        folderBar.hidden = false;
+        folderBar.innerHTML = `
+          <div class="vn-folder-bar-info">
+            <button type="button" class="vn-btn" id="vnBackToShelfBtn" title="Back to main shelf (or drag a record here to move it out of this folder)" style="height:31px;min-height:31px;padding:0 .75rem;font-size:.75rem;">
+              ← Back to Shelf
+            </button>
+            <i class="vn-folder-dot" style="--folder-c:${DB.esc(activeFolder.color || "#bf5af2")};width:11px;height:11px;margin-left:.25rem;"></i>
+            <b>${DB.esc(activeFolder.name)}</b>
+            <span>${folderRecords.length} SONG${folderRecords.length === 1 ? "" : "S"} INSIDE FOLDER</span>
+          </div>
+          <div class="vn-folder-bar-actions">
+            ${folderRecords.length ? `<button type="button" class="vn-btn primary" id="vnPlayFolderBtn">▶ Spin Folder</button>` : ""}
+            <button type="button" class="vn-btn" id="vnManageFolderBtn">+ Edit Songs</button>
+            <button type="button" class="vn-btn" id="vnRenameFolderBtn">✎ Rename</button>
+            <button type="button" class="vn-btn" id="vnDeleteFolderBtn" style="color:#ff453a;">✕ Delete Folder</button>
+          </div>
+        `;
+        const backBtn = $("vnBackToShelfBtn");
+        if (backBtn) {
+          backBtn.onclick = () => {
+            state.openFolderId = null;
+            renderBookshelf(loadVinyls());
+          };
+          backBtn.addEventListener("dragover", e => {
+            if (!state.draggedVinylId) return;
+            e.preventDefault();
+            backBtn.classList.add("primary");
+          });
+          backBtn.addEventListener("dragleave", () => backBtn.classList.remove("primary"));
+          backBtn.addEventListener("drop", async e => {
+            e.preventDefault();
+            e.stopPropagation();
+            backBtn.classList.remove("primary");
+            const vId = state.draggedVinylId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+            state.draggedVinylId = null;
+            if (vId) {
+              await toggleVinylInFolder(vId, activeFolder.id, false);
+              const vObj = loadVinyls().find(x => x.id === vId);
+              if (vObj) DB.toast("Moved to Main Shelf", `Moved "${vObj.title}" back to the main shelf.`, 2200);
+            }
+          });
+        }
+        const playFBtn = $("vnPlayFolderBtn");
+        if (playFBtn) {
+          playFBtn.onclick = () => {
+            if (folderRecords.length) loadVinylOntoTurntable(folderRecords[0], true);
+          };
+        }
+        $("vnManageFolderBtn").onclick = () => openManageFolderRecordsModal(activeFolder);
+        $("vnRenameFolderBtn").onclick = () => openCreateOrRenameFolderModal(activeFolder);
+        $("vnDeleteFolderBtn").onclick = async () => {
+          const nextFolders = loadFolders().filter(f => f.id !== activeFolder.id);
+          state.openFolderId = null;
+          await saveFolders(nextFolders);
+          DB.toast("Folder Deleted", `Removed folder "${activeFolder.name}". All songs remain safe on your shelf.`, 2400);
+        };
+      } else {
+        folderBar.hidden = true;
+      }
+    }
 
     const chkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
     const curFin = FINISH_OPTIONS.find(x => x.id === state.shelfFinish) || FINISH_OPTIONS[0];
@@ -2504,9 +4493,24 @@ DB.whenReady(() => {
     cabinet.dataset.finish = state.shelfFinish || "walnut";
 
     const q = state.searchShelfQuery.toLowerCase();
-    const filtered = list.filter(v => {
-      if (state.shelfFilter === "fav" && !v.favorite) return false;
-      if (state.shelfFilter.startsWith("wax:") && (v.wax || "obsidian") !== state.shelfFilter.slice(4)) return false;
+    const validFolderIds = new Set(folders.map(f => f.id));
+
+    const visibleFolders = (state.shelfFilter === "all" && !activeFolder)
+      ? folders.filter(f => {
+          if (!q) return true;
+          if ((f.name || "").toLowerCase().includes(q)) return true;
+          return list.some(v => isVinylInFolder(v, f.id) && `${v.title || ""} ${v.artist || ""}`.toLowerCase().includes(q));
+        })
+      : [];
+    const filteredRecords = list.filter(v => {
+      if (activeFolder) {
+        if (!isVinylInFolder(v, activeFolder.id)) return false;
+      } else if (state.shelfFilter === "fav") {
+        if (!v.favorite) return false;
+      } else if (state.shelfFilter === "all" && !q) {
+        const assignedValid = getVinylFolderIds(v).filter(fid => validFolderIds.has(fid));
+        if (assignedValid.length > 0) return false;
+      }
       if (q) {
         const hay = `${v.title || ""} ${v.artist || ""} ${v.album || ""} ${v.genre || ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
@@ -2515,7 +4519,7 @@ DB.whenReady(() => {
     });
 
     if (state.sortBy !== "custom") {
-      filtered.sort((a, b) => {
+      filteredRecords.sort((a, b) => {
         if (state.sortBy === "title") return String(a.title || "").localeCompare(String(b.title || ""));
         if (state.sortBy === "artist") return String(a.artist || "").localeCompare(String(b.artist || ""));
         if (state.sortBy === "plays") return (Number(b.plays) || 0) - (Number(a.plays) || 0);
@@ -2523,48 +4527,112 @@ DB.whenReady(() => {
       });
     }
 
-    if (!filtered.length) {
+    const shelfEntries = [
+      ...visibleFolders.map(f => ({ kind: "folder", folder: f })),
+      ...filteredRecords.map(v => ({ kind: "vinyl", vinyl: v }))
+    ];
+
+    if (!shelfEntries.length) {
       const guest = DB.isGuest();
       cabinet.innerHTML = `
         <div class="vn-shelf-tier">
           <div class="vn-empty-shelf">
-            <h3>${guest ? "Sign In to Build Your 3D Vinyl Bookshelf" : (list.length ? "No Matching Vinyls on This Shelf" : "Your Vinyl Bookshelf Is Ready")}</h3>
+            <h3>${
+              guest
+                ? "Sign In to Build Your 3D Vinyl Bookshelf"
+                : activeFolder
+                  ? `Folder "${DB.esc(activeFolder.name)}" Is Empty`
+                  : (list.length ? "No Matching Items on This Shelf" : "Your Vinyl Bookshelf Is Ready")
+            }</h3>
             <p>
-              ${guest
-                ? "Sign in with your Project 23 account to search songs, press custom vinyl records to your shelf, and spin them on the turntable below."
-                : (list.length
-                  ? "Try clearing your shelf search filter above."
-                  : "Search for any song or artist above and click '+ Press Vinyl' to place your first record onto the bookshelf.")}
+              ${
+                guest
+                  ? "Sign in with your Project 23 account to search songs, press custom vinyl records to your shelf, and spin them on the turntable below."
+                  : activeFolder
+                    ? "Click '+ Add / Remove Songs' above or drag any vinyl record from your shelf onto this folder to add songs."
+                    : (list.length
+                        ? "Try clearing your shelf search filter above or switch to 'All Songs'."
+                        : "Search for any song or artist above and click '+ Press Vinyl' to place your first record onto the bookshelf.")
+              }
             </p>
             ${guest ? `<button type="button" class="vn-btn primary" id="vnEmptySignInBtn" style="margin-top:.35rem;">Sign in to continue</button>` : ""}
+            ${!guest && activeFolder ? `<button type="button" class="vn-btn primary" id="vnEmptyAddSongsToFolderBtn" style="margin-top:.35rem;">+ Add Songs to "${DB.esc(activeFolder.name)}"</button>` : ""}
           </div>
           <div class="vn-shelf-plank"><span class="vn-shelf-brass-tag">SHELF TIER 01 · ANALOG ARCHIVE</span></div>
         </div>
       `;
       const signBtn = $("vnEmptySignInBtn");
       if (signBtn) signBtn.onclick = () => ensureAccountAccess();
+      const addFBtn = $("vnEmptyAddSongsToFolderBtn");
+      if (addFBtn && activeFolder) addFBtn.onclick = () => openManageFolderRecordsModal(activeFolder);
       return;
     }
 
     const perTier = window.innerWidth <= 560 ? 2 : (window.innerWidth <= 920 ? 3 : 5);
     const tiers = [];
-    for (let i = 0; i < filtered.length; i += perTier) {
-      tiers.push(filtered.slice(i, i + perTier));
+    for (let i = 0; i < shelfEntries.length; i += perTier) {
+      tiers.push(shelfEntries.slice(i, i + perTier));
     }
 
     const heartSvg = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+    const folderSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>`;
     const paletteSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>`;
     const linkSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
     const delSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+    const playMiniSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>`;
+    const editMiniSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
 
     cabinet.innerHTML = tiers.map((tierItems, tIdx) => `
       <div class="vn-shelf-tier">
         <div class="vn-shelf-row">
-          ${tierItems.map(v => {
+          ${tierItems.map(entry => {
+            if (entry.kind === "folder") {
+              const f = entry.folder;
+              const fRecords = list.filter(v => isVinylInFolder(v, f.id));
+              const previewCovers = fRecords.slice(0, 4).map(v => v.cover);
+              const fColor = f.color || "#bf5af2";
+              const isPlayingInFolder = fRecords.some(v => v.id === state.activeVinylId);
+              return `
+                <div class="vn-folder-slot" data-folder-slot="${DB.esc(f.id)}" style="--folder-c:${DB.esc(fColor)}" title="Click to open folder '${DB.esc(f.name)}' (${fRecords.length} song${fRecords.length === 1 ? "" : "s"}) · Drag any vinyl record here to move into folder">
+                  <div class="vn-folder-3d">
+                    <div class="vn-folder-tab"></div>
+                    <div class="vn-folder-peek-disc"></div>
+                    <div class="vn-folder-body">
+                      <div class="vn-sleeve-actions">
+                        <button type="button" class="vn-mini-act" data-play-folder="${DB.esc(f.id)}" title="Spin Folder" aria-label="Spin folder">${playMiniSvg}</button>
+                        <button type="button" class="vn-mini-act" data-manage-folder="${DB.esc(f.id)}" title="Add / Remove Songs" aria-label="Manage folder songs">${folderSvg}</button>
+                        <button type="button" class="vn-mini-act" data-rename-folder="${DB.esc(f.id)}" title="Rename Folder" aria-label="Rename folder">${editMiniSvg}</button>
+                        <button type="button" class="vn-mini-act del" data-del-folder="${DB.esc(f.id)}" title="Delete Folder" aria-label="Delete folder">${delSvg}</button>
+                      </div>
+                      <div class="vn-folder-grid">
+                        ${previewCovers.length ? previewCovers.map(cov => `<img src="${DB.esc(cov)}" alt="" loading="lazy" draggable="false">`).join("") : `
+                          <div class="vn-folder-grid-empty">
+                            ${folderSvg}
+                            <span>Drop Vinyls Here</span>
+                          </div>
+                        `}
+                      </div>
+                      <div class="vn-folder-foot">
+                        <span class="vn-folder-badge">${fRecords.length} Song${fRecords.length === 1 ? "" : "s"}</span>
+                        <span class="vn-folder-open-lbl">${isPlayingInFolder ? "● Playing" : "Open →"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="vn-slot-caption">
+                    <b>📁 ${DB.esc(f.name)}</b>
+                    <span>${fRecords.length ? `${fRecords.length} record${fRecords.length === 1 ? "" : "s"} inside` : "Empty folder · Click to open"}</span>
+                  </div>
+                </div>
+              `;
+            }
+
+            const v = entry.vinyl;
+            hydrateVinylYt(v);
             const waxObj = WAX_STYLES[v.wax] || WAX_STYLES.obsidian;
             const isOnDeck = state.activeVinylId === v.id;
+            const inAnyFolder = getVinylFolderIds(v).some(fid => validFolderIds.has(fid));
             return `
-              <div class="vn-record-slot ${isOnDeck ? "is-on-turntable" : ""}" draggable="true" data-vinyl-slot="${DB.esc(v.id)}" title="Click to spin '${DB.esc(v.title)}' · Drag to reorder on shelf">
+              <div class="vn-record-slot ${isOnDeck ? "is-on-turntable" : ""}" draggable="true" data-vinyl-slot="${DB.esc(v.id)}" title="Click to spin '${DB.esc(v.title)}' · Drag to reorder or drop onto a Folder on the shelf">
                 <div class="vn-record-3d">
                   <div class="vn-peek-disc" style="--wax-surface:${waxObj.bg}">
                     <div class="vn-peek-label" style="background-image:url('${DB.esc(v.cover)}')"></div>
@@ -2573,8 +4641,9 @@ DB.whenReady(() => {
                     <img src="${DB.esc(v.cover)}" alt="${DB.esc(v.title)}" loading="lazy" draggable="false">
                     <div class="vn-sleeve-actions">
                       <button type="button" class="vn-mini-act ${v.favorite ? "fav-on" : ""}" data-fav-vinyl="${DB.esc(v.id)}" title="Favorite" aria-label="Favorite">${heartSvg}</button>
+                      <button type="button" class="vn-mini-act ${inAnyFolder ? "folder-on" : ""}" data-folder-vinyl="${DB.esc(v.id)}" title="Move to Folder / Playlist" aria-label="Move to folder">${folderSvg}</button>
                       <button type="button" class="vn-mini-act" data-wax-cycle="${DB.esc(v.id)}" title="Cycle Vinyl Wax Color (${DB.esc(waxObj.name)})" aria-label="Change wax color">${paletteSvg}</button>
-                      <button type="button" class="vn-mini-act ${(v.ytVideoId || v.fullAudioUrl) ? "link-on" : ""}" data-src-vinyl="${DB.esc(v.id)}" title="${(v.ytVideoId || v.fullAudioUrl) ? "Full Song Linked (Click to edit)" : "Link Full YouTube / Audio Song"}" aria-label="Set full song source">${linkSvg}</button>
+                      <button type="button" class="vn-mini-act ${(v.ytVideoId || v.fullAudioUrl) ? "link-on" : ""}" data-src-vinyl="${DB.esc(v.id)}" title="${(v.ytVideoId || v.fullAudioUrl) ? "Full Song Linked (Click to edit)" : "Link Full Song Source"}" aria-label="Set full song source">${linkSvg}</button>
                       <button type="button" class="vn-mini-act del" data-del-vinyl="${DB.esc(v.id)}" title="Remove from shelf" aria-label="Remove">${delSvg}</button>
                     </div>
                     ${isOnDeck ? `
@@ -2594,31 +4663,134 @@ DB.whenReady(() => {
           }).join("")}
         </div>
         <div class="vn-shelf-plank">
-          <span class="vn-shelf-brass-tag">SHELF TIER ${String(tIdx + 1).padStart(2, "0")} · ${tierItems.length} RECORD${tierItems.length === 1 ? "" : "S"} · DRAG TO REORDER</span>
+          <span class="vn-shelf-brass-tag">${activeFolder ? `${DB.esc(activeFolder.name.toUpperCase())} · TIER ${String(tIdx + 1).padStart(2, "0")}` : `SHELF TIER ${String(tIdx + 1).padStart(2, "0")} · ${tierItems.length} ITEM${tierItems.length === 1 ? "" : "S"}`}</span>
         </div>
       </div>
     `).join("");
 
+    cabinet.querySelectorAll("[data-folder-slot]").forEach(fSlot => {
+      const fid = fSlot.dataset.folderSlot;
+      fSlot.onclick = e => {
+        if (e.target.closest("button")) return;
+        state.openFolderId = fid;
+        renderBookshelf(loadVinyls());
+      };
+
+      fSlot.addEventListener("dragover", e => {
+        if (!state.draggedVinylId) return;
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        fSlot.classList.add("is-folder-drop");
+      });
+      fSlot.addEventListener("dragleave", () => {
+        fSlot.classList.remove("is-folder-drop");
+      });
+      fSlot.addEventListener("drop", async e => {
+        e.preventDefault();
+        e.stopPropagation();
+        fSlot.classList.remove("is-folder-drop");
+        const vId = state.draggedVinylId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
+        state.draggedVinylId = null;
+        if (vId && fid) {
+          await toggleVinylInFolder(vId, fid, true);
+          const fObj = loadFolders().find(x => x.id === fid);
+          const vObj = loadVinyls().find(x => x.id === vId);
+          if (fObj && vObj) {
+            DB.toast("Moved into Folder", `Moved "${vObj.title}" into folder "${fObj.name}".`, 2200);
+          }
+        }
+      });
+    });
+
+    cabinet.querySelectorAll("[data-play-folder]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const fid = btn.dataset.playFolder;
+        const recs = loadVinyls().filter(v => isVinylInFolder(v, fid));
+        if (recs.length) {
+          loadVinylOntoTurntable(recs[0], true);
+        } else {
+          state.openFolderId = fid;
+          renderBookshelf(loadVinyls());
+        }
+      };
+    });
+
+    cabinet.querySelectorAll("[data-manage-folder]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const fObj = loadFolders().find(f => f.id === btn.dataset.manageFolder);
+        if (fObj) openManageFolderRecordsModal(fObj);
+      };
+    });
+
+    cabinet.querySelectorAll("[data-rename-folder]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const fObj = loadFolders().find(f => f.id === btn.dataset.renameFolder);
+        if (fObj) openCreateOrRenameFolderModal(fObj);
+      };
+    });
+
+    cabinet.querySelectorAll("[data-del-folder]").forEach(btn => {
+      btn.onclick = async e => {
+        e.stopPropagation();
+        const fid = btn.dataset.delFolder;
+        const fObj = loadFolders().find(f => f.id === fid);
+        const nextFolders = loadFolders().filter(f => f.id !== fid);
+        if (state.openFolderId === fid) state.openFolderId = null;
+        await saveFolders(nextFolders);
+        if (fObj) DB.toast("Folder Deleted", `Removed folder "${fObj.name}". Your records are back on the main shelf.`, 2200);
+      };
+    });
+
     let touchDragId = null;
     let touchTargetId = null;
+    let touchTargetFolderId = null;
+
+    async function activateShelfVinyl(vId) {
+      if (DB.isGuest() && !(await ensureAccountAccess())) return;
+      const listNow = loadVinyls();
+      const found = listNow.find(x => x.id === vId);
+      if (!found) return;
+
+      if (state.activeVinylId === found.id) {
+        toggleTurntablePlayPause();
+      } else {
+        found.plays = (Number(found.plays) || 0) + 1;
+        state.activeVinylId = found.id;
+        state.activeVinylObj = found;
+        loadVinylOntoTurntable(found, true);
+        localVinylCache = listNow.slice();
+        DB.set(VN_KEY, localVinylCache);
+        if (typeof DB.flush === "function") DB.flush();
+        const userRef = getUserDocRef();
+        if (userRef) {
+          state.syncInFlight = true;
+          const cleanList = JSON.parse(JSON.stringify(localVinylCache));
+          Promise.all([
+            userRef.collection("state").doc("vinyl").set({
+              items: cleanList,
+              shelfFinish: state.shelfFinish,
+              updatedAt: Date.now()
+            }).catch(() => {}),
+            userRef.set({ vinylShelf: cleanList }, { merge: true }).catch(() => {})
+          ]).finally(() => {
+            state.syncInFlight = false;
+          });
+        }
+      }
+    }
 
     cabinet.querySelectorAll("[data-vinyl-slot]").forEach(slot => {
       const vId = slot.dataset.vinylSlot;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let dragDroppedOnOther = false;
 
-      slot.onclick = async e => {
+      slot.onclick = e => {
         if (e.target.closest("button")) return;
-        if (!(await ensureAccountAccess())) return;
-        const listNow = loadVinyls();
-        const found = listNow.find(x => x.id === vId);
-        if (!found) return;
-
-        if (state.activeVinylId === found.id) {
-          toggleTurntablePlayPause();
-        } else {
-          found.plays = (Number(found.plays) || 0) + 1;
-          await saveVinyls(listNow);
-          loadVinylOntoTurntable(found, true);
-        }
+        activateShelfVinyl(vId);
       };
 
       slot.addEventListener("dragstart", e => {
@@ -2626,6 +4798,9 @@ DB.whenReady(() => {
           e.preventDefault();
           return;
         }
+        dragStartX = e.clientX || 0;
+        dragStartY = e.clientY || 0;
+        dragDroppedOnOther = false;
         state.draggedVinylId = vId;
         slot.classList.add("is-dragging");
         if (e.dataTransfer) {
@@ -2634,10 +4809,17 @@ DB.whenReady(() => {
         }
       });
 
-      slot.addEventListener("dragend", () => {
+      slot.addEventListener("dragend", e => {
+        const wasDraggingId = state.draggedVinylId;
         state.draggedVinylId = null;
         slot.classList.remove("is-dragging");
         cabinet.querySelectorAll(".vn-record-slot.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+        cabinet.querySelectorAll(".vn-folder-slot.is-folder-drop").forEach(el => el.classList.remove("is-folder-drop"));
+        const dx = Math.abs((e.clientX || 0) - dragStartX);
+        const dy = Math.abs((e.clientY || 0) - dragStartY);
+        if (!dragDroppedOnOther && wasDraggingId === vId && dx < 36 && dy < 36) {
+          activateShelfVinyl(vId);
+        }
       });
 
       slot.addEventListener("dragover", e => {
@@ -2654,6 +4836,7 @@ DB.whenReady(() => {
       slot.addEventListener("drop", async e => {
         e.preventDefault();
         e.stopPropagation();
+        dragDroppedOnOther = true;
         slot.classList.remove("is-drop-target");
         const fromId = state.draggedVinylId || (e.dataTransfer && e.dataTransfer.getData("text/plain"));
         state.draggedVinylId = null;
@@ -2668,7 +4851,7 @@ DB.whenReady(() => {
         pressTimer = setTimeout(() => {
           touchDragId = vId;
           slot.classList.add("is-dragging");
-        }, 240);
+        }, 380);
       }, { passive: true });
 
       slot.addEventListener("touchmove", e => {
@@ -2680,13 +4863,21 @@ DB.whenReady(() => {
         if (!t) return;
         e.preventDefault();
         const overEl = document.elementFromPoint(t.clientX, t.clientY);
+        const overFolder = overEl && overEl.closest && overEl.closest("[data-folder-slot]");
         const overSlot = overEl && overEl.closest && overEl.closest("[data-vinyl-slot]");
         cabinet.querySelectorAll(".vn-record-slot.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
-        if (overSlot && overSlot.dataset.vinylSlot !== touchDragId) {
+        cabinet.querySelectorAll(".vn-folder-slot.is-folder-drop").forEach(el => el.classList.remove("is-folder-drop"));
+        if (overFolder) {
+          overFolder.classList.add("is-folder-drop");
+          touchTargetFolderId = overFolder.dataset.folderSlot;
+          touchTargetId = null;
+        } else if (overSlot && overSlot.dataset.vinylSlot !== touchDragId) {
           overSlot.classList.add("is-drop-target");
           touchTargetId = overSlot.dataset.vinylSlot;
+          touchTargetFolderId = null;
         } else {
           touchTargetId = null;
+          touchTargetFolderId = null;
         }
       }, { passive: false });
 
@@ -2695,11 +4886,19 @@ DB.whenReady(() => {
         if (!touchDragId) return;
         slot.classList.remove("is-dragging");
         cabinet.querySelectorAll(".vn-record-slot.is-drop-target").forEach(el => el.classList.remove("is-drop-target"));
+        cabinet.querySelectorAll(".vn-folder-slot.is-folder-drop").forEach(el => el.classList.remove("is-folder-drop"));
         const fromId = touchDragId;
         const toId = touchTargetId;
+        const toFolderId = touchTargetFolderId;
         touchDragId = null;
         touchTargetId = null;
-        if (fromId && toId && fromId !== toId) {
+        touchTargetFolderId = null;
+        if (fromId && toFolderId) {
+          await toggleVinylInFolder(fromId, toFolderId, true);
+          const fObj = loadFolders().find(x => x.id === toFolderId);
+          const vObj = loadVinyls().find(x => x.id === fromId);
+          if (fObj && vObj) DB.toast("Moved into Folder", `Moved "${vObj.title}" into "${fObj.name}".`, 2200);
+        } else if (fromId && toId && fromId !== toId) {
           await reorderVinylShelf(fromId, toId);
         }
       };
@@ -2715,6 +4914,14 @@ DB.whenReady(() => {
         if (!target) return;
         target.favorite = !target.favorite;
         await saveVinyls(listNow);
+      };
+    });
+
+    cabinet.querySelectorAll("[data-folder-vinyl]").forEach(btn => {
+      btn.onclick = e => {
+        e.stopPropagation();
+        const target = loadVinyls().find(x => x.id === btn.dataset.folderVinyl);
+        if (target) openAssignVinylFoldersModal(target);
       };
     });
 
@@ -2763,6 +4970,7 @@ DB.whenReady(() => {
   }
 
   function openFullTrackSourceModal(vinyl) {
+    hydrateVinylYt(vinyl);
     const node = document.createElement("div");
     const curYt = vinyl.ytVideoId ? `https://www.youtube.com/watch?v=${vinyl.ytVideoId}` : "";
     const curAudio = vinyl.fullAudioUrl || "";
@@ -2772,35 +4980,40 @@ DB.whenReady(() => {
     node.innerHTML = `
       <h2>Full-Length Song Source — ${DB.esc(vinyl.title)}</h2>
       <p class="muted" style="margin-top:-.35rem;margin-bottom:.8rem;font-size:.82rem;">
-        Apple Music's catalog only provides 30-second previews without a paid subscription. To play the <b>entire full-length song</b> on your turntable, paste its YouTube URL (or a direct audio stream URL) below.
+        Your turntable automatically streams the <b>full-length studio track</b>. You can also auto-match or paste a custom audio or YouTube URL below.
       </p>
 
       <div class="hint" style="margin-bottom:.8rem;font-size:.79rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;">
         <div>
           <b>Status:</b>
           <span id="vnModalSrcStatus" style="color:${hasFull ? "var(--vn-green)" : "var(--vn-gold)"};font-weight:700;">
-            ${hasFull ? `✓ Full-Length Song Linked (${DB.esc(vinyl.sourceName || "Full YouTube Audio")})` : "30s Preview Only (Link YouTube below for Full Song)"}
+            ${hasFull ? `✓ Full-Length Song Linked (${DB.esc(vinyl.sourceName || "Full Studio Audio")})` : "30s Preview Only"}
           </span>
         </div>
-        <a href="${DB.esc(ytSearchUrl)}" target="_blank" rel="noopener noreferrer" class="vn-btn" style="height:28px;min-height:28px;padding:0 .68rem;font-size:.73rem;">
-          Find on YouTube ↗
-        </a>
+        <div style="display:flex;gap:.35rem;flex-wrap:wrap;">
+          <button type="button" class="vn-btn primary" id="vnModalAutoFind" style="height:28px;min-height:28px;padding:0 .72rem;font-size:.73rem;">
+            ✨ Auto-Match Full Track
+          </button>
+          <a href="${DB.esc(ytSearchUrl)}" target="_blank" rel="noopener noreferrer" class="vn-btn" style="height:28px;min-height:28px;padding:0 .68rem;font-size:.73rem;">
+            Find on YouTube ↗
+          </a>
+        </div>
       </div>
 
       <div class="field">
-        <label for="vnModalYtInput">YouTube Song URL or Video ID (Plays Full Song on Turntable)</label>
+        <label for="vnModalAudioInput">Direct Full Audio Stream URL (.mp4 / .m4a / .mp3)</label>
+        <input id="vnModalAudioInput" type="url" placeholder="https://aac.saavncdn.com/..." value="${DB.esc(curAudio)}" style="width:100%">
+      </div>
+
+      <div class="field">
+        <label for="vnModalYtInput">Or YouTube Song URL / Video ID</label>
         <input id="vnModalYtInput" type="text" placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..." value="${DB.esc(curYt)}" style="width:100%">
-      </div>
-
-      <div class="field">
-        <label for="vnModalAudioInput">Or Direct Full Audio URL (.mp3 / .m4a / .mp4)</label>
-        <input id="vnModalAudioInput" type="url" placeholder="https://example.com/full-song.mp3" value="${DB.esc(curAudio)}" style="width:100%">
       </div>
 
       <div class="actions">
         ${hasFull ? `<button type="button" class="danger left" id="vnModalClear">Remove Link</button>` : `<button type="button" class="ghost left" id="vnModalCancel">Cancel</button>`}
         ${hasFull ? `<button type="button" class="ghost" id="vnModalCancel">Cancel</button>` : ""}
-        <button type="button" class="primary" id="vnModalSave">Verify &amp; Save Full Song</button>
+        <button type="button" class="primary" id="vnModalSave">Save Full Song</button>
       </div>
     `;
 
@@ -2808,6 +5021,29 @@ DB.whenReady(() => {
 
     const cancelBtn = node.querySelector("#vnModalCancel");
     if (cancelBtn) cancelBtn.onclick = close;
+
+    const autoFindBtn = node.querySelector("#vnModalAutoFind");
+    if (autoFindBtn) {
+      autoFindBtn.onclick = async () => {
+        const origTxt = autoFindBtn.textContent;
+        autoFindBtn.disabled = true;
+        autoFindBtn.textContent = "Matching Full Track…";
+        const hits = await searchFullAudioCatalog(`${vinyl.title || ""} ${vinyl.artist || ""}`.trim());
+        const match = pickBestFullTrackMatch(hits, vinyl.title, vinyl.artist, vinyl.fullDurationSec);
+        autoFindBtn.disabled = false;
+        autoFindBtn.textContent = origTxt;
+        if (match && match.fullAudioUrl) {
+          node.querySelector("#vnModalAudioInput").value = match.fullAudioUrl;
+          const statusEl = node.querySelector("#vnModalSrcStatus");
+          if (statusEl) {
+            statusEl.style.color = "var(--vn-green)";
+            statusEl.textContent = `✓ Found Full Studio Audio (${fmtSec(match.fullDurationSec)}) — Click Save Full Song below`;
+          }
+        } else {
+          DB.toast("Could Not Auto-Match", "Paste a direct audio or YouTube URL below.", 2800);
+        }
+      };
+    }
 
     const clearBtn = node.querySelector("#vnModalClear");
     if (clearBtn) {
@@ -2817,10 +5053,14 @@ DB.whenReady(() => {
         target.ytVideoId = "";
         target.fullAudioUrl = "";
         target.sourceName = "";
+        for (const k of getTrackKeys(target)) {
+          delete ytLinkCacheMap[k];
+        }
+        saveYtMap();
         await saveVinyls(list);
         close();
         await prepareVinylOnDeck(target, false);
-        DB.toast("Full Song Link Removed", `Reverted "${target.title}" to standard preview.`, 2200);
+        DB.toast("Full Song Link Removed", `Removed custom link for "${target.title}".`, 2200);
       };
     }
 
@@ -2838,11 +5078,11 @@ DB.whenReady(() => {
           DB.toast("Invalid YouTube Link", "Please paste a valid YouTube watch URL (youtube.com/watch?v=... or youtu.be/...).", 3000);
           return;
         }
-        saveBtn.textContent = "Verifying YouTube Video…";
+        saveBtn.textContent = "Verifying…";
         saveBtn.disabled = true;
         const check = await verifyYouTubeVideoExists(extracted);
         saveBtn.disabled = false;
-        saveBtn.textContent = "Verify & Save Full Song";
+        saveBtn.textContent = "Save Full Song";
         if (!check.ok) {
           statusEl.style.color = "#ff453a";
           statusEl.textContent = "Could not verify that YouTube video ID.";
@@ -2853,19 +5093,20 @@ DB.whenReady(() => {
 
       const list = loadVinyls();
       const target = list.find(x => x.id === vinyl.id) || vinyl;
-      target.ytVideoId = verifiedVid;
       target.fullAudioUrl = audioVal || "";
+      target.ytVideoId = verifiedVid;
       target.sourceName = target.fullAudioUrl
-        ? "Full Audio Stream"
+        ? "Full Studio Audio"
         : (target.ytVideoId ? "Full YouTube Audio" : "");
       if (target.ytVideoId || target.fullAudioUrl) {
         target.fullDurationSec = Math.max(60, Number(target.fullDurationSec) || Math.round((Number(target.durationMs) || 210000) / 1000));
+        rememberFullTrack(target, { fullAudioUrl: target.fullAudioUrl, ytVideoId: target.ytVideoId, fullDurationSec: target.fullDurationSec, sourceName: target.sourceName });
       }
 
       await saveVinyls(list);
       close();
-      await prepareVinylOnDeck(target, false);
-      DB.toast("Full Song Linked", `"${target.title}" is verified and ready on the platter.`, 2600);
+      await prepareVinylOnDeck(target, state.isPlaying);
+      DB.toast("Full Song Linked", `"${target.title}" is linked and ready on the platter.`, 2600);
     };
   }
 
@@ -2876,10 +5117,51 @@ DB.whenReady(() => {
     return `${m}:${String(r).padStart(2, "0")}`;
   }
 
-  function stopAllPlayback() {
+  function syncBookshelfPlaybackIndicators() {
+    const cabinet = $("vnBookshelfCabinet");
+    if (!cabinet) return;
+    const list = loadVinyls();
+    const byId = new Map(list.map(x => [x.id, x]));
+    cabinet.querySelectorAll("[data-vinyl-slot]").forEach(slot => {
+      const id = slot.dataset.vinylSlot;
+      const v = byId.get(id);
+      const isOnDeck = state.activeVinylId === id;
+      slot.classList.toggle("is-on-turntable", isOnDeck);
+      const sleeve = slot.querySelector(".vn-sleeve");
+      if (sleeve) {
+        let badge = sleeve.querySelector(".vn-now-badge");
+        if (isOnDeck) {
+          if (!badge) {
+            badge = document.createElement("div");
+            badge.className = "vn-now-badge";
+            sleeve.appendChild(badge);
+          }
+          badge.innerHTML = `<i class="vn-now-dot"></i><span>${state.isPlaying ? "Spinning" : "On Deck"}</span>`;
+        } else if (badge) {
+          badge.remove();
+        }
+      }
+      if (v) {
+        const srcBtn = slot.querySelector("[data-src-vinyl]");
+        if (srcBtn) {
+          const hasFull = Boolean(v.ytVideoId || v.fullAudioUrl);
+          srcBtn.classList.toggle("link-on", hasFull);
+          srcBtn.title = hasFull ? "Full Song Linked (Click to edit)" : "Link Full Song Source";
+        }
+      }
+    });
+  }
+
+  function stopAllPlayback(keepYtReadyForSwitch = false) {
+    clearTimeout(ytSwitchVerifyTimer);
+    pendingYtAction = null;
+    state.wantAutoPlay = false;
+    if (!keepYtReadyForSwitch) {
+      state.desiredYtVideoId = "";
+    }
     try { audioEl.pause(); } catch {}
-    if (ytReady && ytPlayer && typeof ytPlayer.pauseVideo === "function") {
-      try { ytPlayer.pauseVideo(); } catch {}
+    if (!keepYtReadyForSwitch && ytReady && ytPlayer) {
+      try { if (typeof ytPlayer.pauseVideo === "function") ytPlayer.pauseVideo(); } catch {}
     }
     state.isPlaying = false;
     stopVinylCrackle();
@@ -2887,11 +5169,18 @@ DB.whenReady(() => {
 
   function getExpectedDurationSec(v) {
     if (!v) return 0;
-    const hasFull = Boolean(v.ytVideoId || v.fullAudioUrl);
+    hydrateVinylYt(v);
+    if (v.fullAudioUrl && audioEl.duration && Number.isFinite(audioEl.duration) && audioEl.duration > 35 && state.activeVinylId === v.id) {
+      return Math.round(audioEl.duration);
+    }
+    const hasFull = Boolean(v.fullAudioUrl || v.ytVideoId);
     if (hasFull) {
-      if (v.ytVideoId && ytReady && ytPlayer && state.activeVinylId === v.id && typeof ytPlayer.getDuration === "function") {
-        const ytDur = Number(ytPlayer.getDuration()) || 0;
-        if (ytDur > 0) return Math.round(ytDur);
+      if (v.ytVideoId && !v.fullAudioUrl && ytReady && ytPlayer && state.activeVinylId === v.id && typeof ytPlayer.getDuration === "function") {
+        const vData = (typeof ytPlayer.getVideoData === "function") ? ytPlayer.getVideoData() : null;
+        if (!vData || !vData.video_id || vData.video_id === v.ytVideoId) {
+          const ytDur = Number(ytPlayer.getDuration()) || 0;
+          if (ytDur > 0) return Math.round(ytDur);
+        }
       }
       if (Number(v.fullDurationSec) > 35) return Number(v.fullDurationSec);
       if (Number(v.durationMs) > 35000) return Math.round(Number(v.durationMs) / 1000);
@@ -2900,6 +5189,7 @@ DB.whenReady(() => {
     if (audioEl.duration && Number.isFinite(audioEl.duration) && audioEl.duration > 0) {
       return Math.round(audioEl.duration);
     }
+    if (Number(v.durationMs) > 35000) return Math.round(Number(v.durationMs) / 1000);
     return 30;
   }
 
@@ -2928,9 +5218,10 @@ DB.whenReady(() => {
     const srcBtn = $("vnSourceBtn");
 
     if (v) {
+      hydrateVinylYt(v);
       const waxObj = WAX_STYLES[v.wax] || WAX_STYLES.obsidian;
-      const hasFull = Boolean(v.ytVideoId || v.fullAudioUrl);
-      const modeBadge = hasFull ? (v.sourceName || "FULL YOUTUBE AUDIO") : "30S PREVIEW · LINK YOUTUBE FOR FULL SONG";
+      const hasFull = Boolean(v.fullAudioUrl || v.ytVideoId);
+      const modeBadge = hasFull ? (v.sourceName || "FULL STUDIO AUDIO") : "CONNECTING FULL TRACK…";
       disc.style.setProperty("--active-wax-bg", waxObj.bg);
       label.style.backgroundImage = `url('${v.cover}')`;
       $("vnNowCoverImg").src = v.cover || "assets/logo.png";
@@ -2939,7 +5230,7 @@ DB.whenReady(() => {
       $("vnNowStatusTag").innerHTML = state.isPlaying
         ? `<i class="vn-now-dot"></i><span>SPINNING · ${DB.esc(modeBadge.toUpperCase())}</span>`
         : `<span>ON PLATTER · ${DB.esc(modeBadge.toUpperCase())}</span>`;
-      $("vnWaxEditionLbl").textContent = `${waxObj.name} Wax · ${state.rpm === 45 ? "45" : "33⅓"} RPM · ${hasFull ? "Full Song" : "30s Preview"}`;
+      $("vnWaxEditionLbl").textContent = `${waxObj.name} Wax · ${state.rpm === 45 ? "45" : "33⅓"} RPM · ${hasFull ? "Full Song" : "Connecting…"}`;
 
       const expDur = getExpectedDurationSec(v);
       if (!state.isPlaying) {
@@ -2947,7 +5238,7 @@ DB.whenReady(() => {
       }
 
       if (srcBtnLbl) {
-        srcBtnLbl.textContent = hasFull ? "✓ Track Linked" : "Link Track";
+        srcBtnLbl.textContent = hasFull ? "Track Linked" : "Link Track";
       }
       if (srcBtn) {
         srcBtn.classList.toggle("on", hasFull);
@@ -2976,43 +5267,36 @@ DB.whenReady(() => {
 
   async function prepareVinylOnDeck(vinylObj, autoPlay = false) {
     if (!vinylObj) return;
+    const mySeq = ++deckLoadSeq;
+
+    hydrateVinylYt(vinylObj);
     stopAllPlayback();
 
     state.activeVinylId = vinylObj.id;
     state.activeVinylObj = vinylObj;
+    state.wantAutoPlay = Boolean(autoPlay);
     $("vnCurTimeLbl").textContent = "0:00";
     $("vnSeekSlider").value = "0";
-
-    const ytId = extractYouTubeId(vinylObj.ytVideoId || "");
-    if (ytId) {
-      vinylObj.ytVideoId = ytId;
-      state.playbackEngine = "yt";
-      audioEl.removeAttribute("src");
-      $("vnDurTimeLbl").textContent = fmtSec(getExpectedDurationSec(vinylObj));
-      updateTurntableUI(vinylObj);
-      renderBookshelf(loadVinyls());
-
-      const check = await verifyYouTubeVideoExists(ytId);
-      if (check.ok) {
-        playOrCueYtVideo(ytId, autoPlay);
-        if (autoPlay) {
-          state.isPlaying = true;
-          startVinylCrackle();
-        }
-      }
-      updateTurntableUI(vinylObj);
-      renderBookshelf(loadVinyls());
-      return;
-    }
+    loadAndRenderLyricsForVinyl(vinylObj);
+    applyPlaybackRate();
 
     if (vinylObj.fullAudioUrl) {
       state.playbackEngine = "audio";
-      audioEl.src = vinylObj.fullAudioUrl;
+      if (audioEl.src !== vinylObj.fullAudioUrl) {
+        audioEl.src = vinylObj.fullAudioUrl;
+      } else {
+        try { audioEl.currentTime = 0; } catch {}
+      }
       audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+      audioEl.volume = state.volume;
       $("vnDurTimeLbl").textContent = fmtSec(getExpectedDurationSec(vinylObj));
-      if (autoPlay) {
+      if (state.wantAutoPlay) {
         try {
           await audioEl.play();
+          if (mySeq !== deckLoadSeq || state.activeVinylId !== vinylObj.id) {
+            audioEl.pause();
+            return;
+          }
           state.isPlaying = true;
           startVinylCrackle();
         } catch {
@@ -3020,7 +5304,54 @@ DB.whenReady(() => {
         }
       }
       updateTurntableUI(vinylObj);
-      renderBookshelf(loadVinyls());
+      syncBookshelfPlaybackIndicators();
+      return;
+    }
+
+    const ytId = extractYouTubeId(vinylObj.ytVideoId || "");
+    if (ytId) {
+      vinylObj.ytVideoId = ytId;
+      state.playbackEngine = "yt";
+      hardStopHtmlAudio();
+      $("vnDurTimeLbl").textContent = fmtSec(getExpectedDurationSec(vinylObj));
+      playOrCueYtVideo(ytId, state.wantAutoPlay);
+      if (state.wantAutoPlay) {
+        state.isPlaying = true;
+        startVinylCrackle();
+      }
+      updateTurntableUI(vinylObj);
+      syncBookshelfPlaybackIndicators();
+      return;
+    }
+
+    updateTurntableUI(vinylObj);
+    syncBookshelfPlaybackIndicators();
+    $("vnNowStatusTag").innerHTML = `<i class="vn-now-dot"></i><span>CONNECTING FULL STUDIO TRACK…</span>`;
+
+    const resolvedStream = await autoLinkVinylYouTube(vinylObj, true);
+    if (mySeq !== deckLoadSeq || state.activeVinylId !== vinylObj.id) return;
+
+    if (resolvedStream && vinylObj.fullAudioUrl) {
+      state.playbackEngine = "audio";
+      audioEl.src = vinylObj.fullAudioUrl;
+      audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+      audioEl.volume = state.volume;
+      $("vnDurTimeLbl").textContent = fmtSec(getExpectedDurationSec(vinylObj));
+      if (state.wantAutoPlay) {
+        try {
+          await audioEl.play();
+          if (mySeq !== deckLoadSeq || state.activeVinylId !== vinylObj.id) {
+            audioEl.pause();
+            return;
+          }
+          state.isPlaying = true;
+          startVinylCrackle();
+        } catch {
+          state.isPlaying = false;
+        }
+      }
+      updateTurntableUI(vinylObj);
+      syncBookshelfPlaybackIndicators();
       return;
     }
 
@@ -3029,9 +5360,13 @@ DB.whenReady(() => {
       audioEl.src = vinylObj.previewUrl;
       audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
       $("vnDurTimeLbl").textContent = "0:30";
-      if (autoPlay) {
+      if (state.wantAutoPlay) {
         try {
           await audioEl.play();
+          if (mySeq !== deckLoadSeq || state.activeVinylId !== vinylObj.id) {
+            audioEl.pause();
+            return;
+          }
           state.isPlaying = true;
           startVinylCrackle();
         } catch {
@@ -3039,12 +5374,12 @@ DB.whenReady(() => {
         }
       }
     } else {
-      audioEl.removeAttribute("src");
+      hardStopHtmlAudio();
       $("vnDurTimeLbl").textContent = "--:--";
     }
 
     updateTurntableUI(vinylObj);
-    renderBookshelf(loadVinyls());
+    syncBookshelfPlaybackIndicators();
   }
 
   function loadVinylOntoTurntable(vinylObj, autoPlay = true) {
@@ -3052,7 +5387,7 @@ DB.whenReady(() => {
   }
 
   async function toggleTurntablePlayPause() {
-    if (!(await ensureAccountAccess())) return;
+    if (DB.isGuest() && !(await ensureAccountAccess())) return;
     const list = loadVinyls();
     let cur = list.find(x => x.id === state.activeVinylId) || state.activeVinylObj;
     if (!cur && list.length) {
@@ -3065,81 +5400,99 @@ DB.whenReady(() => {
       return;
     }
 
+    hydrateVinylYt(cur);
+
     if (state.isPlaying) {
+      deckLoadSeq++;
       stopAllPlayback();
       updateTurntableUI(cur);
-      renderBookshelf(list);
+      syncBookshelfPlaybackIndicators();
+      return;
+    }
+
+    if (cur.fullAudioUrl) {
+      state.playbackEngine = "audio";
+      state.wantAutoPlay = true;
+      if (audioEl.src !== cur.fullAudioUrl) {
+        audioEl.src = cur.fullAudioUrl;
+      }
+      audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
+      audioEl.volume = state.volume;
+      try {
+        await audioEl.play();
+        state.isPlaying = true;
+        startVinylCrackle();
+      } catch {
+        state.isPlaying = false;
+      }
+      updateTurntableUI(cur);
+      syncBookshelfPlaybackIndicators();
       return;
     }
 
     const ytId = extractYouTubeId(cur.ytVideoId || "");
     if (ytId) {
+      cur.ytVideoId = ytId;
       state.playbackEngine = "yt";
-      audioEl.removeAttribute("src");
-      if (ytReady && ytPlayer && typeof ytPlayer.playVideo === "function") {
-        const videoData = (typeof ytPlayer.getVideoData === "function") ? ytPlayer.getVideoData() : null;
-        if (videoData && videoData.video_id === ytId) {
-          ytPlayer.playVideo();
-        } else {
-          playOrCueYtVideo(ytId, true);
-        }
-        state.isPlaying = true;
-        startVinylCrackle();
-      } else {
-        playOrCueYtVideo(ytId, true);
-        state.isPlaying = true;
-      }
+      state.wantAutoPlay = true;
+      state.desiredYtVideoId = ytId;
+      hardStopHtmlAudio();
+      playOrCueYtVideo(ytId, true);
+      state.isPlaying = true;
+      startVinylCrackle();
       updateTurntableUI(cur);
-      renderBookshelf(list);
+      syncBookshelfPlaybackIndicators();
       return;
     }
 
-    state.playbackEngine = "audio";
-    const targetSrc = cur.fullAudioUrl || cur.previewUrl || "";
-    if (!audioEl.src && targetSrc) audioEl.src = targetSrc;
-    try {
-      await audioEl.play();
-      state.isPlaying = true;
-      startVinylCrackle();
-    } catch {
-      state.isPlaying = false;
-    }
-    updateTurntableUI(cur);
-    renderBookshelf(list);
+    await prepareVinylOnDeck(cur, true);
   }
 
   function stepShelfVinyl(dir = 1) {
-    const list = loadVinyls();
-    if (!list.length) return;
-    const idx = list.findIndex(x => x.id === state.activeVinylId);
-    const nextIdx = idx === -1 ? 0 : (idx + dir + list.length) % list.length;
-    prepareVinylOnDeck(list[nextIdx], true);
+    const all = loadVinyls();
+    if (!all.length) return;
+    let pool = all;
+    if (state.openFolderId) {
+      const inF = all.filter(v => isVinylInFolder(v, state.openFolderId));
+      if (inF.length) pool = inF;
+    } else if (state.shelfFilter === "fav") {
+      const favs = all.filter(v => v.favorite);
+      if (favs.length) pool = favs;
+    }
+    const idx = pool.findIndex(x => x.id === state.activeVinylId);
+    const nextIdx = idx === -1 ? 0 : (idx + dir + pool.length) % pool.length;
+    prepareVinylOnDeck(pool[nextIdx], true);
   }
 
   audioEl.addEventListener("loadedmetadata", () => {
     if (state.playbackEngine !== "audio") return;
-    if (state.activeVinylObj && state.activeVinylObj.ytVideoId) return;
-    const dur = audioEl.duration || 30;
+    const dur = audioEl.duration || getExpectedDurationSec(state.activeVinylObj) || 210;
+    if (dur > 35 && state.activeVinylObj) {
+      state.activeVinylObj.fullDurationSec = Math.round(dur);
+    }
     $("vnDurTimeLbl").textContent = fmtSec(dur);
   });
 
   audioEl.addEventListener("timeupdate", () => {
     if (state.playbackEngine !== "audio") return;
-    if (state.activeVinylObj && state.activeVinylObj.ytVideoId) return;
-    const dur = audioEl.duration || 30;
+    const dur = audioEl.duration || getExpectedDurationSec(state.activeVinylObj) || 210;
     const cur = audioEl.currentTime || 0;
-    $("vnSeekSlider").value = String(((cur / dur) * 100).toFixed(1));
-    $("vnCurTimeLbl").textContent = fmtSec(cur);
-    $("vnDurTimeLbl").textContent = fmtSec(dur);
-    updateTonearmAngle(cur, dur);
+    if (dur > 0) {
+      $("vnSeekSlider").value = String(((cur / dur) * 100).toFixed(1));
+      $("vnCurTimeLbl").textContent = fmtSec(cur);
+      $("vnDurTimeLbl").textContent = fmtSec(dur);
+      updateTonearmAngle(cur, dur);
+      syncActiveLyricLine(cur);
+    }
   });
 
   audioEl.addEventListener("ended", () => {
     if (state.playbackEngine !== "audio") return;
     state.isPlaying = false;
+    state.wantAutoPlay = false;
     stopVinylCrackle();
     updateTurntableUI();
-    renderBookshelf(loadVinyls());
+    syncBookshelfPlaybackIndicators();
     if (state.autoNextOn && loadVinyls().length > 1) {
       setTimeout(() => stepShelfVinyl(1), 450);
     }
@@ -3153,7 +5506,7 @@ DB.whenReady(() => {
       try { ytPlayer.seekTo(targetSec, true); } catch {}
       updateTonearmAngle(targetSec, dur);
     } else {
-      const dur = audioEl.duration || 30;
+      const dur = audioEl.duration || getExpectedDurationSec(state.activeVinylObj) || 30;
       audioEl.currentTime = (pct / 100) * dur;
       updateTonearmAngle(audioEl.currentTime, dur);
     }
@@ -3161,17 +5514,17 @@ DB.whenReady(() => {
 
   $("vnPlayPauseBtn").onclick = toggleTurntablePlayPause;
   $("vnPrevBtn").onclick = async () => {
-    if (!(await ensureAccountAccess())) return;
+    if (DB.isGuest() && !(await ensureAccountAccess())) return;
     stepShelfVinyl(-1);
   };
   $("vnNextBtn").onclick = async () => {
-    if (!(await ensureAccountAccess())) return;
+    if (DB.isGuest() && !(await ensureAccountAccess())) return;
     stepShelfVinyl(1);
   };
   $("vnActiveDisc").onclick = toggleTurntablePlayPause;
 
   $("vnSourceBtn").onclick = async () => {
-    if (!(await ensureAccountAccess())) return;
+    if (DB.isGuest() && !(await ensureAccountAccess())) return;
     const list = loadVinyls();
     const cur = list.find(x => x.id === state.activeVinylId) || state.activeVinylObj || list[0];
     if (!cur) {
@@ -3185,10 +5538,7 @@ DB.whenReady(() => {
     btn.onclick = () => {
       state.rpm = parseInt(btn.dataset.rpm, 10) || 33;
       document.querySelectorAll("[data-rpm]").forEach(b => b.classList.toggle("active", b === btn));
-      audioEl.playbackRate = state.rpm === 45 ? 1.18 : 1.0;
-      if (ytReady && ytPlayer && typeof ytPlayer.setPlaybackRate === "function") {
-        try { ytPlayer.setPlaybackRate(state.rpm === 45 ? 1.25 : 1.0); } catch {}
-      }
+      applyPlaybackRate();
       updateTurntableUI();
     };
   });
@@ -3196,9 +5546,49 @@ DB.whenReady(() => {
   $("vnCrackleBtn").onclick = () => {
     state.crackleOn = !state.crackleOn;
     $("vnCrackleBtn").classList.toggle("on", state.crackleOn);
-    $("vnCrackleBtn").querySelector("span").textContent = `Vinyl Crackle: ${state.crackleOn ? "On" : "Off"}`;
-    if (state.crackleOn && state.isPlaying) startVinylCrackle();
-    else stopVinylCrackle();
+    $("vnCrackleBtn").querySelector("span").textContent = `Crackle: ${state.crackleOn ? "On" : "Off"}`;
+    if (state.isPlaying) {
+      stopVinylCrackle();
+      startVinylCrackle();
+    }
+  };
+
+  function syncLyricsStageVisibility() {
+    const well = $("vnPlatterWell");
+    const btn = $("vnLyricsToggleBtn");
+    const lbl = $("vnLyricsToggleLbl");
+    if (well) well.classList.toggle("lyrics-mode", state.lyricsOpen);
+    if (btn) btn.classList.toggle("on", state.lyricsOpen);
+    if (lbl) lbl.textContent = `Lyrics: ${state.lyricsOpen ? "On" : "Off"}`;
+    if (state.lyricsOpen) {
+      const curTime = (state.playbackEngine === "yt" && ytReady && ytPlayer && typeof ytPlayer.getCurrentTime === "function")
+        ? (Number(ytPlayer.getCurrentTime()) || 0)
+        : (audioEl.currentTime || 0);
+      setTimeout(() => syncActiveLyricLine(curTime, true), 60);
+    }
+  }
+
+  $("vnLyricsToggleBtn").onclick = () => {
+    state.lyricsOpen = !state.lyricsOpen;
+    syncLyricsStageVisibility();
+  };
+
+  const closeLyricsBtn = $("vnCloseLyricsStageBtn");
+  if (closeLyricsBtn) {
+    closeLyricsBtn.onclick = () => {
+      state.lyricsOpen = false;
+      syncLyricsStageVisibility();
+    };
+  }
+
+  $("vnEditLyricsBtn").onclick = async () => {
+    if (DB.isGuest() && !(await ensureAccountAccess())) return;
+    const cur = state.activeVinylObj || loadVinyls()[0];
+    if (!cur) {
+      DB.toast("Select a Vinyl First", "Load a vinyl onto the turntable to edit its lyrics.", 2200);
+      return;
+    }
+    openEditLyricsModal(cur);
   };
 
   $("vnAutoNextBtn").onclick = () => {
@@ -3223,7 +5613,7 @@ DB.whenReady(() => {
   });
 
   async function runSongSearch() {
-    if (!(await ensureAccountAccess())) return;
+    if (DB.isGuest() && !(await ensureAccountAccess())) return;
     const q = $("vnSearchInput").value.trim();
     if (!q) {
       $("vnSearchInput").focus();
@@ -3233,8 +5623,8 @@ DB.whenReady(() => {
     const origHtml = btn.innerHTML;
     btn.innerHTML = `<span>Searching…</span>`;
     try {
-      const rawResults = await searchSongsCatalog(q);
-      state.lastSearchResults = rawResults.map(mapTrackResult);
+      const results = await searchSongsCatalog(q);
+      state.lastSearchResults = results;
       renderSearchResults();
       if (!state.lastSearchResults.length) {
         DB.toast("No Songs Found", `Couldn't find matches for "${q}". Try another song or artist.`, 2500);
@@ -3264,7 +5654,7 @@ DB.whenReady(() => {
     btn.onclick = async e => {
       e.preventDefault();
       e.stopPropagation();
-      if (!(await ensureAccountAccess())) return;
+      if (DB.isGuest() && !(await ensureAccountAccess())) return;
       const open = menu.hidden;
       $("vnFinishMenu").hidden = true;
       $("vnSortMenu").hidden = true;
@@ -3306,8 +5696,13 @@ DB.whenReady(() => {
     } else if (state.activeVinylId) {
       const fresh = list.find(x => x.id === state.activeVinylId);
       if (fresh) {
+        hydrateVinylYt(fresh);
         state.activeVinylObj = fresh;
-        if (fresh.ytVideoId) state.playbackEngine = "yt";
+        if (fresh.fullAudioUrl) {
+          state.playbackEngine = "audio";
+        } else if (fresh.ytVideoId) {
+          state.playbackEngine = "yt";
+        }
       }
     }
     renderBookshelf(list);
@@ -3321,11 +5716,20 @@ DB.whenReady(() => {
     DB.onLogin(async () => {
       await initDirectFirestoreSync();
       renderAll();
+      setTimeout(() => backfillMissingYouTubeLinks(), 1200);
     });
   }
 
+  window.addEventListener("online", () => {
+    backfillMissingYouTubeLinks();
+    if (state.activeVinylObj && !extractYouTubeId(state.activeVinylObj.ytVideoId)) {
+      prepareVinylOnDeck(state.activeVinylObj, state.isPlaying || state.wantAutoPlay);
+    }
+  });
+
   initDirectFirestoreSync().then(() => {
     renderAll();
+    setTimeout(() => backfillMissingYouTubeLinks(), 1500);
   });
 });
 </script>
