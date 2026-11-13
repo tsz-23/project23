@@ -97,6 +97,9 @@ DB.set = (k,v)=>{
     if(k==="p23.pico_chats") document.dispatchEvent(new CustomEvent("p23pico"));
     if(k==="p23.watchlist") document.dispatchEvent(new CustomEvent("p23watchlist"));
     if(k==="p23.schedule" || k==="p23.scheduleMeta" || k==="p23.vault") document.dispatchEvent(new CustomEvent("p23schedule"));
+    if(k==="p23.events" || k==="p23.todos" || k==="p23.countdowns" || k==="p23.activeFlight" || k==="p23.fired"){
+      setTimeout(()=>{ if(typeof syncScheduleToSW === "function") syncScheduleToSW(); }, 60);
+    }
     return;
   }
   try{ localStorage.setItem(k, JSON.stringify(v)); }catch{}
@@ -636,6 +639,14 @@ DB.onLogin = fn=>{ loginHooks.push(fn); };
 const GENERIC_ERR = "Something went wrong on our end. Please try again later.";
 const GOOGLE_G = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 
+const CACHED_USER_KEY = "p23.cachedUser";
+function withTimeout(promise, ms, fallbackVal = null){
+  return Promise.race([
+    Promise.resolve(promise).catch(()=>fallbackVal),
+    new Promise(res=>setTimeout(()=>res(fallbackVal), ms))
+  ]);
+}
+
 function closeGate(){ if(gateEl) gateEl.classList.add("hide"); gateDismiss=null; gateState=""; }
 function cancelAuth(){ closeGate(); authWaiters.splice(0).forEach(r=>r(false)); }
 function gate(state,o={}){
@@ -647,15 +658,17 @@ function gate(state,o={}){
   gateEl.classList.remove("hide"); gateState=state; gateDismiss=o.dismiss||null;
   const head=`<h1>${DB.wordmark()}</h1>`, err=o.error?`<div class="gate-err">${DB.esc(o.error)}</div>`:"";
   const x=gateDismiss?`<button class="gate-x ghost iconbtn" id="gClose" aria-label="Close">${DB.icon("x")}</button>`:"";
-  if(state==="loading") gateEl.innerHTML=`<div class="gate-card">${head}<div class="ll" style="margin:1.2rem auto"><img class="base" src="assets/logo.png" alt=""><img class="fill" src="assets/logo.png" alt=""></div><p style="margin:0">${DB.esc(o.text||"Loading…")}</p></div>`;
+  if(state==="loading") gateEl.innerHTML=`<div class="gate-card">${head}<div class="ll" style="margin:1.2rem auto"><img class="base" src="assets/logo.png" alt=""><img class="fill" src="assets/logo.png" alt=""></div><p style="margin:0">${DB.esc(o.text||"Loading…")}</p>${o.showRedirectFallback?`<p class="gate-alt" style="margin-top:.85rem"><a href="#" id="gForceRedirect">Popup not opening on Home Screen? Tap to use Redirect Sign-In</a></p>`:""}</div>`;
   else if(state==="signin") gateEl.innerHTML=`<div class="gate-card">${x}${head}<p>${DB.esc(o.text || 'Sign in with Google to continue.')}<br>${DB.esc('Your data are synced to your account.')}</p>
       <button class="gbtn" id="gSign">${GOOGLE_G}Continue with Google</button>${err}
-      <p class="gate-alt">New here? <a href="#" id="gNew">Create an account</a></p>
+      <p class="gate-alt" style="margin-top:.75rem">On Home Screen App? <a href="#" id="gSignRedirect">Use Redirect Sign-In</a></p>
+      <p class="gate-alt" style="margin-top:.45rem">New here? <a href="#" id="gNew">Create an account</a></p>
       <p style="margin:.6rem 0 0;font-size:.85rem"><a href="pages/about.html" style="color:var(--accent)">About Project 23</a></p></div>`;
   else if(state==="create") gateEl.innerHTML=`<div class="gate-card">${x}${head}<p>Creating an account needs the access password. If you don't have it, ask the person who invited you.</p>
       <label for="gPass" style="text-align:left">Access password</label>
       <input type="password" id="gPass" class="gate-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter the password">
       <button class="gbtn" id="gGo" style="margin-top:.9rem">${GOOGLE_G}Continue with Google</button>${err}
+      <p class="gate-alt" style="margin-top:.75rem">On Home Screen App? <a href="#" id="gGoRedirect">Continue via Redirect</a></p>
       <p class="gate-alt"><a href="#" id="gBack">Back</a></p></div>`;
   else if(state==="password") gateEl.innerHTML=`<div class="gate-card">${head}<p>Welcome! To finish creating your account, enter the access password.</p>
       <input type="password" id="gPass" class="gate-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access password">${err}
@@ -663,12 +676,15 @@ function gate(state,o={}){
   else gateEl.innerHTML=`<div class="gate-card">${x}${head}<div class="gate-err" style="text-align:center">${DB.esc(o.error||GENERIC_ERR)}</div><p style="margin-top:1rem"><button id="gClose2">Close</button></p></div>`;
   const q=id=>gateEl.querySelector("#"+id), on=(id,fn)=>{ const e=q(id); if(e) e.onclick=fn; };
   on("gClose",()=>gateDismiss&&gateDismiss()); on("gClose2",()=>cancelAuth());
-  on("gSign",()=>startGoogle(null));
+  on("gSign",()=>startGoogle(null, false));
+  on("gSignRedirect",e=>{ e.preventDefault(); startGoogle(null, true); });
+  on("gForceRedirect",e=>{ e.preventDefault(); startGoogle(pendingCode, true); });
   on("gNew",e=>{ e.preventDefault(); gate("create",{dismiss:cancelAuth}); });
   on("gBack",e=>{ e.preventDefault(); gate("signin",{dismiss:cancelAuth}); });
   const pass=q("gPass");
   if(pass){ setTimeout(()=>pass.focus(),50); pass.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); (q("gGo")||q("gOk")).click(); } }); }
-  on("gGo",()=>{ const v=pass.value; if(!v){ pass.focus(); return; } startGoogle(v); });
+  on("gGo",()=>{ const v=pass.value; if(!v){ pass.focus(); return; } startGoogle(v, false); });
+  on("gGoRedirect",e=>{ e.preventDefault(); const v=pass.value; if(!v){ pass.focus(); return; } startGoogle(v, true); });
   on("gOk",()=>{ const v=pass.value; if(!v){ pass.focus(); return; } if(passResolve) passResolve(v); });
   on("gCancel",()=>{ if(passResolve) passResolve(null); });
 }
@@ -677,49 +693,98 @@ function askPassword(error){ return new Promise(res=>{ passResolve=v=>{ passReso
 
 DB.requireAuth = ()=>{
   if(uid) return Promise.resolve(true);
+  if(auth && auth.currentUser){
+    return handleAuth(auth.currentUser).then(()=>Boolean(uid));
+  }
   return new Promise(res=>{ authWaiters.push(res); if(!auth){ gate("error",{dismiss:cancelAuth}); return; } gate("signin",{dismiss:cancelAuth}); });
 };
 
-async function startGoogle(code){
+async function startGoogle(code, forceRedirect=false){
   if(!auth){ gate("error",{dismiss:cancelAuth}); return; }
   pendingCode=code||null;
   try{
-    if(pendingCode) sessionStorage.setItem("p23.pendingCode", pendingCode);
-    else sessionStorage.removeItem("p23.pendingCode");
+    if(pendingCode){
+      sessionStorage.setItem("p23.pendingCode", pendingCode);
+      localStorage.setItem("p23.pendingCode", pendingCode);
+    } else {
+      sessionStorage.removeItem("p23.pendingCode");
+      localStorage.removeItem("p23.pendingCode");
+    }
   }catch{}
   const prov=new firebase.auth.GoogleAuthProvider();
   prov.setCustomParameters({prompt:"select_account"});
+
+  if(forceRedirect){
+    try{
+      try{
+        sessionStorage.setItem("p23.redirectPending", "1");
+        localStorage.setItem("p23.redirectPending", String(Date.now()));
+      }catch{}
+      gate("loading",{text:"Redirecting to Google…"});
+      await auth.signInWithRedirect(prov);
+      return;
+    }catch(e){
+      dbg("redirect sign-in", e);
+      gate(code?"create":"signin",{dismiss:cancelAuth,error:"Could not start redirect sign-in. Please try again."});
+      return;
+    }
+  }
+
+  let fallbackTimer = null;
   try{
     // Call signInWithPopup synchronously in the tap gesture before replacing DOM so iOS Home Screen PWA allows the auth sheet
     const popPromise = auth.signInWithPopup(prov);
-    gate("loading",{text:"Opening Google…"});
+    gate("loading",{text:"Opening Google…", showRedirectFallback: true});
+    fallbackTimer = setTimeout(()=>{
+      if(gateState==="loading" && !uid){
+        gate("loading",{text:"Still waiting for Google window…", showRedirectFallback: true});
+      }
+    }, 2800);
     const cred = await popPromise;
+    clearTimeout(fallbackTimer);
     if(cred && cred.user && !uid){
       await handleAuth(cred.user);
     }
   }catch(e){
+    clearTimeout(fallbackTimer);
     dbg("sign-in",e);
     if(["auth/popup-blocked","auth/operation-not-supported-in-this-environment","auth/web-storage-unsupported"].includes(e&&e.code)){
       try{
-        try{ sessionStorage.setItem("p23.redirectPending", "1"); }catch{}
-        gate("loading",{text:"Opening Google…"});
+        try{
+          sessionStorage.setItem("p23.redirectPending", "1");
+          localStorage.setItem("p23.redirectPending", String(Date.now()));
+        }catch{}
+        gate("loading",{text:"Redirecting to Google…"});
         await auth.signInWithRedirect(prov);
         return;
       }catch(e2){ e=e2; dbg(e2); }
     }
     const back=code?"create":"signin";
-    if(["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(e&&e.code)) gate(back,{dismiss:cancelAuth});
+    if(["auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(e&&e.code)){
+      gate(back,{
+        dismiss:cancelAuth,
+        error: isStandalone ? "Home Screen popup was closed or blocked by iOS. Tap 'Use Redirect Sign-In' below to sign in directly." : ""
+      });
+    }
     else if(e&&e.code==="auth/network-request-failed") gate(back,{dismiss:cancelAuth,error:"We couldn't reach Google. Check your connection and try again."});
     else if(e&&e.code==="auth/unauthorized-domain") gate(back,{dismiss:cancelAuth,error:"This domain isn't authorized in Firebase Auth settings yet."});
     else gate(back,{dismiss:cancelAuth,error:GENERIC_ERR});
   }
 }
-DB.signOut = async()=>{ try{ await flush(); await auth.signOut(); }catch{} location.reload(); };
+DB.signOut = async()=>{
+  try{ localStorage.removeItem(CACHED_USER_KEY); }catch{}
+  try{ await flush(); await auth.signOut(); }catch{}
+  location.reload();
+};
 
 async function createAccount(user,base){
   const prof={...base, username:user.displayName || (user.email||"traveller").split("@")[0], createdAt:base.lastLoginAt};
   let savedCode=null;
-  try{ savedCode=sessionStorage.getItem("p23.pendingCode"); sessionStorage.removeItem("p23.pendingCode"); }catch{}
+  try{
+    savedCode=sessionStorage.getItem("p23.pendingCode") || localStorage.getItem("p23.pendingCode");
+    sessionStorage.removeItem("p23.pendingCode");
+    localStorage.removeItem("p23.pendingCode");
+  }catch{}
   let code=pendingCode||savedCode, err="", tries=0; pendingCode=null;
   for(;;){
     if(code==null){ code=await askPassword(err); if(code===null) throw {code:"cancelled"}; }
@@ -740,14 +805,51 @@ async function createAccount(user,base){
 async function loadAll(user){
   uid=user.uid; DB.user=user;
   baseRef=fdb.collection("users").doc(uid);
-  const snap=await baseRef.get();
-  const now=firebase.firestore.FieldValue.serverTimestamp();
-  const base={ uid, email:user.email||"", photoURL:user.photoURL||"", lastLoginAt:now };
-  let prof;
-  if(!snap.exists){ prof=await createAccount(user,base); }
-  else { prof=snap.data(); await baseRef.set(base,{merge:true}); }
-  DB.profile={ uid, email:base.email, photoURL:base.photoURL, username:prof.username || user.displayName || "Traveller" };
-  if(prof.settings){
+
+  let cachedProf = null;
+  try{
+    const rawCp = localStorage.getItem(CACHED_USER_KEY);
+    if(rawCp){
+      const parsedCp = JSON.parse(rawCp);
+      if(parsedCp && parsedCp.uid === uid) cachedProf = parsedCp;
+    }
+  }catch{}
+
+  // Pre-populate DB.profile immediately so the user is never blocked or logged out if Firestore is slow on Home Screen launch
+  DB.profile = {
+    uid,
+    email: user.email || (cachedProf && cachedProf.email) || "",
+    photoURL: user.photoURL || (cachedProf && cachedProf.photoURL) || "",
+    username: (cachedProf && cachedProf.username) || user.displayName || (user.email || "Traveller").split("@")[0]
+  };
+
+  const snap = await withTimeout(baseRef.get(), 5500, null);
+  const now = firebase.firestore.FieldValue.serverTimestamp();
+  const base = { uid, email:user.email||"", photoURL:user.photoURL||"", lastLoginAt:now };
+  let prof = null;
+
+  if(snap && snap.exists){
+    prof = snap.data() || {};
+    // Non-blocking lastLoginAt update so offline/slow network never hangs sign-in!
+    baseRef.set(base,{merge:true}).catch(()=>{});
+  } else if(snap && !snap.exists && !cachedProf){
+    // Only prompt for invite password if Firestore explicitly confirmed doc does not exist AND no cached profile exists on this device
+    prof = await createAccount(user,base);
+  } else {
+    prof = cachedProf || { username: DB.profile.username };
+  }
+
+  DB.profile = {
+    uid,
+    email: base.email || DB.profile.email,
+    photoURL: base.photoURL || DB.profile.photoURL,
+    username: (prof && prof.username) || DB.profile.username || "Traveller"
+  };
+  try{
+    localStorage.setItem(CACHED_USER_KEY, JSON.stringify(DB.profile));
+  }catch{}
+
+  if(prof && prof.settings){
     DB.settings=Object.assign({},DEFAULTS,prof.settings);
     DB.set("p23.settings",DB.settings);
     syncPageOrder();
@@ -756,17 +858,36 @@ async function loadAll(user){
     applyNotifStyle(DB.settings.notifStyle);
     if(navGroup) renderNav();
   }
+
   const [ev,td,fl,af,nt,cd,wx,hm,pc,wl,sc,scm,vt]=await Promise.all([
-    baseRef.collection("events").get(), baseRef.collection("todos").get(), baseRef.collection("flights").get(),
-    baseRef.collection("state").doc("activeFlight").get(), baseRef.collection("notes").get(), baseRef.collection("countdowns").get(),
-    baseRef.collection("state").doc("weather").get(), baseRef.collection("state").doc("home").get(),
-    baseRef.collection("pico_chats").get().catch(()=>null),
-    baseRef.collection("watchlist").get().catch(()=>null),
-    baseRef.collection("schedule").get().catch(()=>null),
-    baseRef.collection("state").doc("scheduleMeta").get().catch(()=>null),
-    baseRef.collection("vault").get().catch(()=>null)
+    withTimeout(baseRef.collection("events").get(), 5500, null),
+    withTimeout(baseRef.collection("todos").get(), 5500, null),
+    withTimeout(baseRef.collection("flights").get(), 5500, null),
+    withTimeout(baseRef.collection("state").doc("activeFlight").get(), 5500, null),
+    withTimeout(baseRef.collection("notes").get(), 5500, null),
+    withTimeout(baseRef.collection("countdowns").get(), 5500, null),
+    withTimeout(baseRef.collection("state").doc("weather").get(), 5500, null),
+    withTimeout(baseRef.collection("state").doc("home").get(), 5500, null),
+    withTimeout(baseRef.collection("pico_chats").get(), 5500, null),
+    withTimeout(baseRef.collection("watchlist").get(), 5500, null),
+    withTimeout(baseRef.collection("schedule").get(), 5500, null),
+    withTimeout(baseRef.collection("state").doc("scheduleMeta").get(), 5500, null),
+    withTimeout(baseRef.collection("vault").get(), 5500, null)
   ]);
-  const fill=(k,qs)=>{ const arr=qs.docs.map(d=>d.data()); mem[k]=arr; shadow[k]=new Map(arr.map(x=>[x.id,JSON.stringify(x)])); try{ localStorage.setItem(k,JSON.stringify(arr)); }catch{} };
+
+  const fill=(k,qs)=>{
+    if(qs && qs.docs){
+      const arr=qs.docs.map(d=>d.data());
+      mem[k]=arr;
+      shadow[k]=new Map(arr.map(x=>[x.id,JSON.stringify(x)]));
+      try{ localStorage.setItem(k,JSON.stringify(arr)); }catch{}
+    } else {
+      let localArr=[];
+      try{ const raw=localStorage.getItem(k); if(raw) localArr=JSON.parse(raw)||[]; }catch{}
+      mem[k]=Array.isArray(localArr)?localArr:[];
+      if(!shadow[k]) shadow[k]=new Map();
+    }
+  };
   fill("p23.events",ev); fill("p23.todos",td); fill("p23.flightLog",fl); fill("p23.notes",nt); fill("p23.countdowns",cd);
   if(wl && wl.docs && wl.docs.length){
     fill("p23.watchlist",wl);
@@ -781,10 +902,10 @@ async function loadAll(user){
   if(pc && pc.docs && pc.docs.length){
     fill("p23.pico_chats",pc);
     mem["p23.pico_chats"].sort((a,b)=>(b.updated||0)-(a.updated||0));
-    if(prof.picoChats !== undefined){
+    if(prof && prof.picoChats !== undefined){
       baseRef.update({picoChats:firebase.firestore.FieldValue.delete()}).catch(()=>{});
     }
-  } else if(Array.isArray(prof.picoChats) && prof.picoChats.length){
+  } else if(prof && Array.isArray(prof.picoChats) && prof.picoChats.length){
     mem["p23.pico_chats"]=prof.picoChats.slice().sort((a,b)=>(b.updated||0)-(a.updated||0));
     shadow["p23.pico_chats"]=new Map();
     try{ localStorage.setItem("p23.pico_chats",JSON.stringify(mem["p23.pico_chats"])); }catch{}
@@ -798,7 +919,15 @@ async function loadAll(user){
     if(mem["p23.pico_chats"].length) queue("p23.pico_chats");
   }
   mem["p23.flightLog"].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
-  const one=(k,d)=>{ mem[k]=d.exists?d.data():null; shadow[k]=d.exists?JSON.stringify(d.data()):null; };
+  const one=(k,d)=>{
+    if(d && typeof d.exists === "boolean"){
+      mem[k]=d.exists?d.data():null;
+      shadow[k]=d.exists?JSON.stringify(d.data()):null;
+      try{ if(mem[k]) localStorage.setItem(k, JSON.stringify(mem[k])); }catch{}
+    } else {
+      try{ const lv=localStorage.getItem(k); if(lv!=null) mem[k]=JSON.parse(lv); }catch{}
+    }
+  };
   if(sc && sc.docs && sc.docs.length){
     fill("p23.schedule",sc);
   } else {
@@ -820,7 +949,7 @@ async function loadAll(user){
     shadow["p23.vault"]=new Map();
     if(mem["p23.vault"].length) queue("p23.vault");
   }
-  setSync("saved");
+  setSync(snap ? "saved" : "off");
   document.dispatchEvent(new CustomEvent("p23pico"));
   document.dispatchEvent(new CustomEvent("p23watchlist"));
   document.dispatchEvent(new CustomEvent("p23vault"));
@@ -863,7 +992,12 @@ async function loadAll(user){
 async function loadWithRetry(user){
   for(let i=0;;i++){
     try{ await loadAll(user); return; }
-    catch(e){ dbg("load attempt",i,e); if(i<3 && ["permission-denied","unavailable","failed-precondition"].includes(e&&e.code)) await sleep(1500*(i+1)); else throw e; }
+    catch(e){
+      if(e && e.code === "cancelled") throw e;
+      dbg("load attempt",i,e);
+      if(i<2 && ["permission-denied","unavailable","failed-precondition"].includes(e&&e.code)) await sleep(1200*(i+1));
+      else throw e;
+    }
   }
 }
 function resetSession(){ uid=null; baseRef=null; DB.user=null; DB.profile=null; }
@@ -874,12 +1008,23 @@ async function handleAuth(user){
     finishReady(); return;
   }
   if(authBusy) return; authBusy=true;
-  if(readyDone) gate("loading",{text:"Loading your data…"});
+  if(readyDone && !uid) gate("loading",{text:"Loading your data…"});
   try{ await loadWithRetry(user); }
   catch(e){
-    authBusy=false; resetSession();
-    if(e&&e.code==="cancelled"){ try{ await user.delete(); }catch{} try{ await auth.signOut(); }catch{} cancelAuth(); finishReady(); return; }
-    dbg(e); finishReady(); gate("error",{dismiss:cancelAuth}); return;
+    authBusy=false;
+    if(e&&e.code==="cancelled"){
+      resetSession();
+      try{ await user.delete(); }catch{}
+      try{ await auth.signOut(); }catch{}
+      cancelAuth(); finishReady(); return;
+    }
+    // For any temporary network or Firestore error on Home Screen startup, keep the user signed in with local cache!
+    dbg("Auth data load warning (continuing with local cache):", e);
+    uid = user.uid;
+    DB.user = user;
+    if(!DB.profile){
+      DB.profile = { uid:user.uid, email:user.email||"", photoURL:user.photoURL||"", username:user.displayName||"Traveller" };
+    }
   }
   authBusy=false;
   const wasGuest=readyDone;
@@ -900,21 +1045,33 @@ function initFirebase(){
     if(firebase.auth.Auth && firebase.auth.Auth.Persistence && firebase.auth.Auth.Persistence.LOCAL){
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     }
-    fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    // Do NOT call fdb.enablePersistence({synchronizeTabs:true}) on iOS/Standalone PWA as WebKit IndexedDB locks across page navigations and stalls Auth/Firestore
+    if(!isIOS && !isStandalone){
+      fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+    }
   }catch(e){ dbg(e); finishReady(); return; }
   let redirectChecking = false;
   try{
-    if(sessionStorage.getItem("p23.redirectPending")==="1"){
+    const rp = sessionStorage.getItem("p23.redirectPending") || localStorage.getItem("p23.redirectPending");
+    if(rp){
       redirectChecking = true;
       sessionStorage.removeItem("p23.redirectPending");
+      localStorage.removeItem("p23.redirectPending");
     }
   }catch{}
+
+  let initialAuthTimer = setTimeout(()=>{
+    redirectChecking = false;
+    if(!uid && !auth.currentUser) handleAuth(null);
+  }, 3500);
+
   auth.getRedirectResult().then(res=>{
     redirectChecking = false;
     if(res && res.user){
+      clearTimeout(initialAuthTimer);
       handleAuth(res.user);
     } else if(!auth.currentUser && !uid){
-      handleAuth(null);
+      // Let onAuthStateChanged resolve stored IndexedDB/localStorage session
     }
   }).catch(e=>{
     redirectChecking = false;
@@ -922,8 +1079,13 @@ function initFirebase(){
     gate("signin",{dismiss:cancelAuth,error:GENERIC_ERR});
   });
   auth.onAuthStateChanged(user=>{
-    if(!user && redirectChecking) return;
-    handleAuth(user);
+    if(user){
+      clearTimeout(initialAuthTimer);
+      handleAuth(user);
+    } else if(!redirectChecking){
+      clearTimeout(initialAuthTimer);
+      handleAuth(null);
+    }
   });
 }
 Object.defineProperty(DB, "userId", { value: ()=>uid, writable: false, configurable: false });
@@ -989,6 +1151,157 @@ const audioChanged = ()=>document.dispatchEvent(new CustomEvent("p23audio"));
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const isStandalone = window.navigator.standalone===true || matchMedia("(display-mode: standalone)").matches;
 let swReg=null, bellBtn=null, panel=null;
+function computeUpcomingSchedule(){
+  if(!uid || !DB.settings.notifyOn) return [];
+  const now = Date.now(), s = DB.settings;
+  const HORIZON = 7 * 86400000;
+  const WINDOW = 60 * 60000;
+  const schedule = [];
+
+  if(s.notifyEvents){
+    const rs = new Date(now - WINDOW - 86400000), re = new Date(now + HORIZON);
+    for(const ev of DB.loadEvents()){
+      const a = ev.alert; if(a==null || a<0) continue;
+      for(const o of DB.occurrences(ev, rs, re)){
+        const at = o.start + (ev.allDay ? 9*3600000 : 0) - a*60000;
+        if(at >= now - WINDOW && at <= now + HORIZON){
+          const when = ev.allDay ? "Today" : (a>0 ? `Starts in ${a>=1440?"1 day":a>=60?(a/60)+" hour":a+" min"} (${DB.fmtTime(o.start)})` : `Now (${DB.fmtTime(o.start)})`);
+          schedule.push({
+            key: "ev|" + ev.id + "|" + o.start,
+            title: ev.title,
+            body: when + (ev.location ? " · " + ev.location : ""),
+            url: resolveBaseHref("pages/calendar.html"),
+            fireAt: at
+          });
+        }
+      }
+    }
+  }
+  if(s.notifyTodos){
+    for(const t of DB.get("p23.todos",[])){
+      if(t.done || !t.due) continue;
+      const due = DB.fromInputs(t.due, t.time || "09:00"), at = due - Math.max(0,t.alert??0)*60000;
+      if(at >= now - WINDOW*3 && at <= now + HORIZON){
+        schedule.push({
+          key: "todo|" + t.id + "|" + due,
+          title: t.title,
+          body: (t.time ? "Due " + DB.fmtTime(due) : "Due today") + (t.category ? " · " + t.category : ""),
+          url: resolveBaseHref("pages/todo.html"),
+          fireAt: at
+        });
+      }
+    }
+  }
+  if(s.notifyCountdowns !== false){
+    for(const c of DB.get("p23.countdowns",[])){
+      if(c.notify===false || !c.target) continue;
+      if(c.target >= now - WINDOW && c.target <= now + HORIZON){
+        schedule.push({
+          key: "cd|" + c.id + "|" + c.target,
+          title: c.title,
+          body: "Your countdown has finished",
+          url: resolveBaseHref("pages/timeUntil.html"),
+          fireAt: c.target
+        });
+      }
+    }
+  }
+  if(s.notifyFlight !== false){
+    const af = DB.get("p23.activeFlight", null);
+    if(af && af.end && af.end >= now - WINDOW && af.end <= now + HORIZON){
+      schedule.push({
+        key: "flight|" + (af.id || af.start || af.end),
+        title: "Focus Flight Landed",
+        body: af.dest ? `Arrived at ${af.dest}` : "Your focus session is complete!",
+        url: resolveBaseHref("pages/focus.html"),
+        fireAt: af.end
+      });
+    }
+  }
+  schedule.sort((a,b)=>a.fireAt - b.fireAt);
+  return schedule.slice(0, 120);
+}
+
+const P23_VAPID_PUBLIC_KEY = "BCarY0wiguPHp8SkHaYQAtiXktOrKOs4j8FlMBHxdwXCEcLwS3XTHmnqFP-ajKamovji8VmvS8cCiacIMGSQm08" || window.P23_VAPID_PUBLIC_KEY;
+
+function urlBase64ToUint8Array(base64String){
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;++i) out[i] = raw.charCodeAt(i);
+  return out;
+}
+
+function getPushDeviceId(){
+  let id = localStorage.getItem("p23.pushDeviceId");
+  if(!id){
+    id = "dev_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+    localStorage.setItem("p23.pushDeviceId", id);
+  }
+  return id;
+}
+
+let pushSyncTimer = null;
+async function syncPushToFirestore(reg, schedule){
+  if(!uid || !baseRef) return;
+  clearTimeout(pushSyncTimer);
+  pushSyncTimer = setTimeout(async ()=>{
+    try{
+      const update = {
+        pushSchedule: DB.settings.notifyOn ? schedule : [],
+        pushUpdatedAt: Date.now()
+      };
+      const vapid = (window.P23_VAPID_PUBLIC_KEY || P23_VAPID_PUBLIC_KEY || "").trim();
+      if(DB.settings.notifyOn && vapid && reg && reg.pushManager && "Notification" in window && Notification.permission === "granted"){
+        let sub = await reg.pushManager.getSubscription();
+        if(!sub){
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapid)
+          });
+        }
+        if(sub){
+          const devId = getPushDeviceId();
+          update.pushDevices = {
+            [devId]: {
+              subscription: sub.toJSON(),
+              ios: isIOS,
+              standalone: isStandalone,
+              updatedAt: Date.now()
+            }
+          };
+        }
+      }
+      await baseRef.set(update, { merge: true });
+    }catch(e){ dbg("syncPushToFirestore", e); }
+  }, 800);
+}
+
+async function syncScheduleToSW(){
+  try{
+    const reg = await registerSW();
+    const schedule = computeUpcomingSchedule();
+    if(reg){
+      const payload = {
+        type: "P23_SYNC_SCHEDULE",
+        notifyOn: Boolean(uid && DB.settings.notifyOn),
+        schedule,
+        fired: DB.get("p23.fired", {})
+      };
+      const target = reg.active || navigator.serviceWorker.controller;
+      if(target) target.postMessage(payload);
+      if(reg.periodicSync && typeof reg.periodicSync.register === "function"){
+        reg.periodicSync.register("p23-notif-check", { minInterval: 15 * 60 * 1000 }).catch(()=>{});
+      }
+      if(reg.sync && typeof reg.sync.register === "function"){
+        reg.sync.register("p23-notif-check").catch(()=>{});
+      }
+    }
+    syncPushToFirestore(reg, schedule);
+  }catch(e){ dbg("syncScheduleToSW", e); }
+}
+
 async function registerSW(){
   if(swReg || !("serviceWorker" in navigator)) return swReg;
   if(!(location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1")) return null;
@@ -996,8 +1309,19 @@ async function registerSW(){
     swReg = await navigator.serviceWorker.register(resolveBaseHref("sw.js"));
     if(navigator.serviceWorker){
       navigator.serviceWorker.addEventListener("message", ev=>{
-        if(ev.data && ev.data.type==="SW_UPDATED"){
+        if(!ev.data) return;
+        if(ev.data.type==="SW_UPDATED"){
           DB.toast("Website Updated", "A new version of Project 23 has been installed in the background.", 7000, "update");
+        } else if(ev.data.type==="P23_SW_FIRED_SYNC"){
+          if(ev.data.fired && typeof ev.data.fired === "object"){
+            const merged = Object.assign({}, DB.get("p23.fired", {}), ev.data.fired);
+            DB.set("p23.fired", merged);
+          }
+          if(Array.isArray(ev.data.newlyFired)){
+            ev.data.newlyFired.forEach(item=>{
+              if(item && item.title) addLog(item.title, item.body, item.key, item.url);
+            });
+          }
         }
       });
       swReg.addEventListener("updatefound", ()=>{
@@ -1010,11 +1334,12 @@ async function registerSW(){
         });
       });
     }
+    setTimeout(syncScheduleToSW, 400);
   }catch(e){ dbg(e); }
   return swReg;
 }
-const toastIcon = t=>t==null?"check":/^ev\|/.test(t)?"cal":/^todo\|/.test(t)?"todo":/^cd\|/.test(t)?"timer":t==="landing"?"plane":t==="update"||/^update\|/.test(t)?"sparkle":"bell";
-const notifTone = t=>t==null?"accent":/^ev\|/.test(t)?"cal":/^todo\|/.test(t)?"todo":/^cd\|/.test(t)?"timer":t==="landing"?"flight":t==="update"||/^update\|/.test(t)?"update":"accent";
+const toastIcon = t=>t==null?"check":/^ev\|/.test(t)?"cal":/^todo\|/.test(t)?"todo":/^cd\|/.test(t)?"timer":t==="landing"||/^flight\|/.test(t)?"plane":t==="update"||/^update\|/.test(t)?"sparkle":"bell";
+const notifTone = t=>t==null?"accent":/^ev\|/.test(t)?"cal":/^todo\|/.test(t)?"todo":/^cd\|/.test(t)?"timer":t==="landing"||/^flight\|/.test(t)?"flight":t==="update"||/^update\|/.test(t)?"update":"accent";
 DB.toast = function(title, body, ms=6000, tag){
   let box = $("#toasts"); if(!box){ box=document.createElement("div"); box.id="toasts"; box.setAttribute("aria-live","polite"); document.body.appendChild(box); }
   const t = document.createElement("div"); t.className="toast"; t.dataset.tone=notifTone(tag); t.style.setProperty("--dur",ms+"ms");
@@ -1032,7 +1357,8 @@ DB.notif = {
     DB.settings.notifyOn = true; DB.saveSettings();
     let p = this.perm();
     if(this.supported() && p==="default") p = await Notification.requestPermission();
-    registerSW();
+    await registerSW();
+    await syncScheduleToSW();
     if(p==="unsupported") DB.toast(isIOS&&!isStandalone?"Add to Home Screen for phone alerts":"Alerts on while this page is open",
       isIOS&&!isStandalone?"In Safari tap Share, then Add to Home Screen, and open Project 23 from there.":"This browser can't show system notifications.",7000);
     else if(p==="denied") DB.toast("Alerts on while this page is open","System notifications are blocked. iPhone: Settings, Notifications, Project 23.",8000);
@@ -1040,7 +1366,11 @@ DB.notif = {
     refreshBell(); renderPanel(); document.dispatchEvent(new CustomEvent("p23notif"));
     return p;
   },
-  disable(){ DB.settings.notifyOn=false; DB.saveSettings(); refreshBell(); renderPanel(); document.dispatchEvent(new CustomEvent("p23notif")); }
+  disable(){
+    DB.settings.notifyOn=false; DB.saveSettings();
+    syncScheduleToSW();
+    refreshBell(); renderPanel(); document.dispatchEvent(new CustomEvent("p23notif"));
+  }
 };
 const NLOG="p23.notifLog";
 const nlog = ()=>DB.get(NLOG,[]);
@@ -1096,6 +1426,7 @@ DB.checkDue = function(){
   }
   for(const k in fired) if(now-fired[k] > 7*86400000){ delete fired[k]; dirty=true; }
   if(dirty) DB.set("p23.fired", fired);
+  syncScheduleToSW();
 };
 const stateText = ()=>{ const p=DB.notif.perm(); if(!DB.settings.notifyOn) return p==="denied"?"Off (blocked in system settings)":"Off"; return p==="granted"?"On":"On (in-app only)"; };
 function updateBadge(){ const b=$("#bellBadge"); if(!b) return; const n=nlog().filter(x=>!x.read).length; b.textContent=n>9?"9+":n; b.hidden=!n; }
@@ -1581,7 +1912,7 @@ function openSettings(){
 DB.openSettings = openSettings;
 
 /* PICO Floating Assistant */
-const PICO_BOT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2h-4V4a2 2 0 0 1 2-2z"/><rect x="3" y="8" width="18" height="12" rx="4"/><path d="M9 13v2M15 13v2M9 17h6"/></svg>';
+const PICO_BOT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M3 7l3.5 2M17.5 15L21 17M21 7l-3.5 2M6.5 15L3 17"/></svg>';
 const PICO_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
 let picoMasterKey = null, picoModelIdx = 0;
 DB.getPicoKey = async function(){
@@ -1732,46 +2063,104 @@ DB.sanitizePicoChats = function(list){
 function buildPicoFloat(){
   const pg = document.body && document.body.dataset ? document.body.dataset.page : "";
   if(pg==="pico" || pg==="chat" || $(".pico-fab")) return;
+
+  // Ensure Rajdhani + Space Mono tactical fonts are available on any page
+  if(!document.getElementById("p23TacFonts")){
+    const fl = document.createElement("link");
+    fl.id = "p23TacFonts";
+    fl.rel = "stylesheet";
+    fl.href = "https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Space+Mono:wght@400;700&display=swap";
+    (document.head || document.documentElement).appendChild(fl);
+  }
+
+  const HUD_THEME_KEY = "p23.pico_hud_theme";
+  let curTheme = "valorant";
+  try{
+    const st = localStorage.getItem(HUD_THEME_KEY);
+    if(st) curTheme = st;
+  }catch{}
+
   const fab = document.createElement("button");
   fab.type = "button";
   fab.className = "pico-fab";
-  fab.setAttribute("aria-label", "Open PICO AI Assistant");
-  fab.title = "Ask PICO AI";
-  fab.innerHTML = `<span class="pf-ic">${PICO_BOT_SVG}</span><span class="pf-lbl">PICO</span>`;
+  fab.dataset.hudTheme = curTheme;
+  fab.setAttribute("aria-label", "Open Agent PICO Tactical Comms");
+  fab.title = "Open Agent PICO Tactical Comms";
+  fab.innerHTML = `<span class="pf-ic">${PICO_BOT_SVG}</span><span class="pf-lbl">AGENT PICO<i class="pf-dot"></i></span>`;
+
   const pop = document.createElement("section");
   pop.className = "pico-pop";
+  pop.dataset.hudTheme = curTheme;
   pop.hidden = true;
-  pop.setAttribute("aria-label", "PICO AI Quick Chat");
+  pop.setAttribute("aria-label", "Agent PICO Tactical Comms");
   pop.innerHTML = `
     <div class="pp-head">
       <div class="pp-brand">
         <span class="pp-logo">${PICO_BOT_SVG}</span>
         <div class="pp-title-wrap">
           <div class="pp-picker" id="ppPicker">
+            <span class="pp-agent-tag">AGENT PICO</span>
             <button type="button" class="pp-pick-btn" id="ppPickBtn" aria-haspopup="listbox" aria-expanded="false">
               <span class="pp-pick-lbl" id="ppPickLbl">New Conversation</span>
               ${DB.icon("chevron")}
             </button>
             <div class="pp-pick-menu" id="ppPickMenu" role="listbox" hidden></div>
           </div>
-          <span class="pp-sub" id="ppModelSub">PICO AI · Gemini Flash</span>
+          <span class="pp-sub"><i class="pp-sub-dot"></i><span id="ppModelSub">NEURAL CORE // GEMINI FLASH</span></span>
         </div>
       </div>
       <div class="pp-actions">
-        <button type="button" class="pp-btn" id="ppWebBtn" title="Toggle Web Search Grounding" aria-label="Toggle Web Search">${DB.icon("globe")}</button>
-        <button type="button" class="pp-btn" id="ppNewBtn" title="New Conversation" aria-label="New Conversation">${DB.icon("plus")}</button>
-        <a href="pages/pico.html" class="pp-btn" id="ppFullBtn" title="Open Full PICO Workspace" aria-label="Open Full PICO Workspace">${DB.icon("external")}</a>
+        <div class="pp-hud-dots" role="group" aria-label="HUD Color Protocol">
+          <button type="button" class="pp-hud-dot ${curTheme==="valorant"?"active":""}" data-pp-hud="valorant" style="background:#ff4655;color:#ff4655" title="Protocol Crimson"></button>
+          <button type="button" class="pp-hud-dot ${curTheme==="radianite"?"active":""}" data-pp-hud="radianite" style="background:#00f5d4;color:#00f5d4" title="Radianite Teal"></button>
+          <button type="button" class="pp-hud-dot ${curTheme==="phantom"?"active":""}" data-pp-hud="phantom" style="background:#a855f7;color:#a855f7" title="Phantom Violet"></button>
+          <button type="button" class="pp-hud-dot ${curTheme==="killjoy"?"active":""}" data-pp-hud="killjoy" style="background:#facc15;color:#facc15" title="Killjoy Gold"></button>
+        </div>
+        <button type="button" class="pp-btn" id="ppWebBtn" title="Toggle Recon Web Search" aria-label="Toggle Web Search">${DB.icon("globe")}</button>
+        <button type="button" class="pp-btn" id="ppNewBtn" title="Initialize New Link" aria-label="New Conversation">${DB.icon("plus")}</button>
+        <a href="pages/pico.html" class="pp-btn" id="ppFullBtn" title="Open Full PICO Tactical Terminal" aria-label="Open Full PICO Workspace">${DB.icon("external")}</a>
         <button type="button" class="pp-btn" id="ppCloseBtn" title="Minimize PICO" aria-label="Minimize PICO">${DB.icon("x")}</button>
       </div>
     </div>
     <div class="pp-msgs" id="ppMsgs"></div>
     <div class="pp-foot">
+      <div class="pp-qd-row">
+        <div class="pp-qd-chips">
+          <button type="button" class="pp-qd-chip" data-pp-qd="/debug ">// DEBUG</button>
+          <button type="button" class="pp-qd-chip" data-pp-qd="/explain ">// EXPLAIN</button>
+          <button type="button" class="pp-qd-chip" data-pp-qd="/summarize ">// BRIEF</button>
+        </div>
+        <span class="pp-char-cnt" id="ppCharCnt">0 CHARS // READY</span>
+      </div>
       <div class="pp-input-wrap">
-        <textarea id="ppInput" rows="1" placeholder="Ask PICO anything…"></textarea>
-        <button type="button" class="pp-send primary" id="ppSend" aria-label="Send message">${DB.icon("send")}</button>
+        <textarea id="ppInput" rows="1" placeholder="Transmit directive to Agent PICO…"></textarea>
+        <button type="button" class="pp-send primary" id="ppSend" aria-label="Transmit message">${DB.icon("send")}</button>
       </div>
     </div>`;
   document.body.append(fab, pop);
+
+  pop.querySelectorAll("[data-pp-hud]").forEach(btn=>{
+    btn.onclick = e=>{
+      e.stopPropagation();
+      const t = btn.dataset.ppHud;
+      curTheme = t;
+      pop.dataset.hudTheme = t;
+      fab.dataset.hudTheme = t;
+      pop.querySelectorAll("[data-pp-hud]").forEach(b=>b.classList.toggle("active", b===btn));
+      try{ localStorage.setItem(HUD_THEME_KEY, t); }catch{}
+    };
+  });
+
+  pop.querySelectorAll("[data-pp-qd]").forEach(chip=>{
+    chip.onclick = ()=>{
+      const inp = $("#ppInput", pop);
+      const pfx = chip.dataset.ppQd || "";
+      if(!inp.value.startsWith(pfx)) inp.value = pfx + inp.value;
+      inp.focus();
+      inp.dispatchEvent(new Event("input"));
+    };
+  });
+
   $("#ppFullBtn", pop).addEventListener("click", e=>navClick(e, $("#ppFullBtn", pop)));
   let webOn = false, busy = false, curId = null;
   const pickBtn = $("#ppPickBtn", pop), pickMenu = $("#ppPickMenu", pop), pickWrap = $("#ppPicker", pop);
@@ -1800,18 +2189,19 @@ function buildPicoFloat(){
     const list = ensureChat();
     const chat = list.find(c=>c.id===curId) || list[0];
     $("#ppPickLbl", pop).textContent = chat ? (chat.title || "New Conversation") : "New Conversation";
-    pickMenu.innerHTML = list.map(c=>{
+    pickMenu.innerHTML = list.map((c, idx)=>{
       const cnt = (c.messages||[]).filter(m=>m.text).length;
       const isSel = c.id===curId;
+      const logCode = "LOG-" + String(idx + 1).padStart(2, "0");
       return `<div class="pp-pick-row${isSel?" sel":""}">
         <button type="button" class="pp-pick-opt" role="option" aria-selected="${isSel}" data-id="${DB.esc(c.id)}">
           <span class="pp-opt-main">
             <span class="pp-opt-t">${DB.esc(c.title||"New Conversation")}</span>
-            <span class="pp-opt-m">${cnt} msg${cnt===1?"":"s"}</span>
+            <span class="pp-opt-m">${logCode} • ${cnt} MSG${cnt===1?"":"S"}</span>
           </span>
           ${isSel ? DB.icon("check") : ""}
         </button>
-        ${list.length > 1 ? `<button type="button" class="pp-pick-del" data-del="${DB.esc(c.id)}" title="Delete chat" aria-label="Delete chat">${DB.icon("trash")}</button>` : ""}
+        ${list.length > 1 ? `<button type="button" class="pp-pick-del" data-del="${DB.esc(c.id)}" title="Purge log" aria-label="Delete chat">${DB.icon("trash")}</button>` : ""}
       </div>`;
     }).join("");
     pickMenu.querySelectorAll(".pp-pick-opt").forEach(b=>b.onclick=e=>{
@@ -1832,13 +2222,27 @@ function buildPicoFloat(){
     const box = $("#ppMsgs", pop);
     if(!chat || !chat.messages || !chat.messages.length){
       box.innerHTML = `<div class="pp-empty">
-        <div class="pp-emp-ic">${PICO_BOT_SVG}</div>
-        <b>Hi, I'm PICO</b>
-        <span>Your Project 23 AI assistant. Ask a question or pick a prompt below.</span>
+        <div class="pp-emp-wrap">
+          <div class="pp-emp-glow"></div>
+          <div class="pp-emp-reticle"></div>
+          <div class="pp-emp-ic">${PICO_BOT_SVG}</div>
+        </div>
+        <span class="pp-emp-kicker">// AGENT PICO · COMMS ONLINE</span>
+        <b>PROTOCOL 23 // <em>AGENT PICO</em></b>
+        <span class="pp-emp-sub">[SYS-MSG] Tactical neural link established. Select a directive below or transmit a command.</span>
         <div class="pp-Chips">
-          <button type="button" data-q="Give me a quick 3-step focus plan for studying today"><span class="pp-chip-ic">${DB.icon("flag")}</span><span>3-step focus plan</span></button>
-          <button type="button" data-q="Explain a cool everyday science fact in 3 sentences"><span class="pp-chip-ic">${DB.icon("lightbulb")}</span><span>Cool science fact</span></button>
-          <button type="button" data-q="Help me brainstorm project ideas"><span class="pp-chip-ic">${DB.icon("sparkle")}</span><span>Brainstorm ideas</span></button>
+          <button type="button" data-q="Give me a quick 3-step tactical focus plan for studying today">
+            <span class="pp-chip-top"><span>// DIR-01 · PERFORMANCE</span><i>[TRANSMIT →]</i></span>
+            <span class="pp-chip-txt">3-step tactical focus plan</span>
+          </button>
+          <button type="button" data-q="Explain a cool computer engineering or everyday science concept in 3 sentences">
+            <span class="pp-chip-top"><span>// DIR-02 · SCIENCE &amp; TECH</span><i>[TRANSMIT →]</i></span>
+            <span class="pp-chip-txt">Quick engineering &amp; science briefing</span>
+          </button>
+          <button type="button" data-q="Help me debug code or brainstorm a creative feature for my web project">
+            <span class="pp-chip-top"><span>// DIR-03 · CODE &amp; IDEATION</span><i>[TRANSMIT →]</i></span>
+            <span class="pp-chip-txt">Debug code or brainstorm project ideas</span>
+          </button>
         </div>
       </div>`;
       box.querySelectorAll(".pp-Chips button").forEach(b=>b.onclick=()=>{
@@ -1848,13 +2252,32 @@ function buildPicoFloat(){
       return;
     }
     box.innerHTML = chat.messages.map((m, idx)=>{
+      const isUser = m.role === "user";
       const isErr = m.role==="assistant" && (m.error || String(m.text||"").startsWith("⚠️"));
+      const senderLbl = isUser ? "YOU" : "AGENT PICO";
+      const seqLbl = "#" + String(idx + 1).padStart(2, "0");
       return `<div class="pp-msg ${m.role}">
-        <div class="pp-bub">${m.text==="" && m.role==="assistant" ? `<div class="typing-dots"><span></span><span></span><span></span></div>` : DB.formatPicoMD(m.text)}</div>
-        ${isErr ? `<div style="margin-top:.35rem;"><button type="button" class="ghost" data-pp-retry="${idx}" style="padding:.22rem .65rem;border-radius:999px;font-size:.74rem;font-weight:600;border:1px solid var(--line);display:inline-flex;align-items:center;gap:.3rem;">${DB.icon("refresh")}<span>Try again</span></button></div>` : ""}
-        ${m.sources && m.sources.length ? `<div class="pp-srcs">${m.sources.map(s=>`<a href="${DB.esc(s.uri)}" target="_blank" rel="noopener">${DB.esc(s.title||s.uri)}</a>`).join("")}</div>` : ""}
+        <div class="pp-msg-hdr">
+          <span class="pp-sender">${senderLbl}</span>
+          <span class="pp-seq">${seqLbl}</span>
+        </div>
+        <div class="pp-bub">${m.text==="" && m.role==="assistant" ? `<div class="pp-thinking"><span class="pp-radar-wave"><i></i><i></i><i></i><i></i></span><span class="pp-thinking-txt">DECRYPTING STREAM...</span></div>` : DB.formatPicoMD(m.text)}</div>
+        ${m.sources && m.sources.length ? `<div class="pp-srcs">${m.sources.map(s=>`<a href="${DB.esc(s.uri)}" target="_blank" rel="noopener">// ${DB.esc(s.title||s.uri)}</a>`).join("")}</div>` : ""}
+        ${m.role==="assistant" && m.text ? `<div class="pp-meta-bar">
+          ${isErr ? `<button type="button" class="pp-act-btn" data-pp-retry="${idx}" style="color:var(--val-primary);border-color:color-mix(in srgb,var(--val-primary) 45%,var(--line));">${DB.icon("refresh")}<span>Re-Transmit</span></button>` : ""}
+          <button type="button" class="pp-act-btn" data-pp-copy="${idx}">${DB.icon("note")}<span>Copy Log</span></button>
+        </div>` : ""}
       </div>`;
     }).join("");
+    box.querySelectorAll("button[data-pp-copy]").forEach(btn=>{
+      btn.onclick = ()=>{
+        const msg = chat.messages[+btn.dataset.ppCopy];
+        if(msg && msg.text){
+          navigator.clipboard && navigator.clipboard.writeText(msg.text);
+          DB.toast("Transmission copied", "", 1800);
+        }
+      };
+    });
     box.querySelectorAll("button[data-pp-retry]").forEach(btn=>{
       btn.onclick = ()=>{
         if(busy) return;
@@ -1894,7 +2317,7 @@ function buildPicoFloat(){
   $("#ppWebBtn", pop).onclick = ()=>{
     webOn = !webOn;
     $("#ppWebBtn", pop).classList.toggle("on", webOn);
-    DB.toast(webOn ? "PICO Web Search On" : "PICO Web Search Off", "", 1800);
+    DB.toast(webOn ? "Recon Web Search Enabled" : "Recon Web Search Disabled", "", 1800);
   };
   $("#ppNewBtn", pop).onclick = async ()=>{
     if(DB.isGuest() && !(await DB.requireAuth())) return;
@@ -1908,6 +2331,15 @@ function buildPicoFloat(){
   };
   $("#ppCloseBtn", pop).onclick = ()=>{ pop.hidden = true; fab.classList.remove("open"); };
   fab.onclick = ()=>{
+    try{
+      const latestTheme = localStorage.getItem(HUD_THEME_KEY);
+      if(latestTheme){
+        curTheme = latestTheme;
+        pop.dataset.hudTheme = latestTheme;
+        fab.dataset.hudTheme = latestTheme;
+        pop.querySelectorAll("[data-pp-hud]").forEach(b=>b.classList.toggle("active", b.dataset.ppHud===latestTheme));
+      }
+    }catch{}
     pop.hidden = !pop.hidden;
     fab.classList.toggle("open", !pop.hidden);
     if(!pop.hidden){ renderPop(); setTimeout(()=>$("#ppInput", pop).focus(), 80); }
@@ -1921,10 +2353,12 @@ function buildPicoFloat(){
     const apiKey = await DB.getPicoKey();
     if(!apiKey){ DB.toast("API Key Missing", "Please check your Firebase config/gemini key.", 4000); return; }
     busy = true;
+    const charEl = $("#ppCharCnt", pop);
+    if(charEl) charEl.textContent = "0 CHARS // TRANSMITTING";
     const list = ensureChat();
     const chat = list.find(c=>c.id===curId) || list[0];
     if(chat.title === "New Conversation"){
-      let clean = txt.replace(/^(how to do|how do i|what is|can you|please|explain|write a)\s*/i, "").trim();
+      let clean = txt.replace(/^(\/[a-z]+\s+|how to do|how do i|what is|can you|please|explain|write a)\s*/i, "").trim();
       if(clean.length > 26) clean = clean.slice(0,26) + "…";
       if(clean) chat.title = clean.charAt(0).toUpperCase() + clean.slice(1);
     }
@@ -1949,7 +2383,7 @@ function buildPicoFloat(){
     let ok = false, tries = 0;
     while(!ok && tries < PICO_MODELS.length){
       const model = PICO_MODELS[tries];
-      $("#ppModelSub", pop).textContent = `PICO · ${model}`;
+      const mSub = $("#ppModelSub", pop); if(mSub) mSub.textContent = `NEURAL CORE // ${model.toUpperCase()}`;
       try{
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`, {
           method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(payload)
@@ -2003,10 +2437,19 @@ function buildPicoFloat(){
       }
     }
     busy = false;
+    if(charEl) charEl.textContent = "0 CHARS // READY";
   }
   $("#ppSend", pop).onclick = sendPop;
   $("#ppInput", pop).onkeydown = e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); sendPop(); } };
-  $("#ppInput", pop).oninput = function(){ this.style.height="auto"; this.style.height=Math.min(96, this.scrollHeight)+"px"; };
+  $("#ppInput", pop).oninput = function(){
+    this.style.height="auto";
+    this.style.height=Math.min(96, this.scrollHeight)+"px";
+    const charEl = $("#ppCharCnt", pop);
+    if(charEl){
+      const len = this.value.length;
+      charEl.textContent = `${len} CHAR${len===1?"":"S"} // ${len>0?"LOCKED":"READY"}`;
+    }
+  };
 }
 
 
@@ -2160,7 +2603,7 @@ function afterLogin(){
   setSync("saved"); buildBanner(); refreshBell();
   document.querySelectorAll("main > .panel").forEach((p,i)=>{ if(!p.style.getPropertyValue("--i")) p.style.setProperty("--i", i+1); });
   setTimeout(DB.checkDue,1500); setInterval(DB.checkDue,30000);
-  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) DB.checkDue(); });
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden) DB.checkDue(); else syncScheduleToSW(); });
 }
 function ensureSafeAreaSetup(){
   let vp = document.querySelector('meta[name="viewport"]');
