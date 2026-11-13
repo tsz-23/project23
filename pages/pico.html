@@ -4,7 +4,7 @@
 <base href="../">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Project 23 | PICO AI</title>
+<title>PICO AI | Project 23</title>
 <meta name="theme-color" content="#05030f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@
 <link rel="icon" type="image/png" href="assets/logo.png">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Fredoka:wght@500&family=Playfair+Display:wght@600&family=Caveat:wght@600&family=Space+Mono:wght@400;700&family=Rajdhani:wght@600;700&display=swap">
 <link rel="stylesheet" href="style.css">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -25,19 +25,371 @@
   :root {
     --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --apple-spring: cubic-bezier(0.16, 1, 0.3, 1);
-    --glass-surface: color-mix(in srgb, var(--card-solid) 82%, transparent);
-    --glass-elevated: color-mix(in srgb, var(--card-2) 86%, transparent);
-    --glass-border: color-mix(in srgb, var(--text) 10%, var(--line));
-    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    --tac-font: "Rajdhani", var(--display), sans-serif;
+    --mono-font: "Space Mono", var(--mono), monospace;
+    --val-primary: #ff4655;
+    --val-secondary: #00f5d4;
+    --val-tertiary: #38bdf8;
+    --val-amber: #facc15;
+    --val-bg-deep: color-mix(in srgb, var(--card-solid) 92%, #090d16);
+    --val-bg-panel: color-mix(in srgb, var(--card-2) 88%, #0f1724);
+    --val-bg-elevated: color-mix(in srgb, var(--card-2) 94%, #162032);
+    --val-border: color-mix(in srgb, var(--val-primary) 26%, var(--line));
+    --val-border-cyan: color-mix(in srgb, var(--val-secondary) 32%, var(--line));
+    --val-glow: 0 0 22px color-mix(in srgb, var(--val-primary) 28%, transparent);
+    --val-cyan-glow: 0 0 20px color-mix(in srgb, var(--val-secondary) 26%, transparent);
+  }
+
+  body[data-page="pico"][data-hud-theme="radianite"],
+  .chat-panel[data-hud-theme="radianite"] {
+    --val-primary: #00f5d4;
+    --val-secondary: #38bdf8;
+    --val-tertiary: #a855f7;
+  }
+  body[data-page="pico"][data-hud-theme="phantom"],
+  .chat-panel[data-hud-theme="phantom"] {
+    --val-primary: var(--accent, #a855f7);
+    --val-secondary: #00f5d4;
+    --val-tertiary: var(--accent2, #6366f1);
+  }
+  body[data-page="pico"][data-hud-theme="killjoy"],
+  .chat-panel[data-hud-theme="killjoy"] {
+    --val-primary: #facc15;
+    --val-secondary: #ff4655;
+    --val-tertiary: #00f5d4;
+  }
+
+  body[data-page="pico"] .topbar {
+    position: sticky;
+    top: calc(0.5rem + var(--safe-top));
+    width: min(1208px, calc(100% - 2rem));
+    margin: 0.55rem auto 0.1rem;
+    padding: 0.48rem 0.72rem 0.48rem 0.85rem;
+    border-radius: 4px !important;
+    clip-path: polygon(
+      0 10px,
+      10px 0,
+      calc(100% - 16px) 0,
+      100% 16px,
+      100% calc(100% - 10px),
+      calc(100% - 10px) 100%,
+      12px 100%,
+      0 calc(100% - 12px)
+    );
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--val-primary) 13%, var(--val-bg-deep)) 0%, var(--val-bg-deep) 32%, var(--val-bg-panel) 100%) !important;
+    backdrop-filter: blur(26px) saturate(185%) !important;
+    -webkit-backdrop-filter: blur(26px) saturate(185%) !important;
+    border: 1px solid var(--val-border) !important;
+    border-left: 3px solid var(--val-primary) !important;
+    box-shadow:
+      0 18px 42px -12px rgba(0, 0, 0, 0.68),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  }
+
+  body[data-page="pico"] .topbar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--val-primary), var(--val-secondary), transparent 85%);
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  body[data-page="pico"] .topbar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  body[data-page="pico"] .topbar .tb-spot {
+    background: radial-gradient(circle, color-mix(in srgb, var(--val-primary) 24%, transparent), transparent 65%) !important;
+  }
+
+  body[data-page="pico"] .topbar .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.52rem;
+  }
+  body[data-page="pico"] .topbar .logo::before {
+    content: "// P23";
+    font-family: var(--mono-font);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 0.14rem 0.42rem;
+    background: var(--val-primary);
+    color: #fff;
+    clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
+    box-shadow: var(--val-glow);
+    flex-shrink: 0;
+  }
+  body[data-page="pico"] .topbar .wm {
+    font-family: var(--tac-font) !important;
+    font-weight: 700 !important;
+    font-size: 1.38rem !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase;
+  }
+  body[data-page="pico"] .topbar .wm .l {
+    color: var(--text) !important;
+    animation: none !important;
+    text-shadow: none !important;
+  }
+  body[data-page="pico"] .topbar .wm .dg {
+    color: var(--val-secondary) !important;
+    animation: none !important;
+    text-shadow: 0 0 12px color-mix(in srgb, var(--val-secondary) 45%, transparent) !important;
+  }
+
+  body[data-page="pico"] .navgroup {
+    border-radius: 3px !important;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    background: color-mix(in srgb, var(--val-bg-elevated) 92%, #05070e) !important;
+    border: 1px solid color-mix(in srgb, var(--val-primary) 26%, var(--line)) !important;
+    padding: 0.22rem !important;
+    gap: 0.15rem !important;
+  }
+
+  body[data-page="pico"] .nav-ind {
+    border-radius: 2px !important;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    background: linear-gradient(135deg, var(--val-primary), color-mix(in srgb, var(--val-primary) 72%, #7f1d1d)) !important;
+    border-bottom: 2px solid var(--val-secondary);
+    box-shadow: var(--val-glow) !important;
+  }
+
+  body[data-page="pico"] .nav,
+  body[data-page="pico"] .nav.more {
+    border-radius: 2px !important;
+    font-family: var(--tac-font) !important;
+    font-weight: 700 !important;
+    font-size: 0.86rem !important;
+    letter-spacing: 0.07em !important;
+    text-transform: uppercase;
+    padding: 0.38rem 0.88rem !important;
+  }
+
+  body[data-page="pico"] .nav.hot,
+  body[data-page="pico"] .nav.active.hot {
+    color: #ffffff !important;
+  }
+
+  body[data-page="pico"] .nav:not(.hot):hover {
+    color: var(--val-secondary) !important;
+  }
+
+  body[data-page="pico"] .topbar .sync {
+    border-radius: 2px !important;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+    background: var(--val-bg-elevated) !important;
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 35%, var(--line)) !important;
+    font-family: var(--mono-font) !important;
+    font-size: 0.64rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--val-secondary) !important;
+    height: 2.15rem;
+  }
+  body[data-page="pico"] .topbar .sync i {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 1px !important;
+    transform: rotate(45deg);
+    background: var(--val-secondary) !important;
+    box-shadow: 0 0 8px var(--val-secondary);
+  }
+  body[data-page="pico"] .topbar .sync.saving i {
+    background: var(--val-amber) !important;
+    box-shadow: 0 0 8px var(--val-amber);
+  }
+  body[data-page="pico"] .topbar .sync.error i {
+    background: var(--val-primary) !important;
+    box-shadow: 0 0 8px var(--val-primary);
+  }
+
+  body[data-page="pico"] .topbar .iconbtn {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 3px !important;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    background: var(--val-bg-elevated) !important;
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line)) !important;
+    color: var(--text) !important;
+    transition: all 0.16s var(--apple-ease);
+  }
+  body[data-page="pico"] .topbar .iconbtn:hover {
+    border-color: var(--val-primary) !important;
+    color: var(--val-primary) !important;
+    background: color-mix(in srgb, var(--val-primary) 14%, var(--val-bg-elevated)) !important;
+  }
+  body[data-page="pico"] .topbar .iconbtn .badge {
+    border-radius: 2px !important;
+    background: var(--val-primary) !important;
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+  }
+
+  body[data-page="pico"] .topbar .avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 1.5px;
+    border-radius: 3px !important;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    background: linear-gradient(135deg, var(--val-primary), var(--val-secondary)) !important;
+    box-shadow: var(--val-glow);
+  }
+  body[data-page="pico"] .topbar .avatar > * {
+    border-radius: 2px !important;
+    clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px));
+    background: var(--val-bg-deep) !important;
+    font-family: var(--tac-font);
+    color: #fff;
+  }
+
+  body[data-page="pico"] #signBtn {
+    border-radius: 3px !important;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+    background: linear-gradient(135deg, var(--val-primary), color-mix(in srgb, var(--val-primary) 72%, #7f1d1d)) !important;
+    color: #fff !important;
+    font-family: var(--tac-font) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: var(--val-glow);
+  }
+
+  body[data-page="pico"] .pagemenu,
+  body[data-page="pico"] .notifpanel {
+    border-radius: 4px !important;
+    clip-path: polygon(0 10px, 10px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px));
+    background: linear-gradient(180deg, var(--val-bg-deep), var(--val-bg-panel)) !important;
+    border: 1px solid var(--val-border) !important;
+    border-top: 2px solid var(--val-primary) !important;
+    box-shadow: 0 26px 64px rgba(0, 0, 0, 0.75), var(--val-glow) !important;
+  }
+  body[data-page="pico"] .pm-head b,
+  body[data-page="pico"] .np-head b {
+    font-family: var(--tac-font) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  body[data-page="pico"] .pm-ic {
+    border-radius: 4px !important;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  }
+  body[data-page="pico"] .pm-feat-card {
+    border-radius: 4px !important;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+  }
+
+  body[data-page="pico"] .sitefoot {
+    max-width: 1208px;
+    font-family: var(--mono-font);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border-top-color: color-mix(in srgb, var(--val-primary) 22%, var(--line));
+  }
+  body[data-page="pico"] .sitefoot a {
+    color: var(--val-secondary);
+  }
+
+  @media (max-width: 760px) {
+    body[data-page="pico"] .topbar {
+      width: calc(100% - 1rem);
+      padding: 0.38rem 0.55rem;
+    }
+    body[data-page="pico"] .topbar .sync {
+      width: 1.75rem;
+      height: 1.75rem;
+      flex: 0 0 1.75rem;
+      padding: 0;
+    }
+    body[data-page="pico"] > .navgroup {
+      border-radius: 4px !important;
+      clip-path: polygon(0 8px, 8px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px));
+      background: linear-gradient(180deg, var(--val-bg-deep), var(--val-bg-panel)) !important;
+      border: 1px solid var(--val-border) !important;
+      border-top: 2px solid var(--val-primary) !important;
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.75), var(--val-glow) !important;
+    }
+    body[data-page="pico"] > .navgroup .nav,
+    body[data-page="pico"] > .navgroup .nav.more {
+      font-size: 0.64rem !important;
+      letter-spacing: 0.04em !important;
+      padding: 0.38rem 0.15rem !important;
+    }
   }
 
   main {
-    max-width: 1160px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 0.75rem 1rem 1.5rem;
+    padding: 0.65rem 1rem 1.4rem;
+  }
+
+  .val-top-telemetry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.35rem 0.65rem 0.55rem;
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    user-select: none;
+  }
+  .val-tele-left,
+  .val-tele-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .val-tele-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.38rem;
+    padding: 0.16rem 0.55rem;
+    background: color-mix(in srgb, var(--val-primary) 14%, var(--val-bg-panel));
+    border-left: 2px solid var(--val-primary);
+    color: var(--text);
+    font-weight: 700;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%);
+  }
+  .val-tele-tag.cyan {
+    background: color-mix(in srgb, var(--val-secondary) 12%, var(--val-bg-panel));
+    border-left-color: var(--val-secondary);
+    color: var(--val-secondary);
+  }
+  .val-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--val-secondary);
+    box-shadow: 0 0 8px var(--val-secondary);
+    animation: valPulse 1.6s infinite ease-in-out;
+  }
+  @keyframes valPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.35; transform: scale(0.75); }
   }
 
   .chat-panel {
+    position: relative;
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
@@ -45,26 +397,95 @@
     flex-direction: column;
     height: calc(100vh - 6.2rem);
     height: calc(100dvh - 6.2rem);
-    min-height: 520px;
-    border-radius: 26px;
-    background: var(--glass-surface);
-    backdrop-filter: blur(30px) saturate(190%);
-    -webkit-backdrop-filter: blur(30px) saturate(190%);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow), var(--glass-spec);
+    min-height: 540px;
+    border-radius: 6px;
+    clip-path: polygon(
+      0 14px,
+      14px 0,
+      calc(100% - 22px) 0,
+      100% 22px,
+      100% calc(100% - 14px),
+      calc(100% - 14px) 100%,
+      18px 100%,
+      0 calc(100% - 18px)
+    );
+    background:
+      radial-gradient(circle at 82% 14%, color-mix(in srgb, var(--val-primary) 11%, transparent), transparent 46%),
+      radial-gradient(circle at 14% 88%, color-mix(in srgb, var(--val-secondary) 9%, transparent), transparent 48%),
+      linear-gradient(180deg, var(--val-bg-deep) 0%, var(--val-bg-panel) 100%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid var(--val-border);
+    box-shadow:
+      0 24px 60px -18px rgba(0, 0, 0, 0.7),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .chat-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .chat-panel::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--val-primary), var(--val-secondary), transparent);
+    opacity: 0.85;
+    z-index: 45;
+    pointer-events: none;
   }
 
   .chat-header-bar {
-    padding: 0.75rem 1.1rem;
-    border-bottom: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
+    position: relative;
+    padding: 0.68rem 1rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--val-primary) 24%, var(--line));
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    background: color-mix(in srgb, var(--card-solid) 78%, transparent);
+    gap: 0.75rem;
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--val-primary) 10%, transparent) 0%, transparent 38%),
+      color-mix(in srgb, var(--val-bg-deep) 90%, transparent);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     flex: none;
     z-index: 30;
+  }
+
+  .val-icon-btn {
+    width: 2.25rem;
+    height: 2.25rem;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    padding: 0;
+    border-radius: 4px;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+    background: var(--val-bg-elevated);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    color: var(--text);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.16s var(--apple-ease);
+  }
+  .val-icon-btn:hover {
+    border-color: var(--val-primary);
+    color: var(--val-primary);
+    background: color-mix(in srgb, var(--val-primary) 14%, var(--val-bg-elevated));
+    transform: translateY(-1px);
+  }
+  .val-icon-btn svg {
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .hdr-title-wrap {
@@ -72,7 +493,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: 0.12rem;
   }
 
   .hdr-title-row {
@@ -82,36 +503,55 @@
     min-width: 0;
   }
 
-  #activeChatTitle {
-    font-family: var(--display);
+  .val-ch-badge {
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
     font-weight: 700;
-    font-size: 1.05rem;
-    letter-spacing: -0.01em;
+    letter-spacing: 0.08em;
+    padding: 0.12rem 0.45rem;
+    background: var(--val-primary);
+    color: #fff;
+    clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
+    flex-shrink: 0;
+  }
+
+  #activeChatTitle {
+    font-family: var(--tac-font);
+    font-weight: 700;
+    font-size: 1.18rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: pointer;
+    color: var(--text);
+    transition: color 0.15s;
   }
 
   #activeChatTitle:hover {
-    color: var(--accent);
+    color: var(--val-secondary);
   }
 
   .model-pill {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    font-size: 0.72rem;
-    font-weight: 600;
+    gap: 0.42rem;
+    font-family: var(--mono-font);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     color: var(--muted);
   }
 
   .model-dot {
     width: 0.42rem;
     height: 0.42rem;
-    border-radius: 50%;
-    background: var(--good);
-    box-shadow: 0 0 8px var(--good);
+    border-radius: 1px;
+    transform: rotate(45deg);
+    background: var(--val-secondary);
+    box-shadow: 0 0 8px var(--val-secondary);
   }
 
   .hdr-actions {
@@ -119,38 +559,112 @@
     align-items: center;
     gap: 0.45rem;
     flex: none;
+    flex-wrap: wrap;
+  }
+
+  .val-mode-group {
+    display: inline-flex;
+    align-items: center;
+    background: color-mix(in srgb, var(--val-bg-deep) 85%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 12%, var(--line));
+    padding: 2px;
+    border-radius: 4px;
+    gap: 2px;
+  }
+  .val-mode-btn {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 0.55rem;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--tac-font);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .val-mode-btn:hover {
+    color: var(--text);
+    transform: none;
+  }
+  .val-mode-btn.active {
+    background: var(--val-primary);
+    color: #fff;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--val-primary) 45%, transparent);
+  }
+
+  .val-theme-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0 0.35rem;
+    height: 30px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--val-bg-deep) 75%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 10%, var(--line));
+  }
+  .val-theme-dot {
+    width: 13px;
+    height: 13px;
+    min-width: 13px;
+    min-height: 13px;
+    padding: 0;
+    border-radius: 2px;
+    transform: rotate(45deg);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  }
+  .val-theme-dot:hover {
+    transform: rotate(45deg) scale(1.18);
+  }
+  .val-theme-dot.active {
+    border-color: #fff;
+    box-shadow: 0 0 8px currentColor;
+    transform: rotate(45deg) scale(1.15);
   }
 
   .web-pill-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.42rem 0.82rem;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    background: var(--card-2);
-    border: 1px solid var(--line);
+    height: 34px;
+    min-height: 34px;
+    padding: 0 0.82rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
+    font-family: var(--tac-font);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: var(--val-bg-elevated);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
     color: var(--muted);
-    transition: all 0.2s var(--apple-ease);
+    cursor: pointer;
+    transition: all 0.18s var(--apple-ease);
   }
 
   .web-pill-btn svg {
-    width: 0.98rem;
-    height: 0.98rem;
+    width: 0.92rem;
+    height: 0.92rem;
   }
 
   .web-pill-btn:hover {
     color: var(--text);
-    border-color: var(--accent);
+    border-color: var(--val-secondary);
     transform: none;
   }
 
   .web-pill-btn.active {
-    background: color-mix(in srgb, var(--accent) 18%, var(--card-2));
-    border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
-    color: var(--accent);
-    box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 22%, transparent);
+    background: color-mix(in srgb, var(--val-secondary) 18%, var(--val-bg-elevated));
+    border-color: var(--val-secondary);
+    color: var(--val-secondary);
+    box-shadow: var(--val-cyan-glow);
   }
 
   .chat-inner-layout {
@@ -159,16 +673,18 @@
     min-height: 0;
     position: relative;
     overflow: hidden;
+    z-index: 2;
   }
 
   .chat-sidebar-pane {
-    width: 286px;
-    border-right: 1px solid color-mix(in srgb, var(--line) 75%, transparent);
-    background: color-mix(in srgb, var(--card-solid) 68%, transparent);
+    width: 292px;
+    border-right: 1px solid color-mix(in srgb, var(--val-primary) 22%, var(--line));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--val-bg-deep) 92%, transparent), color-mix(in srgb, var(--val-bg-panel) 94%, transparent));
     display: flex;
     flex-direction: column;
     gap: 0.7rem;
-    padding: 0.95rem 0.85rem;
+    padding: 0.9rem 0.8rem;
     transition: width 0.28s var(--apple-ease), padding 0.28s var(--apple-ease), transform 0.28s var(--apple-ease), opacity 0.22s ease;
     flex: none;
     z-index: 40;
@@ -189,7 +705,7 @@
     display: none;
     position: absolute;
     inset: 0;
-    background: rgba(5, 5, 18, 0.52);
+    background: rgba(5, 7, 15, 0.65);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     z-index: 35;
@@ -208,16 +724,29 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
-    padding: 0.58rem 1rem;
-    border-radius: 14px;
-    font-size: 0.88rem;
-    font-weight: 600;
+    gap: 0.48rem;
+    padding: 0.62rem 1rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    background: linear-gradient(135deg, var(--val-primary), color-mix(in srgb, var(--val-primary) 72%, #991b1b));
+    color: #fff;
+    border: 0;
+    font-family: var(--tac-font);
+    font-size: 0.92rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: var(--val-glow);
+    cursor: pointer;
+    transition: filter 0.16s, transform 0.16s;
   }
-
+  #newChatBtn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
   #newChatBtn svg {
-    width: 1.05rem;
-    height: 1.05rem;
+    width: 1rem;
+    height: 1rem;
   }
 
   .sb-search {
@@ -234,33 +763,51 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--muted);
+    color: var(--val-secondary);
     pointer-events: none;
     line-height: 0;
   }
 
   #sbSearchIc svg {
-    width: 0.95rem;
-    height: 0.95rem;
+    width: 0.9rem;
+    height: 0.9rem;
     display: block;
   }
 
   .sb-search input {
     width: 100%;
-    padding: 0.44rem 0.7rem 0.44rem 2.05rem;
-    border-radius: 11px;
-    font-size: 0.82rem;
-    background: var(--card-2);
-    border: 1px solid var(--line);
+    padding: 0.46rem 0.7rem 0.46rem 2.05rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+    font-family: var(--mono-font);
+    font-size: 0.74rem;
+    background: var(--val-bg-elevated);
+    border: 1px solid color-mix(in srgb, var(--text) 12%, var(--line));
+    color: var(--text);
+  }
+  .sb-search input:focus {
+    outline: none;
+    border-color: var(--val-secondary);
   }
 
+  .sb-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.15rem 0.25rem 0;
+  }
   .sb-label {
-    font-size: 0.7rem;
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.1em;
+    color: var(--val-secondary);
+  }
+  .sb-count-tag {
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
     color: var(--muted);
-    padding: 0.1rem 0.35rem 0;
   }
 
   .chat-list {
@@ -269,35 +816,43 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.35rem;
     padding-right: 0.15rem;
   }
 
   .chat-row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.2rem;
-    border-radius: 13px;
-    padding: 0.15rem 0.25rem 0.15rem 0.15rem;
-    border: 1px solid transparent;
-    transition: background 0.18s, border-color 0.18s;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    padding: 0.15rem 0.25rem 0.15rem 0.2rem;
+    background: color-mix(in srgb, var(--val-bg-elevated) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+    border-left: 3px solid transparent;
+    transition: all 0.16s var(--apple-ease);
   }
 
   .chat-row:hover {
-    background: var(--card-2);
+    background: var(--val-bg-elevated);
+    border-color: color-mix(in srgb, var(--val-secondary) 32%, transparent);
+    border-left-color: var(--val-secondary);
   }
 
   .chat-row.active {
-    background: color-mix(in srgb, var(--accent) 15%, var(--card-2));
-    border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--val-primary) 20%, var(--val-bg-elevated)), var(--val-bg-elevated));
+    border-color: color-mix(in srgb, var(--val-primary) 42%, transparent);
+    border-left-color: var(--val-primary);
+    box-shadow: inset 0 0 14px color-mix(in srgb, var(--val-primary) 12%, transparent);
   }
 
   .chat-item {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.12rem;
-    padding: 0.45rem 0.55rem;
+    gap: 0.16rem;
+    padding: 0.42rem 0.48rem;
     background: transparent;
     border: 0;
     color: var(--text);
@@ -317,21 +872,29 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     width: 100%;
-    font-size: 0.87rem;
-    font-weight: 600;
-    line-height: 1.25;
+    font-family: var(--tac-font);
+    font-size: 0.94rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
   }
 
   .chat-row.active .chat-item .title {
-    color: var(--accent);
+    color: #fff;
   }
 
   .chat-item .meta {
-    font-size: 0.71rem;
+    font-family: var(--mono-font);
+    font-size: 0.64rem;
     color: var(--muted);
     display: flex;
     align-items: center;
     gap: 0.35rem;
+    text-transform: uppercase;
+  }
+  .chat-item .meta .log-code {
+    color: var(--val-secondary);
+    font-weight: 700;
   }
 
   .chat-row-actions {
@@ -339,7 +902,7 @@
     align-items: center;
     gap: 0.1rem;
     flex: none;
-    opacity: 0.65;
+    opacity: 0.6;
     transition: opacity 0.18s;
   }
 
@@ -352,10 +915,10 @@
     background: transparent;
     border: 0;
     color: var(--muted);
-    width: 1.85rem;
-    height: 1.85rem;
+    width: 1.75rem;
+    height: 1.75rem;
     padding: 0;
-    border-radius: 9px;
+    border-radius: 4px;
     cursor: pointer;
     display: grid;
     place-items: center;
@@ -363,19 +926,32 @@
   }
 
   .chat-act:hover {
-    color: var(--text);
-    background: color-mix(in srgb, var(--text) 8%, transparent);
+    color: var(--val-secondary);
+    background: color-mix(in srgb, var(--val-secondary) 14%, transparent);
     transform: none;
   }
 
   .chat-act.del:hover {
-    color: var(--bad);
-    background: color-mix(in srgb, var(--bad) 14%, transparent);
+    color: var(--val-primary);
+    background: color-mix(in srgb, var(--val-primary) 16%, transparent);
   }
 
   .chat-act svg {
-    width: 0.92rem;
-    height: 0.92rem;
+    width: 0.88rem;
+    height: 0.88rem;
+  }
+
+  .sb-footer-hud {
+    padding-top: 0.55rem;
+    border-top: 1px solid color-mix(in srgb, var(--text) 10%, var(--line));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--mono-font);
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 
   .chat-main-area {
@@ -395,16 +971,16 @@
     padding: 1.35rem clamp(1rem, 3vw, 2.2rem);
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
+    gap: 1.15rem;
     scroll-behavior: smooth;
     min-height: 0;
   }
 
   .msg {
     display: flex;
-    gap: 0.75rem;
-    max-width: min(86%, 760px);
-    animation: rise 0.26s var(--apple-spring) both;
+    gap: 0.78rem;
+    max-width: min(88%, 790px);
+    animation: rise 0.24s var(--apple-spring) both;
     align-self: flex-start;
   }
 
@@ -415,35 +991,37 @@
   }
 
   .msg-avatar {
-    width: 2.15rem;
-    height: 2.15rem;
-    border-radius: 12px;
+    position: relative;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 7px 100%, 0 calc(100% - 7px));
     display: grid;
     place-items: center;
     flex: none;
-    background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 22%, var(--card-2)), var(--card-solid));
-    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
-    color: var(--accent);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-    margin-top: 0.1rem;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--val-secondary) 22%, var(--val-bg-elevated)), var(--val-bg-deep));
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 52%, var(--line));
+    color: var(--val-secondary);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    margin-top: 0.15rem;
   }
 
   .msg.user .msg-avatar {
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-color: transparent;
-    color: var(--on-accent);
+    background: linear-gradient(135deg, var(--val-primary), color-mix(in srgb, var(--val-primary) 65%, #7f1d1d));
+    border-color: var(--val-primary);
+    color: #fff;
+    box-shadow: var(--val-glow);
   }
 
   .msg-avatar svg {
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 1.18rem;
+    height: 1.18rem;
   }
 
   .msg-col {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.28rem;
     min-width: 0;
   }
 
@@ -451,79 +1029,192 @@
     align-items: flex-end;
   }
 
+  .val-msg-header {
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+    font-family: var(--mono-font);
+    font-size: 0.66rem;
+    letter-spacing: 0.05em;
+    padding: 0 0.15rem;
+  }
+  .msg.user .val-msg-header {
+    flex-direction: row-reverse;
+  }
+  .val-channel-tag {
+    font-weight: 700;
+    padding: 0.06rem 0.38rem;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .val-channel-tag.pico {
+    background: color-mix(in srgb, var(--val-secondary) 18%, transparent);
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 48%, transparent);
+    color: var(--val-secondary);
+  }
+  .val-channel-tag.party {
+    background: color-mix(in srgb, var(--val-primary) 20%, transparent);
+    border: 1px solid color-mix(in srgb, var(--val-primary) 50%, transparent);
+    color: var(--val-primary);
+  }
+  .val-sender-name {
+    font-family: var(--tac-font);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .val-msg-idx {
+    color: var(--muted);
+    font-size: 0.62rem;
+  }
+
   .msg-bubble {
-    padding: 0.82rem 1.05rem;
-    border-radius: 20px 20px 20px 6px;
-    background: var(--glass-elevated);
-    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
-    box-shadow: 0 6px 20px -6px rgba(0, 0, 0, 0.22), var(--glass-spec);
+    position: relative;
+    padding: 0.88rem 1.12rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--val-secondary) 6%, var(--val-bg-elevated)) 0%, var(--val-bg-elevated) 100%);
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 24%, var(--line));
+    border-left: 3px solid var(--val-secondary);
+    box-shadow: 0 10px 26px -8px rgba(0, 0, 0, 0.45);
     font-size: 0.94rem;
-    line-height: 1.56;
+    line-height: 1.58;
     word-break: break-word;
     font-family: var(--body);
+    color: var(--text);
   }
 
   .msg.user .msg-bubble {
-    border-radius: 20px 20px 6px 20px;
-    background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent2) 75%, var(--accent)));
-    color: var(--on-accent);
-    border-color: transparent;
-    box-shadow: 0 8px 24px -6px color-mix(in srgb, var(--accent) 45%, transparent);
+    clip-path: polygon(12px 0, 100% 0, 100% 100%, 0 100%, 0 12px);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--val-primary) 24%, var(--val-bg-elevated)) 0%, color-mix(in srgb, var(--val-primary) 12%, var(--val-bg-deep)) 100%);
+    color: var(--text);
+    border: 1px solid color-mix(in srgb, var(--val-primary) 45%, var(--line));
+    border-left: 1px solid color-mix(in srgb, var(--val-primary) 45%, var(--line));
+    border-right: 3px solid var(--val-primary);
+    box-shadow: 0 10px 28px -8px color-mix(in srgb, var(--val-primary) 28%, rgba(0, 0, 0, 0.5));
   }
 
   .msg-bubble img {
     max-width: min(100%, 320px);
-    border-radius: 12px;
+    border-radius: 6px;
     margin-top: 0.55rem;
     display: block;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .msg-bubble .pico-pre-wrap {
+    margin: 0.65rem 0;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 32%, var(--line));
+    background: #070a12;
+  }
+  .msg-bubble .pico-code-lang {
+    font-family: var(--mono-font);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.75rem;
+    background: color-mix(in srgb, var(--val-secondary) 16%, #0d1322);
+    color: var(--val-secondary);
+    border-bottom: 1px solid color-mix(in srgb, var(--val-secondary) 24%, transparent);
+  }
+  .msg-bubble .pico-pre {
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    overflow-x: auto;
+    font-family: var(--mono-font);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #e2e8f0;
+  }
+  .msg-bubble .pico-code {
+    font-family: var(--mono-font);
+    font-size: 0.83em;
+    padding: 0.12rem 0.38rem;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--val-secondary) 14%, rgba(0, 0, 0, 0.35));
+    color: var(--val-secondary);
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 28%, transparent);
   }
 
   .msg-meta-bar {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0 0.25rem;
+    padding: 0 0.15rem;
   }
 
   .msg-copy-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    background: transparent;
-    border: 1px solid transparent;
+    padding: 0.18rem 0.58rem;
+    border-radius: 3px;
+    font-family: var(--mono-font);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: color-mix(in srgb, var(--val-bg-elevated) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 10%, var(--line));
     color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
   }
 
   .msg-copy-btn:hover {
-    background: var(--card-2);
-    border-color: var(--line);
-    color: var(--text);
+    background: color-mix(in srgb, var(--val-secondary) 16%, var(--val-bg-elevated));
+    border-color: var(--val-secondary);
+    color: var(--val-secondary);
     transform: none;
   }
 
   .msg-copy-btn svg {
-    width: 0.8rem;
-    height: 0.8rem;
+    width: 0.76rem;
+    height: 0.76rem;
   }
 
   .thinking-box {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.15rem 0;
+    gap: 0.75rem;
+    padding: 0.2rem 0;
+  }
+  .val-radar-wave {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 16px;
+  }
+  .val-radar-wave i {
+    width: 3px;
+    height: 5px;
+    background: var(--val-secondary);
+    box-shadow: 0 0 6px var(--val-secondary);
+    animation: valWave 0.7s infinite ease-in-out;
+  }
+  .val-radar-wave i:nth-child(2) { animation-delay: 0.15s; }
+  .val-radar-wave i:nth-child(3) { animation-delay: 0.3s; }
+  .val-radar-wave i:nth-child(4) { animation-delay: 0.45s; }
+  @keyframes valWave {
+    0%, 100% { height: 4px; opacity: 0.45; }
+    50% { height: 16px; opacity: 1; }
   }
 
   .thinking-status {
-    font-size: 0.84rem;
-    color: var(--accent);
-    font-family: var(--display);
-    font-weight: 600;
-    animation: pulseText 1.1s infinite alternate;
+    font-size: 0.78rem;
+    color: var(--val-secondary);
+    font-family: var(--mono-font);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    animation: pulseText 1s infinite alternate;
   }
 
   @keyframes pulseText {
@@ -537,60 +1228,92 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem;
     margin: auto;
-    max-width: 620px;
-    animation: rise 0.45s var(--apple-spring) both;
+    max-width: 720px;
+    width: 100%;
+    animation: rise 0.42s var(--apple-spring) both;
   }
 
   .pico-hero-wrap {
     position: relative;
-    margin-bottom: 1.1rem;
+    width: 5.8rem;
+    height: 5.8rem;
+    margin-bottom: 1rem;
     display: grid;
     place-items: center;
   }
 
   .pico-hero-glow {
     position: absolute;
-    width: 6.4rem;
-    height: 6.4rem;
+    inset: -8px;
     border-radius: 50%;
-    background: conic-gradient(from 0deg, var(--accent), var(--accent2), var(--accent3), var(--accent));
+    background: conic-gradient(from 0deg, var(--val-primary), var(--val-secondary), var(--val-tertiary), var(--val-primary));
     filter: blur(22px);
-    opacity: 0.48;
-    animation: psspin 6s linear infinite;
+    opacity: 0.42;
+    animation: psspin 7s linear infinite;
+  }
+
+  .val-reticle-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 1.5px dashed color-mix(in srgb, var(--val-secondary) 55%, transparent);
+    animation: psspin 14s linear infinite reverse;
+    pointer-events: none;
   }
 
   .pico-hero-icon {
     position: relative;
-    width: 4.4rem;
-    height: 4.4rem;
-    border-radius: 22px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    width: 4.3rem;
+    height: 4.3rem;
+    clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+    background: linear-gradient(135deg, var(--val-primary), color-mix(in srgb, var(--val-secondary) 70%, #0f172a));
     display: grid;
     place-items: center;
-    color: var(--on-accent);
-    box-shadow: 0 16px 36px -6px color-mix(in srgb, var(--accent) 50%, transparent), inset 0 1.5px 1px rgba(255, 255, 255, 0.45);
+    color: #fff;
+    box-shadow: var(--val-glow);
   }
 
   .pico-hero-icon svg {
-    width: 2.3rem;
-    height: 2.3rem;
+    width: 2.15rem;
+    height: 2.15rem;
+  }
+
+  .val-welcome-kicker {
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--val-secondary);
+    background: color-mix(in srgb, var(--val-secondary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 35%, transparent);
+    padding: 0.18rem 0.68rem;
+    margin-bottom: 0.45rem;
+    clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
   }
 
   .welcome-screen h2 {
-    font-size: clamp(1.65rem, 3.5vw, 2.1rem);
-    margin-bottom: 0.35rem;
-    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    font-family: var(--tac-font);
+    font-size: clamp(1.85rem, 3.8vw, 2.45rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0 0 0.3rem;
+    color: var(--text);
+  }
+  .welcome-screen h2 span {
+    color: var(--val-primary);
   }
 
   .welcome-screen p {
-    max-width: 460px;
-    margin: 0 auto 1.35rem;
-    font-size: 0.93rem;
+    max-width: 520px;
+    margin: 0 auto 1.25rem;
+    font-family: var(--mono-font);
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--muted);
   }
 
   .prompt-pills {
@@ -601,69 +1324,168 @@
   }
 
   .prompt-pill {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.22rem;
-    padding: 0.82rem 0.95rem;
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--card-2) 78%, transparent);
-    border: 1px solid var(--line);
+    gap: 0.25rem;
+    padding: 0.82rem 1rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--val-bg-elevated) 92%, transparent), color-mix(in srgb, var(--val-bg-deep) 92%, transparent));
+    border: 1px solid color-mix(in srgb, var(--text) 12%, var(--line));
+    border-left: 3px solid var(--val-primary);
     text-align: left;
     cursor: pointer;
     color: var(--text);
-    transition: border-color 0.2s, transform 0.2s var(--apple-ease), background 0.2s;
+    transition: all 0.18s var(--apple-ease);
   }
 
   .prompt-pill:hover {
-    border-color: var(--accent);
+    border-color: var(--val-secondary);
+    border-left-color: var(--val-secondary);
     transform: translateY(-2px);
-    background: color-mix(in srgb, var(--accent) 10%, var(--card-2));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--val-secondary) 14%, var(--val-bg-elevated)), var(--val-bg-elevated));
+    box-shadow: var(--val-cyan-glow);
+  }
+
+  .prompt-pill .pp-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    width: 100%;
   }
 
   .prompt-pill .pp-tag {
-    font-size: 0.69rem;
+    font-family: var(--mono-font);
+    font-size: 0.64rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--accent);
+    letter-spacing: 0.08em;
+    color: var(--val-secondary);
+  }
+
+  .prompt-pill .pp-arrow {
+    font-family: var(--mono-font);
+    font-size: 0.64rem;
+    color: var(--muted);
+    transition: transform 0.16s, color 0.16s;
+  }
+  .prompt-pill:hover .pp-arrow {
+    color: var(--val-secondary);
+    transform: translateX(3px);
   }
 
   .prompt-pill .pp-txt {
-    font-size: 0.86rem;
-    font-weight: 600;
-    line-height: 1.3;
+    font-family: var(--tac-font);
+    font-size: 0.96rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
   }
 
   .chat-input-area {
-    padding: 0.75rem clamp(0.85rem, 2.5vw, 1.6rem) 0.95rem;
-    background: linear-gradient(to top, color-mix(in srgb, var(--card-solid) 92%, transparent) 60%, transparent);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: none;
-  }
-
-  .composer-box {
+    padding: 0.65rem clamp(0.85rem, 2.5vw, 1.5rem) 0.9rem;
+    background: linear-gradient(to top, color-mix(in srgb, var(--val-bg-deep) 96%, transparent) 65%, transparent);
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
-    padding: 0.5rem 0.55rem 0.5rem 0.65rem;
-    border-radius: 22px;
-    background: var(--card-solid);
+    flex: none;
+  }
+
+  .val-quick-directives {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .val-qd-left {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+  .val-qd-chip {
+    height: 24px;
+    min-height: 24px;
+    padding: 0 0.55rem;
+    border-radius: 2px;
+    clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 0 100%);
+    background: color-mix(in srgb, var(--val-bg-elevated) 85%, transparent);
     border: 1px solid color-mix(in srgb, var(--text) 12%, var(--line));
-    box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.32), var(--glass-spec);
+    color: var(--muted);
+    font-family: var(--mono-font);
+    font-size: 0.64rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.14s;
+  }
+  .val-qd-chip:hover {
+    border-color: var(--val-secondary);
+    color: var(--val-secondary);
+    background: color-mix(in srgb, var(--val-secondary) 12%, var(--val-bg-elevated));
+    transform: none;
+  }
+  .val-char-counter {
+    font-family: var(--mono-font);
+    font-size: 0.63rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .composer-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.42rem;
+    padding: 0.48rem 0.55rem 0.48rem 0.65rem;
+    border-radius: 4px;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    background: var(--val-bg-deep);
+    border: 1px solid color-mix(in srgb, var(--val-primary) 35%, var(--line));
+    border-left: 3px solid var(--val-primary);
+    box-shadow: 0 12px 32px -10px rgba(0, 0, 0, 0.55);
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   .composer-box:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 12px 34px -8px rgba(0, 0, 0, 0.4), 0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent);
+    border-color: var(--val-secondary);
+    border-left-color: var(--val-secondary);
+    box-shadow: 0 12px 34px -8px rgba(0, 0, 0, 0.6), var(--val-cyan-glow);
   }
 
   .chat-input-row {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.48rem;
     align-items: flex-end;
+  }
+
+  .val-channel-cycler {
+    height: 2.2rem;
+    min-height: 2.2rem;
+    padding: 0 0.62rem;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--val-primary) 18%, var(--val-bg-elevated));
+    border: 1px solid color-mix(in srgb, var(--val-primary) 48%, transparent);
+    color: var(--val-primary);
+    font-family: var(--mono-font);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.15s;
+  }
+  .val-channel-cycler:hover {
+    background: color-mix(in srgb, var(--val-secondary) 18%, var(--val-bg-elevated));
+    border-color: var(--val-secondary);
+    color: var(--val-secondary);
+    transform: none;
   }
 
   .chat-input-row textarea {
@@ -671,12 +1493,19 @@
     min-height: 2.2rem;
     max-height: 7.5rem;
     resize: none;
-    padding: 0.38rem 0.35rem;
+    padding: 0.4rem 0.35rem;
     border: 0;
     background: transparent;
+    color: var(--text);
     font-family: var(--body);
-    font-size: 0.95rem;
+    font-size: 0.94rem;
     line-height: 1.45;
+  }
+
+  .chat-input-row textarea::placeholder {
+    font-family: var(--mono-font);
+    font-size: 0.78rem;
+    color: var(--muted);
   }
 
   .chat-input-row textarea:focus {
@@ -687,24 +1516,47 @@
   #attachBtn {
     width: 2.2rem;
     height: 2.2rem;
+    min-width: 2.2rem;
+    min-height: 2.2rem;
     flex: none;
-    background: var(--card-2);
+    border-radius: 3px;
+    background: var(--val-bg-elevated);
+    border: 1px solid color-mix(in srgb, var(--text) 14%, var(--line));
+    color: var(--muted);
+  }
+  #attachBtn:hover {
+    border-color: var(--val-secondary);
+    color: var(--val-secondary);
   }
 
   #sendBtn {
     height: 2.25rem;
-    padding: 0 1.05rem;
-    border-radius: 999px;
+    min-height: 2.25rem;
+    padding: 0 1.15rem;
+    border-radius: 3px;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    background: linear-gradient(135deg, var(--val-primary), color-mix(in srgb, var(--val-primary) 75%, #991b1b));
+    color: #fff;
+    border: 0;
     display: inline-flex;
     align-items: center;
-    gap: 0.38rem;
-    font-size: 0.86rem;
+    gap: 0.42rem;
+    font-family: var(--tac-font);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: var(--val-glow);
     flex: none;
+    cursor: pointer;
+  }
+  #sendBtn:hover {
+    filter: brightness(1.1);
   }
 
   #sendBtn svg {
-    width: 0.95rem;
-    height: 0.95rem;
+    width: 0.92rem;
+    height: 0.92rem;
   }
 
   .attach-preview {
@@ -722,19 +1574,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.42rem;
-    padding: 0.28rem 0.6rem;
-    border-radius: 10px;
-    background: var(--card-2);
-    border: 1px solid var(--line);
-    font-size: 0.78rem;
-    font-weight: 500;
+    padding: 0.26rem 0.6rem;
+    border-radius: 3px;
+    background: var(--val-bg-elevated);
+    border: 1px solid var(--val-secondary);
+    font-family: var(--mono-font);
+    font-size: 0.72rem;
+    font-weight: 700;
   }
 
   .att-chip img {
     width: 22px;
     height: 22px;
     object-fit: cover;
-    border-radius: 5px;
+    border-radius: 3px;
   }
 
   .att-chip button {
@@ -742,16 +1595,17 @@
     border: 0;
     padding: 0 0.15rem;
     cursor: pointer;
-    color: var(--bad);
+    color: var(--val-primary);
     font-weight: 700;
     font-size: 0.95rem;
     line-height: 1;
   }
 
   .search-sources {
-    font-size: 0.75rem;
+    font-family: var(--mono-font);
+    font-size: 0.68rem;
     color: var(--muted);
-    margin-top: 0.25rem;
+    margin-top: 0.28rem;
     display: flex;
     align-items: center;
     gap: 0.38rem;
@@ -762,34 +1616,47 @@
     display: inline-flex;
     align-items: center;
     gap: 0.28rem;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    background: var(--card-2);
-    border: 1px solid var(--line);
+    padding: 0.16rem 0.55rem;
+    border-radius: 2px;
+    background: var(--val-bg-elevated);
+    border: 1px solid color-mix(in srgb, var(--val-secondary) 40%, var(--line));
     text-decoration: none;
-    color: var(--accent);
-    font-weight: 500;
-    max-width: 220px;
+    color: var(--val-secondary);
+    font-weight: 700;
+    max-width: 230px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .search-source-pill:hover {
-    border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 12%, var(--card-2));
+    border-color: var(--val-secondary);
+    background: color-mix(in srgb, var(--val-secondary) 16%, var(--val-bg-elevated));
+  }
+
+  @media (max-width: 900px) {
+    .val-mode-group {
+      display: none;
+    }
   }
 
   @media (max-width: 760px) {
     main {
-      padding: 0.45rem 0.55rem 5.4rem;
+      padding: 0.35rem 0.5rem 5.4rem;
+    }
+
+    .val-top-telemetry {
+      font-size: 0.6rem;
+      padding: 0.2rem 0.25rem 0.4rem;
+    }
+    .val-tele-right {
+      display: none;
     }
 
     .chat-panel {
       height: calc(100vh - 9.4rem - var(--safe-top, 0px) - env(safe-area-inset-bottom));
       height: calc(100dvh - 9.4rem - var(--safe-top, 0px) - env(safe-area-inset-bottom));
       min-height: 400px;
-      border-radius: 22px;
     }
 
     .chat-sidebar-pane {
@@ -798,9 +1665,9 @@
       bottom: 0;
       left: 0;
       height: 100%;
-      width: min(280px, 82vw);
-      background: var(--card-solid);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+      width: min(286px, 84vw);
+      background: var(--val-bg-deep);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75);
       transform: translateX(-100%);
     }
 
@@ -818,7 +1685,7 @@
     }
 
     .msg {
-      max-width: 94%;
+      max-width: 95%;
     }
 
     .web-pill-btn span {
@@ -826,29 +1693,42 @@
     }
 
     .web-pill-btn {
-      padding: 0.45rem;
+      padding: 0 0.55rem;
+    }
+
+    .val-channel-cycler span {
+      display: none;
     }
   }
 </style>
 </head>
-<body data-page="pico">
+<body data-page="pico" data-hud-theme="valorant">
 <header id="topbar"></header>
 <main>
-  <section class="panel chat-panel" id="chatPanel">
+  <section class="panel chat-panel" id="chatPanel" data-hud-theme="valorant">
     <div class="chat-header-bar">
-      <button class="iconbtn" id="toggleSidebarBtn" title="Toggle Conversation History" aria-label="Toggle History"></button>
+      <button class="val-icon-btn" id="toggleSidebarBtn" title="Toggle Operation Logs" aria-label="Toggle History"></button>
       <div class="hdr-title-wrap">
         <div class="hdr-title-row">
-          <b id="activeChatTitle" title="Click to rename conversation">PICO</b>
+          <span class="val-ch-badge">AGENT PICO</span>
+          <b id="activeChatTitle" title="Click to rename operation log">PICO</b>
         </div>
         <div class="model-pill">
           <span class="model-dot"></span>
           <span id="activeChatModelInfo">Powered by Gemini Flash</span>
         </div>
       </div>
+
       <div class="hdr-actions">
-        <button type="button" id="webSearchToggle" class="web-pill-btn" title="Toggle Google Web Search Grounding" aria-pressed="false"></button>
-        <button type="button" id="topNewChatBtn" class="iconbtn" title="New Conversation" aria-label="New Conversation"></button>
+        <div class="val-theme-dots" role="group" aria-label="HUD Color Protocol">
+          <button type="button" class="val-theme-dot active" data-hud-pick="valorant" style="background:#ff4655;color:#ff4655" title="Protocol Crimson & Radianite"></button>
+          <button type="button" class="val-theme-dot" data-hud-pick="radianite" style="background:#00f5d4;color:#00f5d4" title="Radianite Teal & Cyber Cyan"></button>
+          <button type="button" class="val-theme-dot" data-hud-pick="phantom" style="background:#a855f7;color:#a855f7" title="Omen Phantom Violet"></button>
+          <button type="button" class="val-theme-dot" data-hud-pick="killjoy" style="background:#facc15;color:#facc15" title="Killjoy Tactical Gold"></button>
+        </div>
+
+        <button type="button" id="webSearchToggle" class="web-pill-btn" title="Toggle Google Web Search Recon" aria-pressed="false"></button>
+        <button type="button" id="topNewChatBtn" class="val-icon-btn" title="New Operation Link" aria-label="New Conversation"></button>
       </div>
     </div>
 
@@ -859,22 +1739,39 @@
           <button type="button" class="primary" id="newChatBtn"></button>
           <div class="sb-search">
             <span id="sbSearchIc"></span>
-            <input type="search" id="chatFilterInput" placeholder="Filter chats…" aria-label="Filter conversations">
+            <input type="search" id="chatFilterInput" placeholder="SEARCH OPERATION LOGS…" aria-label="Filter conversations">
           </div>
         </div>
-        <div class="sb-label">Conversations</div>
+        <div class="sb-label-row">
+          <span class="sb-label">// Operation Logs</span>
+          <span class="sb-count-tag" id="sbLogCountTag">0 LOGS</span>
+        </div>
         <div class="chat-list" id="chatList"></div>
+        <div class="sb-footer-hud">
+          <span>COMMS: ENCRYPTED</span>
+          <span id="sbHudStatus">STATUS // READY</span>
+        </div>
       </aside>
 
       <div class="chat-main-area">
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-input-area">
+          <div class="val-quick-directives">
+            <div class="val-qd-left">
+              <button type="button" class="val-qd-chip" data-qd="/debug ">// DEBUG CODE</button>
+              <button type="button" class="val-qd-chip" data-qd="/explain ">// EXPLAIN STEP-BY-STEP</button>
+              <button type="button" class="val-qd-chip" data-qd="/summarize ">// TACTICAL BRIEF</button>
+              <button type="button" class="val-qd-chip" data-qd="/brainstorm ">// IDEATE</button>
+            </div>
+            <span class="val-char-counter" id="valCharCounter">0 CHARS // READY</span>
+          </div>
+
           <div class="composer-box">
             <div class="attach-preview" id="attachPreview"></div>
             <div class="chat-input-row">
               <input type="file" id="fileInput" accept="image/*,.txt,.pdf,.md,.csv,.json" style="display:none" multiple>
-              <button type="button" class="iconbtn" id="attachBtn" title="Attach image or file" aria-label="Attach file"></button>
-              <textarea id="userInput" placeholder="Ask PICO anything…" rows="1"></textarea>
+              <button type="button" class="val-icon-btn" id="attachBtn" title="Attach image or data file" aria-label="Attach file"></button>
+              <textarea id="userInput" placeholder="Transmit directive to Agent PICO…" rows="1"></textarea>
               <button type="button" class="primary" id="sendBtn" aria-label="Send message"></button>
             </div>
           </div>
@@ -888,19 +1785,22 @@
   DB.whenReady(async () => {
     const $ = id => document.getElementById(id);
     const CHATS_KEY = "p23.pico_chats";
+    const HUD_THEME_KEY = "p23.pico_hud_theme";
     const FREE_MODELS = [
       "gemini-3.8-flash",
       "gemini-3.6-flash",
       "gemini-3.5-flash-lite"
     ];
 
-    const PICO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a2 2 0 0 1 2 2v2h-4V4a2 2 0 0 1 2-2z"/><rect x="3" y="8" width="18" height="12" rx="4"/><path d="M9 13v2M15 13v2M9 17h6"/></svg>';
+    const PICO_SYS_PROMPT = "You are PICO (Project 23 Integrated Chat Operator), a friendly, witty, entertaining, and highly knowledgeable AI companion. You love chatting, telling engaging stories, cracking jokes, helping with coding, writing, and exploring the world.";
+
+    const PICO_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M3 7l3.5 2M17.5 15L21 17M21 7l-3.5 2M6.5 15L3 17"/></svg>';
     const THINKING_PHRASES = [
-      "Thinking through your request...",
-      "Gathering ideas and context...",
-      "Crafting a clear response...",
-      "Connecting the dots...",
-      "Almost ready..."
+      "DECRYPTING NEURAL STREAM...",
+      "SCANNING TACTICAL ARCHIVES...",
+      "COMPILING PROTOCOL RESPONSE...",
+      "LOCKING SIGNAL COORDINATES...",
+      "TRANSMISSION READY..."
     ];
 
     let chats = (DB.get(CHATS_KEY, []) || []).slice();
@@ -911,17 +1811,50 @@
     let filterQuery = "";
     let isStreaming = false;
 
+    try {
+      const savedTheme = localStorage.getItem(HUD_THEME_KEY);
+      if (savedTheme) {
+        $("chatPanel").dataset.hudTheme = savedTheme;
+        document.body.dataset.hudTheme = savedTheme;
+        document.querySelectorAll("[data-hud-pick]").forEach(b => {
+          b.classList.toggle("active", b.dataset.hudPick === savedTheme);
+        });
+      }
+    } catch {}
+
     if (matchMedia("(max-width: 760px)").matches) {
       $("chatPanel").classList.add("sidebar-collapsed");
     }
 
     $("toggleSidebarBtn").innerHTML = DB.icon("list");
-    $("newChatBtn").innerHTML = DB.icon("plus") + "<span>New Conversation<" + "/span>";
+    $("newChatBtn").innerHTML = DB.icon("plus") + "<span>Initialize New Link<" + "/span>";
     $("topNewChatBtn").innerHTML = DB.icon("plus");
     $("attachBtn").innerHTML = DB.icon("upload");
     $("sbSearchIc").innerHTML = DB.icon("search");
-    $("webSearchToggle").innerHTML = DB.icon("globe") + "<span>Web Search<" + "/span>";
-    $("sendBtn").innerHTML = DB.icon("send") + "<span>Send<" + "/span>";
+    $("webSearchToggle").innerHTML = DB.icon("globe") + "<span>Recon Search<" + "/span>";
+    $("sendBtn").innerHTML = DB.icon("send") + "<span>Transmit<" + "/span>";
+
+    document.querySelectorAll("[data-hud-pick]").forEach(btn => {
+      btn.onclick = () => {
+        const theme = btn.dataset.hudPick;
+        $("chatPanel").dataset.hudTheme = theme;
+        document.body.dataset.hudTheme = theme;
+        document.querySelectorAll("[data-hud-pick]").forEach(b => b.classList.toggle("active", b === btn));
+        try { localStorage.setItem(HUD_THEME_KEY, theme); } catch {}
+      };
+    });
+
+    document.querySelectorAll("[data-qd]").forEach(chip => {
+      chip.onclick = () => {
+        const inp = $("userInput");
+        const prefix = chip.dataset.qd || "";
+        if (!inp.value.startsWith(prefix)) {
+          inp.value = prefix + inp.value;
+        }
+        inp.focus();
+        inp.dispatchEvent(new Event("input"));
+      };
+    });
 
     const mainEl = document.querySelector("main");
     if (mainEl) {
@@ -970,13 +1903,13 @@
     }
 
     function relTime(ts) {
-      if (!ts) return "Just now";
+      if (!ts) return "NOW";
       const diff = Math.max(0, Date.now() - ts);
       const mins = Math.floor(diff / 60000);
-      if (mins < 1) return "Just now";
-      if (mins < 60) return mins + "m ago";
+      if (mins < 1) return "NOW";
+      if (mins < 60) return mins + "M AGO";
       const hrs = Math.floor(mins / 60);
-      if (hrs < 24) return hrs + "h ago";
+      if (hrs < 24) return hrs + "H AGO";
       return new Date(ts).toLocaleDateString([], { month: "short", day: "numeric" });
     }
 
@@ -984,7 +1917,7 @@
       webSearchEnabled = !webSearchEnabled;
       $("webSearchToggle").classList.toggle("active", webSearchEnabled);
       $("webSearchToggle").setAttribute("aria-pressed", webSearchEnabled);
-      DB.toast(webSearchEnabled ? "Web Search Grounding Enabled" : "Web Search Grounding Disabled", "", 2000);
+      DB.toast(webSearchEnabled ? "Recon Web Search Enabled" : "Recon Web Search Disabled", "", 2000);
     };
 
     function compressImageDataUrl(dataUrl) {
@@ -1054,9 +1987,9 @@
       if (!chat) return;
       const node = document.createElement("div");
       node.innerHTML = `
-        <h2>Rename Conversation<" + "/h2>
+        <h2>Rename Operation Log<" + "/h2>
         <div class="field">
-          <label for="rnInput">Title<" + "/label>
+          <label for="rnInput">Operation Callsign<" + "/label>
           <input id="rnInput" maxlength="60" value="${DB.esc(chat.title || "New Conversation")}" style="width:100%">
         <" + "/div>
         <div class="actions">
@@ -1088,26 +2021,30 @@
 
     function renderChatList() {
       const list = $("chatList");
+      const countTag = $("sbLogCountTag");
+      if (countTag) countTag.textContent = `${chats.length} LOG${chats.length === 1 ? "" : "S"}`;
+
       const filtered = filterQuery
         ? chats.filter(c => (c.title || "").toLowerCase().includes(filterQuery) || (c.messages || []).some(m => (m.text || "").toLowerCase().includes(filterQuery)))
         : chats;
 
       if (!filtered.length) {
-        list.innerHTML = `<div class="muted" style="padding:1.2rem .5rem;text-align:center;font-size:.82rem">${filterQuery ? "No matching chats." : "No conversations yet."}<` + `/div>`;
+        list.innerHTML = `<div class="muted" style="padding:1.2rem .5rem;text-align:center;font-family:var(--mono-font);font-size:.74rem">${filterQuery ? "// NO MATCHING LOGS" : "// NO ACTIVE LOGS"}<` + `/div>`;
         return;
       }
 
-      list.innerHTML = filtered.map(c => {
+      list.innerHTML = filtered.map((c, idx) => {
         const count = (c.messages || []).filter(m => m.text).length;
+        const logCode = "LOG-" + String(idx + 1).padStart(2, "0");
         return `
         <div class="chat-row ${c.id === activeChatId ? "active" : ""}">
           <button type="button" class="chat-item" data-id="${DB.esc(c.id)}">
             <span class="title">${DB.esc(c.title || "New Conversation")}<` + `/span>
-            <span class="meta"><span>${relTime(c.updated)}<` + `/span><span>•<` + `/span><span>${count} msg${count === 1 ? "" : "s"}<` + `/span><` + `/span>
+            <span class="meta"><span class="log-code">${logCode}<` + `/span><span>•<` + `/span><span>${relTime(c.updated)}<` + `/span><span>•<` + `/span><span>${count} MSG${count === 1 ? "" : "S"}<` + `/span><` + `/span>
           <` + `/button>
           <div class="chat-row-actions">
-            <button type="button" class="chat-act" data-rn="${DB.esc(c.id)}" title="Rename chat" aria-label="Rename chat">${DB.icon("edit")}<` + `/button>
-            <button type="button" class="chat-act del" data-del="${DB.esc(c.id)}" title="Delete chat" aria-label="Delete chat">${DB.icon("trash")}<` + `/button>
+            <button type="button" class="chat-act" data-rn="${DB.esc(c.id)}" title="Rename log" aria-label="Rename chat">${DB.icon("edit")}<` + `/button>
+            <button type="button" class="chat-act del" data-del="${DB.esc(c.id)}" title="Purge log" aria-label="Delete chat">${DB.icon("trash")}<` + `/button>
           <` + `/div>
         <` + `/div>`;
       }).join("");
@@ -1143,7 +2080,7 @@
           saveChats();
           renderChatList();
           renderMessages();
-          DB.toast("Conversation deleted", "", 2000);
+          DB.toast("Operation log purged", "", 2000);
         };
       });
     }
@@ -1182,6 +2119,7 @@
     function renderMessages() {
       const chat = getActiveChat();
       const container = $("chatMessages");
+
       $("activeChatTitle").textContent = chat ? (chat.title || "New Conversation") : "PICO";
 
       if (!chat || !chat.messages || !chat.messages.length) {
@@ -1189,26 +2127,40 @@
           <div class="welcome-screen">
             <div class="pico-hero-wrap">
               <div class="pico-hero-glow"><` + `/div>
+              <div class="val-reticle-ring"><` + `/div>
               <div class="pico-hero-icon">${PICO_SVG}<` + `/div>
             <` + `/div>
-            <h2>Meet PICO<` + `/h2>
-            <p class="muted">Your intelligent AI collaborator for Project 23 — synced across every page and device.<` + `/p>
+            <div class="val-welcome-kicker">// AGENT PICO · COMMS ONLINE<` + `/div>
+            <h2>PROTOCOL 23 // <span>AGENT PICO<` + `/span><` + `/h2>
+            <p>[SYS-MSG] Tactical neural link established. Select a mission directive below or transmit a custom command in the comms terminal.<` + `/p>
             <div class="prompt-pills">
-              <button type="button" class="prompt-pill" data-prompt="Summarize the key themes and tropes of classic science fiction literature">
-                <span class="pp-tag">Literature<` + `/span>
-                <span class="pp-txt">Overview of classic sci-fi themes & tropes<` + `/span>
+              <button type="button" class="prompt-pill" data-prompt="Debug a C pointer function or explain how stack vs heap memory works with a diagram">
+                <div class="pp-head">
+                  <span class="pp-tag">// DIR-01 · CODE &amp; SYSTEMS<` + `/span>
+                  <span class="pp-arrow">[TRANSMIT →]<` + `/span>
+                <` + `/div>
+                <span class="pp-txt">Trace C pointers &amp; memory stack frames<` + `/span>
               <` + `/button>
-              <button type="button" class="prompt-pill" data-prompt="Write a short, suspenseful mystery story set in a rainy neon-lit city">
-                <span class="pp-tag">Creative Writing<` + `/span>
-                <span class="pp-txt">Write a short neon-noir mystery story<` + `/span>
+              <button type="button" class="prompt-pill" data-prompt="Write a short, suspenseful cyberpunk mystery story set in a rainy neon-lit city">
+                <div class="pp-head">
+                  <span class="pp-tag">// DIR-02 · CREATIVE LORE<` + `/span>
+                  <span class="pp-arrow">[TRANSMIT →]<` + `/span>
+                <` + `/div>
+                <span class="pp-txt">Generate a neon-noir cyberpunk mystery<` + `/span>
               <` + `/button>
-              <button type="button" class="prompt-pill" data-prompt="Give me 5 creative productivity tips to stay focused during deep work">
-                <span class="pp-tag">Productivity<` + `/span>
-                <span class="pp-txt">5 actionable deep-work focus strategies<` + `/span>
+              <button type="button" class="prompt-pill" data-prompt="Give me 5 tactical deep-work focus strategies for university engineering study sessions">
+                <div class="pp-head">
+                  <span class="pp-tag">// DIR-03 · PERFORMANCE<` + `/span>
+                  <span class="pp-arrow">[TRANSMIT →]<` + `/span>
+                <` + `/div>
+                <span class="pp-txt">5 tactical deep-work focus strategies<` + `/span>
               <` + `/button>
-              <button type="button" class="prompt-pill" data-prompt="Explain how modern renewable energy grids balance supply and demand in simple terms">
-                <span class="pp-tag">Science & Tech<` + `/span>
-                <span class="pp-txt">How modern renewable energy grids work<` + `/span>
+              <button type="button" class="prompt-pill" data-prompt="Explain how Three.js vehicle physics and tyre grip telemetry can be modeled in JavaScript">
+                <div class="pp-head">
+                  <span class="pp-tag">// DIR-04 · 3D &amp; WEB DEV<` + `/span>
+                  <span class="pp-arrow">[TRANSMIT →]<` + `/span>
+                <` + `/div>
+                <span class="pp-txt">Model 3D racing physics in Three.js<` + `/span>
               <` + `/button>
             <` + `/div>
           <` + `/div>`;
@@ -1222,30 +2174,40 @@
         return;
       }
 
-      container.innerHTML = chat.messages.map((m, idx) => `
+      container.innerHTML = chat.messages.map((m, idx) => {
+        const isUser = m.role === "user";
+        const senderLbl = isUser ? "YOU" : "AGENT PICO";
+        const seqLbl = "#" + String(idx + 1).padStart(2, "0");
+
+        return `
         <div class="msg ${m.role}">
-          <div class="msg-avatar">${m.role === "user" ? DB.icon("user") : PICO_SVG}<` + `/div>
+          <div class="msg-avatar">${isUser ? DB.icon("user") : PICO_SVG}<` + `/div>
           <div class="msg-col">
+            <div class="val-msg-header">
+              <span class="val-sender-name">${DB.esc(senderLbl)}<` + `/span>
+              <span class="val-msg-idx">${seqLbl}<` + `/span>
+            <` + `/div>
             <div class="msg-bubble">${m.text === "" && m.role === "assistant"
-              ? `<div class="thinking-box"><div class="thinking-status" id="thinkingStatus">Thinking through your request...<` + `/div><div class="typing-dots"><span><` + `/span><span><` + `/span><span><` + `/span><` + `/div><` + `/div>`
+              ? `<div class="thinking-box"><span class="val-radar-wave"><i><` + `/i><i><` + `/i><i><` + `/i><i><` + `/i><` + `/span><div class="thinking-status" id="thinkingStatus">DECRYPTING NEURAL STREAM...<` + `/div><` + `/div>`
               : formatMarkdown(m.text)}
               ${m.attachments && m.attachments.length ? m.attachments.map(a => a.preview ? `<img src="${a.preview}" alt="${DB.esc(a.name)}">` : `<div class="chip" style="margin-top:.4rem">📄 ${DB.esc(a.name)}<` + `/div>`).join("") : ""}
             <` + `/div>
-            ${m.sources && m.sources.length ? `<div class="search-sources"><span>Sources:<` + `/span>${m.sources.map(s => `<a href="${DB.esc(s.uri)}" target="_blank" rel="noopener" class="search-source-pill">${DB.icon("globe")}<span>${DB.esc(s.title || s.uri)}<` + `/span><` + `/a>`).join("")}<` + `/div>` : ""}
+            ${m.sources && m.sources.length ? `<div class="search-sources"><span>// RECON SOURCES:<` + `/span>${m.sources.map(s => `<a href="${DB.esc(s.uri)}" target="_blank" rel="noopener" class="search-source-pill">${DB.icon("globe")}<span>${DB.esc(s.title || s.uri)}<` + `/span><` + `/a>`).join("")}<` + `/div>` : ""}
             ${m.role === "assistant" && m.text ? `<div class="msg-meta-bar">
-              ${(m.error || String(m.text).startsWith("⚠️")) ? `<button type="button" class="msg-copy-btn" data-retry="${idx}" style="color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:color-mix(in srgb,var(--accent) 12%,var(--card-2));">${DB.icon("refresh")}<span>Try again<` + `/span><` + `/button>` : ""}
-              <button type="button" class="msg-copy-btn" data-copy="${idx}">${DB.icon("note")}<span>Copy<` + `/span><` + `/button>
+              ${(m.error || String(m.text).startsWith("⚠️")) ? `<button type="button" class="msg-copy-btn" data-retry="${idx}" style="color:var(--val-primary);border-color:color-mix(in srgb,var(--val-primary) 45%,var(--line));background:color-mix(in srgb,var(--val-primary) 14%,var(--val-bg-elevated));">${DB.icon("refresh")}<span>Re-Transmit<` + `/span><` + `/button>` : ""}
+              <button type="button" class="msg-copy-btn" data-copy="${idx}">${DB.icon("note")}<span>Copy Log<` + `/span><` + `/button>
             <` + `/div>` : ""}
           <` + `/div>
         <` + `/div>
-      `).join("");
+      `;
+      }).join("");
 
       container.querySelectorAll("button[data-copy]").forEach(btn => {
         btn.onclick = () => {
           const msg = chat.messages[+btn.dataset.copy];
           if (msg && msg.text) {
             navigator.clipboard && navigator.clipboard.writeText(msg.text);
-            DB.toast("Response copied", "", 1800);
+            DB.toast("Transmission copied", "", 1800);
           }
         };
       });
@@ -1284,7 +2246,7 @@
 
     function updateChatTitleFromContext(chat, prompt) {
       if (chat.title !== "New Conversation") return;
-      let clean = (prompt || "").replace(/^(how to do|how do i|what is|can you|please|explain|write a)\s*/i, "").trim();
+      let clean = (prompt || "").replace(/^(\/[a-z]+\s+|how to do|how do i|what is|can you|please|explain|write a)\s*/i, "").trim();
       if (clean.length > 28) clean = clean.slice(0, 28) + "…";
       if (clean) {
         chat.title = clean.charAt(0).toUpperCase() + clean.slice(1);
@@ -1310,6 +2272,9 @@
       }
 
       isStreaming = true;
+      const hudStatus = $("sbHudStatus");
+      if (hudStatus) hudStatus.textContent = "STATUS // STREAMING";
+
       const chat = getActiveChat();
       updateChatTitleFromContext(chat, text || (currentAttachments[0]?.name || "Attachment"));
 
@@ -1330,6 +2295,8 @@
 
       textInput.value = "";
       textInput.style.height = "auto";
+      const charEl = $("valCharCounter");
+      if (charEl) charEl.textContent = "0 CHARS // TRANSMITTING";
       currentAttachments = [];
       renderAttachments();
       saveChats();
@@ -1344,7 +2311,7 @@
         phraseIdx = (phraseIdx + 1) % THINKING_PHRASES.length;
         const statusEl = document.getElementById("thinkingStatus");
         if (statusEl) statusEl.textContent = THINKING_PHRASES[phraseIdx];
-      }, 1500);
+      }, 1400);
 
       const container = $("chatMessages");
       const lastBubble = container.lastElementChild ? container.lastElementChild.querySelector(".msg-bubble") : null;
@@ -1371,7 +2338,7 @@
 
       const payload = {
         systemInstruction: {
-          parts: [{ text: "You are PICO (Project 23 Integrated Chat Operator), a friendly, witty, entertaining, and highly knowledgeable AI companion. You love chatting, telling engaging stories, cracking jokes, helping with coding, writing, and exploring the world." }]
+          parts: [{ text: PICO_SYS_PROMPT }]
         },
         contents
       };
@@ -1385,7 +2352,7 @@
 
       while (!success && attempts < FREE_MODELS.length) {
         const modelToUse = FREE_MODELS[attempts];
-        $("activeChatModelInfo").textContent = `Powered by ${modelToUse}`;
+        $("activeChatModelInfo").textContent = `NEURAL CORE // ${modelToUse.toUpperCase()}`;
 
         try {
           const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
@@ -1464,6 +2431,8 @@
         }
       }
       isStreaming = false;
+      if (hudStatus) hudStatus.textContent = "STATUS // READY";
+      if (charEl) charEl.textContent = "0 CHARS // READY";
     }
 
     $("sendBtn").onclick = sendMessage;
@@ -1476,6 +2445,11 @@
     $("userInput").oninput = function () {
       this.style.height = "auto";
       this.style.height = Math.min(120, this.scrollHeight) + "px";
+      const charEl = $("valCharCounter");
+      if (charEl) {
+        const len = this.value.length;
+        charEl.textContent = `${len} CHAR${len === 1 ? "" : "S"} // ${len > 0 ? "LOCKED" : "READY"}`;
+      }
     };
 
     const syncFromCloud = () => {
