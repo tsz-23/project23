@@ -82,6 +82,13 @@ async function writeSwState(stateObj) {
   } catch {}
 }
 
+const isAppleOS = /iPad|iPhone|iPod|Macintosh/.test((self.navigator && self.navigator.userAgent) || "");
+function formatSwNotificationTitle(rawTitle) {
+  const clean = String(rawTitle || "Project 23").replace(/\s+from\s+Project\s+23$/i, "").trim();
+  if (isAppleOS) return clean;
+  return clean === "Project 23" ? "Project 23" : `${clean} from Project 23`;
+}
+
 let swWakeTimer = null;
 
 async function notifyClientsOfFired(fired, newlyFired) {
@@ -124,7 +131,7 @@ async function checkAndFireSwNotifications() {
         newlyFired.push(item);
         pendingLog.push({ title: item.title, body: item.body || "", key: item.key, url: item.url || "./index.html", ts: now });
         try {
-          await self.registration.showNotification(item.title, {
+          await self.registration.showNotification(formatSwNotificationTitle(item.title), {
             body: item.body || "",
             tag: item.key,
             icon: "assets/icon.png",
@@ -270,7 +277,7 @@ self.addEventListener("push", e => {
       } catch {}
 
       if (!hasFocusedClient) {
-        await self.registration.showNotification(payload.title, {
+        await self.registration.showNotification(formatSwNotificationTitle(payload.title), {
           body: payload.body || "",
           tag,
           icon: "assets/icon.png",
