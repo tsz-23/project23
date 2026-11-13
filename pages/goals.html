@@ -1432,6 +1432,9 @@ DB.whenReady(() => {
         localGoalsCache = cloudList;
         DB.set(TR_KEY, localGoalsCache);
       }
+      if (userData.trackerGoals !== undefined) {
+        userRef.update({ trackerGoals: firebase.firestore.FieldValue.delete() }).catch(() => {});
+      }
 
       userRef.collection("state").doc("tracker").onSnapshot(docSnap => {
         if (state.syncInFlight) return;
@@ -1470,10 +1473,7 @@ DB.whenReady(() => {
       state.syncInFlight = true;
       try {
         const cleanList = JSON.parse(JSON.stringify(localGoalsCache));
-        await Promise.all([
-          userRef.collection("state").doc("tracker").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {}),
-          userRef.set({ trackerGoals: cleanList }, { merge: true }).catch(() => {})
-        ]);
+        await userRef.collection("state").doc("tracker").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {});
       } catch {}
       state.syncInFlight = false;
     }
@@ -1985,7 +1985,7 @@ DB.whenReady(() => {
               </div>
             </div>
 
-            <!-- Active Period Progress & Logging Controls -->
+            
             <div class="tr-progress-box">
               <div class="tr-progress-head">
                 <div class="tr-progress-count">
@@ -2017,7 +2017,7 @@ DB.whenReady(() => {
               </div>
             </div>
 
-            <!-- Under-Goal Recent Stats: Chart + Table -->
+            
             <div class="tr-stats-box">
               <div class="tr-stats-head">
                 <div class="tr-stats-title">
