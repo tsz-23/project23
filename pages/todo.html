@@ -339,9 +339,13 @@
       var(--glass-elevated);
     border: 1px solid var(--line);
     border-left: 5px solid var(--c, var(--accent));
-    animation: rise 0.38s var(--apple-spring) both;
-    animation-delay: calc(var(--k, 0) * 35ms);
-    transition: transform 0.2s var(--apple-ease), border-color 0.2s, opacity 0.25s, box-shadow 0.2s;
+    transition: transform 0.2s var(--apple-ease), border-color 0.2s, opacity 0.22s var(--apple-ease), box-shadow 0.2s;
+  }
+
+  .task.task-completing {
+    opacity: 0;
+    transform: translateX(10px) scale(0.985);
+    pointer-events: none;
   }
 
   .task:hover {
@@ -1000,7 +1004,7 @@
       <form id="quick" class="row">
         <input id="qTitle" class="grow" placeholder="Add a task…" required aria-label="New task">
         <button class="primary" id="qAdd" type="submit"></button>
-        <button type="button" id="fullNew" class="ghost">More options</button>
+        <button type="button" id="fullNew">More options</button>
       </form>
 
       <div class="stats">
@@ -1027,8 +1031,8 @@
           <button type="button" data-f="all">All</button>
         </div>
         <div class="todo-top-actions">
-          <button id="clearDone" type="button" class="ghost">Clear completed</button>
-          <button id="deleteAll" type="button" class="ghost del-all-btn">Delete all</button>
+          <button id="clearDone" type="button">Clear completed</button>
+          <button id="deleteAll" type="button" class="del-all-btn">Delete all</button>
         </div>
       </div>
 
@@ -1133,60 +1137,31 @@ DB.whenReady(() => {
     return dt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   }
 
+  let lastCatsKey = null;
+  let lastTagsKey = null;
+
   function refreshFilters() {
-    const cats = [...new Set(todos.map(t => t.category).filter(Boolean))].sort(), tags = [...new Set(todos.flatMap(t => t.tags || []))].sort();
-    const keepC = $("fCat").value, keepT = $("fTag").value;
-    $("fCat").innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option>${DB.esc(c)}</option>`).join("");
-    $("fTag").innerHTML = '<option value="">All tags</option>' + tags.map(c => `<option>${DB.esc(c)}</option>`).join("");
-    $("fCat").value = cats.includes(keepC) ? keepC : "";
-    $("fTag").value = tags.includes(keepT) ? keepT : "";
-    DB.enhanceSelect($("fCat"));
-    DB.enhanceSelect($("fTag"));
+    const cats = [...new Set(todos.map(t => t.category).filter(Boolean))].sort();
+    const tags = [...new Set(todos.flatMap(t => t.tags || []))].sort();
+    const catsKey = JSON.stringify(cats);
+    const tagsKey = JSON.stringify(tags);
+    if (catsKey !== lastCatsKey) {
+      const keepC = $("fCat").value;
+      $("fCat").innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option>${DB.esc(c)}</option>`).join("");
+      $("fCat").value = cats.includes(keepC) ? keepC : "";
+      DB.enhanceSelect($("fCat"));
+      lastCatsKey = catsKey;
+    }
+    if (tagsKey !== lastTagsKey) {
+      const keepT = $("fTag").value;
+      $("fTag").innerHTML = '<option value="">All tags</option>' + tags.map(c => `<option>${DB.esc(c)}</option>`).join("");
+      $("fTag").value = tags.includes(keepT) ? keepT : "";
+      DB.enhanceSelect($("fTag"));
+      lastTagsKey = tagsKey;
+    }
   }
 
-  function render() {
-    refreshFilters();
-    const today = DB.dayKey(new Date()), q = $("search").value.toLowerCase(), cat = $("fCat").value, tag = $("fTag").value;
-    let shown = todos.filter(t => (filter === "all" || (filter === "done" ? t.done : !t.done)) && (!cat || t.category === cat) && (!tag || (t.tags || []).includes(tag)) &&
-      (!q || (t.title + " " + (t.notes || "") + " " + (t.category || "") + " " + (t.tags || []).join(" ")).toLowerCase().includes(q)));
-    const s = $("sort").value;
-    shown.sort((a, b) => (a.done - b.done) || (s === "pri" ? b.priority - a.priority : s === "new" ? b.created - a.created : ((a.due ? a.due + (a.time || "23:59") : "9999") > (b.due ? b.due + (b.time || "23:59") : "9999") ? 1 : -1)));
-    const list = $("list");
-    list.innerHTML = "";
-    if (!shown.length) {
-      list.innerHTML = `<div class="todo-empty"><div class="todo-empty-ico">${DB.icon("todo")}</div><p style="margin:0">${todos.length ? "Nothing matches your current filters." : "No tasks yet. Add one above or import your iPhone Reminders."}</p></div>`;
-    }
-    shown.forEach((t, k) => {
-      const row = document.createElement("div");
-      row.className = "task" + (t.done ? " done" : "");
-      row.style.setProperty("--c", t.color || DB.palette[0]);
-      row.style.setProperty("--k", Math.min(k, 12));
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.className = "check";
-      cb.checked = t.done;
-      cb.setAttribute("aria-label", "Mark done: " + t.title);
-      cb.onchange = () => { t.done = cb.checked; save(); render(); };
-
-      const due = t.due
-        ? `<span class="due ${!t.done && t.due < today ? "late" : t.due === today ? "today" : ""}">${DB.icon("cal")} ${new Date(t.due + "T00:00").toLocaleDateString([], { month: "short", day: "numeric" })}${t.time ? " · " + DB.fmtTime(DB.fromInputs(t.due, t.time)) : ""}</span>`
-        : "";
-      const main = document.createElement("div");
-      main.className = "main";
-      main.innerHTML = `<div class="title">${t.flagged ? `<span class="flag" title="Flagged">${DB.icon("flag")}</span>` : ""}${DB.esc(t.title)}</div>${t.notes ? `<div class="desc">${DB.esc(t.notes)}</div>` : ""}
-        <div class="meta">${due}${t.category ? `<span class="cat">${DB.esc(t.category)}</span>` : ""}${t.priority ? `<span class="pri p${t.priority}" title="${PRI[t.priority]} priority">${PRI[t.priority]}</span>` : ""}${(t.tags || []).map(x => `<span class="tag">#${DB.esc(x)}</span>`).join("")}</div>`;
-
-      const ed = document.createElement("button");
-      ed.type = "button";
-      ed.className = "task-edit-btn";
-      ed.textContent = "Edit";
-      ed.onclick = () => openEditor(t);
-
-      row.append(cb, main, ed);
-      list.appendChild(row);
-    });
-
+  function updateStatsAndTabs(today) {
     const today_ = todos.filter(t => !t.done && t.due === today).length;
     const late = todos.filter(t => !t.done && t.due && t.due < today).length;
     const done = todos.filter(t => t.done).length;
@@ -1199,6 +1174,107 @@ DB.whenReady(() => {
     $("prog").style.width = pct + "%";
     if ($("progPctLabel")) $("progPctLabel").textContent = pct + "%";
     document.querySelectorAll("#seg button").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+  }
+
+  function buildTaskMainHtml(t, today) {
+    const due = t.due
+      ? `<span class="due ${!t.done && t.due < today ? "late" : t.due === today ? "today" : ""}">${DB.icon("cal")} ${new Date(t.due + "T00:00").toLocaleDateString([], { month: "short", day: "numeric" })}${t.time ? " · " + DB.fmtTime(DB.fromInputs(t.due, t.time)) : ""}</span>`
+      : "";
+    return `<div class="title">${t.flagged ? `<span class="flag" title="Flagged">${DB.icon("flag")}</span>` : ""}${DB.esc(t.title)}</div>${t.notes ? `<div class="desc">${DB.esc(t.notes)}</div>` : ""}<div class="meta">${due}${t.category ? `<span class="cat">${DB.esc(t.category)}</span>` : ""}${t.priority ? `<span class="pri p${t.priority}" title="${PRI[t.priority]} priority">${PRI[t.priority]}</span>` : ""}${(t.tags || []).map(x => `<span class="tag">#${DB.esc(x)}</span>`).join("")}</div>`;
+  }
+
+  function updateTaskRow(row, t, today) {
+    row.dataset.id = t.id;
+    row.classList.toggle("done", !!t.done);
+    row.classList.remove("task-completing");
+    row.style.setProperty("--c", t.color || DB.palette[0]);
+
+    let cb = row.querySelector(".check");
+    let main = row.querySelector(".main");
+    let ed = row.querySelector(".task-edit-btn");
+
+    if (!cb) {
+      cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.className = "check";
+      main = document.createElement("div");
+      main.className = "main";
+      ed = document.createElement("button");
+      ed.type = "button";
+      ed.className = "task-edit-btn";
+      ed.textContent = "Edit";
+      row.append(cb, main, ed);
+    }
+
+    if (cb.checked !== !!t.done) cb.checked = !!t.done;
+    cb.setAttribute("aria-label", "Mark done: " + t.title);
+    cb.onchange = () => {
+      t.done = cb.checked;
+      save();
+      const nowToday = DB.dayKey(new Date());
+      row.classList.toggle("done", !!t.done);
+      updateStatsAndTabs(nowToday);
+      const fadesOut = (filter === "open" && t.done) || (filter === "done" && !t.done);
+      if (fadesOut) {
+        row.classList.add("task-completing");
+        setTimeout(() => render(), 180);
+      } else {
+        render();
+      }
+    };
+
+    const nextHtml = buildTaskMainHtml(t, today);
+    if (main._lastHtml !== nextHtml) {
+      main.innerHTML = nextHtml;
+      main._lastHtml = nextHtml;
+    }
+
+    ed.onclick = () => openEditor(t);
+  }
+
+  function render() {
+    refreshFilters();
+    const today = DB.dayKey(new Date()), q = $("search").value.toLowerCase(), cat = $("fCat").value, tag = $("fTag").value;
+    let shown = todos.filter(t => (filter === "all" || (filter === "done" ? t.done : !t.done)) && (!cat || t.category === cat) && (!tag || (t.tags || []).includes(tag)) &&
+      (!q || (t.title + " " + (t.notes || "") + " " + (t.category || "") + " " + (t.tags || []).join(" ")).toLowerCase().includes(q)));
+    const s = $("sort").value;
+    shown.sort((a, b) => (a.done - b.done) || (s === "pri" ? b.priority - a.priority : s === "new" ? b.created - a.created : ((a.due ? a.due + (a.time || "23:59") : "9999") > (b.due ? b.due + (b.time || "23:59") : "9999") ? 1 : -1)));
+    const list = $("list");
+
+    if (!shown.length) {
+      list.innerHTML = `<div class="todo-empty"><div class="todo-empty-ico">${DB.icon("todo")}</div><p style="margin:0">${todos.length ? "Nothing matches your current filters." : "No tasks yet. Add one above or import your iPhone Reminders."}</p></div>`;
+      updateStatsAndTabs(today);
+      return;
+    }
+
+    const emptyEl = list.querySelector(".todo-empty");
+    if (emptyEl) emptyEl.remove();
+
+    const existingRows = new Map();
+    Array.from(list.querySelectorAll(".task[data-id]")).forEach(el => {
+      existingRows.set(el.dataset.id, el);
+    });
+
+    const shownIds = new Set(shown.map(t => String(t.id)));
+    existingRows.forEach((el, id) => {
+      if (!shownIds.has(id)) el.remove();
+    });
+
+    shown.forEach((t, idx) => {
+      const idStr = String(t.id);
+      let row = existingRows.get(idStr);
+      if (!row) {
+        row = document.createElement("div");
+        row.className = "task" + (t.done ? " done" : "");
+      }
+      updateTaskRow(row, t, today);
+      const currentAtIdx = list.children[idx];
+      if (currentAtIdx !== row) {
+        list.insertBefore(row, currentAtIdx || null);
+      }
+    });
+
+    updateStatsAndTabs(today);
   }
 
   function openEditor(task) {
