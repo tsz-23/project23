@@ -1222,7 +1222,8 @@ function computeUpcomingSchedule(){
   return schedule.slice(0, 120);
 }
 
-const P23_VAPID_PUBLIC_KEY = "BCarY0wiguPHp8SkHaYQAtiXktOrKOs4j8FlMBHxdwXCEcLwS3XTHmnqFP-ajKamovji8VmvS8cCiacIMGSQm08" || window.P23_VAPID_PUBLIC_KEY;
+// Paste your VAPID Public Key here (or set window.P23_VAPID_PUBLIC_KEY in firebase-config.js)
+const P23_VAPID_PUBLIC_KEY = window.P23_VAPID_PUBLIC_KEY || "BCarY0wiguPHp8SkHaYQAtiXktOrKOs4j8FlMBHxdwXCEcLwS3XTHmnqFP-ajKamovji8VmvS8cCiacIMGSQm08";
 
 function urlBase64ToUint8Array(base64String){
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -1253,24 +1254,27 @@ async function syncPushToFirestore(reg, schedule){
         pushUpdatedAt: Date.now()
       };
       const vapid = (window.P23_VAPID_PUBLIC_KEY || P23_VAPID_PUBLIC_KEY || "").trim();
-      if(DB.settings.notifyOn && vapid && reg && reg.pushManager && "Notification" in window && Notification.permission === "granted"){
-        let sub = await reg.pushManager.getSubscription();
-        if(!sub){
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapid)
-          });
-        }
-        if(sub){
-          const devId = getPushDeviceId();
-          update.pushDevices = {
-            [devId]: {
-              subscription: sub.toJSON(),
-              ios: isIOS,
-              standalone: isStandalone,
-              updatedAt: Date.now()
-            }
-          };
+      if(DB.settings.notifyOn && vapid && "serviceWorker" in navigator && "Notification" in window && Notification.permission === "granted"){
+        const readyReg = await navigator.serviceWorker.ready;
+        if(readyReg && readyReg.pushManager){
+          let sub = await readyReg.pushManager.getSubscription();
+          if(!sub){
+            sub = await readyReg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapid)
+            });
+          }
+          if(sub){
+            const devId = getPushDeviceId();
+            update.pushDevices = {
+              [devId]: {
+                subscription: sub.toJSON(),
+                ios: isIOS,
+                standalone: isStandalone,
+                updatedAt: Date.now()
+              }
+            };
+          }
         }
       }
       await baseRef.set(update, { merge: true });
