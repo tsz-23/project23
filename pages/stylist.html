@@ -2829,17 +2829,27 @@ DB.whenReady(() => {
         userRef.get().catch(() => null)
       ]);
       const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
-      const remote = (stateSnap && stateSnap.exists && stateSnap.data()) ? stateSnap.data() : userData.closetData;
+      const hasStateCloset = Boolean(stateSnap && stateSnap.exists && stateSnap.data());
+      const remote = hasStateCloset ? stateSnap.data() : userData.closetData;
       if (remote) normalizeIncoming(remote);
 
-      DB.set(CL_KEY, {
+      const cleanPayload = {
         ...cloudData,
         outfit: state.outfit,
         jacketOpen: state.jacketOpen,
         stylistMood: state.stylistMood,
         stylistWeather: state.stylistWeather,
-        stylistTone: state.stylistTone
-      });
+        stylistTone: state.stylistTone,
+        updatedAt: Date.now()
+      };
+      DB.set(CL_KEY, cleanPayload);
+
+      if ((!hasStateCloset && userData.closetData) || userData.closetData !== undefined) {
+        await userRef.collection("state").doc("closet").set(cleanPayload).catch(() => {});
+        if (userData.closetData !== undefined) {
+          userRef.update({ closetData: firebase.firestore.FieldValue.delete() }).catch(() => {});
+        }
+      }
 
       userRef.collection("state").doc("closet").onSnapshot(docSnap => {
         if (state.syncInFlight) return;
@@ -3282,9 +3292,9 @@ DB.whenReady(() => {
   async function generateSmartStyledOutfit() {
     if (!(await ensureAccountAccess())) return;
     const items = cloudData.items || [];
-    const mood = state.stylistMood;       // "streetwear" | "formal" | "cozy" | "sporty"
-    const weather = state.stylistWeather; // "cool" | "rain" | "cold" | "mild" | "warm"
-    const tone = state.stylistTone;       // "contrast" | "dark" | "light" | "earth" | "monochrome"
+    const mood = state.stylistMood;
+    const weather = state.stylistWeather;
+    const tone = state.stylistTone;
 
     let wornInRotationPicked = 0;
     let scenarioMatchedCount = 0;
