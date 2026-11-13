@@ -1422,6 +1422,13 @@ DB.whenReady(() => {
         localTxCache = cloudTx;
         DB.set(TX_KEY, localTxCache);
       }
+      if (userData.financeTransactions !== undefined || userData.financeTransaction !== undefined || userData.financeMeta !== undefined) {
+        userRef.update({
+          financeTransactions: firebase.firestore.FieldValue.delete(),
+          financeTransaction: firebase.firestore.FieldValue.delete(),
+          financeMeta: firebase.firestore.FieldValue.delete()
+        }).catch(() => {});
+      }
 
       userRef.collection("state").doc("finance").onSnapshot(docSnap => {
         if (state.syncInFlight) return;
@@ -1472,14 +1479,10 @@ DB.whenReady(() => {
       state.syncInFlight = true;
       try {
         const cleanList = JSON.parse(JSON.stringify(localTxCache));
-        await Promise.all([
-          userRef.collection("state").doc("finance").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {}),
-          userRef.set({ financeTransactions: cleanList }, { merge: true }).catch(() => {})
-        ]);
+        await userRef.collection("state").doc("finance").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {});
       } catch {}
       state.syncInFlight = false;
     }
-
 
   }
 
@@ -1499,10 +1502,7 @@ DB.whenReady(() => {
     if (userRef) {
       try {
         const cleanMeta = JSON.parse(JSON.stringify(next));
-        await Promise.all([
-          userRef.collection("state").doc("financeMeta").set(cleanMeta, { merge: true }).catch(() => {}),
-          userRef.set({ financeMeta: cleanMeta }, { merge: true }).catch(() => {})
-        ]);
+        await userRef.collection("state").doc("financeMeta").set(cleanMeta, { merge: true }).catch(() => {});
       } catch {}
     }
     renderSheetStatusBar();
@@ -2287,8 +2287,6 @@ function deleteTxRow(sheet, p, useOldFields) {
   var item = match.item;
   var idx = match.index;
 
-  // If this row held the visible date for a same-day group and the row below had a blank Date cell,
-  // copy the date string down to the next row before deleting this row so the next row keeps its date
   if (item.rawA && idx + 1 < bl.rows.length && !bl.rows[idx + 1].rawA) {
     sheet.getRange(bl.rows[idx + 1].row, 1).setValue(item.rawA).setNumberFormat("@").setHorizontalAlignment("center");
   }
@@ -2326,7 +2324,6 @@ function editTxRow(sheet, p) {
   var blocks = scanBlocks(sheet);
   var match = findMatchingRow(blocks, p, true);
 
-  // If the date did NOT change and we found the exact row, update ONLY that 1 row in-place!
   if (match && oldD && oldD.dateVal === newD.dateVal) {
     var r = match.item.row;
     sheet.getRange(r, 2, 1, 3).setValues([[p.merchant, p.payment, newAmt]]);
@@ -2336,7 +2333,6 @@ function editTxRow(sheet, p) {
     return;
   }
 
-  // If the date changed, remove only the old row and insert at the new chronological position
   if (match) {
     deleteTxRow(sheet, p, true);
   }
@@ -2528,7 +2524,6 @@ function doPost(e) {
     const years = [...yearsSet].sort((a, b) => b - a);
     if (!years.includes(state.chartYear)) state.chartYear = years[0];
 
-    // Custom Apple Year Dropdown Rendering
     const yearLbl = $("chartYearLbl");
     const yearMenu = $("chartYearMenu");
     const yearDd = $("chartYearDropdown");
