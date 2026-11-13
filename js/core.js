@@ -1050,6 +1050,7 @@ function initFirebase(){
     if(firebase.auth.Auth && firebase.auth.Auth.Persistence && firebase.auth.Auth.Persistence.LOCAL){
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     }
+
     if(!isIOS && !isStandalone){
       fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
     }
@@ -1152,6 +1153,34 @@ const audioChanged = ()=>document.dispatchEvent(new CustomEvent("p23audio"));
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const isStandalone = window.navigator.standalone===true || matchMedia("(display-mode: standalone)").matches;
 let swReg=null, bellBtn=null, panel=null;
+function fmtNotifDate(ms){
+  return new Date(ms).toLocaleDateString([], { month:"short", day:"numeric" });
+}
+function fmtNotifWhen(ms, hasTime=true){
+  return hasTime ? `${fmtNotifDate(ms)} at ${DB.fmtTime(ms)}` : `${fmtNotifDate(ms)} · All day`;
+}
+function notifPageLabel(tag, url){
+  if(/^ev\|/.test(tag) || (url && url.includes("calendar.html"))) return "Calendar";
+  if(/^todo\|/.test(tag) || (url && url.includes("todo.html"))) return "To-Do List";
+  if(/^cd\|/.test(tag) || (url && url.includes("timeUntil.html"))) return "Time Until";
+  if(tag==="landing" || /^flight\|/.test(tag) || (url && url.includes("focus.html"))) return "Focus";
+  if(/^bday\|/.test(tag) || (url && url.includes("birthday.html"))) return "Birthday Alert";
+  if(tag==="update" || /^update\|/.test(tag) || (url && url.includes("about.html"))) return "About";
+  if(tag==="test" || tag==="welcome") return "Settings";
+  const cur = pageById(document.body && document.body.dataset ? document.body.dataset.page : "");
+  return cur ? cur.name : "Project 23";
+}
+function formatInAppHeader(title){
+  const clean = String(title || "Project 23").replace(/\s+from\s+Project\s+23$/i, "").trim();
+  return clean === "Project 23" ? "Project 23" : `${clean} from Project 23`;
+}
+function formatOsTitle(title){
+  const clean = String(title || "Project 23").replace(/\s+from\s+Project\s+23$/i, "").trim();
+  const isApple = isIOS || /Macintosh/.test(navigator.userAgent || "");
+  if(isApple) return clean;
+  return clean === "Project 23" ? "Project 23" : `${clean} from Project 23`;
+}
+
 function computeUpcomingSchedule(){
   if(!uid || !DB.settings.notifyOn) return [];
   const now = Date.now(), s = DB.settings;
@@ -1166,11 +1195,11 @@ function computeUpcomingSchedule(){
       for(const o of DB.occurrences(ev, rs, re)){
         const at = o.start + (ev.allDay ? 9*3600000 : 0) - a*60000;
         if(at >= now - WINDOW && at <= now + HORIZON){
-          const when = ev.allDay ? "Today" : (a>0 ? `Starts in ${a>=1440?"1 day":a>=60?(a/60)+" hour":a+" min"} (${DB.fmtTime(o.start)})` : `Now (${DB.fmtTime(o.start)})`);
+          const whenLine = fmtNotifWhen(o.start, !ev.allDay) + (ev.location ? " · " + ev.location : "");
           schedule.push({
             key: "ev|" + ev.id + "|" + o.start,
-            title: ev.title,
-            body: when + (ev.location ? " · " + ev.location : ""),
+            title: "Calendar",
+            body: `${ev.title}\n${whenLine}`,
             url: resolveBaseHref("pages/calendar.html"),
             fireAt: at
           });
@@ -1183,10 +1212,11 @@ function computeUpcomingSchedule(){
       if(t.done || !t.due) continue;
       const due = DB.fromInputs(t.due, t.time || "09:00"), at = due - Math.max(0,t.alert??0)*60000;
       if(at >= now - WINDOW*3 && at <= now + HORIZON){
+        const whenLine = fmtNotifWhen(due, Boolean(t.time)) + (t.category ? " · " + t.category : "");
         schedule.push({
           key: "todo|" + t.id + "|" + due,
-          title: t.title,
-          body: (t.time ? "Due " + DB.fmtTime(due) : "Due today") + (t.category ? " · " + t.category : ""),
+          title: "To-Do List",
+          body: `${t.title}\n${whenLine}`,
           url: resolveBaseHref("pages/todo.html"),
           fireAt: at
         });
@@ -1199,8 +1229,8 @@ function computeUpcomingSchedule(){
       if(c.target >= now - WINDOW && c.target <= now + HORIZON){
         schedule.push({
           key: "cd|" + c.id + "|" + c.target,
-          title: c.title,
-          body: "Your countdown has finished",
+          title: "Time Until",
+          body: `${c.title}\n${fmtNotifWhen(c.target, true)}`,
           url: resolveBaseHref("pages/timeUntil.html"),
           fireAt: c.target
         });
@@ -1210,10 +1240,11 @@ function computeUpcomingSchedule(){
   if(s.notifyFlight !== false){
     const af = DB.get("p23.activeFlight", null);
     if(af && af.end && af.end >= now - WINDOW && af.end <= now + HORIZON){
+      const flightLabel = af.dest ? `Focus Flight to ${af.dest}` : "Focus Flight";
       schedule.push({
         key: "flight|" + (af.id || af.start || af.end),
-        title: "Focus Flight Landed",
-        body: af.dest ? `Arrived at ${af.dest}` : "Your focus session is complete!",
+        title: "Focus",
+        body: `${flightLabel}\n${fmtNotifWhen(af.end, true)}`,
         url: resolveBaseHref("pages/focus.html"),
         fireAt: af.end
       });
@@ -1402,7 +1433,8 @@ const notifTone = t=>t==null?"accent":/^ev\|/.test(t)?"cal":/^todo\|/.test(t)?"t
 DB.toast = function(title, body, ms=6000, tag){
   let box = $("#toasts"); if(!box){ box=document.createElement("div"); box.id="toasts"; box.setAttribute("aria-live","polite"); document.body.appendChild(box); }
   const t = document.createElement("div"); t.className="toast"; t.dataset.tone=notifTone(tag); t.style.setProperty("--dur",ms+"ms");
-  t.innerHTML = `<span class="ti">${DB.icon(toastIcon(tag))}</span><div class="tb-copy"><b>${DB.esc(title)}</b>${body?`<span class="muted">${DB.esc(body)}</span>`:""}</div><i class="tbar"></i>`;
+  const bodyHtml = body ? `<span class="muted">${DB.esc(body).replace(/\n/g, "<br>")}</span>` : "";
+  t.innerHTML = `<span class="ti">${DB.icon(toastIcon(tag))}</span><div class="tb-copy"><b>${DB.esc(title)}</b>${bodyHtml}</div><i class="tbar"></i>`;
   box.appendChild(t);
   const kill = ()=>{ t.classList.add("out"); setTimeout(()=>t.remove(),300); };
   t.onclick = kill; setTimeout(kill, ms);
@@ -1421,7 +1453,7 @@ DB.notif = {
     if(p==="unsupported") DB.toast(isIOS&&!isStandalone?"Add to Home Screen for phone alerts":"Alerts on while this page is open",
       isIOS&&!isStandalone?"In Safari tap Share, then Add to Home Screen, and open Project 23 from there.":"This browser can't show system notifications.",7000);
     else if(p==="denied") DB.toast("Alerts on while this page is open","System notifications are blocked. iPhone: Settings, Notifications, Project 23.",8000);
-    else if(p==="granted") DB.fire("Notifications are on","Project 23 will alert you about events, reminders and landings.",{tag:"welcome"});
+    else if(p==="granted") DB.fire("Settings", `Notifications Enabled\n${fmtNotifWhen(Date.now(), true)}`, {tag:"welcome"});
     refreshBell(); renderPanel(); document.dispatchEvent(new CustomEvent("p23notif"));
     return p;
   },
@@ -1435,20 +1467,33 @@ const NLOG="p23.notifLog";
 const nlog = ()=>DB.get(NLOG,[]);
 let shown=[];
 function addLog(title,body,tag,url){
-  const open=!!(panel&&!panel.hidden), e={id:DB.uid(),title,body:body||"",tag:tag||"",url:url||"",ts:Date.now(),read:open};
+  const hdr = formatInAppHeader(title);
+  const open=!!(panel&&!panel.hidden), e={id:DB.uid(),title:hdr,body:body||"",tag:tag||"",url:url||"",ts:Date.now(),read:open};
   const l=nlog(); l.unshift(e); DB.set(NLOG,l.slice(0,40));
   if(open) shown.unshift({...e,u:true});
   updateBadge(); renderPanel();
 }
+const KNOWN_PAGE_TITLES = new Set(["Calendar","To-Do List","Time Until","Focus","Birthday Alert","Settings","About","Spending Tracker","Grade Calculator","Fashion Stylist","Vinyl Shelf","Notes","Clipboard Snippet","Schedule Planner","Goal Tracker","Watchlist","Weather","PICO AI","So That's How","Projects"]);
 DB.fire = async function(title, body, o={}){
   if(!DB.settings.notifyOn && !o.force) return;
-  addLog(title,body,o.tag,o.url);
-  DB.toast(title, body, 7000, o.tag); DB.chime();
+  let pageTitle = o.page || title;
+  let finalBody = body || "";
+  const cleanTitle = String(title || "").replace(/\s+from\s+Project\s+23$/i, "").trim();
+  if(!o.page && !KNOWN_PAGE_TITLES.has(cleanTitle)){
+    pageTitle = notifPageLabel(o.tag || "", o.url || "");
+    finalBody = finalBody ? `${title}\n${finalBody}` : String(title || "");
+  } else {
+    pageTitle = cleanTitle;
+  }
+  const inAppTitle = formatInAppHeader(pageTitle);
+  const osTitle = formatOsTitle(pageTitle);
+  addLog(inAppTitle, finalBody, o.tag, o.url);
+  DB.toast(inAppTitle, finalBody, 7000, o.tag); DB.chime();
   if(DB.notif.perm()!=="granted") return;
   try{
     const reg = await registerSW();
-    const opts = { body, tag:o.tag, icon:"assets/icon.png", badge:"assets/icon.png", data:{url:o.url||"./index.html"} };
-    if(reg && reg.showNotification) await reg.showNotification(title, opts); else new Notification(title, opts);
+    const opts = { body: finalBody, tag:o.tag, icon:"assets/icon.png", badge:"assets/icon.png", data:{url:o.url||"./index.html"} };
+    if(reg && reg.showNotification) await reg.showNotification(osTitle, opts); else new Notification(osTitle, opts);
   }catch(e){ dbg(e); }
 };
 let checkingDue = false;
@@ -1468,8 +1513,8 @@ DB.checkDue = async function(){
       for(const o of DB.occurrences(ev, rs, re)){
         const at = o.start + (ev.allDay ? 9*3600000 : 0) - a*60000;
         if(at<=now && now-at<WINDOW){
-          const when = ev.allDay ? "Today" : (a>0 ? `Starts in ${a>=1440?"1 day":a>=60?(a/60)+" hour":a+" min"} (${DB.fmtTime(o.start)})` : `Now (${DB.fmtTime(o.start)})`);
-          once("ev|"+ev.id+"|"+o.start, ev.title, when+(ev.location?" · "+ev.location:""), "pages/calendar.html");
+          const whenLine = fmtNotifWhen(o.start, !ev.allDay) + (ev.location ? " · " + ev.location : "");
+          once("ev|"+ev.id+"|"+o.start, "Calendar", `${ev.title}\n${whenLine}`, "pages/calendar.html");
         }
       }
     }
@@ -1478,13 +1523,18 @@ DB.checkDue = async function(){
     for(const t of DB.get("p23.todos",[])){
       if(t.done || !t.due) continue;
       const due = DB.fromInputs(t.due, t.time || "09:00"), at = due - Math.max(0,t.alert??0)*60000;
-      if(at<=now && now-at<WINDOW*3) once("todo|"+t.id+"|"+due, t.title, (t.time?"Due "+DB.fmtTime(due):"Due today")+(t.category?" · "+t.category:""), "pages/todo.html");
+      if(at<=now && now-at<WINDOW*3){
+        const whenLine = fmtNotifWhen(due, Boolean(t.time)) + (t.category ? " · " + t.category : "");
+        once("todo|"+t.id+"|"+due, "To-Do List", `${t.title}\n${whenLine}`, "pages/todo.html");
+      }
     }
   }
   if(s.notifyCountdowns !== false){
     for(const c of DB.get("p23.countdowns",[])){
       if(c.notify===false || !c.target) continue;
-      if(c.target<=now && now-c.target<WINDOW) once("cd|"+c.id+"|"+c.target, c.title, "Your countdown has finished", "pages/timeUntil.html");
+      if(c.target<=now && now-c.target<WINDOW){
+        once("cd|"+c.id+"|"+c.target, "Time Until", `${c.title}\n${fmtNotifWhen(c.target, true)}`, "pages/timeUntil.html");
+      }
     }
   }
     for(const k in fired) if(now-fired[k] > 7*86400000){ delete fired[k]; dirty=true; }
@@ -1519,7 +1569,7 @@ function renderPanel(){
       <span class="np-ic" data-tone="${notifTone(n.tag)}">${DB.icon(toastIcon(n.tag))}</span>
       <span class="np-body">
         <span class="np-top"><b>${DB.esc(n.title)}</b><span class="np-time">${ago(n.ts)}${n.u?'<i class="np-dot"></i>':""}</span></span>
-        ${n.body?`<span class="t">${DB.esc(n.body)}</span>`:""}
+        ${n.body?`<span class="t">${DB.esc(n.body).replace(/\n/g,"<br>")}</span>`:""}
       </span>
     </button>`).join(""):`<div class="np-empty">
       <div class="np-empty-ic">${DB.icon("bell")}</div>
@@ -1964,7 +2014,7 @@ function openSettings(){
   vol.onchange=()=>DB.chime(true);
   const syncNotifUI=()=>{ $("#setToggle",el).textContent=DB.settings.notifyOn?"Disable":"Enable"; $("#nSubs",el).classList.toggle("dim",!DB.settings.notifyOn); refreshBell(); };
   $("#setToggle",el).onclick=async()=>{ if(DB.settings.notifyOn) DB.notif.disable(); else await DB.notif.enable(); syncNotifUI(); };
-  $("#setTest",el).onclick=()=>DB.fire("Test notification","If you can see this, alerts are working.",{tag:"test",force:true});
+  $("#setTest",el).onclick=()=>DB.fire("Settings",`Test Notification\n${fmtNotifWhen(Date.now(), true)}`,{tag:"test",force:true});
   $("#uSave",el).onclick=async()=>{ const v=$("#uName",el).value.trim(); if(!v) return; DB.profile.username=v; const dn=$("#uDispName",el); if(dn) dn.textContent=v; const me=$("#meBtn"); if(me) me.innerHTML=avatarHTML(); try{ await baseRef.set({username:v},{merge:true}); DB.toast("Username saved",v,2500); }catch(e){ dbg(e); DB.toast("Couldn't save your username","Please try again.",3000); } };
   $("#uCopy",el).onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(uid); DB.toast("User ID copied","",2000); };
   $("#uOut",el).onclick=()=>DB.signOut();
@@ -2512,6 +2562,7 @@ function buildPicoFloat(){
     }
   };
 }
+
 
 function checkAppUpdate(){
   const SEEN_VER_KEY = "p23.seen_version";
