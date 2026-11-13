@@ -934,7 +934,7 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;r
 $('stage').prepend(renderer.domElement);
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();console.warn('WebGL context lost — awaiting restore');},false);
 renderer.domElement.addEventListener('webglcontextrestored',()=>{for(const k in envCache)delete envCache[k];if(G&&G.tod)applyTOD(G.tod);},false);
-const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(72,initW/initH,0.85,4800);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(72,initW/initH,0.5,6000);
 scene.fog=new THREE.Fog(0xbcd3e6,300,2400);
 const skyU={uZen:{value:new THREE.Vector3()},uMid:{value:new THREE.Vector3()},uHor:{value:new THREE.Vector3()},uWarm:{value:new THREE.Vector3()},uSunDir:{value:new THREE.Vector3(0,1,0)},uSunCol:{value:new THREE.Vector3()},uGlow:{value:1},uHaze:{value:.5}};
 const sky=new THREE.Mesh(new THREE.SphereGeometry(5000,40,24),new THREE.ShaderMaterial({uniforms:skyU,side:THREE.BackSide,depthWrite:false,fog:false,
@@ -1126,8 +1126,8 @@ function buildTerrainGrid(){
     }
   };
   for(let k=0;k<N;k++){
-    const maxO=OFFW+10,drop=C[k].y>0.35?0.68:0.38;
-    for(let o=-maxO;o<=maxO;o+=3)clampPt(C[k].x+Nn[k].x*o,C[k].z+Nn[k].z*o,C[k].y-drop);
+    const maxO=OFFW+4;
+    for(let o=-maxO;o<=maxO;o+=3)clampPt(C[k].x+Nn[k].x*o,C[k].z+Nn[k].z*o,C[k].y-0.24);
   }
   TERR={x0,z0,x1:x0+nx*cs,z1:z0+nz*cs,cs,nx,nz,g,dTr};
 }
@@ -1150,31 +1150,24 @@ function posAt(s,off){
   }
   return {x:C[i].x+(C[j].x-C[i].x)*u+nx*off,z:C[i].z+(C[j].z-C[i].z)*u+nz*off,y:H[i]+(H[j]-H[i])*u,psi:Math.atan2(tx,tz),pitch:-Math.atan(slopeAt(i))};
 }
-let buildWorldBusy=null;
-function disposeWorldGroup(wGrp){
-  if(!wGrp)return;
-  const keepGeo=new Set([typeof TREEG!=='undefined'&&TREEG,typeof PINEG!=='undefined'&&PINEG,typeof PALMG!=='undefined'&&PALMG]);
-  const keepMat=new Set([waterMat,fenceMat,typeof treeMat!=='undefined'&&treeMat]);
-  const keepTex=new Set([asphaltTex,waterNormal,fenceTex,adTex,typeof glowTex!=='undefined'&&glowTex]);
-  scene.remove(wGrp);
-  wGrp.traverse(o=>{
-    if(o.geometry&&!keepGeo.has(o.geometry))o.geometry.dispose();
-    if(o.material){
-      const mats=Array.isArray(o.material)?o.material:[o.material];
-      for(const m of mats){
-        if(!m||keepMat.has(m))continue;
-        for(const k of ['map','bumpMap','emissiveMap','normalMap']){if(m[k]&&!keepTex.has(m[k]))m[k].dispose();}
-        m.dispose();
-      }
-    }
-  });
-}
 async function buildWorld(id,tod){
-  if(buildWorldBusy){try{await buildWorldBusy;}catch(e){}}
-  let resolveBuild;
-  buildWorldBusy=new Promise(r=>{resolveBuild=r;});
-  try{
-  if(world){disposeWorldGroup(world);world=null;}
+  if(world){
+    const keepGeo=new Set([typeof TREEG!=='undefined'&&TREEG,typeof PINEG!=='undefined'&&PINEG,typeof PALMG!=='undefined'&&PALMG]);
+    const keepMat=new Set([waterMat,fenceMat,typeof treeMat!=='undefined'&&treeMat]);
+    const keepTex=new Set([asphaltTex,waterNormal,fenceTex,adTex,typeof glowTex!=='undefined'&&glowTex]);
+    scene.remove(world);
+    world.traverse(o=>{
+      if(o.geometry&&!keepGeo.has(o.geometry))o.geometry.dispose();
+      if(o.material){
+        const mats=Array.isArray(o.material)?o.material:[o.material];
+        for(const m of mats){
+          if(!m||keepMat.has(m))continue;
+          for(const k of ['map','bumpMap','emissiveMap','normalMap']){if(m[k]&&!keepTex.has(m[k]))m[k].dispose();}
+          m.dispose();
+        }
+      }
+    });
+  }
   world=new THREE.Group();scene.add(world);window.nightMats=[];
   MAP=MAPS.find(m=>m.id===id);TH=THEMES[MAP.th];const TD=window.TRACKS[id],R=rngSeed(id.length*7919+13);
   const k0=MAP.km*1000/TD.lapPx;MAPK=k0;
@@ -1257,14 +1250,12 @@ async function buildWorld(id,tod){
   world.traverse(o=>{if(o.isMesh){o.castShadow=false;if(o.isInstancedMesh){o.frustumCulled=false;}else{o.frustumCulled=true;if(o.geometry&&!o.geometry.boundingSphere)o.geometry.computeBoundingSphere();}}});
   applyTOD(tod);
   window.pendingSceneryTasks=[];
-  }finally{buildWorldBusy=null;if(resolveBuild)resolveBuild();}
 }
-let matVC,matRoad,matConc,matSkirt;
+let matVC,matRoad,matConc;
 function buildMaterials(){
-  matVC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,metalness:0,envMapIntensity:.45,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
-  matRoad=new THREE.MeshStandardMaterial({vertexColors:true,map:asphaltTex,bumpMap:asphaltTex,bumpScale:.55,roughness:.9,metalness:0,envMapIntensity:.35,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
-  matSkirt=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.92,metalness:0,envMapIntensity:.4,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
-  addLamp(matVC);addLamp(matRoad);addLamp(matSkirt);
+  matVC=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9,metalness:0,envMapIntensity:.45,side:THREE.DoubleSide});
+  matRoad=new THREE.MeshStandardMaterial({vertexColors:true,map:asphaltTex,bumpMap:asphaltTex,bumpScale:.55,roughness:.9,metalness:0,envMapIntensity:.35,side:THREE.DoubleSide});
+  addLamp(matVC);addLamp(matRoad);
 }
 function ribbon(o1,o2,dy,colorFn,mat,i0=0,cnt=N,filter){
   const pos=[],col=[],uv=[],idx=[];let v=0;
@@ -1305,14 +1296,14 @@ function vstrip(side,o,y0,y1,i0,cnt,filter,mat,uvLen,uvH,offFn){
 }
 function buildTrackMeshes(R){
   const gtex=noiseTex(TH.ground[0],TH.ground[1],TH.ground[2],62,1,256);gtex.repeat.set(500,500);
-  const groundMat=new THREE.MeshStandardMaterial({map:gtex,bumpMap:gtex,bumpScale:0.85,vertexColors:true,roughness:.92,polygonOffset:true,polygonOffsetFactor:3,polygonOffsetUnits:3});
+  const groundMat=new THREE.MeshStandardMaterial({map:gtex,bumpMap:gtex,bumpScale:0.85,vertexColors:true,roughness:.92});
   addLamp(groundMat);
   if(TERR){
     const {x0,z0,x1,z1,cs,nx,nz,g,dTr}=TERR,W1=nx+1,nV=(nx+1)*(nz+1)+16;
     const tGeo=new THREE.BufferGeometry(),pos=new Float32Array(nV*3),col=new Float32Array(nV*3),uv=new Float32Array(nV*2),ix=[];
     let p=0,c=0,u=0;
     for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){
-      const idx=j*W1+i,wx=x0+i*cs,wz=z0+j*cs,h=g[idx],wy=h-0.22;
+      const idx=j*W1+i,wx=x0+i*cs,wz=z0+j*cs,h=g[idx],wy=h-0.08;
       pos[p++]=wx;pos[p++]=wy;pos[p++]=wz;
       uv[u++]=(wx+4500)/9000;uv[u++]=(wz+4500)/9000;
       const hL=g[j*W1+Math.max(0,i-1)],hR=g[j*W1+Math.min(nx,i+1)],hD=g[Math.max(0,j-1)*W1+i],hU=g[Math.min(nz,j+1)*W1+i];
@@ -1377,14 +1368,24 @@ function buildTrackMeshes(R){
    for(let k=0;k<N;k++){
      if(crossH&&crossH[k]>0.8)continue;
      const k2=(k+1)%N;
+     if(!fold(k,W/2+1,1)&&!fold(k,W/2+1,-1)){
+       skPos.push(
+         C[k].x+Nn[k].x*(W/2),C[k].y-0.06,C[k].z+Nn[k].z*(W/2),
+         C[k].x-Nn[k].x*(W/2),C[k].y-0.06,C[k].z-Nn[k].z*(W/2),
+         C[k2].x+Nn[k2].x*(W/2),C[k2].y-0.06,C[k2].z+Nn[k2].z*(W/2),
+         C[k2].x-Nn[k2].x*(W/2),C[k2].y-0.06,C[k2].z-Nn[k2].z*(W/2)
+       );
+       for(let q=0;q<4;q++)skCol.push(cBot[0],cBot[1],cBot[2]);
+       skIdx.push(sv,sv+1,sv+2,sv+1,sv+3,sv+2);sv+=4;
+     }
      for(const side of [1,-1]){
        const e1=fold(k,TH.street?5:14,side)?(W/2):Math.min(offOf(side,k),W/2+rw);
        const e2=fold(k2,TH.street?5:14,side)?(W/2):Math.min(offOf(side,k2),W/2+rw);
        if(fold(k,e1+1.5,side)||fold(k2,e2+1.5,side))continue;
        const o1=side*e1,o2=side*e2;
-       const x1=C[k].x+Nn[k].x*o1,z1=C[k].z+Nn[k].z*o1,y1=C[k].y-0.05;
-       const x2=C[k2].x+Nn[k2].x*o2,z2=C[k2].z+Nn[k2].z*o2,y2=C[k2].y-0.05;
-       const yb1=Math.min(y1-1.6,terrainY(x1,z1)-2.0),yb2=Math.min(y2-1.6,terrainY(x2,z2)-2.0);
+       const x1=C[k].x+Nn[k].x*o1,z1=C[k].z+Nn[k].z*o1,y1=C[k].y-0.03;
+       const x2=C[k2].x+Nn[k2].x*o2,z2=C[k2].z+Nn[k2].z*o2,y2=C[k2].y-0.03;
+       const yb1=Math.min(y1-1.5,terrainY(x1,z1)-1.8),yb2=Math.min(y2-1.5,terrainY(x2,z2)-1.8);
        skPos.push(x1,y1,z1, x1,yb1,z1, x2,y2,z2, x2,yb2,z2);
        skCol.push(cTop[0],cTop[1],cTop[2], cBot[0],cBot[1],cBot[2], cTop[0],cTop[1],cTop[2], cBot[0],cBot[1],cBot[2]);
        skIdx.push(sv,sv+1,sv+2,sv+1,sv+3,sv+2);sv+=4;
@@ -1394,7 +1395,7 @@ function buildTrackMeshes(R){
    skGeo.setAttribute('position',new THREE.Float32BufferAttribute(skPos,3));
    skGeo.setAttribute('color',new THREE.Float32BufferAttribute(skCol,3));
    skGeo.setIndex(skIdx);skGeo.computeVertexNormals();
-   const skMesh=new THREE.Mesh(skGeo,matSkirt||matVC);skMesh.receiveShadow=true;world.add(skMesh);
+   const skMesh=new THREE.Mesh(skGeo,matVC);skMesh.receiveShadow=true;world.add(skMesh);
   }
   for(const side of [1,-1]){const wi=side>0?0:1;
     const shareSuppress=k=>otherSide[k]===side&&other[k]<2*OFFW+8&&otherIdx[k]<k&&Math.abs(H[k]-H[otherIdx[k]])<1.2;
@@ -1672,21 +1673,19 @@ function buildExtras(R){
   const addAbs=(m,x,y,z,ry=0)=>tryBatchBox(m,x,y,z,ry);
   const idx=f=>(((Math.round((((f-startShift/LAP)%1)+1)%1*N))%N)+N)%N;
   const lotTex=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='#3b3d42';x.fillRect(0,0,128,128);x.fillStyle='#d8d8d0';for(let i=0;i<128;i+=16){x.fillRect(i,4,2,52);x.fillRect(i,72,2,52);}const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t;})();
-  const planeOnTerrain=(w,d,mat,x,z,ry,dy=.12)=>{
-    if(mat){mat.polygonOffset=true;mat.polygonOffsetFactor=-1;mat.polygonOffsetUnits=-1;}
-    const nx=Math.max(2,Math.ceil(w/10)),nz=Math.max(2,Math.ceil(d/10)),g=new THREE.PlaneGeometry(w,d,nx,nz).rotateX(-Math.PI/2),pos=g.attributes.position,cs=Math.cos(ry),sn=Math.sin(ry);
+  const planeOnTerrain=(w,d,mat,x,z,ry,dy=.05)=>{
+    const nx=Math.max(2,Math.ceil(w/14)),nz=Math.max(2,Math.ceil(d/14)),g=new THREE.PlaneGeometry(w,d,nx,nz).rotateX(-Math.PI/2),pos=g.attributes.position,cs=Math.cos(ry),sn=Math.sin(ry);
     for(let i=0;i<pos.count;i++){const lx=pos.getX(i),lz=pos.getZ(i),wx=x+lx*cs+lz*sn,wz=z-lx*sn+lz*cs;pos.setY(i,terrainY(wx,wz)+dy);}
     g.computeVertexNormals();const m=new THREE.Mesh(g,mat);m.position.set(x,0,z);m.rotation.y=ry;m.receiveShadow=true;world.add(m);return m;
   };
-  const lot=(x,z,w,d,ry)=>{regBld(x,z,Math.hypot(w,d)*.5+4);const t=lotTex.clone();t.needsUpdate=true;t.repeat.set(w/16,d/16);planeOnTerrain(w,d,new THREE.MeshStandardMaterial({map:t,roughness:.95,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),x,z,ry,.14);};
-  const pave=(x,z,w,d,ry,c=0xcfcabd)=>{regBld(x,z,Math.hypot(w,d)*.5+4);return planeOnTerrain(w,d,M(c,{roughness:.95,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),x,z,ry,.12);};
-  const disc=(x,z,r,c,y=.12)=>add(new THREE.Mesh(new THREE.CircleGeometry(r,28).rotateX(-Math.PI/2),M(c,{roughness:1,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1})),x,y,z);
+  const lot=(x,z,w,d,ry)=>{regBld(x,z,Math.hypot(w,d)*.5+4);const t=lotTex.clone();t.needsUpdate=true;t.repeat.set(w/16,d/16);planeOnTerrain(w,d,new THREE.MeshStandardMaterial({map:t,roughness:.95}),x,z,ry,.06);};
+  const pave=(x,z,w,d,ry,c=0xcfcabd)=>{regBld(x,z,Math.hypot(w,d)*.5+4);return planeOnTerrain(w,d,M(c,{roughness:.95}),x,z,ry,.05);};
+  const disc=(x,z,r,c,y=.05)=>add(new THREE.Mesh(new THREE.CircleGeometry(r,28).rotateX(-Math.PI/2),M(c,{roughness:1})),x,y,z);
   const capBasin=(x,z,r,mat,dy)=>{
-    if(mat){mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;}
-    const y0=terrainY(x,z)+dy+0.08;
-    addAbs(new THREE.Mesh(new THREE.CircleGeometry(r*1.22,28).rotateX(-Math.PI/2),M(0xb8b2a4,{roughness:.95,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1})),x,y0-.04,z);
+    const y0=terrainY(x,z)+dy;
+    addAbs(new THREE.Mesh(new THREE.CircleGeometry(r*1.22,28).rotateX(-Math.PI/2),M(0xb8b2a4,{roughness:.95})),x,y0-.015,z);
     addAbs(new THREE.Mesh(new THREE.CircleGeometry(r,28).rotateX(-Math.PI/2),mat),x,y0,z);
-    addAbs(new THREE.Mesh(new THREE.CircleGeometry(r*.32,18).rotateX(-Math.PI/2),M(0x4d8a3c,{roughness:1,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3})),x,y0+.04,z);
+    addAbs(new THREE.Mesh(new THREE.CircleGeometry(r*.32,18).rotateX(-Math.PI/2),M(0x4d8a3c,{roughness:1})),x,y0+.02,z);
   };
   const ribbonAlong=(f0,f1,off,wid,mat,y,minD=0)=>{
     const k0=idx(f0),n=Math.round((((f1-f0)%1)+1)%1*N),km=(k0+(n>>1))%N,sgn=inside(C[km].x+Nn[km].x*off,C[km].z+Nn[km].z*off)?1:-1;
@@ -1706,8 +1705,7 @@ function buildExtras(R){
       prev=ok;}
     if(prev&&lastC)caps.push(lastC);
     if(!v)return;
-    if(mat){mat.polygonOffset=true;mat.polygonOffsetFactor=-2;mat.polygonOffsetUnits=-2;}
-    const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.Float32BufferAttribute(bp,3));bg.setIndex(bi);bg.computeVertexNormals();world.add(new THREE.Mesh(bg,M(0xb8b2a4,{roughness:.95,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1})));
+    const bg=new THREE.BufferGeometry();bg.setAttribute('position',new THREE.Float32BufferAttribute(bp,3));bg.setIndex(bi);bg.computeVertexNormals();world.add(new THREE.Mesh(bg,M(0xb8b2a4,{roughness:.95,side:THREE.DoubleSide})));
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(ix);g.computeVertexNormals();const m=new THREE.Mesh(g,mat);m.receiveShadow=true;world.add(m);
     caps.forEach(c=>capBasin(c[0],c[1],wid*.95,mat,y));
   };
@@ -1721,10 +1719,10 @@ function buildExtras(R){
       regRoadSeg(a,b,w);
       const nx=-(b[1]-a[1])/l,nz=(b[0]-a[0])/l;
       const ya=terrainY(a[0],a[1]),yb=terrainY(b[0],b[1]);
-      p.push(a[0]+nx*w/2,ya+.12,a[1]+nz*w/2,a[0]-nx*w/2,ya+.12,a[1]-nz*w/2,b[0]+nx*w/2,yb+.12,b[1]+nz*w/2,b[0]-nx*w/2,yb+.12,b[1]-nz*w/2);ix.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;
-      if(i%2===0){dp.push(a[0]+nx*.2,ya+.15,a[1]+nz*.2,a[0]-nx*.2,ya+.15,a[1]-nz*.2,b[0]+nx*.2,yb+.15,b[1]+nz*.2,b[0]-nx*.2,yb+.15,b[1]-nz*.2);di.push(dv,dv+1,dv+2,dv+1,dv+3,dv+2);dv+=4;}}
+      p.push(a[0]+nx*w/2,ya+.05,a[1]+nz*w/2,a[0]-nx*w/2,ya+.05,a[1]-nz*w/2,b[0]+nx*w/2,yb+.05,b[1]+nz*w/2,b[0]-nx*w/2,yb+.05,b[1]-nz*w/2);ix.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;
+      if(i%2===0){dp.push(a[0]+nx*.2,ya+.07,a[1]+nz*.2,a[0]-nx*.2,ya+.07,a[1]-nz*.2,b[0]+nx*.2,yb+.07,b[1]+nz*.2,b[0]-nx*.2,yb+.07,b[1]-nz*.2);di.push(dv,dv+1,dv+2,dv+1,dv+3,dv+2);dv+=4;}}
     const mk=(pp,ii,m)=>{if(!pp.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pp,3));g.setIndex(ii);g.computeVertexNormals();const q=new THREE.Mesh(g,m);q.receiveShadow=true;world.add(q);};
-    mk(p,ix,new THREE.MeshStandardMaterial({color:0x383a40,roughness:.92,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));if(dp.length)mk(dp,di,new THREE.MeshBasicMaterial({color:0xd8d8d0,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));};
+    mk(p,ix,new THREE.MeshStandardMaterial({color:0x383a40,roughness:.92,side:THREE.DoubleSide}));if(dp.length)mk(dp,di,new THREE.MeshBasicMaterial({color:0xd8d8d0,side:THREE.DoubleSide}));};
   const contour=(lvl)=>{const cs=22,x0=minX-420,z0=minZ-420,nx=Math.ceil((maxX-minX+840)/cs),nz=Math.ceil((maxZ-minZ+840)/cs),val=new Float32Array((nx+1)*(nz+1));
     for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++)val[j*(nx+1)+i]=D(x0+i*cs,z0+j*cs)-lvl;
     const V=(i,j)=>val[j*(nx+1)+i],nodes=new Map(),adj=new Map();
@@ -2838,25 +2836,22 @@ addEventListener('deviceorientation',e=>{
   let adj=deg-tiltZeroDeg;
   if(adj>180)adj-=360;
   if(adj<-180)adj+=360;
-  const dead=2.0,maxDeg=34;
+  const dead=1.6,maxDeg=28;
   let norm=0;
   if(Math.abs(adj)>dead){
-    const rawU=clamp((Math.abs(adj)-dead)/(maxDeg-dead),0,1);
-    norm=Math.pow(rawU,1.14)*Math.sign(adj);
+    norm=clamp((Math.abs(adj)-dead)/(maxDeg-dead),0,1)*Math.sign(adj);
   }
-  tiltSteer+=(norm-tiltSteer)*0.30;
+  tiltSteer+=(norm-tiltSteer)*0.35;
   const wEl=$('mcTiltWheel'),dEl=$('mcTiltDeg');
   if(wEl)wEl.style.transform=`rotate(${clamp(adj,-65,65).toFixed(1)}deg)`;
   if(dEl)dEl.textContent=`${Math.round(clamp(adj,-75,75))}°`;
 });
-function nearest(x,z,full,noHint,customHint){
+function nearest(x,z,full,noHint){
   if(!C||!C.length)return 0;
-  const hasCustom=typeof customHint==='number'&&Number.isFinite(customHint);
-  let best=1e18,bi=hasCustom?customHint:(noHint?0:(hint||0));
-  const useLocal=!full&&(!noHint||hasCustom);
-  const a=useLocal?-32:0,b=useLocal?32:N-1;
-  for(let j=a;j<=b;j++){const k=useLocal?((bi+j)%N+N)%N:j,dx=x-C[k].x,dz=z-C[k].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=k;}}
-  if(useLocal&&best>196){
+  let best=1e18,bi=hint||0;
+  const a=full?0:-32,b=full?N-1:32;
+  for(let j=a;j<=b;j++){const k=full?j:((bi+j)%N+N)%N,dx=x-C[k].x,dz=z-C[k].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=k;}}
+  if(!full&&best>196){
     for(let j=0;j<N;j++){const dx=x-C[j].x,dz=z-C[j].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=j;}}
   }
   if(!noHint)hint=bi;
@@ -3014,7 +3009,6 @@ function setupRace(opts){
       b.tyre=race.wetness>0.5?'wet':(['soft','medium','hard'][bi%3]);
       bi++;
       const s2=gridSlot(g);b.dist=s2.m;b.s=((s2.m%LAP)+LAP)%LAP;b.off=s2.lat;b.lane=s2.lat;b.v=0;
-      b.rng=rngSeed(((opts.botSeed||1337)+g*997)>>>0);
       b.skill=pace*(1-.009*g)*(.98+Rbot()*.04);b.mist=0;b.pitAt=.6+Rbot()*.18;b.wear=Rbot()*.08;b.phase=Rbot()*6;b.wearRate=.85+Rbot()*.3;
       const pB=posAt(b.s,b.off);b.x=pB.x;b.z=pB.z;b.psi=pB.psi;
       b.mesh=makeCar(TEAMS[b.team][0],TEAMS[b.team][1],true);
@@ -3032,8 +3026,7 @@ function updateBots(dt){
   for(const b of race.cars){if(b.isPlayer)continue;
     const idx=((Math.floor(b.s/DS)%N)+N)%N,baseVt=vProf[idx]*b.skill*(G.pit?(1.04-.17*Math.pow(b.wear,1.2)):1);
     let vt=baseVt;
-    const brng=b.rng||Math.random;
-    if(b.mist>0){b.mist-=dt;vt*=.9;}else if(brng()<dt*.012)b.mist=2.5+brng()*2;
+    if(b.mist>0){b.mist-=dt;vt*=.9;}else if(Math.random()<dt*.012)b.mist=2.5+Math.random()*2;
     if(!race.go)vt=0;
     const pitOn=G.pit&&race.mode==='sprint';
     if(pitOn&&b.pitState===0&&(b.wear>b.pitAt||(b.pitsDone===0&&b.dist>LAP*race.laps*.5))&&b.pitsDone<3){const toEntry=(((pit.m0-b.s)%LAP)+LAP)%LAP;if(toEntry<180&&b.dist+toEntry<LAP*(race.laps-1))b.pitState=1;}
@@ -3347,7 +3340,7 @@ function showResults(){
   syncRacingClass();for(const id of ['standings','mapwrap','top','hud','help','sl'])$(id).hidden=true;$('cd').hidden=true;
   $('results').hidden=false;
 }
-function exitRace(){race.on=false;race.go=false;race.pitUntil=0;if($('pitPicker'))$('pitPicker').hidden=true;SFX.tick(false,0,0,0,false,0,1);syncRacingClass();for(const id of ['standings','mapwrap','top','hud','help','sl'])$(id).hidden=true;$('cd').hidden=true;}
+function exitRace(){const wasOn=race.on||race.loading||introActive;race.on=false;race.go=false;race.pitUntil=0;if($('pitPicker'))$('pitPicker').hidden=true;SFX.tick(false,0,0,0,false,0,1);syncRacingClass();for(const id of ['standings','mapwrap','top','hud','help','sl'])$(id).hidden=true;$('cd').hidden=true;if(wasOn&&!sessionLockedOut)writeSessionState(false,false);}
 function buildLights(){for(const id of ['sl']){const el=$(id);el.innerHTML='';for(let i=0;i<5;i++){const c=document.createElement('div');c.className='col';c.innerHTML='<i></i><i></i>';el.appendChild(c);}}}
 let lastLightN=-1,lastLightG=null;
 function setLights(n,green){
@@ -3795,8 +3788,8 @@ function updateVisuals(dt){
   if(introActive){
     if(rainSys)rainSys.visible=false;
     const clipDur=INTRO_CLIP_DUR,totalDur=clipDur*4;
-    if(race.mode==='friendly'&&(race.introAtSrv||race.introAtLocal)){
-      introElapsed=Math.max(0,(race.introAtSrv?(syncSrvNow()-race.introAtSrv):(Date.now()-race.introAtLocal))/1000);
+    if(race.mode==='friendly'&&race.syncPerfT0){
+      introElapsed=Math.max(0,(performance.now()-race.syncPerfT0)/1000);
     }else{
       introElapsed+=Math.min(dt,0.033);
     }
@@ -4045,12 +4038,25 @@ async function loadProfile(user){
   AU.prof={username:prof.username||user.displayName||(user.email||'Driver').split('@')[0],photoURL:base.photoURL||prof.photoURL||'',email:base.email||prof.email||''};
 }
 const MY_SESSION_ID='ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
-let sessionLockUnsub=null,sessionLockedOut=false,sessionChan=null,sessionClaimTs=0;
-try{if(typeof BroadcastChannel!=='undefined'){sessionChan=new BroadcastChannel('df_active_session_channel');sessionChan.onmessage=e=>{const d=e&&e.data;if(d&&AU.user&&d.uid===AU.user.uid&&d.sid&&d.sid!==MY_SESSION_ID)engageSessionLock();};}}catch(e){}
+let sessionLockUnsub=null,sessionStatsUnsub=null,sessionRtdbUnsub=null,sessionLockedOut=false,sessionChan=null,sessionClaimOrder=0;
+try{
+  if(typeof BroadcastChannel!=='undefined'){
+    sessionChan=new BroadcastChannel('df_active_session_channel');
+    sessionChan.onmessage=e=>{
+      const d=e&&e.data;if(!d||d.sid===MY_SESSION_ID)return;
+      const sameAcct=(!AU.user&&!d.uid)||(AU.user&&d.uid===AU.user.uid);
+      if(sameAcct)engageSessionLock(d.reason||'Your account was activated in another tab or window.');
+    };
+  }
+}catch(e){}
 window.addEventListener('storage',e=>{
-  if(!AU.user||!e.key)return;
-  if(e.key==='df_active_ses_'+AU.user.uid&&e.newValue&&e.newValue!==MY_SESSION_ID){
-    engageSessionLock();
+  if(!e.key||!e.newValue)return;
+  if(e.key==='df_active_ses_any'&&e.newValue!==MY_SESSION_ID){
+    engageSessionLock('Downforce was activated in another browser tab.');
+    return;
+  }
+  if(AU.user&&e.key==='df_active_ses_'+AU.user.uid&&e.newValue!==MY_SESSION_ID){
+    engageSessionLock('Your account was activated in another browser tab.');
   }
 });
 function ensureSessionLockModal(){
@@ -4059,64 +4065,167 @@ function ensureSessionLockModal(){
   el=document.createElement('div');
   el.id='sessionLockModal';
   el.hidden=true;
-  el.innerHTML=`<div class="sl-card"><div class="sl-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h2>Active on Another Device</h2><p>Your account is currently open in Downforce on another device or browser tab. Only one active session is allowed at a time.</p><button type="button" class="sl-btn" id="btnClaimSession">Play on This Device Instead</button></div>`;
+  el.innerHTML=`<div class="sl-card"><div class="sl-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><h2 id="slTitle">Active on Another Device</h2><p id="slDesc">Your account is currently active in Downforce on another device or browser tab. Only one active page is allowed at a time.</p><button type="button" class="sl-btn" id="btnClaimSession">Activate on This Device</button></div>`;
   document.body.appendChild(el);
   el.querySelector('#btnClaimSession').onclick=()=>claimActiveSession(true);
   return el;
 }
-function engageSessionLock(){
+function engageSessionLock(customMsg){
   if(sessionLockedOut)return;
   sessionLockedOut=true;
   const el=ensureSessionLockModal();
+  const dEl=el.querySelector('#slDesc');
+  if(dEl)dEl.textContent=customMsg||'Your account is currently active in Downforce on another device or browser tab. Only one active page is allowed at a time.';
   el.hidden=false;
   SFX.tick(false,0,0,0,false,0,1);
-  if(room.id&&FB){leaveRoom().catch(()=>{});}
-  if(race.on||introActive||!$('loading').hidden){quitGame();}
-}
-async function claimActiveSession(fromClick=false){
-  if(!AU.user||!FB)return;
-  const uid=AU.user.uid;
-  sessionLockedOut=false;
-  sessionClaimTs=Date.now();
-  const el=$('sessionLockModal');
-  if(el)el.hidden=true;
-  try{localStorage.setItem('df_active_ses_'+uid,MY_SESSION_ID);}catch(e){}
-  try{if(sessionChan)sessionChan.postMessage({uid,sid:MY_SESSION_ID});}catch(e){}
-  try{
-    await FB.Fs.setDoc(FB.Fs.doc(FB.fs,'users',uid),{activeSessionId:MY_SESSION_ID,activeSessionAt:FB.Fs.serverTimestamp()},{merge:true});
-  }catch(e){console.warn('Session claim write:',e);}
-  if(fromClick){
-    await restoreRoomIfAny();
-    uiAuth();
+  if(room.id){
+    const curPl=room.players&&room.players[myUid()];
+    if(!curPl||!curPl.sid||curPl.sid===MY_SESSION_ID){
+      leaveRoom().catch(()=>{});
+    }else{
+      leaveLocal();
+    }
+  }
+  if(race.on||introActive||!$('loading').hidden){
+    quitGame();
   }
 }
-function startSessionWatch(uid){
+async function writeSessionState(isRacing,bumpOrder=false){
+  try{localStorage.setItem('df_active_ses_any',MY_SESSION_ID);}catch(e){}
+  if(!AU.user||!FB)return;
+  const uid=AU.user.uid;
+  const nowSrv=Date.now()+(FB.off||0);
+  if(bumpOrder)sessionClaimOrder=Math.max(sessionClaimOrder+1,nowSrv);
+  const ord=sessionClaimOrder||nowSrv;
+  sessionClaimOrder=ord;
+  const payload={
+    activeSessionId:MY_SESSION_ID,
+    activeSessionOrder:ord,
+    activeRaceSid:MY_SESSION_ID,
+    activeRaceStatus:isRacing?'racing':'lobby',
+    activeRaceHb:nowSrv
+  };
+  try{localStorage.setItem('df_active_ses_'+uid,MY_SESSION_ID);}catch(e){}
+  try{if(sessionChan)sessionChan.postMessage({uid,sid:MY_SESSION_ID});}catch(e){}
+  try{await FB.D.set(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid),payload);}catch(e){}
+  try{await FB.Fs.setDoc(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'),payload,{merge:true});}catch(e){}
+  try{await FB.Fs.setDoc(FB.Fs.doc(FB.fs,'users',uid),payload,{merge:true});}catch(e){}
+}
+async function verifyCanStartRace(){
+  if(sessionLockedOut){
+    ensureSessionLockModal().hidden=false;
+    return false;
+  }
+  try{localStorage.setItem('df_active_ses_any',MY_SESSION_ID);}catch(e){}
+  try{if(sessionChan)sessionChan.postMessage({uid:AU.user?AU.user.uid:'',sid:MY_SESSION_ID,reason:'A race was started in another tab.'});}catch(e){}
+  if(!AU.user||!FB)return true;
+  const uid=AU.user.uid;
+  const nowSrv=Date.now()+(FB.off||0);
+  try{
+    const rtSnap=await FB.D.get(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid));
+    if(rtSnap.exists()){
+      const d=rtSnap.val()||{};
+      if(d.activeSessionId&&d.activeSessionId!==MY_SESSION_ID){
+        if(d.activeRaceStatus==='racing'&&Math.abs(nowSrv-(d.activeRaceHb||0))<15000){
+          engageSessionLock('Your account is already in an active race on another device or tab.');
+          return false;
+        }
+      }
+    }
+  }catch(e){}
+  try{
+    const fsSnap=await FB.Fs.getDoc(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'));
+    if(fsSnap.exists()){
+      const d=fsSnap.data()||{};
+      if(d.activeSessionId&&d.activeSessionId!==MY_SESSION_ID){
+        if(d.activeRaceStatus==='racing'&&Math.abs(nowSrv-(d.activeRaceHb||0))<15000){
+          engageSessionLock('Your account is already in an active race on another device or tab.');
+          return false;
+        }
+      }
+    }
+  }catch(e){}
+  await writeSessionState(true,true);
+  return true;
+}
+async function claimActiveSession(fromClick=false){
+  sessionLockedOut=false;
+  const el=$('sessionLockModal');
+  if(el)el.hidden=true;
+  const uid=AU.user&&AU.user.uid;
+  if(uid&&FB){
+    const nowSrv=Date.now()+(FB.off||0);
+    let maxOrd=nowSrv;
+    try{
+      const s1=await FB.D.get(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid));
+      if(s1.exists()&&s1.val()&&s1.val().activeSessionOrder)maxOrd=Math.max(maxOrd,s1.val().activeSessionOrder+1);
+    }catch(e){}
+    try{
+      const s2=await FB.Fs.getDoc(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'));
+      if(s2.exists()&&s2.data()&&s2.data().activeSessionOrder)maxOrd=Math.max(maxOrd,s2.data().activeSessionOrder+1);
+    }catch(e){}
+    sessionClaimOrder=maxOrd;
+    await writeSessionState(!!(race.on||introActive),false);
+    if(fromClick){
+      await restoreRoomIfAny();
+      uiAuth();
+    }
+  }else{
+    try{localStorage.setItem('df_active_ses_any',MY_SESSION_ID);}catch(e){}
+    try{if(sessionChan)sessionChan.postMessage({uid:'',sid:MY_SESSION_ID});}catch(e){}
+  }
+}
+function checkIncomingSessionDoc(d){
+  if(!d||!AU.user)return;
+  const remSid=d.activeSessionId||d.activeRaceSid;
+  const remOrd=d.activeSessionOrder||0;
+  if(remSid&&remSid!==MY_SESSION_ID){
+    if(sessionClaimOrder>0&&remOrd>0&&remOrd<sessionClaimOrder)return;
+    engageSessionLock(d.activeRaceStatus==='racing'?'Your account started a race on another device or tab.':'Your account was activated on another device or tab.');
+  }
+}
+async function startSessionWatch(uid){
   if(sessionLockUnsub){try{sessionLockUnsub();}catch(e){}sessionLockUnsub=null;}
+  if(sessionStatsUnsub){try{sessionStatsUnsub();}catch(e){}sessionStatsUnsub=null;}
+  if(sessionRtdbUnsub){try{sessionRtdbUnsub();}catch(e){}sessionRtdbUnsub=null;}
   if(!uid||!FB)return;
-  claimActiveSession(false);
+  await claimActiveSession(false);
+  try{
+    sessionRtdbUnsub=FB.D.onValue(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid),s=>{
+      if(!s.exists()||!AU.user||AU.user.uid!==uid)return;
+      checkIncomingSessionDoc(s.val());
+    },()=>{});
+  }catch(e){}
+  try{
+    sessionStatsUnsub=FB.Fs.onSnapshot(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'),snap=>{
+      if(!snap.exists()||!AU.user||AU.user.uid!==uid)return;
+      checkIncomingSessionDoc(snap.data());
+    },()=>{});
+  }catch(e){}
   try{
     sessionLockUnsub=FB.Fs.onSnapshot(FB.Fs.doc(FB.fs,'users',uid),snap=>{
       if(!snap.exists()||!AU.user||AU.user.uid!==uid)return;
-      const data=snap.data()||{};
-      const remoteSid=data.activeSessionId;
-      if(remoteSid&&remoteSid!==MY_SESSION_ID){
-        if(Date.now()-sessionClaimTs<900)return;
-        engageSessionLock();
-      }
-    },err=>{console.warn('Session watch:',err);});
-  }catch(e){console.warn('Session watch init:',e);}
+      checkIncomingSessionDoc(snap.data());
+    },()=>{});
+  }catch(e){}
 }
+setInterval(()=>{
+  if(sessionLockedOut||!AU.user||!FB)return;
+  if(race.on||introActive||room.id){
+    writeSessionState(!!(race.on||introActive),false);
+  }
+},2500);
 async function handleAuth(user){
-  if(!user){if(sessionLockUnsub){try{sessionLockUnsub();}catch(e){}sessionLockUnsub=null;}sessionLockedOut=false;const sl=$('sessionLockModal');if(sl)sl.hidden=true;AU.user=null;AU.prof=null;AU.stats=null;authInFlight=null;if(gateState==='loading')closeGate();uiAuth();refreshSettingsModal();return;}
+  if(!user){if(sessionLockUnsub){try{sessionLockUnsub();}catch(e){}sessionLockUnsub=null;}if(sessionStatsUnsub){try{sessionStatsUnsub();}catch(e){}sessionStatsUnsub=null;}if(sessionRtdbUnsub){try{sessionRtdbUnsub();}catch(e){}sessionRtdbUnsub=null;}sessionLockedOut=false;const sl=$('sessionLockModal');if(sl)sl.hidden=true;AU.user=null;AU.prof=null;AU.stats=null;authInFlight=null;if(gateState==='loading')closeGate();uiAuth();refreshSettingsModal();return;}
   if(authInFlight)return authInFlight;
   authBusy=true;
   if(gateEl&&!gateEl.classList.contains('hide'))gate('loading',{text:'Loading your account…'});
   authInFlight=(async()=>{
     try{
       await loadProfile(user);
-      startSessionWatch(user.uid);
+      await startSessionWatch(user.uid);
       await loadStats();
-      await restoreRoomIfAny();
+      if(!sessionLockedOut)await restoreRoomIfAny();
     }catch(e){
       authBusy=false;authInFlight=null;AU.user=null;AU.prof=null;AU.stats=null;
       if(e&&e.code==='cancelled'){try{await FB.Au.deleteUser(user);}catch{}try{await FB.Au.signOut(FB.auth);}catch{}cancelAuth();uiAuth();refreshSettingsModal();return;}
@@ -4284,7 +4393,7 @@ function syncGuestLock(){
   else syncPitOption();
 }
 async function createRoom(){
-  if(!await ensureOnline())return;const {D}=FB;readSettings();let code=null;
+  if(!await ensureOnline())return;if(!await verifyCanStartRace())return;await writeSessionState(false,true);const {D}=FB;readSettings();let code=null;
   try{for(let i=0;i<8&&!code;i++){const c=rcode(),s=await D.get(D.ref(FB.db,'downforce-rooms/'+c+'/public'));if(!s.exists())code=c;}
     if(!code)return setMsg('Could not find a free room code. Try again.');
     room.id=code;room.host=true;
@@ -4293,7 +4402,7 @@ async function createRoom(){
   }catch(e){console.warn(e);room.id=null;setMsg('Could not create the room. Check the database rules.');}
 }
 async function joinRoom(){
-  if(!await ensureOnline())return;const {D}=FB,code=($('fcode').value||'').trim().toUpperCase();if(code.length<5)return setMsg('Enter the 5-character room code.');
+  if(!await ensureOnline())return;if(!await verifyCanStartRace())return;await writeSessionState(false,true);const {D}=FB,code=($('fcode').value||'').trim().toUpperCase();if(code.length<5)return setMsg('Enter the 5-character room code.');
   try{const s=await D.get(D.ref(FB.db,'downforce-rooms/'+code));if(!s.exists()||!s.val().public)return setMsg('Room not found.');
     const v=s.val();if(v.public.status!=='lobby'&&!(v.players&&v.players[myUid()]))return setMsg('That race has already started.');
     const ps=v.players||{};if(!ps[myUid()]&&Object.keys(ps).length>=10)return setMsg('That room is full.');
@@ -4307,9 +4416,12 @@ async function joinPlayer(host,prev){
   await D.set(r,{
     name:AU.prof.username,
     car:(prev&&typeof prev.car==='number')?prev.car:G.car,
+    tyre:(prev&&prev.tyre)||G.tyre||'soft',
     ready:host?true:!!(prev&&prev.ready),
     joined:(prev&&prev.joined)||(Date.now()+FB.off),
-    photo:AU.prof.photoURL||''
+    photo:AU.prof.photoURL||'',
+    sid:MY_SESSION_ID,
+    ord:sessionClaimOrder||Date.now()
   });
   try{localStorage.setItem('df_room_code',room.id);}catch(e){}
 }
@@ -4415,18 +4527,15 @@ function applyRoomSettings(p){
   $('slaps').value=G.laps;pitPref=!!G.pit;$('spit').checked=!!G.pit;syncPitOption();syncGuestLock();
   applyingRoomSettings=false;
 }
-function syncSrvNow(){
-  return Date.now()+(typeof race.syncOff==='number'?race.syncOff:(FB?FB.off:0));
-}
 function triggerFriendlyLaunch(){
   if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.introAt>0)return;
   if(launchingRound===room.pub.round)return;
   launchingRound=room.pub.round;
   const nowSrv=Date.now()+FB.off;
-  const introAt=nowSrv+650;
+  const introAt=nowSrv+450;
   const introDurMs=Math.round(INTRO_CLIP_DUR*4*1000);
   const startAt=introAt+introDurMs+4500;
-  FB.D.update(rref('public'),{introAt,startAt}).catch(()=>{launchingRound=0;});
+  FB.D.update(rref('public'),{introAt,startAt,launchedAtSrv:nowSrv}).catch(()=>{launchingRound=0;});
 }
 function checkFriendlySync(){
   if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.introAt>0)return;
@@ -4436,7 +4545,7 @@ function checkFriendlySync(){
   if(!exp.length)return;
   const loaded=room.loaded||{};
   const curRound=room.pub.round||1;
-  if(exp.every(u=>loaded[u]===curRound||loaded[u]===true)){
+  if(exp.every(u=>loaded[u]===curRound)){
     triggerFriendlyLaunch();
   }
 }
@@ -4451,6 +4560,10 @@ function watchRoom(initialSkipRound=0){
     else syncGuestLock();
     if(p.status==='racing'){
       if(checkFriendlyTimeout())return;
+      if(p.racersSid&&p.racersSid[myUid()]&&p.racersSid[myUid()]!==MY_SESSION_ID){
+        engageSessionLock('Your account started this race on another device.');
+        return;
+      }
       if(!race.on&&!race.loading&&p.round&&p.round!==room.startedRound&&p.racers&&p.racers[myUid()]!==undefined){
         room.startedRound=p.round;
         beginFriendly(p);
@@ -4462,6 +4575,11 @@ function watchRoom(initialSkipRound=0){
     renderFriendly();setMode(G.mode);
   });
   on('players',ps=>{room.players=ps||{};
+    const myPl=room.players[myUid()];
+    if(myPl&&myPl.sid&&myPl.sid!==MY_SESSION_ID&&(myPl.ord||0)>=(sessionClaimOrder||0)){
+      engageSessionLock('Your account joined this room on another device.');
+      return;
+    }
     if(room.pub&&!room.players[room.pub.hostUid]&&room.players[myUid()]){const first=sortedPlayers()[0];
       if(first&&first[0]===myUid()){D.update(rref('public'),{hostUid:myUid(),hostName:AU.prof.username}).catch(()=>{});D.update(rref('players/'+myUid()),{ready:true}).catch(()=>{});}}
     if(room.pub&&room.pub.status==='racing')checkFriendlySync();
@@ -4470,21 +4588,21 @@ function watchRoom(initialSkipRound=0){
   on('scores',v=>{room.scores=v||{};renderFriendly();});
   on('lastRound',v=>{room.lastRound=v;renderRound();});
   on('results',v=>{room.results=v||{};checkRoundDone();});
-  on('state',all=>{all=all||{};room.stateMap=all;for(const id in all){if(id===myUid())continue;const st=all[id];if(!st)continue;let r=race.remote[id];
-      if(!r){const car=CARS[st.car||0],mesh=makeCar(car.c1,car.c2,true);setCarTyreVisual(mesh,st.tyre||'soft');mesh.rotation.order='YXZ';scene.add(mesh);meshes.push(mesh);r=race.remote[id]={mesh,cur:{x:st.x,z:st.z,psi:st.psi,y:st.y||0,pitch:st.pitch||0,v:st.v||0},st:newCarState(st.name,0,false),hint:idxAt(st.s||0),wheelSpin:0,lastSeq:0,lastTs:0,rxTime:performance.now()};r.st.color=car.c1;}
-      if(st.seq&&r.lastSeq&&st.seq<r.lastSeq)continue;
-      if(!st.seq&&st.ts&&r.lastTs&&st.ts<r.lastTs)continue;
-      r.lastSeq=st.seq||0;r.lastTs=st.ts||0;r.rxTime=performance.now();
+  on('state',all=>{all=all||{};room.stateMap=all;
+    const mySt=all[myUid()];
+    if(mySt&&mySt.sid&&mySt.sid!==MY_SESSION_ID){
+      engageSessionLock('Your account is actively racing on another device.');
+      return;
+    }
+    for(const id in all){if(id===myUid())continue;const st=all[id];if(!st)continue;let r=race.remote[id];
+      if(!r){const car=CARS[st.car||0],mesh=makeCar(car.c1,car.c2,true);setCarTyreVisual(mesh,st.tyre||'soft');scene.add(mesh);meshes.push(mesh);r=race.remote[id]={mesh,cur:{x:st.x,z:st.z,psi:st.psi,y:0},st:newCarState(st.name,0,false)};r.st.color=car.c1;}
       if(st.tyre&&r.st.tyre!==st.tyre){r.st.tyre=st.tyre;setCarTyreVisual(r.mesh,st.tyre);}
       r.tgt=st;r.st.name=st.name;r.st.dist=st.dist;r.st.laps=st.laps;r.st.v=st.v;r.st.last=st.last;r.st.fin=st.fin||0;}
     for(const id in race.remote)if(!all[id]&&race.go){scene.remove(race.remote[id].mesh);delete race.remote[id];}});
   on('botState',bs=>{if(!bs||room.host||!race.on)return;
     for(const b of race.cars){if(!b.botId||!bs[b.botId])continue;const s=bs[b.botId];
-      const dErr=s.dist-b.dist;
-      if(Math.abs(dErr)>22){b.dist=s.dist;b.s=s.s;}
-      else if(dErr>=0){b.dist+=dErr*0.28;b.s=((b.dist%LAP)+LAP)%LAP;}
-      else if(b.v<1){b.dist+=dErr*0.25;b.s=((b.dist%LAP)+LAP)%LAP;}
-      b.off+=(s.off-b.off)*0.3;b.v+=(s.v-b.v)*0.35;b.laps=s.laps;b.fin=s.fin||0;b.wear=s.wear||0;b.pitState=s.pitState||0;
+      if(Math.abs(s.dist-b.dist)>14){b.dist=s.dist;b.s=s.s;}else{b.dist+=(s.dist-b.dist)*0.35;b.s=((b.dist%LAP)+LAP)%LAP;}
+      b.off+=(s.off-b.off)*0.35;b.v=s.v;b.laps=s.laps;b.fin=s.fin||0;b.wear=s.wear||0;b.pitState=s.pitState||0;
     }});
 }
 function leaveLocal(){room.unsub.forEach(f=>f());room.unsub=[];room.id=null;room.host=false;room.pub=null;room.players={};room.scores={};room.results={};room.loaded={};room.lastRound=null;room.startedRound=0;clearTimeout(room.finT);
@@ -4550,26 +4668,32 @@ function setGo(){
 }
 async function friendlyAction(){
   if(!AU.user)return requireAuth();if(!room.id)return setMsg('Create or join a room first.');
+  if(!await verifyCanStartRace())return;
   if(room.host)return startFriendly();
-  const me=room.players[myUid()];FB.D.update(rref('players/'+myUid()),{ready:!(me&&me.ready)});
+  const me=room.players[myUid()];FB.D.update(rref('players/'+myUid()),{ready:!(me&&me.ready),sid:MY_SESSION_ID,ord:sessionClaimOrder||Date.now()});
 }
 async function startFriendly(){
   if(!room.host||!room.pub||room.pub.status!=='lobby')return;
+  if(!await verifyCanStartRace())return;
   if(sortedPlayers().some(([u,p])=>u!==myUid()&&!p.ready))return setMsg('Everyone must be ready first.');
-  readSettings();const racers={};sortedPlayers().forEach(([u],i)=>racers[u]=i);const {D}=FB;
+  readSettings();
+  const racers={},racersSid={};
+  sortedPlayers().forEach(([u,pl],i)=>{racers[u]=i;racersSid[u]=(u===myUid()?MY_SESSION_ID:(pl&&pl.sid)||'');});
+  const {D}=FB;
   const nextRound=(room.pub.round||0)+1;
   const botSeed=((room.id||'DF').split('').reduce((a,c)=>a*31+c.charCodeAt(0),7)+nextRound*131)>>>0;
   launchingRound=0;
   try{await D.update(rref(),{results:null,state:null,botState:null,lastRound:null,loaded:null});
-    await D.update(rref('public'),{map:G.map,tod:G.tod,wx:G.wx||'clear',botFill:!!G.botFill,diff:G.diff||'medium',botSeed,laps:G.laps,pit:G.pit,racers,status:'racing',raceStartedAt:Date.now()+FB.off,introAt:0,startAt:0,round:nextRound});
+    await D.update(rref('public'),{map:G.map,tod:G.tod,wx:G.wx||'clear',botFill:!!G.botFill,diff:G.diff||'medium',botSeed,laps:G.laps,pit:G.pit,racers,racersSid,status:'racing',raceStartedAt:Date.now()+FB.off,introAt:0,startAt:0,launchedAtSrv:0,round:nextRound});
   }catch(e){console.warn(e);setMsg('Could not start the race.');}
 }
 async function beginFriendly(p){
-  if(race.loading)return;
+  if(race.loading||sessionLockedOut)return;
   race.loading=true;
   const myRound=p.round;
   const slot=p.racers[myUid()];
   try{
+  if(!await verifyCanStartRace())return;
   applyRoomSettings(p);
   readSettings();
   G.name=(AU.prof&&AU.prof.username)||G.name;
@@ -4592,7 +4716,7 @@ async function beginFriendly(p){
     scene.add(mesh);meshes.push(mesh);
     const st=newCarState(pl.name||'Driver',0,false);
     st.color=car.c1;st.tyre=pl.tyre||'soft';st.dist=gs.m;st.s=((gs.m%LAP)+LAP)%LAP;st.x=gp.x;st.z=gp.z;st.psi=gp.psi;
-    race.remote[uid]={mesh,cur:{x:gp.x,z:gp.z,psi:gp.psi,y:gp.y,pitch:gp.pitch||0,v:0},tgt:{x:gp.x,z:gp.z,psi:gp.psi,y:gp.y,pitch:gp.pitch||0,v:0,vx:0,vy:0,r:0,s:st.s,off:gs.lat},st,hint:idxAt(gs.m),wheelSpin:0,lastSeq:0,lastTs:0,rxTime:performance.now()};
+    race.remote[uid]={mesh,cur:{x:gp.x,z:gp.z,psi:gp.psi,y:gp.y},tgt:{x:gp.x,z:gp.z,psi:gp.psi},st};
   }
   miniCache=null;drawMini();
   await loadStage(95,'Warming up broadcast cameras & shaders');
@@ -4611,45 +4735,38 @@ async function beginFriendly(p){
     if(usePost&&composer)composer.render();else renderer.render(scene,camera);
   }
   await loadStage(98,'Waiting for all drivers to sync…');
-  const waitT0=performance.now();
   const wasWaiting=!(room.pub&&room.pub.introAt>0);
   try{await FB.D.set(rref('loaded/'+myUid()),myRound);}catch(e){}
   checkFriendlySync();
+  const waitT0=performance.now();
   while(room.id&&room.pub&&room.pub.status==='racing'&&room.pub.round===myRound&&!(room.pub.introAt>0)){
     if(room.host&&performance.now()-waitT0>12000)triggerFriendlyLaunch();
-    await sleep(25);
+    await sleep(20);
   }
-  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.round!==myRound)return;
-  const introAtSrv=room.pub.introAt||(Date.now()+FB.off);
+  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.round!==myRound||sessionLockedOut)return;
+  const recvPerf=performance.now();
   const introDurMs=Math.round(INTRO_CLIP_DUR*4*1000);
-  const startAtSrv=room.pub.startAt||(introAtSrv+introDurMs+4500);
   if(wasWaiting){
-    const estSrvAtLaunch=introAtSrv-600;
-    const rawSrvNow=Date.now()+FB.off;
-    race.syncOff=Math.abs(rawSrvNow-estSrvAtLaunch)>320?(estSrvAtLaunch-Date.now()):FB.off;
+    race.syncPerfT0=recvPerf+350;
   }else{
-    race.syncOff=FB.off;
+    const srvElapsed=Math.max(0,(Date.now()+FB.off)-(room.pub.introAt||(Date.now()+FB.off)));
+    race.syncPerfT0=recvPerf-srvElapsed;
   }
-  race.introAtSrv=introAtSrv;
-  race.startAtSrv=startAtSrv;
+  race.cdPerfT0=race.syncPerfT0+introDurMs;
   await loadStage(100,'Ready');
   syncLoadBarVisual(100);
-  while(room.id&&room.pub&&room.pub.status==='racing'&&room.pub.round===myRound){
-    const remToIntro=introAtSrv-syncSrvNow();
-    if(remToIntro<=10)break;
-    await sleep(Math.min(20,remToIntro));
-  }
-  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.round!==myRound)return;
-  if(syncSrvNow()>=startAtSrv-200){
+  const waitToIntro=race.syncPerfT0-performance.now();
+  if(waitToIntro>0)await sleep(Math.min(waitToIntro,600));
+  if(!room.id||!room.pub||room.pub.status!=='racing'||room.pub.round!==myRound||sessionLockedOut)return;
+  if(performance.now()>=race.cdPerfT0+4500){
     $('loading').hidden=true;
     lastT=performance.now();
-    startCountdown(startAtSrv-race.syncOff);
+    startCountdown(Date.now());
     return;
   }
   $('loading').hidden=true;
   lastT=performance.now();
-  race.introAtLocal=introAtSrv-race.syncOff;
-  runIntroAnimation(()=>startCountdown(startAtSrv-race.syncOff));
+  runIntroAnimation(()=>startCountdown(Date.now()+Math.max(0,race.cdPerfT0+4500-performance.now())));
   }finally{race.loading=false;}
 }
 function checkRoundDone(){
@@ -4693,88 +4810,16 @@ function renderRound(){
   const el=$('rpts');if(!el||!room.lastRound)return;
   el.innerHTML=`<h4>Championship points this race (Carried over to Room Standings)</h4><table class="rt"><tr><th>POS</th><th>DRIVER</th><th>TIME</th><th>PTS</th><th>TOTAL PTS</th></tr>${room.lastRound.map(e=>{const tot=(room.scores&&room.scores[e.uid])?room.scores[e.uid].pts:e.pts;return `<tr class="${e.uid===myUid()?'me':''}"><td>${e.pos}</td><td>${esc(e.name)}</td><td>${e.time?lapText(e.time):'DNF'}</td><td><b>+${e.pts}</b></td><td>${tot}</td></tr>`;}).join('')}</table>`;
 }
-let lastPush=0,pushSeq=0;
-function pushState(now){
-  if(race.mode!=='friendly'||!FB||!room.id||now-lastPush<50)return;
-  lastPush=now;
-  const me=race.me;if(!me)return;
-  const seq=++pushSeq;
-  FB.D.set(rref('state/'+myUid()),{
-    name:G.name,car:G.car,tyre:P.tyre||'soft',
-    x:+P.x.toFixed(3),y:+P.y.toFixed(3),z:+P.z.toFixed(3),
-    psi:+P.psi.toFixed(4),pitch:+(P.pitch||0).toFixed(4),
-    vx:+P.vx.toFixed(2),vy:+P.vy.toFixed(2),r:+P.r.toFixed(3),
-    v:+me.v.toFixed(2),s:+me.s.toFixed(2),off:+P.d.toFixed(2),
-    dist:+me.dist.toFixed(2),laps:me.laps,last:me.last,fin:me.fin||0,
-    seq,ts:Date.now()+FB.off
-  }).catch(()=>{});
+let lastPush=0;function pushState(now){if(race.mode!=='friendly'||!FB||!room.id||now-lastPush<100)return;lastPush=now;const me=race.me;
+  FB.D.set(rref('state/'+myUid()),{name:G.name,car:G.car,tyre:P.tyre||'soft',x:P.x,z:P.z,psi:P.psi,v:me.v,dist:me.dist,laps:me.laps,last:me.last,fin:me.fin||0,sid:MY_SESSION_ID,ts:Date.now()+FB.off}).catch(()=>{});
   if(room.host&&room.pub&&room.pub.botFill){
     const bs={};
-    for(const b of race.cars){if(b.botId)bs[b.botId]={s:+b.s.toFixed(2),dist:+b.dist.toFixed(2),off:+b.off.toFixed(2),v:+b.v.toFixed(2),laps:b.laps,fin:b.fin||0,wear:+b.wear.toFixed(3),pitState:b.pitState||0};}
+    for(const b of race.cars){if(b.botId)bs[b.botId]={s:b.s,dist:b.dist,off:b.off,v:b.v,laps:b.laps,fin:b.fin||0,wear:b.wear||0,pitState:b.pitState||0};}
     FB.D.set(rref('botState'),bs).catch(()=>{});
-  }
-}
-function updateRemote(dt){
-  const nowP=performance.now();
-  for(const id in race.remote){
-    const r=race.remote[id];if(!r||!r.tgt)continue;
-    const st=r.tgt;
-    const age=clamp((nowP-(r.rxTime||nowP))/1000,0,0.20);
-    const spd=typeof st.vx==='number'?st.vx:(st.v||0);
-    const latV=typeof st.vy==='number'?st.vy:0;
-    const yawR=typeof st.r==='number'?st.r:0;
-    const predPsi=st.psi+yawR*age*0.6;
-    const predX=st.x+(Math.sin(predPsi)*spd+Math.cos(predPsi)*latV)*age;
-    const predZ=st.z+(Math.cos(predPsi)*spd-Math.sin(predPsi)*latV)*age;
-    let dPsi=predPsi-r.cur.psi;
-    dPsi=Math.atan2(Math.sin(dPsi),Math.cos(dPsi));
-    r.cur.psi+=dPsi*Math.min(1,dt*14);
-    const dx=predX-r.cur.x,dz=predZ-r.cur.z;
-    const distErr=Math.hypot(dx,dz);
-    if(distErr>24||!race.go){
-      const kSnap=!race.go?Math.min(1,dt*12):1;
-      r.cur.x+=dx*kSnap;r.cur.z+=dz*kSnap;
-      if(distErr>24)r.cur.psi=predPsi;
-    }else{
-      const fx=Math.sin(r.cur.psi),fz=Math.cos(r.cur.psi);
-      const rx=Math.cos(r.cur.psi),rz=-Math.sin(r.cur.psi);
-      const fwdErr=dx*fx+dz*fz;
-      const latErr=dx*rx+dz*rz;
-      let fwdStep=0;
-      if(spd>1.2){
-        if(fwdErr>=0){
-          fwdStep=fwdErr*Math.min(1,dt*9.5);
-        }else if(fwdErr>-8.5){
-          fwdStep=0;
-        }else{
-          fwdStep=(fwdErr+8.5)*Math.min(1,dt*5);
-        }
-      }else{
-        fwdStep=fwdErr*Math.min(1,dt*10);
-      }
-      const latStep=latErr*Math.min(1,dt*11);
-      r.cur.x+=fx*fwdStep+rx*latStep;
-      r.cur.z+=fz*fwdStep+rz*latStep;
-    }
-    const rk=C.length?nearest(r.cur.x,r.cur.z,false,true,r.hint):0;
-    r.hint=rk;
-    const sOff=C.length?((r.cur.x-C[rk].x)*Tg[rk].x+(r.cur.z-C[rk].z)*Tg[rk].z):0;
-    const trackY=(H&&H.length)?(H[rk]+(H[sOff>0?(rk+1)%N:(rk-1+N)%N]-H[rk])*clamp(Math.abs(sOff)/DS,0,1)):0;
-    const tgtY=typeof st.y==='number'&&Math.abs(st.y-trackY)<1.8?trackY:(typeof st.y==='number'?st.y:trackY);
-    r.cur.y=(r.cur.y===undefined)?tgtY:(r.cur.y+(tgtY-r.cur.y)*Math.min(1,dt*18));
-    const tSlope=C.length?slopeAt(rk)*Math.cos(r.cur.psi-Math.atan2(Tg[rk].x,Tg[rk].z)):0;
-    const tgtPitch=typeof st.pitch==='number'?st.pitch:(-Math.atan(tSlope));
-    r.cur.pitch=(r.cur.pitch||0)+(tgtPitch-(r.cur.pitch||0))*Math.min(1,dt*14);
-    r.mesh.position.set(r.cur.x,r.cur.y,r.cur.z);
-    r.mesh.rotation.order='YXZ';
-    r.mesh.rotation.y=r.cur.psi;
-    r.mesh.rotation.x=r.cur.pitch;
-    r.wheelSpin=(r.wheelSpin||0)+spd*dt/RW;
-    if(r.mesh.userData&&r.mesh.userData.wheels){
-      for(const w of r.mesh.userData.wheels){w.t.rotation.x=r.wheelSpin;if(w.f)w.p.rotation.y=clamp(dPsi*2.2,-0.35,0.35);}
-    }
-  }
-}
+  }}
+function updateRemote(dt){for(const id in race.remote){const r=race.remote[id];if(!r.tgt)continue;const k=Math.min(1,dt*10);r.cur.x+=(r.tgt.x-r.cur.x)*k;r.cur.z+=(r.tgt.z-r.cur.z)*k;let d=r.tgt.psi-r.cur.psi;d=Math.atan2(Math.sin(d),Math.cos(d));r.cur.psi+=d*k;
+  const rk=C.length?nearest(r.cur.x,r.cur.z,false,true):0,ry=(H&&H.length)?H[rk]:0;
+  r.mesh.position.set(r.cur.x,ry,r.cur.z);r.mesh.rotation.y=r.cur.psi;}}
 let lbData=[],lbDocCache={};
 const lbTop5=a=>{
   const byId=new Map();
@@ -5071,9 +5116,10 @@ function finishIntroAnimation(){
   if(introDoneCb){const cb=introDoneCb;introDoneCb=null;cb();}
 }
 async function startRace(){
-  if(race.loading)return;
+  if(race.loading||sessionLockedOut)return;
   race.loading=true;
   try{
+  if(!await verifyCanStartRace())return;
   readSettings();$('menu').style.display='none';showLoading();await sleep(20);
   await buildWorld(G.map,G.tod);
   await loadStage(92,'Positioning 22 cars on the starting grid');
@@ -5150,15 +5196,15 @@ function frame(t){
     const now=t;
     if(!race.go){
       if(race.mode==='friendly'){
-        const rem=(race.startAtSrv?(race.startAtSrv-syncSrvNow()):(race.startAt-Date.now()))/1000;
         const LIGHT_STEP=0.90,TOTAL_CD=LIGHT_STEP*5;
-        if(rem>0){
-          const elapsed=clamp(TOTAL_CD-rem,0,TOTAL_CD);
-          setLights(clamp(Math.floor(elapsed/LIGHT_STEP)+1,1,5),false);
+        const elapsed=race.cdPerfT0?((performance.now()-race.cdPerfT0)/1000):(TOTAL_CD-(race.startAt-Date.now())/1000);
+        if(elapsed<TOTAL_CD){
+          const eClamped=clamp(elapsed,0,TOTAL_CD);
+          setLights(clamp(Math.floor(eClamped/LIGHT_STEP)+1,1,5),false);
         }else{
           const pNow=performance.now();
-          const overshootMs=clamp(-rem*1000,0,1500);
-          race.go=true;race.t0=pNow-overshootMs;for(const c of race.cars)c.lapT0=race.t0;
+          const overMs=clamp((elapsed-TOTAL_CD)*1000,0,1200);
+          race.go=true;race.t0=pNow-overMs;for(const c of race.cars)c.lapT0=race.t0;
           if(keys.KeyW||keys.ArrowUp)P.thr=Math.max(P.thr,0.75);
           lastSt=pNow-120;lastMiniT=t;
           setLights(5,true);
