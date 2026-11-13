@@ -1076,7 +1076,13 @@ function evalElev(id,f){
   for(let i=0;i<kn.length-1;i++){const [f0,y0]=kn[i],[f1,y1]=kn[i+1];if(f>=f0&&f<=f1){const u=(f-f0)/Math.max(1e-6,f1-f0);return y0+(y1-y0)*(.5-.5*Math.cos(Math.PI*u));}}
   return 0;
 }
-function slopeAt(k){return H?((H[(k+2)%N]-H[(k-2+N)%N])/(4*DS)):0;}
+let arcS=null,totArc=0;
+function slopeAt(k){
+  if(!H||!N)return 0;
+  const a=(k-3+N)%N,b=(k+3)%N;
+  const ds=arcS?((arcS[b]-arcS[a]+(b<a?totArc:0))||(6*DS)):(6*DS);
+  return (H[b]-H[a])/ds;
+}
 function buildTerrainGrid(){
   let minX=1e9,maxX=-1e9,minZ=1e9,maxZ=-1e9;for(const p of C){minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minZ=Math.min(minZ,p.z);maxZ=Math.max(maxZ,p.z);}
   const pad=700,x0=minX-pad,z0=minZ-pad,x1=maxX+pad,z1=maxZ+pad,cs=16,nx=Math.ceil((x1-x0)/cs),nz=Math.ceil((z1-z0)/cs);
@@ -1088,46 +1094,56 @@ function buildTerrainGrid(){
   const inW=(x,z)=>{if(!wat||x<wMinX||x>wMaxX||z<wMinZ||z>wMaxZ)return false;let r=false;for(let i=0,j=wat.length-1;i<wat.length;j=i++){const a=wat[i],b=wat[j];if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])r=!r;}return r;};
   const dSeg=(x,z,a,b)=>{const dx=b[0]-a[0],dz=b[1]-a[1],t=clamp(((x-a[0])*dx+(z-a[1])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-t*dx,z-a[1]-t*dz);};
   const dWat=(x,z)=>{if(!wat||x<wMinX-45||x>wMaxX+45||z<wMinZ-45||z>wMaxZ+45)return 999;let m=999;for(let i=0;i<wat.length;i++)m=Math.min(m,dSeg(x,z,wat[i],wat[(i+1)%wat.length]));return m;};
-  const stepK=8,nS=Math.ceil(N/stepK),sxA=new Float32Array(nS),szA=new Float32Array(nS),shA=new Float32Array(nS);
-  for(let s=0;s<nS;s++){const k=s*stepK;sxA[s]=C[k].x;szA[s]=C[k].z;shA[s]=H[k];}
+  const stepK=2,nS=Math.ceil(N/stepK),sxA=new Float32Array(nS),szA=new Float32Array(nS),shA=new Float32Array(nS);
+  for(let s=0;s<nS;s++){const k=Math.min(N-1,s*stepK);sxA[s]=C[k].x;szA[s]=C[k].z;shA[s]=H[k];}
   for(let j=0;j<=nz;j++)for(let i=0;i<=nx;i++){
     const x=x0+i*cs,z=z0+j*cs,idx=j*(nx+1)+i;
-    let wSum=0,hSum=0,minD=1e9,nearH=0;
+    let wSum=0,hSum=0,minD=1e9,nearS=0;
     for(let s=0;s<nS;s++){
       const dx=sxA[s]-x,dz=szA[s]-z,d2=dx*dx+dz*dz;
-      if(d2<minD){minD=d2;nearH=shA[s];}
-      if(hasElev){const d2p=d2+260,w=1/(d2p*d2p);wSum+=w;hSum+=w*shA[s];}
+      if(d2<minD){minD=d2;nearS=s;}
+      if(hasElev&&(s&3)===0){const d2p=d2+320,w=1/(d2p*d2p);wSum+=w;hSum+=w*shA[s];}
     }
-    minD=Math.sqrt(minD);dTr[idx]=minD;
+    const sPrev=(nearS-1+nS)%nS,sNext=(nearS+1)%nS;
+    let nearH=shA[nearS],bestSegD2=minD;
+    for(const [a,b] of [[sPrev,nearS],[nearS,sNext]]){
+      const vx=sxA[b]-sxA[a],vz=szA[b]-szA[a],l2=vx*vx+vz*vz||1;
+      const t=clamp(((x-sxA[a])*vx+(z-szA[a])*vz)/l2,0,1);
+      const px=sxA[a]+vx*t-x,pz=szA[a]+vz*t-z,d2=px*px+pz*pz;
+      if(d2<=bestSegD2){bestSegD2=d2;nearH=shA[a]+(shA[b]-shA[a])*t;}
+    }
+    minD=Math.sqrt(bestSegD2);dTr[idx]=minD;
     if(inW(x,z)&&minD>OFFW+4){g[idx]=-0.28;continue;}
     let h=hasElev?(wSum>0?hSum/wSum:0):0;
     if(hasElev){
-      const blendNear=clamp((minD-(OFFW+12))/38,0,1),sNear=blendNear*blendNear*(3-2*blendNear);
+      const blendNear=clamp((minD-(OFFW+14))/42,0,1),sNear=blendNear*blendNear*(3-2*blendNear);
       h=nearH+(h-nearH)*sNear;
-      const hillWave=(Math.sin(x*.018)*Math.cos(z*.018)+.5*Math.sin(x*.042+z*.035))*clamp((minD-(OFFW+28))/55,0,1)*(0.35+0.12*h);
+      const hillWave=(Math.sin(x*.018)*Math.cos(z*.018)+.5*Math.sin(x*.042+z*.035))*clamp((minD-(OFFW+32))/58,0,1)*(0.32+0.10*h);
       h+=hillWave;
       const fadeOut=clamp(1-(minD-240)/440,0,1);
       h*=fadeOut*fadeOut*(3-2*fadeOut);
     }
     if(wat&&minD>OFFW+6){const dw=dWat(x,z),wf=clamp((dw-4)/34,0,1),trKeep=clamp((minD-(OFFW+6))/24,0,1);h*=1-(1-wf*wf*(3-2*wf))*trKeep;}
     const bEdge=Math.min(i,nx-i,j,nz-j);if(bEdge<4)h*=bEdge/4;
+    if(minD<OFFW+16){
+      const tDep=clamp((OFFW+16-minD)/12,0,1),sDep=tDep*tDep*(3-2*tDep);
+      const maxAllow=nearH-0.55*sDep;
+      if(h>maxAllow)h=maxAllow;
+    }
     g[idx]=h;
   }
   const W1=nx+1,clampPt=(px,pz,maxY)=>{
     const fx=(px-x0)/cs,fz=(pz-z0)/cs,ix=Math.floor(fx),iz=Math.floor(fz);
-    for(let dz=-1;dz<=2;dz++)for(let dx=-1;dx<=2;dx++){
+    for(let dz=0;dz<=1;dz++)for(let dx=0;dx<=1;dx++){
       const gx=ix+dx,gz=iz+dz;
       if(gx>=0&&gz>=0&&gx<=nx&&gz<=nz){
-        const vx=x0+gx*cs,vz=z0+gz*cs;
-        if(Math.hypot(vx-px,vz-pz)<=cs*1.45){
-          const idx=gz*W1+gx;if(g[idx]>maxY)g[idx]=maxY;
-        }
+        const idx=gz*W1+gx;if(g[idx]>maxY)g[idx]=maxY;
       }
     }
   };
   for(let k=0;k<N;k++){
-    const maxO=OFFW+4;
-    for(let o=-maxO;o<=maxO;o+=3)clampPt(C[k].x+Nn[k].x*o,C[k].z+Nn[k].z*o,C[k].y-0.24);
+    const maxO=OFFW+5;
+    for(let o=-maxO;o<=maxO;o+=3)clampPt(C[k].x+Nn[k].x*o,C[k].z+Nn[k].z*o,C[k].y-0.48);
   }
   TERR={x0,z0,x1:x0+nx*cs,z1:z0+nz*cs,cs,nx,nz,g,dTr};
 }
@@ -1148,7 +1164,8 @@ function posAt(s,off){
     const maxIn=Math.max(W*0.42,(DS/Math.abs(cr))*0.78);
     if(Math.abs(off)>maxIn)off=Math.sign(off)*maxIn;
   }
-  return {x:C[i].x+(C[j].x-C[i].x)*u+nx*off,z:C[i].z+(C[j].z-C[i].z)*u+nz*off,y:H[i]+(H[j]-H[i])*u,psi:Math.atan2(tx,tz),pitch:-Math.atan(slopeAt(i))};
+  const sl=slopeAt(i)+(slopeAt(j)-slopeAt(i))*u;
+  return {x:C[i].x+(C[j].x-C[i].x)*u+nx*off,z:C[i].z+(C[j].z-C[i].z)*u+nz*off,y:H[i]+(H[j]-H[i])*u,psi:Math.atan2(tx,tz),pitch:-Math.atan(sl)};
 }
 async function buildWorld(id,tod){
   if(world){
@@ -1215,14 +1232,18 @@ async function buildWorld(id,tod){
       else if(c*DS>40&&d<0.5*c*DS&&d<other[i]){other[i]=d;otherSide[i]=sg;otherIdx[i]=j;}}}}
   if(MAP.id==='monaco'){crossJ.length=0;crossNear.fill(0);}
   {const cn=crossNear.slice();for(let i=0;i<N;i++)if(cn[i])for(let j=-26;j<=26;j++)crossNear[(i+j+N)%N]=1;}
+  arcS=new Float32Array(N+1);arcS[0]=0;
+  for(let i=0;i<N;i++){const j=(i+1)%N;arcS[i+1]=arcS[i]+Math.hypot(C[j].x-C[i].x,C[j].z-C[i].z);}
+  totArc=arcS[N]||LAP;
   H=new Float32Array(N);crossH=new Float32Array(N);crossJ.sort((a,b)=>a-b);
   for(let c0=0;c0<crossJ.length;){let c1=c0;while(c1+1<crossJ.length&&crossJ[c1+1]-crossJ[c1]<40)c1++;const jc=Math.round((crossJ[c0]+crossJ[c1])/2);
     for(let k=-60;k<=60;k++){const q=(jc+k+N)%N,ch=7*0.5*(1+Math.cos(Math.PI*k/60));crossH[q]=Math.max(crossH[q],ch);H[q]=Math.max(H[q],ch);}c0=c1+1;}
   if(ELEV_PROFILES[MAP.id]){
     const prof=new Float32Array(N);
-    for(let i=0;i<N;i++){const f=(((i/N)+startShift/LAP)%1+1)%1;prof[i]=evalElev(MAP.id,f);}
-    for(let p=0;p<14;p++){const nx=prof.slice();for(let i=0;i<N;i++)nx[i]=(prof[(i+N-1)%N]+2*prof[i]+prof[(i+1)%N])*.25;prof.set(nx);}
-    for(let i=0;i<N;i++){H[i]=Math.max(H[i],prof[i]);if(MAP.id==='singapore'){const f=(((i/N)+startShift/LAP)%1+1)%1;if(f>=.632&&f<=.718)crossH[i]=H[i];}}
+    for(let i=0;i<N;i++){const f=(((arcS[i]/totArc)+startShift/LAP)%1+1)%1;prof[i]=evalElev(MAP.id,f);}
+    for(let p=0;p<36;p++){const nx=prof.slice();for(let i=0;i<N;i++)nx[i]=(prof[(i+N-1)%N]+2*prof[i]+prof[(i+1)%N])*.25;prof.set(nx);}
+    for(let i=0;i<N;i++){H[i]=Math.max(H[i],prof[i]);if(MAP.id==='singapore'){const f=(((arcS[i]/totArc)+startShift/LAP)%1+1)%1;if(f>=.632&&f<=.718)crossH[i]=H[i];}}
+    for(let p=0;p<8;p++){const nx=H.slice();for(let i=0;i<N;i++)nx[i]=(H[(i+N-1)%N]+2*H[i]+H[(i+1)%N])*.25;H.set(nx);}
   }
   for(let i=0;i<N;i++)C[i].y=H[i];
   await loadStage(18,'Sculpting circuit terrain');
@@ -1259,10 +1280,14 @@ function buildMaterials(){
 }
 function ribbon(o1,o2,dy,colorFn,mat,i0=0,cnt=N,filter){
   const pos=[],col=[],uv=[],idx=[];let v=0;
+  const span=Math.abs(o1-o2),nSub=span>5?4:1,wTot=span/10;
   for(let j=0;j<cnt;j++){const k=(i0+j)%N,k2=(k+1)%N;if(filter&&!filter(k))continue;const c=colorFn(k,j);if(!c)continue;
-    const w=Math.abs(o1-o2)/10;
-    for(const [q,o,u,vv] of [[k,o1,0,j],[k,o2,w,j],[k2,o1,0,j+1],[k2,o2,w,j+1]]){pos.push(C[q].x+Nn[q].x*o,C[q].y+dy,C[q].z+Nn[q].z*o);col.push(c.r,c.g,c.b);uv.push(u,vv*DS/10);}
-    idx.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;}
+    for(let s=0;s<nSub;s++){
+      const f0=s/nSub,f1=(s+1)/nSub,oa=o1+(o2-o1)*f0,ob=o1+(o2-o1)*f1,ua=wTot*f0,ub=wTot*f1;
+      for(const [q,o,u,vv] of [[k,oa,ua,j],[k,ob,ub,j],[k2,oa,ua,j+1],[k2,ob,ub,j+1]]){pos.push(C[q].x+Nn[q].x*o,C[q].y+dy,C[q].z+Nn[q].z*o);col.push(c.r,c.g,c.b);uv.push(u,vv*DS/10);}
+      idx.push(v,v+1,v+2,v+1,v+3,v+2);v+=4;
+    }
+  }
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
   const m=new THREE.Mesh(g,mat||matVC);m.receiveShadow=true;world.add(m);return m;
@@ -1296,7 +1321,7 @@ function vstrip(side,o,y0,y1,i0,cnt,filter,mat,uvLen,uvH,offFn){
 }
 function buildTrackMeshes(R){
   const gtex=noiseTex(TH.ground[0],TH.ground[1],TH.ground[2],62,1,256);gtex.repeat.set(500,500);
-  const groundMat=new THREE.MeshStandardMaterial({map:gtex,bumpMap:gtex,bumpScale:0.85,vertexColors:true,roughness:.92});
+  const groundMat=new THREE.MeshStandardMaterial({map:gtex,bumpMap:gtex,bumpScale:0.85,vertexColors:true,roughness:.92,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:2});
   addLamp(groundMat);
   if(TERR){
     const {x0,z0,x1,z1,cs,nx,nz,g,dTr}=TERR,W1=nx+1,nV=(nx+1)*(nz+1)+16;
@@ -1368,12 +1393,12 @@ function buildTrackMeshes(R){
    for(let k=0;k<N;k++){
      if(crossH&&crossH[k]>0.8)continue;
      const k2=(k+1)%N;
-     if(!fold(k,W/2+1,1)&&!fold(k,W/2+1,-1)){
+     if((C[k].y>0.6||C[k2].y>0.6)&&!fold(k,W/2+1,1)&&!fold(k,W/2+1,-1)){
        skPos.push(
-         C[k].x+Nn[k].x*(W/2),C[k].y-0.06,C[k].z+Nn[k].z*(W/2),
-         C[k].x-Nn[k].x*(W/2),C[k].y-0.06,C[k].z-Nn[k].z*(W/2),
-         C[k2].x+Nn[k2].x*(W/2),C[k2].y-0.06,C[k2].z+Nn[k2].z*(W/2),
-         C[k2].x-Nn[k2].x*(W/2),C[k2].y-0.06,C[k2].z-Nn[k2].z*(W/2)
+         C[k].x+Nn[k].x*(W/2),C[k].y-0.14,C[k].z+Nn[k].z*(W/2),
+         C[k].x-Nn[k].x*(W/2),C[k].y-0.14,C[k].z-Nn[k].z*(W/2),
+         C[k2].x+Nn[k2].x*(W/2),C[k2].y-0.14,C[k2].z+Nn[k2].z*(W/2),
+         C[k2].x-Nn[k2].x*(W/2),C[k2].y-0.14,C[k2].z-Nn[k2].z*(W/2)
        );
        for(let q=0;q<4;q++)skCol.push(cBot[0],cBot[1],cBot[2]);
        skIdx.push(sv,sv+1,sv+2,sv+1,sv+3,sv+2);sv+=4;
@@ -1383,8 +1408,8 @@ function buildTrackMeshes(R){
        const e2=fold(k2,TH.street?5:14,side)?(W/2):Math.min(offOf(side,k2),W/2+rw);
        if(fold(k,e1+1.5,side)||fold(k2,e2+1.5,side))continue;
        const o1=side*e1,o2=side*e2;
-       const x1=C[k].x+Nn[k].x*o1,z1=C[k].z+Nn[k].z*o1,y1=C[k].y-0.03;
-       const x2=C[k2].x+Nn[k2].x*o2,z2=C[k2].z+Nn[k2].z*o2,y2=C[k2].y-0.03;
+       const x1=C[k].x+Nn[k].x*o1,z1=C[k].z+Nn[k].z*o1,y1=C[k].y-0.06;
+       const x2=C[k2].x+Nn[k2].x*o2,z2=C[k2].z+Nn[k2].z*o2,y2=C[k2].y-0.06;
        const yb1=Math.min(y1-1.5,terrainY(x1,z1)-1.8),yb2=Math.min(y2-1.5,terrainY(x2,z2)-1.8);
        skPos.push(x1,y1,z1, x1,yb1,z1, x2,y2,z2, x2,yb2,z2);
        skCol.push(cTop[0],cTop[1],cTop[2], cBot[0],cBot[1],cBot[2], cTop[0],cTop[1],cTop[2], cBot[0],cBot[1],cBot[2]);
@@ -2846,16 +2871,37 @@ addEventListener('deviceorientation',e=>{
   if(wEl)wEl.style.transform=`rotate(${clamp(adj,-65,65).toFixed(1)}deg)`;
   if(dEl)dEl.textContent=`${Math.round(clamp(adj,-75,75))}°`;
 });
-function nearest(x,z,full,noHint){
+function nearest(x,z,full,noHint,customHint){
   if(!C||!C.length)return 0;
-  let best=1e18,bi=hint||0;
-  const a=full?0:-32,b=full?N-1:32;
-  for(let j=a;j<=b;j++){const k=full?j:((bi+j)%N+N)%N,dx=x-C[k].x,dz=z-C[k].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=k;}}
-  if(!full&&best>196){
+  const base=((customHint!==undefined?customHint:hint)||0);
+  let best=1e18,bi=base;
+  const a=full?0:-36,b=full?N-1:36;
+  for(let j=a;j<=b;j++){const k=full?j:((base+j)%N+N)%N,dx=x-C[k].x,dz=z-C[k].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=k;}}
+  if(!full&&best>1600){
     for(let j=0;j<N;j++){const dx=x-C[j].x,dz=z-C[j].z,d=dx*dx+dz*dz;if(d<best){best=d;bi=j;}}
   }
   if(!noHint)hint=bi;
   return bi;
+}
+function sampleTrack(x,z,noHint,customHint){
+  if(!C||!C.length||!H)return {k:0,i0:0,u:0,y:0,slope:0,tPsi:0,d:0,s:0,s_off:0};
+  const k=nearest(x,z,false,noHint,customHint);
+  const sAt=q=>(x-C[q].x)*Tg[q].x+(z-C[q].z)*Tg[q].z;
+  const sk=sAt(k);
+  let i0,i1,s0,s1;
+  if(sk>=0){i0=k;i1=(k+1)%N;s0=sk;s1=-sAt(i1);}
+  else{i0=(k-1+N)%N;i1=k;s0=sAt(i0);s1=-sk;}
+  const den=s0+s1,u=den>1e-4?clamp(s0/den,0,1):0;
+  const segLen=Math.hypot(C[i1].x-C[i0].x,C[i1].z-C[i0].z)||DS;
+  const sl0=slopeAt(i0),sl1=slopeAt(i1),m0=sl0*segLen,m1=sl1*segLen,u2=u*u,u3=u2*u;
+  const y=(2*u3-3*u2+1)*H[i0]+(u3-2*u2+u)*m0+(-2*u3+3*u2)*H[i1]+(u3-u2)*m1;
+  const slope=sl0+(sl1-sl0)*u;
+  const tx=Tg[i0].x+(Tg[i1].x-Tg[i0].x)*u,tz=Tg[i0].z+(Tg[i1].z-Tg[i0].z)*u;
+  const nx=Nn[i0].x+(Nn[i1].x-Nn[i0].x)*u,nz=Nn[i0].z+(Nn[i1].z-Nn[i0].z)*u,nl=Math.hypot(nx,nz)||1;
+  const cx=C[i0].x+(C[i1].x-C[i0].x)*u,cz=C[i0].z+(C[i1].z-C[i0].z)*u;
+  const d=((x-cx)*nx+(z-cz)*nz)/nl;
+  const s=(((i0+u)*DS)%LAP+LAP)%LAP;
+  return {k,i0,u,y,slope,tPsi:Math.atan2(tx,tz),d,s,s_off:sk};
 }
 function step(dt){
   const c=P,S=c.stats,v=Math.hypot(c.vx,c.vy);
@@ -2982,7 +3028,7 @@ function setupRace(opts){
   if($('pitPicker'))$('pitPicker').hidden=true;
   P.stats=CARS[opts.car];P.wear=0;P.vx=P.vy=P.r=0;P.gear=1;P.steer=0;P.mu=2;P.grass=false;hint=0;
   race.cars=[];const me=newCarState(opts.name,5,true);me.tyre=P.tyre;race.cars.push(me);race.me=me;me.valid=0;me.sum=0;me.lapList=[];
-  const pg=opts.mode==='sprint'?11:(opts.slot||0),sl=gridSlot(pg),pp=posAt(sl.m,sl.lat);P.x=pp.x;P.z=pp.z;P.psi=pp.psi;P.y=pp.y;hint=idxAt(sl.m);
+  const pg=opts.mode==='sprint'?11:(opts.slot||0),sl=gridSlot(pg),pp=posAt(sl.m,sl.lat);P.x=pp.x;P.z=pp.z;P.psi=pp.psi;P.y=pp.y;P.visY=pp.y;P.pitch=pp.pitch||0;P.carGradeSm=0;P.camGradeSm=0;hint=idxAt(sl.m);
   me.dist=sl.m;me.s=((sl.m%LAP)+LAP)%LAP;
   playerMesh=makeCar(CARS[opts.car].c1,CARS[opts.car].c2,true);
   setCarTyreVisual(playerMesh,P.tyre);
@@ -3162,14 +3208,14 @@ function updateRace(now,dt){
   }else{
     P.pitWallSide=pitD>=wMid?1:-1;
   }
-  const s_off = (P.x - C[k].x) * Tg[k].x + (P.z - C[k].z) * Tg[k].z;
-  P.y = H[k] + (H[s_off > 0 ? (k + 1) % N : (k - 1 + N) % N] - H[k]) * (Math.abs(s_off) / DS);
+  const trkSample=sampleTrack(P.x,P.z,true,k);
+  P.y=trkSample.y;P.slope=trkSample.slope;P.tPsi=trkSample.tPsi;
   const outLine=laneD>W/2+1.0&&!lane&&!inPitZ;
   if(race.go&&!race.finished){
     if(outLine){race.tl+=dt;race.back=0;if(race.tl>.45&&race.armed2){race.armed2=false;violation(now);}}
     else{race.tl=0;race.back+=dt;if(race.back>1.5)race.armed2=true;}
   }
-  const s=(((k*DS+s_off)%LAP)+LAP)%LAP,prev=me.s;let ds=s-prev;if(ds>LAP/2)ds-=LAP;if(ds<-LAP/2)ds+=LAP;me.dist+=ds;me.s=s;me.v=Math.hypot(P.vx,P.vy);me.off=P.d;
+  const s=trkSample.s,prev=me.s;let ds=s-prev;if(ds>LAP/2)ds-=LAP;if(ds<-LAP/2)ds+=LAP;me.dist+=ds;me.s=s;me.v=Math.hypot(P.vx,P.vy);me.off=P.d;
   {const fh=Math.cos(dpsi);
    if(race.go&&!race.finished&&fh<-.5&&P.vx>5.6){race.wt+=dt;if(!race.wshow){race.wshow=true;flash('WRONG WAY|Wrong direction, turn around',now,'warn');}
      if(race.wt>4){const sp=Math.hypot(P.vx,P.vy);P.x=C[k].x;P.z=C[k].z;P.psi=Math.atan2(Tg[k].x,Tg[k].z);P.vx=sp;P.vy=0;P.r=0;hint=k;race.wt=0;race.wshow=false;flash('BACK ON TRACK|Reset onto the circuit',now,'info');}}
@@ -3778,7 +3824,7 @@ function restartPractice(keepTyre=true){
   }
   race.on=true;race.go=true;race.jump=true;race.armed=true;race.t0=performance.now();for(const c of race.cars)c.lapT0=race.t0;$('sl').hidden=true;
 }
-function resetCar(){race.armed2=true;race.back=0;const k=nearest(P.x,P.z,true);P.x=C[k].x;P.z=C[k].z;P.y=C[k].y;P.psi=Math.atan2(Tg[k].x,Tg[k].z);P.vx=P.vy=P.r=0;P.gear=1;}
+function resetCar(){race.armed2=true;race.back=0;const k=nearest(P.x,P.z,true);P.x=C[k].x;P.z=C[k].z;P.y=C[k].y;P.visY=C[k].y;P.psi=Math.atan2(Tg[k].x,Tg[k].z);P.vx=P.vy=P.r=0;P.gear=1;P.carGradeSm=slopeAt(k);P.camGradeSm=P.carGradeSm;}
 addEventListener('resize',syncStageSize);addEventListener('orientationchange',()=>setTimeout(syncStageSize,120));
 const spots=[new THREE.SpotLight(0xfff3d0,0,140,.5,.5,1),new THREE.SpotLight(0xfff3d0,0,140,.5,.5,1)];
 for(const s of spots){scene.add(s,s.target);}
@@ -3855,7 +3901,7 @@ function updateVisuals(dt){
       camera.fov=66;
       playerMesh.visible=true;
     }else{
-      const kNow=P.idx||0,tPsi=C.length?Math.atan2(Tg[kNow].x,Tg[kNow].z):P.psi,carGrade=C.length?slopeAt(kNow)*Math.cos(P.psi-tPsi):0;
+      const stI=C.length?sampleTrack(P.x,P.z,true,P.idx):{slope:0,tPsi:P.psi},carGrade=C.length?stI.slope*Math.cos(P.psi-stI.tPsi):0;
       const effCam=(isSmallDevice()&&camMode===2)?0:camMode;
       const bl=effCam===2?1:0,CM={R:13+14*bl,el:.22+.28*bl,ah:4+5*bl,fov:74-4*bl};
       const fx=Math.sin(P.psi),fz=Math.cos(P.psi),rx=Math.cos(P.psi),rz=-Math.sin(P.psi);
@@ -3895,18 +3941,27 @@ function updateVisuals(dt){
     sun.position.set(P.x+sunDir.x*200,P.y+Math.max(12,sunDir.y*200),P.z+sunDir.z*200);sun.target.position.set(P.x,P.y,P.z);
     return;
   }
-  const kNow=P.idx||0,tPsi=C.length?Math.atan2(Tg[kNow].x,Tg[kNow].z):P.psi,carGrade=C.length?slopeAt(kNow)*Math.cos(P.psi-tPsi):0;
-  P.pitch=(P.pitch||0)+(-Math.atan(carGrade)-(P.pitch||0))*Math.min(1,dt*14);
-  playerMesh.position.set(P.x,P.y,P.z);playerMesh.rotation.order='YXZ';playerMesh.rotation.y=P.psi;playerMesh.rotation.x=P.pitch;wheelSpin+=P.vx*dt/RW;const v=Math.hypot(P.vx,P.vy);
+  const stNow=C.length?sampleTrack(P.x,P.z,true,P.idx):{y:P.y,slope:0,tPsi:P.psi};
+  P.y=stNow.y;
+  let da=P.psi-camPsi;da=Math.atan2(Math.sin(da),Math.cos(da));camPsi+=da*Math.min(1,dt*6);
+  const rawCarGrade=C.length?stNow.slope*Math.cos(P.psi-stNow.tPsi):0;
+  const rawCamGrade=C.length?stNow.slope*Math.cos(camPsi-stNow.tPsi):0;
+  P.carGradeSm=(P.carGradeSm??rawCarGrade)+(rawCarGrade-(P.carGradeSm??rawCarGrade))*(1-Math.exp(-dt*14));
+  P.camGradeSm=(P.camGradeSm??rawCamGrade)+(rawCamGrade-(P.camGradeSm??rawCamGrade))*(1-Math.exp(-dt*6.5));
+  const carGrade=P.carGradeSm,camGrade=P.camGradeSm;
+  P.pitch=(P.pitch||0)+(-Math.atan(carGrade)-(P.pitch||0))*(1-Math.exp(-dt*14));
+  P.visY=(P.visY===undefined||Math.abs(P.y-P.visY)>2.5)?P.y:(P.visY+(P.y-P.visY)*(1-Math.exp(-dt*24)));
+  const cyBase=P.visY;
+  playerMesh.position.set(P.x,cyBase,P.z);playerMesh.rotation.order='YXZ';playerMesh.rotation.y=P.psi;playerMesh.rotation.x=P.pitch;wheelSpin+=P.vx*dt/RW;const v=Math.hypot(P.vx,P.vy);
+  P.vSm=(P.vSm??v)+(v-(P.vSm??v))*(1-Math.exp(-dt*10));const vCam=P.vSm;
   for(const w of playerMesh.userData.wheels){w.t.rotation.x=wheelSpin;if(w.f)w.p.rotation.y=P.dl;}
   for(const w of (playerMesh.userData.gw||[])){qA.setFromAxisAngle(AXx,wheelSpin);w.o.quaternion.copy(w.base);if(w.front){qB.setFromAxisAngle(AXy,P.dl);w.o.quaternion.multiply(qB);}w.o.quaternion.multiply(qA);}
-  let da=P.psi-camPsi;da=Math.atan2(Math.sin(da),Math.cos(da));camPsi+=da*Math.min(1,dt*6);
   if(!dragging&&performance.now()-lastDrag>3000){const k=Math.min(1,dt*1.5);tYaw*=1-k;tPitch*=1-k;tZoom+=(1-tZoom)*k;}
   const sm=Math.min(1,dt*12);orbYaw+=(tYaw-orbYaw)*sm;orbPitch+=(tPitch-orbPitch)*sm;orbZoom+=(tZoom-orbZoom)*sm;
   const effCam=race.finished?0:((isSmallDevice()&&camMode===2)?0:camMode);
   if(effCam===1){
     playerMesh.visible=false;const fx=Math.sin(P.psi),fz=Math.cos(P.psi);
-    camera.position.set(P.x+fx*.35,P.y+1.35,P.z+fz*.35);camera.lookAt(P.x+fx*40,P.y+.5+carGrade*40,P.z+fz*40);camera.fov=84+v*.1;
+    camera.position.set(P.x+fx*.35,cyBase+1.35,P.z+fz*.35);camera.lookAt(P.x+fx*40,cyBase+.5+camGrade*40,P.z+fz*40);camera.fov=84+vCam*.1;
   }else{
     playerMesh.visible=true;
     let inZone=false,inTun=false;
@@ -3915,10 +3970,10 @@ function updateVisuals(dt){
     camFarT+=((effCam===2&&!inZone?1:0)-camFarT)*(1-Math.exp(-dt*3.2));tunB+=((inTun?1:0)-tunB)*(1-Math.exp(-dt*3));
     {const be=window.baseExp||1;renderer.toneMappingExposure=be*(1-.3*tunB);}
     const bl=camMode===2?camFarT:0,CM={R:13+14*bl,rv:.04+.03*bl,el:.22+.28*bl,ah:4+5*bl,fov:74-4*bl};
-    const finSweep=race.finished?Math.sin(performance.now()*.00045)*.28:0,yaw=camPsi+orbYaw+finSweep,dx=Math.sin(yaw),dz=Math.cos(yaw),ah=CM.ah*Math.max(0,1-Math.abs(orbYaw)),px=P.x+Math.sin(camPsi)*ah,pz=P.z+Math.cos(camPsi)*ah,Rr=(CM.R+v*CM.rv)*orbZoom,el=CM.el+orbPitch+(race.finished?.05:0);
-    const camY=Math.max(P.y+.7,P.y+1.2+Rr*Math.sin(el)-carGrade*Rr*.45+v*.01);
-    camera.position.set(px-dx*Rr*Math.cos(el),camY,pz-dz*Rr*Math.cos(el));camera.lookAt(px,P.y+1.2+carGrade*ah,pz);
-    camera.fov=CM.fov+v*.12;
+    const finSweep=race.finished?Math.sin(performance.now()*.00045)*.28:0,yaw=camPsi+orbYaw+finSweep,dx=Math.sin(yaw),dz=Math.cos(yaw),ah=CM.ah*Math.max(0,1-Math.abs(orbYaw)),px=P.x+Math.sin(camPsi)*ah,pz=P.z+Math.cos(camPsi)*ah,Rr=(CM.R+vCam*CM.rv)*orbZoom,el=CM.el+orbPitch+(race.finished?.05:0);
+    const camY=Math.max(cyBase+.7,cyBase+1.2+Rr*Math.sin(el)-camGrade*Rr*.45+vCam*.01);
+    camera.position.set(px-dx*Rr*Math.cos(el),camY,pz-dz*Rr*Math.cos(el));camera.lookAt(px,cyBase+1.2+camGrade*ah,pz);
+    camera.fov=CM.fov+vCam*.12;
   }
   camera.updateProjectionMatrix();sky.position.copy(camera.position);if(stars)stars.position.copy(camera.position);
   sun.position.set(P.x+sunDir.x*200,P.y+Math.max(12,sunDir.y*200),P.z+sunDir.z*200);sun.target.position.set(P.x,P.y,P.z);
@@ -4032,7 +4087,8 @@ async function loadProfile(user){
     prof=await createAccount(user,base,ref);
   }else{
     prof=snap.data()||{};
-    Fs.setDoc(ref,base,{merge:true}).catch(()=>{});
+    const cleanUser={...base,activeRaceSid:Fs.deleteField(),activeRaceStatus:Fs.deleteField(),activeRaceHb:Fs.deleteField(),activeSessionId:Fs.deleteField(),activeSessionOrder:Fs.deleteField(),activeRace:Fs.deleteField()};
+    Fs.setDoc(ref,cleanUser,{merge:true}).catch(()=>{});
   }
   AU.user=user;
   AU.prof={username:prof.username||user.displayName||(user.email||'Driver').split('@')[0],photoURL:base.photoURL||prof.photoURL||'',email:base.email||prof.email||''};
@@ -4090,6 +4146,16 @@ function engageSessionLock(customMsg){
     quitGame();
   }
 }
+function unpackActiveRace(d){
+  if(!d)return {sid:'',status:'lobby',hb:0,ord:0};
+  const ar=(d.activeRace&&typeof d.activeRace==='object')?d.activeRace:d;
+  return {
+    sid:ar.sid||d.activeSessionId||d.activeRaceSid||'',
+    status:ar.status||d.activeRaceStatus||'lobby',
+    hb:ar.hb||d.activeRaceHb||0,
+    ord:ar.ord||d.activeSessionOrder||0
+  };
+}
 async function writeSessionState(isRacing,bumpOrder=false){
   try{localStorage.setItem('df_active_ses_any',MY_SESSION_ID);}catch(e){}
   if(!AU.user||!FB)return;
@@ -4098,18 +4164,26 @@ async function writeSessionState(isRacing,bumpOrder=false){
   if(bumpOrder)sessionClaimOrder=Math.max(sessionClaimOrder+1,nowSrv);
   const ord=sessionClaimOrder||nowSrv;
   sessionClaimOrder=ord;
-  const payload={
-    activeSessionId:MY_SESSION_ID,
-    activeSessionOrder:ord,
-    activeRaceSid:MY_SESSION_ID,
-    activeRaceStatus:isRacing?'racing':'lobby',
-    activeRaceHb:nowSrv
+  const activeRace={
+    sid:MY_SESSION_ID,
+    status:isRacing?'racing':'lobby',
+    hb:nowSrv,
+    ord
   };
   try{localStorage.setItem('df_active_ses_'+uid,MY_SESSION_ID);}catch(e){}
   try{if(sessionChan)sessionChan.postMessage({uid,sid:MY_SESSION_ID});}catch(e){}
-  try{await FB.D.set(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid),payload);}catch(e){}
-  try{await FB.Fs.setDoc(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'),payload,{merge:true});}catch(e){}
-  try{await FB.Fs.setDoc(FB.Fs.doc(FB.fs,'users',uid),payload,{merge:true});}catch(e){}
+  try{await FB.D.set(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid),{activeRace});}catch(e){}
+  try{
+    const {Fs,fs}=FB;
+    await Fs.setDoc(Fs.doc(fs,'users',uid,'downforce','stats'),{
+      activeRace,
+      activeRaceSid:Fs.deleteField(),
+      activeRaceStatus:Fs.deleteField(),
+      activeRaceHb:Fs.deleteField(),
+      activeSessionId:Fs.deleteField(),
+      activeSessionOrder:Fs.deleteField()
+    },{merge:true});
+  }catch(e){}
 }
 async function verifyCanStartRace(){
   if(sessionLockedOut){
@@ -4124,24 +4198,20 @@ async function verifyCanStartRace(){
   try{
     const rtSnap=await FB.D.get(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid));
     if(rtSnap.exists()){
-      const d=rtSnap.val()||{};
-      if(d.activeSessionId&&d.activeSessionId!==MY_SESSION_ID){
-        if(d.activeRaceStatus==='racing'&&Math.abs(nowSrv-(d.activeRaceHb||0))<15000){
-          engageSessionLock('Your account is already in an active race on another device or tab.');
-          return false;
-        }
+      const ar=unpackActiveRace(rtSnap.val());
+      if(ar.sid&&ar.sid!==MY_SESSION_ID&&ar.status==='racing'&&Math.abs(nowSrv-ar.hb)<15000){
+        engageSessionLock('Your account is already in an active race on another device or tab.');
+        return false;
       }
     }
   }catch(e){}
   try{
     const fsSnap=await FB.Fs.getDoc(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'));
     if(fsSnap.exists()){
-      const d=fsSnap.data()||{};
-      if(d.activeSessionId&&d.activeSessionId!==MY_SESSION_ID){
-        if(d.activeRaceStatus==='racing'&&Math.abs(nowSrv-(d.activeRaceHb||0))<15000){
-          engageSessionLock('Your account is already in an active race on another device or tab.');
-          return false;
-        }
+      const ar=unpackActiveRace(fsSnap.data());
+      if(ar.sid&&ar.sid!==MY_SESSION_ID&&ar.status==='racing'&&Math.abs(nowSrv-ar.hb)<15000){
+        engageSessionLock('Your account is already in an active race on another device or tab.');
+        return false;
       }
     }
   }catch(e){}
@@ -4158,11 +4228,11 @@ async function claimActiveSession(fromClick=false){
     let maxOrd=nowSrv;
     try{
       const s1=await FB.D.get(FB.D.ref(FB.db,'downforce-rooms/__sessions__/'+uid));
-      if(s1.exists()&&s1.val()&&s1.val().activeSessionOrder)maxOrd=Math.max(maxOrd,s1.val().activeSessionOrder+1);
+      if(s1.exists()){const ar=unpackActiveRace(s1.val());if(ar.ord)maxOrd=Math.max(maxOrd,ar.ord+1);}
     }catch(e){}
     try{
       const s2=await FB.Fs.getDoc(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'));
-      if(s2.exists()&&s2.data()&&s2.data().activeSessionOrder)maxOrd=Math.max(maxOrd,s2.data().activeSessionOrder+1);
+      if(s2.exists()){const ar=unpackActiveRace(s2.data());if(ar.ord)maxOrd=Math.max(maxOrd,ar.ord+1);}
     }catch(e){}
     sessionClaimOrder=maxOrd;
     await writeSessionState(!!(race.on||introActive),false);
@@ -4177,11 +4247,10 @@ async function claimActiveSession(fromClick=false){
 }
 function checkIncomingSessionDoc(d){
   if(!d||!AU.user)return;
-  const remSid=d.activeSessionId||d.activeRaceSid;
-  const remOrd=d.activeSessionOrder||0;
-  if(remSid&&remSid!==MY_SESSION_ID){
-    if(sessionClaimOrder>0&&remOrd>0&&remOrd<sessionClaimOrder)return;
-    engageSessionLock(d.activeRaceStatus==='racing'?'Your account started a race on another device or tab.':'Your account was activated on another device or tab.');
+  const ar=unpackActiveRace(d);
+  if(ar.sid&&ar.sid!==MY_SESSION_ID){
+    if(sessionClaimOrder>0&&ar.ord>0&&ar.ord<sessionClaimOrder)return;
+    engageSessionLock(ar.status==='racing'?'Your account started a race on another device or tab.':'Your account was activated on another device or tab.');
   }
 }
 async function startSessionWatch(uid){
@@ -4198,12 +4267,6 @@ async function startSessionWatch(uid){
   }catch(e){}
   try{
     sessionStatsUnsub=FB.Fs.onSnapshot(FB.Fs.doc(FB.fs,'users',uid,'downforce','stats'),snap=>{
-      if(!snap.exists()||!AU.user||AU.user.uid!==uid)return;
-      checkIncomingSessionDoc(snap.data());
-    },()=>{});
-  }catch(e){}
-  try{
-    sessionLockUnsub=FB.Fs.onSnapshot(FB.Fs.doc(FB.fs,'users',uid),snap=>{
       if(!snap.exists()||!AU.user||AU.user.uid!==uid)return;
       checkIncomingSessionDoc(snap.data());
     },()=>{});
@@ -4818,8 +4881,11 @@ let lastPush=0;function pushState(now){if(race.mode!=='friendly'||!FB||!room.id|
     FB.D.set(rref('botState'),bs).catch(()=>{});
   }}
 function updateRemote(dt){for(const id in race.remote){const r=race.remote[id];if(!r.tgt)continue;const k=Math.min(1,dt*10);r.cur.x+=(r.tgt.x-r.cur.x)*k;r.cur.z+=(r.tgt.z-r.cur.z)*k;let d=r.tgt.psi-r.cur.psi;d=Math.atan2(Math.sin(d),Math.cos(d));r.cur.psi+=d*k;
-  const rk=C.length?nearest(r.cur.x,r.cur.z,false,true):0,ry=(H&&H.length)?H[rk]:0;
-  r.mesh.position.set(r.cur.x,ry,r.cur.z);r.mesh.rotation.y=r.cur.psi;}}
+  const stR=C.length?sampleTrack(r.cur.x,r.cur.z,true,r.cur.idx):{k:0,y:0,slope:0,tPsi:r.cur.psi};
+  r.cur.idx=stR.k;
+  const tPitch=-Math.atan(stR.slope*Math.cos(r.cur.psi-stR.tPsi));
+  r.cur.pitch=(r.cur.pitch||0)+(tPitch-(r.cur.pitch||0))*Math.min(1,dt*12);
+  r.mesh.position.set(r.cur.x,stR.y,r.cur.z);r.mesh.rotation.order='YXZ';r.mesh.rotation.y=r.cur.psi;r.mesh.rotation.x=r.cur.pitch;}}
 let lbData=[],lbDocCache={};
 const lbTop5=a=>{
   const byId=new Map();
@@ -5246,8 +5312,8 @@ let lampTick=0,lastMiniT=0;
 function updateLights(t){
   if(window.tunL&&window.tunnel&&race.me){const tz=window.tunnel,kP=Math.round((((race.me.s%LAP)+LAP)%LAP)/DS)%N,span=((tz.kE-tz.kS)%N+N)%N,d=((kP-tz.kS)%N+N)%N,inside=d<=span+2;
     window.tunL.forEach((l,i)=>{const k=(kP+(i-1)*5+N)%N;l.position.set(C[k].x,C[k].y+6.4,C[k].z);l.intensity=inside?85:0;});}
-  const sd=sunDir;fill.position.set(P.x-sd.x*40,30,P.z-sd.z*40);fill.target.position.set(P.x,0,P.z);
-  carFill.position.set(P.x,6,P.z);
+  const sd=sunDir;fill.position.set(P.x-sd.x*40,P.y+30,P.z-sd.z*40);fill.target.position.set(P.x,P.y,P.z);
+  carFill.position.set(P.x,P.y+6,P.z);
   if(!window.lampI||!window.lampPos){return;}
   if(++lampTick%8)return;
   const L=window.lampPos,near=[];for(let i=0;i<L.length;i++){const dx=L[i][0]-P.x,dz=L[i][2]-P.z;near.push([dx*dx+dz*dz,i]);}
