@@ -1,4 +1,4 @@
-const CACHE = "project23-v2";
+const CACHE = "project23-v3";
 const SHELL = [
   "./",
   "index.html",
@@ -60,11 +60,13 @@ async function readSwState() {
     return await new Promise(resolve => {
       const tx = db.transaction(SW_STORE_NAME, "readonly");
       const req = tx.objectStore(SW_STORE_NAME).get(SW_STATE_KEY);
-      req.onsuccess = () => resolve(req.result || { notifyOn: false, schedule: [], fired: {} });
-      req.onerror = () => resolve({ notifyOn: false, schedule: [], fired: {} });
+      req.onsuccess = () =>
+        resolve(req.result || { notifyOn: false, schedule: [], fired: {}, pendingLog: [], webPushActive: false });
+      req.onerror = () =>
+        resolve({ notifyOn: false, schedule: [], fired: {}, pendingLog: [], webPushActive: false });
     });
   } catch {
-    return { notifyOn: false, schedule: [], fired: {} };
+    return { notifyOn: false, schedule: [], fired: {}, pendingLog: [], webPushActive: false };
   }
 }
 
@@ -82,26 +84,11 @@ async function writeSwState(stateObj) {
 
 let swWakeTimer = null;
 
-async function scheduleTriggerNotifications(stateObj) {
-  if (!stateObj || !stateObj.notifyOn || !Array.isArray(stateObj.schedule)) return;
-  if (!("showTrigger" in Notification.prototype) || typeof self.TimestampTrigger !== "function") return;
-  const now = Date.now();
-  const fired = stateObj.fired || {};
-  for (const item of stateObj.schedule) {
-    if (!item || !item.key || fired[item.key]) continue;
-    if (item.fireAt > now && item.fireAt - now <= 7 * 86400000) {
-      try {
-        await self.registration.showNotification(item.title, {
-          body: item.body || "",
-          tag: item.key,
-          icon: "assets/icon.png",
-          badge: "assets/icon.png",
-          showTrigger: new self.TimestampTrigger(item.fireAt),
-          data: { url: item.url || "./index.html", key: item.key }
-        });
-      } catch {}
-    }
-  }
+async function notifyClientsOfFired(fired, newlyFired) {
+  try {
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    clients.forEach(c => c.postMessage({ type: "P23_SW_FIRED_SYNC", fired, newlyFired }));
+  } catch {}
 }
 
 async function checkAndFireSwNotifications() {
@@ -110,10 +97,12 @@ async function checkAndFireSwNotifications() {
 
   const stateObj = await readSwState();
   if (!stateObj || !stateObj.notifyOn || !Array.isArray(stateObj.schedule)) return;
+  if (stateObj.webPushActive) return;
 
   const now = Date.now();
   const WINDOW = 60 * 60000;
   const fired = Object.assign({}, stateObj.fired || {});
+  const pendingLog = Array.isArray(stateObj.pendingLog) ? stateObj.pendingLog.slice() : [];
   let dirty = false;
   const newlyFired = [];
 
@@ -133,6 +122,7 @@ async function checkAndFireSwNotifications() {
         fired[item.key] = now;
         dirty = true;
         newlyFired.push(item);
+        pendingLog.push({ title: item.title, body: item.body || "", key: item.key, url: item.url || "./index.html", ts: now });
         try {
           await self.registration.showNotification(item.title, {
             body: item.body || "",
@@ -158,11 +148,9 @@ async function checkAndFireSwNotifications() {
 
   if (dirty) {
     stateObj.fired = fired;
+    stateObj.pendingLog = pendingLog.slice(-40);
     await writeSwState(stateObj);
-    try {
-      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      clients.forEach(c => c.postMessage({ type: "P23_SW_FIRED_SYNC", fired, newlyFired }));
-    } catch {}
+    await notifyClientsOfFired(fired, newlyFired);
   }
 
   if (Number.isFinite(nextUpcomingDelay) && nextUpcomingDelay > 0 && nextUpcomingDelay <= 30 * 60000) {
@@ -194,7 +182,6 @@ self.addEventListener("activate", e => {
         clients.forEach(client => {
           client.postMessage({ type: "SW_UPDATED", version: CACHE });
         });
-        await checkAndFireSwNotifications();
       })
   );
 });
@@ -207,14 +194,17 @@ self.addEventListener("message", e => {
       (async () => {
         const prev = await readSwState();
         const mergedFired = Object.assign({}, prev.fired || {}, data.fired || {});
+        const pendingLog = Array.isArray(prev.pendingLog) ? prev.pendingLog : [];
         const nextState = {
           notifyOn: Boolean(data.notifyOn),
+          webPushActive: Boolean(data.webPushActive),
           schedule: Array.isArray(data.schedule) ? data.schedule : [],
           fired: mergedFired,
+          pendingLog: [],
           updatedAt: Date.now()
         };
         await writeSwState(nextState);
-        await scheduleTriggerNotifications(nextState);
+        await notifyClientsOfFired(mergedFired, pendingLog);
         await checkAndFireSwNotifications();
       })()
     );
@@ -247,16 +237,48 @@ self.addEventListener("push", e => {
           if (txt) payload = { title: "Project 23", body: txt };
         }
       }
-      if (payload && payload.title) {
+      if (!payload || !payload.title) return;
+
+      const tag = payload.tag || "p23-push-" + Date.now();
+      const now = Date.now();
+      const stateObj = await readSwState();
+      const fired = Object.assign({}, stateObj.fired || {});
+
+      if (fired[tag]) return;
+
+      fired[tag] = now;
+      stateObj.fired = fired;
+      stateObj.webPushActive = true;
+      const itemLog = {
+        title: payload.title,
+        body: payload.body || "",
+        key: tag,
+        url: payload.url || "./index.html",
+        ts: now
+      };
+      const pendingLog = Array.isArray(stateObj.pendingLog) ? stateObj.pendingLog.slice() : [];
+      pendingLog.push(itemLog);
+      stateObj.pendingLog = pendingLog.slice(-40);
+      await writeSwState(stateObj);
+
+      await notifyClientsOfFired(fired, [itemLog]);
+
+      let hasFocusedClient = false;
+      try {
+        const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        hasFocusedClient = clients.some(c => c.focused || c.visibilityState === "visible");
+      } catch {}
+
+      if (!hasFocusedClient) {
         await self.registration.showNotification(payload.title, {
           body: payload.body || "",
-          tag: payload.tag || "p23-push-" + Date.now(),
+          tag,
           icon: "assets/icon.png",
           badge: "assets/icon.png",
-          data: { url: payload.url || "./index.html" }
+          renotify: false,
+          data: { url: payload.url || "./index.html", key: tag }
         });
       }
-      await checkAndFireSwNotifications();
     })()
   );
 });
