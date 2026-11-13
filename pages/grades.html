@@ -1591,7 +1591,7 @@
 
 <script>
 DB.whenReady(() => {
-  const GR_KEY = "p23.grades.v2";
+  const GR_KEY = "p23.grades";
   const $ = id => document.getElementById(id);
 
   const COURSE_COLORS = [
@@ -1819,7 +1819,7 @@ DB.whenReady(() => {
   }
 
   async function initDirectFirestoreSync() {
-    const localStored = DB.get(GR_KEY, null);
+    const localStored = DB.get(GR_KEY, null) || DB.get("p23.grades.v2", null);
     if (localStored) normalizeIncoming(localStored);
 
     const userRef = getUserDocRef();
@@ -1827,20 +1827,36 @@ DB.whenReady(() => {
     directFirestoreBound = true;
 
     try {
-      const [stateSnap, userDocSnap] = await Promise.all([
+      const [gradesSnap, v2Snap, V2Snap, userDocSnap] = await Promise.all([
+        userRef.collection("state").doc("grades").get().catch(() => null),
         userRef.collection("state").doc("grades_v2").get().catch(() => null),
+        userRef.collection("state").doc("grades_V2").get().catch(() => null),
         userRef.get().catch(() => null)
       ]);
       const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
-      const remote = (stateSnap && stateSnap.exists && stateSnap.data()) ? stateSnap.data() : userData.gradesDataV2;
+      const gData = (gradesSnap && gradesSnap.exists) ? gradesSnap.data() : null;
+      const v2Data = (v2Snap && v2Snap.exists) ? v2Snap.data() : ((V2Snap && V2Snap.exists) ? V2Snap.data() : null);
+      const hasCourses = d => d && Array.isArray(d.courses) && d.courses.length > 0;
+      const remote = hasCourses(gData) ? gData : (hasCourses(v2Data) ? v2Data : (hasCourses(userData.gradesDataV2) ? userData.gradesDataV2 : (gData || v2Data || userData.gradesDataV2)));
       if (remote) normalizeIncoming(remote);
 
-      DB.set(GR_KEY, {
+      const cleanPayload = {
         courses: cloudData.courses,
-        activeCourseId: state.activeCourseId
-      });
+        activeCourseId: state.activeCourseId,
+        updatedAt: Date.now()
+      };
+      DB.set(GR_KEY, cleanPayload);
 
-      userRef.collection("state").doc("grades_v2").onSnapshot(docSnap => {
+      if ((!hasCourses(gData) && hasCourses(remote)) || v2Data || userData.gradesDataV2 !== undefined) {
+        await userRef.collection("state").doc("grades").set(cleanPayload).catch(() => {});
+        if (v2Snap && v2Snap.exists) userRef.collection("state").doc("grades_v2").delete().catch(() => {});
+        if (V2Snap && V2Snap.exists) userRef.collection("state").doc("grades_V2").delete().catch(() => {});
+        if (userData.gradesDataV2 !== undefined) {
+          userRef.update({ gradesDataV2: firebase.firestore.FieldValue.delete() }).catch(() => {});
+        }
+      }
+
+      userRef.collection("state").doc("grades").onSnapshot(docSnap => {
         if (state.syncInFlight) return;
         if (docSnap && docSnap.exists && docSnap.data()) {
           const incoming = docSnap.data();
@@ -1875,10 +1891,7 @@ DB.whenReady(() => {
       if (userRef) {
         state.syncInFlight = true;
         try {
-          await Promise.all([
-            userRef.collection("state").doc("grades_v2").set(payload).catch(() => {}),
-            userRef.set({ gradesDataV2: payload }, { merge: true }).catch(() => {})
-          ]);
+          await userRef.collection("state").doc("grades").set(payload).catch(() => {});
         } catch {}
         state.syncInFlight = false;
       }
