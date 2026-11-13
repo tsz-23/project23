@@ -1,4 +1,4 @@
-const CACHE = "project23-v1";
+const CACHE = "project23-v2";
 const SHELL = [
   "./",
   "index.html",
@@ -36,6 +36,142 @@ const SHELL = [
   "pages/projectWeb.html"
 ];
 
+const SW_DB_NAME = "p23-bg-notif-db";
+const SW_STORE_NAME = "state";
+const SW_STATE_KEY = "notifState";
+
+function openSwDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(SW_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(SW_STORE_NAME)) {
+        db.createObjectStore(SW_STORE_NAME);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function readSwState() {
+  try {
+    const db = await openSwDb();
+    return await new Promise(resolve => {
+      const tx = db.transaction(SW_STORE_NAME, "readonly");
+      const req = tx.objectStore(SW_STORE_NAME).get(SW_STATE_KEY);
+      req.onsuccess = () => resolve(req.result || { notifyOn: false, schedule: [], fired: {} });
+      req.onerror = () => resolve({ notifyOn: false, schedule: [], fired: {} });
+    });
+  } catch {
+    return { notifyOn: false, schedule: [], fired: {} };
+  }
+}
+
+async function writeSwState(stateObj) {
+  try {
+    const db = await openSwDb();
+    await new Promise(resolve => {
+      const tx = db.transaction(SW_STORE_NAME, "readwrite");
+      tx.objectStore(SW_STORE_NAME).put(stateObj, SW_STATE_KEY);
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = () => resolve(false);
+    });
+  } catch {}
+}
+
+let swWakeTimer = null;
+
+async function scheduleTriggerNotifications(stateObj) {
+  if (!stateObj || !stateObj.notifyOn || !Array.isArray(stateObj.schedule)) return;
+  if (!("showTrigger" in Notification.prototype) || typeof self.TimestampTrigger !== "function") return;
+  const now = Date.now();
+  const fired = stateObj.fired || {};
+  for (const item of stateObj.schedule) {
+    if (!item || !item.key || fired[item.key]) continue;
+    if (item.fireAt > now && item.fireAt - now <= 7 * 86400000) {
+      try {
+        await self.registration.showNotification(item.title, {
+          body: item.body || "",
+          tag: item.key,
+          icon: "assets/icon.png",
+          badge: "assets/icon.png",
+          showTrigger: new self.TimestampTrigger(item.fireAt),
+          data: { url: item.url || "./index.html", key: item.key }
+        });
+      } catch {}
+    }
+  }
+}
+
+async function checkAndFireSwNotifications() {
+  clearTimeout(swWakeTimer);
+  swWakeTimer = null;
+
+  const stateObj = await readSwState();
+  if (!stateObj || !stateObj.notifyOn || !Array.isArray(stateObj.schedule)) return;
+
+  const now = Date.now();
+  const WINDOW = 60 * 60000;
+  const fired = Object.assign({}, stateObj.fired || {});
+  let dirty = false;
+  const newlyFired = [];
+
+  let hasFocusedClient = false;
+  try {
+    const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    hasFocusedClient = clients.some(c => c.focused || c.visibilityState === "visible");
+  } catch {}
+
+  let nextUpcomingDelay = Infinity;
+
+  for (const item of stateObj.schedule) {
+    if (!item || !item.key || fired[item.key]) continue;
+    const diff = item.fireAt - now;
+    if (diff <= 0 && now - item.fireAt < WINDOW) {
+      if (!hasFocusedClient) {
+        fired[item.key] = now;
+        dirty = true;
+        newlyFired.push(item);
+        try {
+          await self.registration.showNotification(item.title, {
+            body: item.body || "",
+            tag: item.key,
+            icon: "assets/icon.png",
+            badge: "assets/icon.png",
+            renotify: false,
+            data: { url: item.url || "./index.html", key: item.key }
+          });
+        } catch {}
+      }
+    } else if (diff > 0 && diff < nextUpcomingDelay) {
+      nextUpcomingDelay = diff;
+    }
+  }
+
+  for (const k in fired) {
+    if (now - fired[k] > 7 * 86400000) {
+      delete fired[k];
+      dirty = true;
+    }
+  }
+
+  if (dirty) {
+    stateObj.fired = fired;
+    await writeSwState(stateObj);
+    try {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      clients.forEach(c => c.postMessage({ type: "P23_SW_FIRED_SYNC", fired, newlyFired }));
+    } catch {}
+  }
+
+  if (Number.isFinite(nextUpcomingDelay) && nextUpcomingDelay > 0 && nextUpcomingDelay <= 30 * 60000) {
+    swWakeTimer = setTimeout(() => {
+      checkAndFireSwNotifications();
+    }, Math.min(nextUpcomingDelay + 250, 5 * 60000));
+  }
+}
+
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE)
@@ -50,30 +186,121 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil(
-    caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys()
+      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
-      .then(() => {
-        return self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(clients => {
-          clients.forEach(client => {
-            client.postMessage({ type: "SW_UPDATED", version: CACHE });
-          });
+      .then(async () => {
+        const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+        clients.forEach(client => {
+          client.postMessage({ type: "SW_UPDATED", version: CACHE });
         });
+        await checkAndFireSwNotifications();
       })
+  );
+});
+
+self.addEventListener("message", e => {
+  const data = e.data;
+  if (!data || typeof data !== "object") return;
+  if (data.type === "P23_SYNC_SCHEDULE") {
+    e.waitUntil(
+      (async () => {
+        const prev = await readSwState();
+        const mergedFired = Object.assign({}, prev.fired || {}, data.fired || {});
+        const nextState = {
+          notifyOn: Boolean(data.notifyOn),
+          schedule: Array.isArray(data.schedule) ? data.schedule : [],
+          fired: mergedFired,
+          updatedAt: Date.now()
+        };
+        await writeSwState(nextState);
+        await scheduleTriggerNotifications(nextState);
+        await checkAndFireSwNotifications();
+      })()
+    );
+  } else if (data.type === "P23_CHECK_NOW") {
+    e.waitUntil(checkAndFireSwNotifications());
+  }
+});
+
+self.addEventListener("periodicsync", e => {
+  if (e.tag === "p23-notif-check") {
+    e.waitUntil(checkAndFireSwNotifications());
+  }
+});
+
+self.addEventListener("sync", e => {
+  if (e.tag === "p23-notif-check") {
+    e.waitUntil(checkAndFireSwNotifications());
+  }
+});
+
+self.addEventListener("push", e => {
+  e.waitUntil(
+    (async () => {
+      let payload = null;
+      if (e.data) {
+        try {
+          payload = e.data.json();
+        } catch {
+          const txt = e.data.text();
+          if (txt) payload = { title: "Project 23", body: txt };
+        }
+      }
+      if (payload && payload.title) {
+        await self.registration.showNotification(payload.title, {
+          body: payload.body || "",
+          tag: payload.tag || "p23-push-" + Date.now(),
+          icon: "assets/icon.png",
+          badge: "assets/icon.png",
+          data: { url: payload.url || "./index.html" }
+        });
+      }
+      await checkAndFireSwNotifications();
+    })()
   );
 });
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const u = new URL(e.request.url);
-  if (u.origin !== location.origin || u.pathname.startsWith("/__/auth/")) return;
+  if (
+    u.origin !== location.origin ||
+    u.pathname.startsWith("/__/auth/") ||
+    u.searchParams.has("apiKey") ||
+    u.searchParams.has("code") ||
+    u.searchParams.has("state")
+  ) {
+    return;
+  }
+
+  const isNavigation = e.request.mode === "navigate" || (e.request.headers.get("accept") || "").includes("text/html");
+
+  if (isNavigation) {
+    e.respondWith(
+      fetch(e.request)
+        .then(r => {
+          if (r && r.ok) {
+            const copy = r.clone();
+            caches.open(CACHE).then(c => c.put(e.request, copy));
+          }
+          return r;
+        })
+        .catch(() => caches.match(e.request, { ignoreSearch: true }).then(m => m || caches.match("./index.html")))
+    );
+    return;
+  }
+
   e.respondWith(
     fetch(e.request)
       .then(r => {
-        const copy = r.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
+        if (r && r.ok) {
+          const copy = r.clone();
+          caches.open(CACHE).then(c => c.put(e.request, copy));
+        }
         return r;
       })
-      .catch(() => caches.match(e.request).then(m => m || caches.match("./index.html")))
+      .catch(() => caches.match(e.request, { ignoreSearch: true }))
   );
 });
 
