@@ -2207,7 +2207,6 @@
             Search Songs &amp; Press to Vinyl
           </b>
           <div class="vn-wax-picker" id="vnWaxPicker" aria-label="Choose Vinyl Wax Edition">
-            <span class="vn-wax-lbl">Vinyl Wax:</span>
             <button type="button" class="vn-wax-chip active" data-wax="obsidian" style="--wax-bg:radial-gradient(circle,#2a2b36,#0c0d12)">
               <i class="vn-wax-dot"></i><span>Obsidian Black</span>
             </button>
@@ -3062,7 +3061,6 @@ DB.whenReady(() => {
       const baseTitle = String(vinylObj.title || "").trim();
       const baseArtist = String(vinylObj.artist || "").trim();
       const expDur = Math.round((Number(vinylObj.durationMs) || 210000) / 1000);
-
       const [catalogHits, fastDirectUrl] = await Promise.all([
         searchFullAudioCatalog(`${baseTitle} ${baseArtist}`.trim()),
         resolveFastSaavnDirect(baseTitle, baseArtist)
@@ -3344,13 +3342,10 @@ DB.whenReady(() => {
       state.syncInFlight = true;
       try {
         const cleanFolders = JSON.parse(JSON.stringify(localFoldersCache));
-        await Promise.all([
-          userRef.collection("state").doc("vinyl").set({
-            folders: cleanFolders,
-            updatedAt: Date.now()
-          }, { merge: true }).catch(() => {}),
-          userRef.set({ vinylFolders: cleanFolders }, { merge: true }).catch(() => {})
-        ]);
+        await userRef.collection("state").doc("vinyl").set({
+          folders: cleanFolders,
+          updatedAt: Date.now()
+        }, { merge: true }).catch(() => {});
       } catch {}
       state.syncInFlight = false;
     }
@@ -3390,7 +3385,7 @@ DB.whenReady(() => {
     node.innerHTML = `
       <h2>${existingFolder ? "Rename Folder / Playlist" : "New Vinyl Folder / Playlist"}</h2>
       <p class="muted" style="margin-top:-.35rem;margin-bottom:.8rem;font-size:.82rem;">
-        Group your vinyl records into custom crates or playlists (e.g. Late Night Lo-Fi, K-Pop Favorites, Study Session).
+        Group your vinyl records into custom crates or playlists
       </p>
       <div class="field">
         <label for="vnFolderNameInp">Folder / Playlist Name</label>
@@ -3672,6 +3667,7 @@ DB.whenReady(() => {
     }
 
     let plainLines = rawLines.map(l => cleanLyricTextLine(l.trim(), songHasNativeScript)).filter(Boolean);
+
     if (songHasNativeScript && plainLines.length >= 8) {
       const nativeLineCount = plainLines.filter(l => countNativeScriptChars(l) > 0).length;
       if (nativeLineCount >= Math.floor(plainLines.length * 0.35)) {
@@ -4016,12 +4012,20 @@ DB.whenReady(() => {
       if (!localFoldersCache && Array.isArray(userData.vinylFolders) && userData.vinylFolders.length) {
         localFoldersCache = userData.vinylFolders;
         try { localStorage.setItem(VN_FOLDERS_KEY, JSON.stringify(userData.vinylFolders)); } catch {}
+        await userRef.collection("state").doc("vinyl").set({ folders: userData.vinylFolders }, { merge: true }).catch(() => {});
       }
       if (!cloudList && colSnap && colSnap.docs && colSnap.docs.length) {
         cloudList = colSnap.docs.map(d => d.data());
       }
       if (!cloudList && Array.isArray(userData.vinylShelf) && userData.vinylShelf.length) {
         cloudList = userData.vinylShelf;
+        await userRef.collection("state").doc("vinyl").set({ items: userData.vinylShelf }, { merge: true }).catch(() => {});
+      }
+      if (userData.vinylFolders !== undefined || userData.vinylShelf !== undefined) {
+        userRef.update({
+          vinylFolders: firebase.firestore.FieldValue.delete(),
+          vinylShelf: firebase.firestore.FieldValue.delete()
+        }).catch(() => {});
       }
 
       if (Array.isArray(cloudList) && cloudList.length) {
@@ -4070,14 +4074,12 @@ DB.whenReady(() => {
       state.syncInFlight = true;
       try {
         const cleanList = JSON.parse(JSON.stringify(localVinylCache));
-        await Promise.all([
-          userRef.collection("state").doc("vinyl").set({
-            items: cleanList,
-            shelfFinish: state.shelfFinish,
-            updatedAt: Date.now()
-          }).catch(() => {}),
-          userRef.set({ vinylShelf: cleanList }, { merge: true }).catch(() => {})
-        ]);
+        await userRef.collection("state").doc("vinyl").set({
+          items: cleanList,
+          folders: Array.isArray(localFoldersCache) ? JSON.parse(JSON.stringify(localFoldersCache)) : [],
+          shelfFinish: state.shelfFinish,
+          updatedAt: Date.now()
+        }, { merge: true }).catch(() => {});
       } catch {}
       state.syncInFlight = false;
     }
@@ -4325,7 +4327,6 @@ DB.whenReady(() => {
     const favCount = list.filter(x => x.favorite).length;
     const folders = loadFolders();
     const pillsEl = $("vnShelfPills");
-
     if (state.openFolderId && !folders.some(f => f.id === state.openFolderId)) {
       state.openFolderId = null;
     }
@@ -4494,7 +4495,6 @@ DB.whenReady(() => {
 
     const q = state.searchShelfQuery.toLowerCase();
     const validFolderIds = new Set(folders.map(f => f.id));
-
     const visibleFolders = (state.shelfFilter === "all" && !activeFolder)
       ? folders.filter(f => {
           if (!q) return true;
@@ -4502,6 +4502,7 @@ DB.whenReady(() => {
           return list.some(v => isVinylInFolder(v, f.id) && `${v.title || ""} ${v.artist || ""}`.toLowerCase().includes(q));
         })
       : [];
+
     const filteredRecords = list.filter(v => {
       if (activeFolder) {
         if (!isVinylInFolder(v, activeFolder.id)) return false;
@@ -4768,14 +4769,12 @@ DB.whenReady(() => {
         if (userRef) {
           state.syncInFlight = true;
           const cleanList = JSON.parse(JSON.stringify(localVinylCache));
-          Promise.all([
-            userRef.collection("state").doc("vinyl").set({
-              items: cleanList,
-              shelfFinish: state.shelfFinish,
-              updatedAt: Date.now()
-            }).catch(() => {}),
-            userRef.set({ vinylShelf: cleanList }, { merge: true }).catch(() => {})
-          ]).finally(() => {
+          userRef.collection("state").doc("vinyl").set({
+            items: cleanList,
+            folders: Array.isArray(localFoldersCache) ? JSON.parse(JSON.stringify(localFoldersCache)) : [],
+            shelfFinish: state.shelfFinish,
+            updatedAt: Date.now()
+          }, { merge: true }).catch(() => {}).finally(() => {
             state.syncInFlight = false;
           });
         }
