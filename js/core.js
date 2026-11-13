@@ -60,7 +60,6 @@ const dbg = (...a)=>{ if(DEBUG) console.warn("[P23]",...a); };
 const $ = (s,r=document)=>r.querySelector(s);
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/* Cloud & Local Storage */
 const CLOUD = {
   "p23.events":       { kind:"col", name:"events"  },
   "p23.todos":        { kind:"col", name:"todos"   },
@@ -108,7 +107,6 @@ DB.del = k=>DB.set(k, CLOUD[k] && CLOUD[k].kind==="col" ? [] : null);
 DB.uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 DB.esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-/* Theme, Settings State & Helpers */
 const DEFAULTS = { theme:"space", notifyOn:false, notifyEvents:true, notifyTodos:true, notifyCountdowns:true, notifyFlight:true, notifStyle:"glass", sound:true, notifSound:true, volume:.6, lite:false, pinD:null, pinP:null, pageOrder:null };
 DB.settings = Object.assign({}, DEFAULTS, DB.get("p23.settings", {}));
 function syncPageOrder(){
@@ -173,7 +171,6 @@ DB.toInputTime = ms=>{ const d=new Date(ms); return String(d.getHours()).padStar
 DB.fromInputs = (date,time)=>{ const [y,m,d]=date.split("-").map(Number); const [h,mi]=(time||"00:00").split(":").map(Number); return new Date(y,m-1,d,h,mi).getTime(); };
 DB.fmtTime = ms=>new Date(ms).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});
 
-/* Calendar ICS & Recurrence Engine */
 const unfold = t=>t.replace(/\r\n/g,"\n").replace(/\n[ \t]/g,"");
 DB.unescapeText = s=>s.replace(/\\n/gi,"\n").replace(/\\,/g,",").replace(/\\;/g,";").replace(/\\\\/g,"\\");
 function parseICSDate(value, params){
@@ -279,7 +276,6 @@ DB.loadEvents = ()=>{
   return list;
 };
 
-/* Icons & Wordmark */
 const IC = {
   bell:'<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>',
   pin:'<path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
@@ -379,7 +375,6 @@ DB.wordmark = ()=>{
   return `<span class="wm" role="img" aria-label="Project 23"><span class="wm-w" aria-hidden="true">${L("Project")}</span><span class="wm-d" aria-hidden="true">${dg(2,0)}${dg(3,1)}</span></span>`;
 };
 
-/* Page Switch & Refresh Animation */
 let stageEl=null;
 const stageAt=Date.now();
 try{ sessionStorage.removeItem("p23.wipe"); }catch{}
@@ -500,7 +495,6 @@ addEventListener("pageshow",e=>{
   if(e.persisted) document.querySelectorAll(".p23stage").forEach(x=>x.remove());
 });
 
-/* Modals & Custom Select */
 DB.modal = function(node, onClose){
   const ov = document.createElement("div"); ov.className="overlay";
   const box = document.createElement("div"); box.className="modal"; box.setAttribute("role","dialog"); box.setAttribute("aria-modal","true");
@@ -568,7 +562,6 @@ DB.enhanceSelect = function(sel){
   sel._cs={refresh,close}; refresh(); return sel._cs;
 };
 
-/* Firebase Auth & Cloud Sync */
 let fdb=null, auth=null, baseRef=null, uid=null;
 DB.user = null; DB.profile = null; DB.syncState = "off";
 let resolveReady; DB.ready = new Promise(r=>resolveReady=r);
@@ -732,7 +725,6 @@ async function startGoogle(code, forceRedirect=false){
 
   let fallbackTimer = null;
   try{
-    // Call signInWithPopup synchronously in the tap gesture before replacing DOM so iOS Home Screen PWA allows the auth sheet
     const popPromise = auth.signInWithPopup(prov);
     gate("loading",{text:"Opening Google…", showRedirectFallback: true});
     fallbackTimer = setTimeout(()=>{
@@ -815,7 +807,6 @@ async function loadAll(user){
     }
   }catch{}
 
-  // Pre-populate DB.profile immediately so the user is never blocked or logged out if Firestore is slow on Home Screen launch
   DB.profile = {
     uid,
     email: user.email || (cachedProf && cachedProf.email) || "",
@@ -830,10 +821,8 @@ async function loadAll(user){
 
   if(snap && snap.exists){
     prof = snap.data() || {};
-    // Non-blocking lastLoginAt update so offline/slow network never hangs sign-in!
     baseRef.set(base,{merge:true}).catch(()=>{});
   } else if(snap && !snap.exists && !cachedProf){
-    // Only prompt for invite password if Firestore explicitly confirmed doc does not exist AND no cached profile exists on this device
     prof = await createAccount(user,base);
   } else {
     prof = cachedProf || { username: DB.profile.username };
@@ -849,6 +838,10 @@ async function loadAll(user){
     localStorage.setItem(CACHED_USER_KEY, JSON.stringify(DB.profile));
   }catch{}
 
+  if(prof && prof.pushSent && typeof prof.pushSent === "object"){
+    const mergedFired = Object.assign({}, DB.get("p23.fired", {}), prof.pushSent);
+    try{ localStorage.setItem("p23.fired", JSON.stringify(mergedFired)); }catch{}
+  }
   if(prof && prof.settings){
     DB.settings=Object.assign({},DEFAULTS,prof.settings);
     DB.set("p23.settings",DB.settings);
@@ -955,6 +948,19 @@ async function loadAll(user){
   document.dispatchEvent(new CustomEvent("p23vault"));
   if(!baseRef._liveAttached){
     baseRef._liveAttached = true;
+    baseRef.onSnapshot(docSnap=>{
+      const d = docSnap && docSnap.exists ? docSnap.data() : null;
+      if(d && d.pushSent && typeof d.pushSent === "object"){
+        const cur = DB.get("p23.fired", {});
+        let changed = false;
+        for(const k of Object.keys(d.pushSent)){
+          if(!cur[k]){ cur[k] = d.pushSent[k]; changed = true; }
+        }
+        if(changed){
+          try{ localStorage.setItem("p23.fired", JSON.stringify(cur)); }catch{}
+        }
+      }
+    }, ()=>{});
     baseRef.collection("vault").onSnapshot(snap=>{
       if(pending.has("p23.vault") || inflight>0) return;
       const arr = snap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
@@ -1018,7 +1024,6 @@ async function handleAuth(user){
       try{ await auth.signOut(); }catch{}
       cancelAuth(); finishReady(); return;
     }
-    // For any temporary network or Firestore error on Home Screen startup, keep the user signed in with local cache!
     dbg("Auth data load warning (continuing with local cache):", e);
     uid = user.uid;
     DB.user = user;
@@ -1045,7 +1050,6 @@ function initFirebase(){
     if(firebase.auth.Auth && firebase.auth.Auth.Persistence && firebase.auth.Auth.Persistence.LOCAL){
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
     }
-    // Do NOT call fdb.enablePersistence({synchronizeTabs:true}) on iOS/Standalone PWA as WebKit IndexedDB locks across page navigations and stalls Auth/Firestore
     if(!isIOS && !isStandalone){
       fdb.enablePersistence({synchronizeTabs:true}).catch(()=>{});
     }
@@ -1071,7 +1075,6 @@ function initFirebase(){
       clearTimeout(initialAuthTimer);
       handleAuth(res.user);
     } else if(!auth.currentUser && !uid){
-      // Let onAuthStateChanged resolve stored IndexedDB/localStorage session
     }
   }).catch(e=>{
     redirectChecking = false;
@@ -1103,7 +1106,6 @@ DB.loadProjectAssets = async function(){
   return null;
 };
 
-/* Audio & Chimes */
 let actx=null, userInteracted=false;
 function audioCtx(){ if(actx) return actx; const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null; try{ actx=new AC(); }catch{} return actx; }
 function unlockAudio(){
@@ -1147,7 +1149,6 @@ DB.chime = function(force){
 };
 const audioChanged = ()=>document.dispatchEvent(new CustomEvent("p23audio"));
 
-/* Notifications & Bell Panel */
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 const isStandalone = window.navigator.standalone===true || matchMedia("(display-mode: standalone)").matches;
 let swReg=null, bellBtn=null, panel=null;
@@ -1222,7 +1223,6 @@ function computeUpcomingSchedule(){
   return schedule.slice(0, 120);
 }
 
-// Paste your VAPID Public Key here (or set window.P23_VAPID_PUBLIC_KEY in firebase-config.js)
 const P23_VAPID_PUBLIC_KEY = window.P23_VAPID_PUBLIC_KEY || "BCarY0wiguPHp8SkHaYQAtiXktOrKOs4j8FlMBHxdwXCEcLwS3XTHmnqFP-ajKamovji8VmvS8cCiacIMGSQm08";
 
 function urlBase64ToUint8Array(base64String){
@@ -1243,7 +1243,54 @@ function getPushDeviceId(){
   return id;
 }
 
-let pushSyncTimer = null;
+async function pullSwFiredState(){
+  if(!("indexedDB" in window)) return;
+  try{
+    const db = await new Promise((resolve, reject)=>{
+      const req = indexedDB.open("p23-bg-notif-db", 1);
+      req.onupgradeneeded = ()=>{
+        const d = req.result;
+        if(!d.objectStoreNames.contains("state")) d.createObjectStore("state");
+      };
+      req.onsuccess = ()=>resolve(req.result);
+      req.onerror = ()=>reject(req.error);
+    });
+    const stateObj = await new Promise(resolve=>{
+      const tx = db.transaction("state", "readonly");
+      const req = tx.objectStore("state").get("notifState");
+      req.onsuccess = ()=>resolve(req.result || null);
+      req.onerror = ()=>resolve(null);
+    });
+    if(!stateObj) return;
+    if(stateObj.fired && typeof stateObj.fired === "object"){
+      const cur = DB.get("p23.fired", {});
+      let changed = false;
+      for(const k of Object.keys(stateObj.fired)){
+        if(!cur[k]){ cur[k] = stateObj.fired[k]; changed = true; }
+      }
+      if(changed){
+        try{ localStorage.setItem("p23.fired", JSON.stringify(cur)); }catch{}
+      }
+    }
+    if(Array.isArray(stateObj.pendingLog) && stateObj.pendingLog.length){
+      const existingKeys = new Set(nlog().map(x=>x.tag));
+      stateObj.pendingLog.forEach(item=>{
+        if(item && item.title && (!item.key || !existingKeys.has(item.key))){
+          addLog(item.title, item.body, item.key, item.url);
+        }
+      });
+      stateObj.pendingLog = [];
+      await new Promise(resolve=>{
+        const tx = db.transaction("state", "readwrite");
+        tx.objectStore("state").put(stateObj, "notifState");
+        tx.oncomplete = ()=>resolve(true);
+        tx.onerror = ()=>resolve(false);
+      });
+    }
+  }catch(e){ dbg("pullSwFiredState", e); }
+}
+
+let pushSyncTimer = null, hasActiveWebPush = false;
 async function syncPushToFirestore(reg, schedule){
   if(!uid || !baseRef) return;
   clearTimeout(pushSyncTimer);
@@ -1251,6 +1298,7 @@ async function syncPushToFirestore(reg, schedule){
     try{
       const update = {
         pushSchedule: DB.settings.notifyOn ? schedule : [],
+        pushSent: DB.get("p23.fired", {}),
         pushUpdatedAt: Date.now()
       };
       const vapid = (window.P23_VAPID_PUBLIC_KEY || P23_VAPID_PUBLIC_KEY || "").trim();
@@ -1265,6 +1313,7 @@ async function syncPushToFirestore(reg, schedule){
             });
           }
           if(sub){
+            hasActiveWebPush = true;
             const devId = getPushDeviceId();
             update.pushDevices = {
               [devId]: {
@@ -1284,12 +1333,15 @@ async function syncPushToFirestore(reg, schedule){
 
 async function syncScheduleToSW(){
   try{
+    await pullSwFiredState();
     const reg = await registerSW();
     const schedule = computeUpcomingSchedule();
+    const vapid = (window.P23_VAPID_PUBLIC_KEY || P23_VAPID_PUBLIC_KEY || "").trim();
     if(reg){
       const payload = {
         type: "P23_SYNC_SCHEDULE",
         notifyOn: Boolean(uid && DB.settings.notifyOn),
+        webPushActive: Boolean(hasActiveWebPush || vapid),
         schedule,
         fired: DB.get("p23.fired", {})
       };
@@ -1319,11 +1371,14 @@ async function registerSW(){
         } else if(ev.data.type==="P23_SW_FIRED_SYNC"){
           if(ev.data.fired && typeof ev.data.fired === "object"){
             const merged = Object.assign({}, DB.get("p23.fired", {}), ev.data.fired);
-            DB.set("p23.fired", merged);
+            try{ localStorage.setItem("p23.fired", JSON.stringify(merged)); }catch{}
           }
-          if(Array.isArray(ev.data.newlyFired)){
+          if(Array.isArray(ev.data.newlyFired) && ev.data.newlyFired.length){
+            const existingKeys = new Set(nlog().map(x=>x.tag));
             ev.data.newlyFired.forEach(item=>{
-              if(item && item.title) addLog(item.title, item.body, item.key, item.url);
+              if(item && item.title && (!item.key || !existingKeys.has(item.key))){
+                addLog(item.title, item.body, item.key, item.url);
+              }
             });
           }
         }
@@ -1396,9 +1451,13 @@ DB.fire = async function(title, body, o={}){
     if(reg && reg.showNotification) await reg.showNotification(title, opts); else new Notification(title, opts);
   }catch(e){ dbg(e); }
 };
-DB.checkDue = function(){
-  if(!uid || !DB.settings.notifyOn) return;
-  const now = Date.now(), fired = DB.get("p23.fired",{}), s = DB.settings;
+let checkingDue = false;
+DB.checkDue = async function(){
+  if(!uid || !DB.settings.notifyOn || checkingDue) return;
+  checkingDue = true;
+  try{
+    await pullSwFiredState();
+    const now = Date.now(), fired = DB.get("p23.fired",{}), s = DB.settings;
   let dirty=false;
   const once = (key,title,body,url)=>{ if(fired[key]) return; fired[key]=now; dirty=true; DB.fire(title,body,{tag:key,url}); };
   const WINDOW = 60*60000;
@@ -1428,9 +1487,12 @@ DB.checkDue = function(){
       if(c.target<=now && now-c.target<WINDOW) once("cd|"+c.id+"|"+c.target, c.title, "Your countdown has finished", "pages/timeUntil.html");
     }
   }
-  for(const k in fired) if(now-fired[k] > 7*86400000){ delete fired[k]; dirty=true; }
-  if(dirty) DB.set("p23.fired", fired);
-  syncScheduleToSW();
+    for(const k in fired) if(now-fired[k] > 7*86400000){ delete fired[k]; dirty=true; }
+    if(dirty) DB.set("p23.fired", fired);
+    syncScheduleToSW();
+  }finally{
+    checkingDue = false;
+  }
 };
 const stateText = ()=>{ const p=DB.notif.perm(); if(!DB.settings.notifyOn) return p==="denied"?"Off (blocked in system settings)":"Off"; return p==="granted"?"On":"On (in-app only)"; };
 function updateBadge(){ const b=$("#bellBadge"); if(!b) return; const n=nlog().filter(x=>!x.read).length; b.textContent=n>9?"9+":n; b.hidden=!n; }
@@ -1501,7 +1563,6 @@ function buildBanner(){
   $("#nbClose").onclick=()=>{ DB.set("p23.bannerOff",true); d.remove(); };
 }
 
-/* Starfield Background */
 function buildBackground(){
   const bg = document.createElement("div"); bg.className="bg"; bg.setAttribute("aria-hidden","true");
   bg.innerHTML = "<i></i><i></i><i></i><canvas></canvas>"; document.body.prepend(bg);
@@ -1521,7 +1582,6 @@ function buildBackground(){
   document.addEventListener("themechange",sync); document.addEventListener("visibilitychange",sync); document.addEventListener("p23lite",sync); sync();
 }
 
-/* Header, Navigation & All Pages Grid */
 let navGroup=null, indicator=null, menuEl=null;
 const initial = ()=>((DB.profile&&DB.profile.username)||(DB.user&&DB.user.displayName)||"?").trim().charAt(0).toUpperCase();
 function avatarHTML(){ const url=DB.profile&&DB.profile.photoURL; return url ? `<img src="${DB.esc(url)}" alt="" referrerpolicy="no-referrer">` : `<span>${DB.esc(initial())}</span>`; }
@@ -1808,7 +1868,6 @@ function buildHeader(){
   setTimeout(()=>document.documentElement.classList.add("rolled"),2400);
 }
 
-/* Settings Modal */
 function openSettings(){
   if(!uid){ DB.requireAuth().then(ok=>{ if(ok) openSettings(); }); return; }
   const el=document.createElement("div"); el.className="apple-settings";
@@ -1915,7 +1974,6 @@ function openSettings(){
 }
 DB.openSettings = openSettings;
 
-/* PICO Floating Assistant */
 const PICO_BOT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"/><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M3 7l3.5 2M17.5 15L21 17M21 7l-3.5 2M6.5 15L3 17"/></svg>';
 const PICO_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite"];
 let picoMasterKey = null, picoModelIdx = 0;
@@ -2068,7 +2126,6 @@ function buildPicoFloat(){
   const pg = document.body && document.body.dataset ? document.body.dataset.page : "";
   if(pg==="pico" || pg==="chat" || $(".pico-fab")) return;
 
-  // Ensure Rajdhani + Space Mono tactical fonts are available on any page
   if(!document.getElementById("p23TacFonts")){
     const fl = document.createElement("link");
     fl.id = "p23TacFonts";
@@ -2456,8 +2513,6 @@ function buildPicoFloat(){
   };
 }
 
-
-/* App Update Notifications & Access Control */
 function checkAppUpdate(){
   const SEEN_VER_KEY = "p23.seen_version";
   const curVer = (CFG && CFG.version) ? CFG.version : "v1.0";
@@ -2594,7 +2649,6 @@ function enforcePageAccess(){
   }
 }
 
-/* Footer & Boot */
 function buildFooter(){
   if($(".sitefoot")) return;
   const f=document.createElement("footer"); f.className="sitefoot";
