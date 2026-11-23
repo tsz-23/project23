@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Coming in December | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  :root {
+    --apple-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --apple-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --cs-bg: var(--bg, #05030f);
+    --cs-text: var(--text, #f3eeff);
+    --cs-muted: var(--muted, #b7a9e3);
+    --cs-accent: var(--accent, #b388ff);
+    --cs-accent2: var(--accent2, #ff7ad9);
+    --cs-accent3: var(--accent3, #5ce1ff);
+    --cs-card-solid: var(--card-solid, #1a1040);
+    --cs-card-2: var(--card-2, rgba(179, 136, 255, 0.1));
+    --cs-line: var(--line, rgba(190, 160, 255, 0.2));
+    --cs-display: var(--display, "Bricolage Grotesque", "Outfit", system-ui, sans-serif);
+    --cs-body: var(--body, "Outfit", system-ui, -apple-system, sans-serif);
+    --cs-mono: var(--mono, "Space Mono", ui-monospace, monospace);
+    --glass-surface: color-mix(in srgb, var(--cs-card-solid) 78%, transparent);
+    --glass-border: color-mix(in srgb, var(--cs-text) 11%, var(--cs-line));
+    --glass-spec: inset 0 1px 0 0 rgba(255, 255, 255, 0.09);
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  body[data-page="coming-soon"] * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--cs-text) 22%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--cs-text) 20%, transparent);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--cs-accent) 62%, var(--cs-text) 20%);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  body[data-page="coming-soon"] {
+    margin: 0;
+    min-height: 100dvh;
+    background: var(--cs-bg);
+    color: var(--cs-text);
+    font-family: var(--cs-body);
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  body[data-page="coming-soon"]:not([data-theme]) {
+    background-image:
+      radial-gradient(62vmax 62vmax at 12% 14%, rgba(75, 31, 168, 0.42), transparent 62%),
+      radial-gradient(54vmax 54vmax at 88% 24%, rgba(163, 33, 127, 0.28), transparent 62%),
+      radial-gradient(56vmax 56vmax at 52% 92%, rgba(11, 95, 179, 0.28), transparent 64%);
+  }
+
+  main.cs-stage {
+    flex: 1;
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cs-card {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    padding: clamp(2.5rem, 6vw, 3.6rem) clamp(1.6rem, 5vw, 2.8rem);
+    border-radius: 28px;
+    background: var(--glass-surface);
+    border: 1px solid var(--glass-border);
+    box-shadow:
+      var(--glass-spec),
+      0 24px 60px rgba(0, 0, 0, 0.34),
+      0 0 0 1px color-mix(in srgb, var(--cs-accent) 10%, transparent);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+    animation: csRise 0.7s var(--apple-ease) both;
+  }
+
+  .cs-card::before {
+    content: "";
+    position: absolute;
+    inset: -40% 10% auto 10%;
+    height: 220px;
+    background: radial-gradient(
+      ellipse at center,
+      color-mix(in srgb, var(--cs-accent) 28%, transparent) 0%,
+      color-mix(in srgb, var(--cs-accent2) 14%, transparent) 45%,
+      transparent 72%
+    );
+    pointer-events: none;
+    filter: blur(18px);
+  }
+
+  .cs-icon-wrap {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    margin-bottom: 1.65rem;
+    display: grid;
+    place-items: center;
+  }
+
+  .cs-icon-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 30px;
+    border: 1px solid color-mix(in srgb, var(--cs-accent) 30%, transparent);
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--cs-accent) 14%, transparent) 0%,
+      transparent 70%
+    );
+    animation: csPulse 3.6s ease-in-out infinite;
+  }
+
+  .cs-icon-badge {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--cs-accent) 24%, var(--cs-card-solid)),
+      color-mix(in srgb, var(--cs-accent2) 16%, var(--cs-card-solid))
+    );
+    border: 1px solid color-mix(in srgb, var(--cs-accent) 42%, transparent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 14px 32px color-mix(in srgb, var(--cs-accent) 26%, rgba(0, 0, 0, 0.35));
+    color: var(--cs-text);
+    animation: csFloat 4.8s ease-in-out infinite;
+  }
+
+  .cs-icon-badge svg {
+    width: 38px;
+    height: 38px;
+    stroke: url(#csIconGrad);
+    filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--cs-accent) 42%, transparent));
+  }
+
+  .cs-stop-1 { stop-color: var(--cs-text); }
+  .cs-stop-2 { stop-color: var(--cs-accent); }
+  .cs-stop-3 { stop-color: var(--cs-accent3); }
+
+  .cs-spark {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cs-accent3);
+    box-shadow: 0 0 12px var(--cs-accent3);
+    top: 4px;
+    right: 4px;
+    animation: csTwinkle 2.8s ease-in-out infinite;
+  }
+
+  .cs-title {
+    position: relative;
+    margin: 0;
+    font-family: var(--cs-display);
+    font-size: clamp(1.85rem, 5.2vw, 2.55rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+    background: linear-gradient(
+      135deg,
+      var(--cs-text) 22%,
+      var(--cs-accent) 68%,
+      var(--cs-accent3) 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .cs-desc {
+    position: relative;
+    margin: 0.85rem 0 0;
+    font-size: clamp(1rem, 2.8vw, 1.12rem);
+    font-weight: 500;
+    color: var(--cs-muted);
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+  }
+
+  .cs-bar {
+    position: relative;
+    margin-top: 1.8rem;
+    width: 120px;
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--cs-text) 10%, transparent);
+    overflow: hidden;
+  }
+
+  .cs-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 44%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--cs-accent), var(--cs-accent2), var(--cs-accent3));
+    animation: csSlide 2.4s var(--apple-ease) infinite;
+  }
+
+  @keyframes csRise {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes csFloat {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes csPulse {
+    0%, 100% {
+      opacity: 0.55;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.95;
+      transform: scale(1.04);
+    }
+  }
+
+  @keyframes csTwinkle {
+    0%, 100% {
+      opacity: 0.45;
+      transform: scale(0.85);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+  }
+
+  @keyframes csSlide {
+    0% {
+      transform: translateX(-110%);
+    }
+    100% {
+      transform: translateX(250%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cs-card,
+    .cs-icon-ring,
+    .cs-icon-badge,
+    .cs-spark,
+    .cs-bar::after {
+      animation: none !important;
+    }
+    .cs-bar::after {
+      width: 55%;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    main.cs-stage {
+      padding: 1.5rem 1rem 2.5rem;
+    }
+    .cs-card {
+      border-radius: 24px;
+    }
+    .cs-icon-wrap {
+      width: 86px;
+      height: 86px;
+      margin-bottom: 1.4rem;
+    }
+    .cs-icon-badge {
+      width: 76px;
+      height: 76px;
+      border-radius: 22px;
+    }
+    .cs-icon-badge svg {
+      width: 34px;
+      height: 34px;
+    }
+  }
+</style>
+</head>
+<body data-page="coming-soon">
+<header id="topbar"></header>
+<main class="cs-stage">
+  <section class="cs-card" aria-labelledby="csHeading">
+    <div class="cs-icon-wrap" aria-hidden="true">
+      <div class="cs-icon-ring"></div>
+      <div class="cs-icon-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <defs>
+            <linearGradient id="csIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" class="cs-stop-1"/>
+              <stop offset="55%" class="cs-stop-2"/>
+              <stop offset="100%" class="cs-stop-3"/>
+            </linearGradient>
+          </defs>
+          <path d="M5 22h14"/>
+          <path d="M5 2h14"/>
+          <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
+          <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
+        </svg>
+      </div>
+      <span class="cs-spark"></span>
+    </div>
+    <h1 id="csHeading" class="cs-title">Coming in December</h1>
+    <p class="cs-desc">Work in Progress...</p>
+    <div class="cs-bar" aria-hidden="true"></div>
+  </section>
+</main>
+</body>
+</html>
