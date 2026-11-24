@@ -3,7 +3,7 @@
 <head>
 <base href="../">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Finance | Project 23</title>
 <meta name="theme-color" content="#05030f">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -46,6 +46,105 @@
   input[type="number"] {
     -moz-appearance: textfield;
     appearance: textfield;
+  }
+
+  html,
+  body,
+  body[data-page="finance"] * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text) 20%, transparent);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.2s ease;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--accent) 62%, var(--text) 20%);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--accent);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .fn-breakdown-list::-webkit-scrollbar,
+  .fn-sheet-table-wrap::-webkit-scrollbar,
+  .fn-pills::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .fn-ac-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+  .fn-ac-wrap input {
+    position: relative;
+    z-index: 2;
+    background: transparent !important;
+  }
+  .fn-ac-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: 12px;
+    background: var(--card-solid);
+    pointer-events: none;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    padding: 0 0.75rem;
+    white-space: pre;
+    font-family: inherit;
+    font-size: 0.88rem;
+    line-height: 1;
+  }
+  .fn-ac-typed {
+    color: transparent;
+  }
+  .fn-ac-ghost {
+    color: var(--muted);
+    opacity: 0.55;
+  }
+  .fn-ac-hint {
+    position: absolute;
+    right: 0.55rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    pointer-events: none;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.1rem 0.34rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--accent) 16%, var(--card-2));
+    border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--line));
+    color: var(--accent3, var(--accent));
+    opacity: 0;
+    transition: opacity 0.14s ease;
+  }
+  .fn-ac-wrap.has-suggestion .fn-ac-hint {
+    opacity: 1;
   }
 
   main {
@@ -572,13 +671,10 @@
     align-items: center;
     gap: 0.35rem;
     overflow-x: auto;
-    scrollbar-width: none;
+    scrollbar-width: thin;
     max-width: 100%;
-    padding: 0.1rem 0;
+    padding: 0.15rem 0 0.3rem;
     flex: 1 1 300px;
-  }
-  .fn-pills::-webkit-scrollbar {
-    display: none;
   }
   .fn-pill {
     flex: none;
@@ -1158,6 +1254,21 @@
       width: auto;
     }
   }
+
+  @media (max-width: 768px), (pointer: coarse) {
+    input,
+    select,
+    textarea,
+    .fn-field input,
+    .fn-date-input-wrap input[type="text"],
+    .fn-search-box input,
+    .fn-ac-bg {
+      font-size: 16px !important;
+    }
+    .fn-ac-hint {
+      display: none;
+    }
+  }
 </style>
 </head>
 <body data-page="finance">
@@ -1233,26 +1344,33 @@
           <div class="fn-field">
             <label for="txDateInput">Date</label>
             <div class="fn-date-input-wrap" id="txDateWrap">
-              <input type="text" id="txDateInput" placeholder="MM/DD/YY" autocomplete="off" spellcheck="false">
-              <button type="button" class="fn-cal-btn" id="txDateCalBtn" title="Open calendar picker" aria-label="Open calendar picker">
+              <input type="text" id="txDateInput" placeholder="MM/DD/YY" autocomplete="off" spellcheck="false" enterkeyhint="next">
+              <button type="button" class="fn-cal-btn" id="txDateCalBtn" tabindex="-1" title="Open calendar picker" aria-label="Open calendar picker">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
               </button>
             </div>
           </div>
           <div class="fn-field full-sm">
             <label for="txDescInput">Transaction</label>
-            <input type="text" id="txDescInput" list="merchantSuggestions" placeholder="e.g. Apple Music Subscription" autocomplete="off">
-            <datalist id="merchantSuggestions"></datalist>
+            <div class="fn-ac-wrap" id="txDescAcWrap">
+              <div class="fn-ac-bg" aria-hidden="true"><span class="fn-ac-typed"></span><span class="fn-ac-ghost"></span></div>
+              <input type="text" id="txDescInput" placeholder="e.g. Apple Music Subscription" autocomplete="off" enterkeyhint="next">
+              <span class="fn-ac-hint">Tab</span>
+            </div>
           </div>
           <div class="fn-field">
             <label for="txBankInput">Payment Bank</label>
-            <input type="text" id="txBankInput" value="RBC" placeholder="e.g. CIBC" autocomplete="off">
+            <div class="fn-ac-wrap" id="txBankAcWrap">
+              <div class="fn-ac-bg" aria-hidden="true"><span class="fn-ac-typed"></span><span class="fn-ac-ghost"></span></div>
+              <input type="text" id="txBankInput" value="RBC" placeholder="e.g. CIBC" autocomplete="off" enterkeyhint="next">
+              <span class="fn-ac-hint">Tab</span>
+            </div>
           </div>
           <div class="fn-field">
             <label for="txAmountInput">Amount ($)</label>
             <div class="fn-amount-wrap">
               <span class="cur-sym">$</span>
-              <input type="number" id="txAmountInput" step="0.01" placeholder="0.00" inputmode="decimal">
+              <input type="number" id="txAmountInput" step="0.01" placeholder="0.00" inputmode="decimal" enterkeyhint="done">
             </div>
           </div>
           <button type="button" class="fn-btn primary full-sm" id="addTxBtn" style="height:42px;justify-content:center;">
@@ -1326,13 +1444,17 @@ DB.whenReady(() => {
   ];
   const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
+  const DEFAULT_BANKS = ["RBC", "CIBC", "HSBC", "TD", "BMO", "Scotiabank", "Amex", "Cash"];
+
   const state = {
     monthFilter: "all",
     chartYear: new Date().getFullYear(),
     breakdownMode: "merchant",
     searchQuery: "",
     googleAccessToken: sessionStorage.getItem("p23.sheetsToken") || "",
-    syncInFlight: false
+    syncInFlight: false,
+    merchantList: [],
+    bankList: DEFAULT_BANKS.slice()
   };
 
   (function initDefaultDateInput() {
@@ -2509,10 +2631,20 @@ function doPost(e) {
     $("statTopBank").textContent = topBank;
     $("statTopBankSub").textContent = topBankAmt > 0 && Number.isFinite(topBankAmt) ? `${fmtCurrency(topBankAmt)} via ${topBank}` : "Primary Payment";
 
-    const dl = $("merchantSuggestions");
-    if (dl) {
-      dl.innerHTML = [...merchants].slice(0, 40).map(m => `<option value="${DB.esc(m)}">`).join("");
+    const merchCounts = new Map();
+    for (const tx of txList) {
+      const m = (tx.merchant || "").trim();
+      if (m) merchCounts.set(m, (merchCounts.get(m) || 0) + 1);
     }
+    state.merchantList = [...merchCounts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([m]) => m);
+
+    const bankSet = new Set(DEFAULT_BANKS);
+    for (const bName of bankTotals.keys()) {
+      if (bName) bankSet.add(bName);
+    }
+    state.bankList = [...bankSet];
   }
 
   function renderCharts(txList) {
@@ -2794,7 +2926,7 @@ function doPost(e) {
           <label for="edDate">Date</label>
           <div class="fn-date-input-wrap" id="edDateWrap">
             <input id="edDate" type="text" value="${DB.esc(dispDate)}" placeholder="MM/DD/YY" autocomplete="off" spellcheck="false" style="width:100%">
-            <button type="button" class="fn-cal-btn" id="edDateCalBtn" title="Open calendar picker" aria-label="Open calendar picker">
+            <button type="button" class="fn-cal-btn" id="edDateCalBtn" tabindex="-1" title="Open calendar picker" aria-label="Open calendar picker">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
             </button>
           </div>
@@ -2888,12 +3020,79 @@ function doPost(e) {
     };
   });
 
-  $("txBankInput").addEventListener("input", () => {
+  function syncBankChipHighlight() {
     const val = $("txBankInput").value.trim().toLowerCase();
     document.querySelectorAll("#quickBankChips [data-bank]").forEach(c => {
       c.classList.toggle("active", c.dataset.bank.toLowerCase() === val);
     });
+  }
+
+  function bindTabAutocomplete(inputEl, wrapEl, getCandidates, onAccept) {
+    if (!inputEl || !wrapEl) return;
+    const typedEl = wrapEl.querySelector(".fn-ac-typed");
+    const ghostEl = wrapEl.querySelector(".fn-ac-ghost");
+    let currentMatch = "";
+
+    function updateGhost() {
+      const val = inputEl.value;
+      const trimmed = val.trimStart();
+      if (!trimmed || document.activeElement !== inputEl) {
+        currentMatch = "";
+        typedEl.textContent = "";
+        ghostEl.textContent = "";
+        wrapEl.classList.remove("has-suggestion");
+        return;
+      }
+      const lower = trimmed.toLowerCase();
+      const list = getCandidates() || [];
+      const match = list.find(item => item.toLowerCase().startsWith(lower) && item.toLowerCase() !== lower);
+      if (match) {
+        currentMatch = match;
+        typedEl.textContent = val;
+        ghostEl.textContent = match.slice(trimmed.length);
+        wrapEl.classList.add("has-suggestion");
+      } else {
+        currentMatch = "";
+        typedEl.textContent = "";
+        ghostEl.textContent = "";
+        wrapEl.classList.remove("has-suggestion");
+      }
+    }
+
+    inputEl.addEventListener("input", updateGhost);
+    inputEl.addEventListener("focus", updateGhost);
+    inputEl.addEventListener("blur", () => {
+      currentMatch = "";
+      typedEl.textContent = "";
+      ghostEl.textContent = "";
+      wrapEl.classList.remove("has-suggestion");
+    });
+
+    inputEl.addEventListener("keydown", e => {
+      if ((e.key === "Tab" && !e.shiftKey) || (e.key === "ArrowRight" && inputEl.selectionStart === inputEl.value.length && inputEl.selectionEnd === inputEl.value.length)) {
+        if (currentMatch) {
+          e.preventDefault();
+          inputEl.value = currentMatch;
+          inputEl.setSelectionRange(currentMatch.length, currentMatch.length);
+          currentMatch = "";
+          typedEl.textContent = "";
+          ghostEl.textContent = "";
+          wrapEl.classList.remove("has-suggestion");
+          if (typeof onAccept === "function") onAccept(inputEl.value);
+        }
+      }
+    });
+  }
+
+  bindTabAutocomplete($("txDescInput"), $("txDescAcWrap"), () => state.merchantList);
+  bindTabAutocomplete($("txBankInput"), $("txBankAcWrap"), () => state.bankList, syncBankChipHighlight);
+
+  $("txDateInput").addEventListener("blur", () => {
+    const parsed = parseFlexibleDate($("txDateInput").value);
+    if (parsed) $("txDateInput").value = parsed.mdyShort;
   });
+
+  $("txBankInput").addEventListener("input", syncBankChipHighlight);
 
   $("txDateCalBtn").onclick = async e => {
     e.preventDefault();
