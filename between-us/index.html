@@ -143,8 +143,8 @@
 
   .cs-icon-wrap {
     position: relative;
-    width: 96px;
-    height: 96px;
+    width: 100px;
+    height: 100px;
     margin-bottom: 1.65rem;
     display: grid;
     place-items: center;
@@ -165,9 +165,11 @@
 
   .cs-icon-badge {
     position: relative;
-    width: 84px;
-    height: 84px;
+    width: 88px;
+    height: 88px;
+    padding: 10px;
     border-radius: 24px;
+    overflow: hidden;
     display: grid;
     place-items: center;
     background: linear-gradient(
@@ -179,31 +181,17 @@
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.22),
       0 14px 32px color-mix(in srgb, var(--cs-accent) 26%, rgba(0, 0, 0, 0.35));
-    color: var(--cs-text);
     animation: csFloat 4.8s ease-in-out infinite;
   }
 
-  .cs-icon-badge svg {
-    width: 38px;
-    height: 38px;
-    stroke: url(#csIconGrad);
-    filter: drop-shadow(0 4px 12px color-mix(in srgb, var(--cs-accent) 42%, transparent));
-  }
-
-  .cs-stop-1 { stop-color: var(--cs-text); }
-  .cs-stop-2 { stop-color: var(--cs-accent); }
-  .cs-stop-3 { stop-color: var(--cs-accent3); }
-
-  .cs-spark {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--cs-accent3);
-    box-shadow: 0 0 12px var(--cs-accent3);
-    top: 4px;
-    right: 4px;
-    animation: csTwinkle 2.8s ease-in-out infinite;
+  .cs-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 14px;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
   }
 
   .cs-title {
@@ -286,17 +274,6 @@
     }
   }
 
-  @keyframes csTwinkle {
-    0%, 100% {
-      opacity: 0.45;
-      transform: scale(0.85);
-    }
-    50% {
-      opacity: 1;
-      transform: scale(1.15);
-    }
-  }
-
   @keyframes csSlide {
     0% {
       transform: translateX(-110%);
@@ -310,7 +287,6 @@
     .cs-card,
     .cs-icon-ring,
     .cs-icon-badge,
-    .cs-spark,
     .cs-bar::after {
       animation: none !important;
     }
@@ -328,18 +304,15 @@
       border-radius: 24px;
     }
     .cs-icon-wrap {
-      width: 86px;
-      height: 86px;
+      width: 90px;
+      height: 90px;
       margin-bottom: 1.4rem;
     }
     .cs-icon-badge {
-      width: 76px;
-      height: 76px;
+      width: 78px;
+      height: 78px;
+      padding: 8px;
       border-radius: 22px;
-    }
-    .cs-icon-badge svg {
-      width: 34px;
-      height: 34px;
     }
   }
 </style>
@@ -348,24 +321,11 @@
 <header id="topbar"></header>
 <main class="cs-stage">
   <section class="cs-card" aria-labelledby="csHeading">
-    <div class="cs-icon-wrap" aria-hidden="true">
-      <div class="cs-icon-ring"></div>
+    <div class="cs-icon-wrap">
+      <div class="cs-icon-ring" aria-hidden="true"></div>
       <div class="cs-icon-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-          <defs>
-            <linearGradient id="csIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" class="cs-stop-1"/>
-              <stop offset="55%" class="cs-stop-2"/>
-              <stop offset="100%" class="cs-stop-3"/>
-            </linearGradient>
-          </defs>
-          <path d="M5 22h14"/>
-          <path d="M5 2h14"/>
-          <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/>
-          <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>
-        </svg>
+        <img class="cs-icon-img" src="assets/between_us.png" alt="Between Us">
       </div>
-      <span class="cs-spark"></span>
     </div>
     <h1 id="csHeading" class="cs-title">Coming in December</h1>
     <p class="cs-desc">Work in Progress...</p>
