@@ -1,7 +1,7 @@
 window.P23 = {
   name:    "Project 23",
   code:    "PW0226",
-  version: "v1.0",
+  version: "v1.1",
   shortcutUrl: "https://www.icloud.com/shortcuts/e55cc642b0f146f59eccefa3aca3b5d2",
   creator: "Tsz",
   credits: [],
