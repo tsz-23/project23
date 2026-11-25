@@ -813,6 +813,18 @@
     border: 1px solid rgba(255, 209, 102, 0.38);
   }
 
+  [data-theme="light"] .change-badge.new {
+    background: rgba(11, 122, 108, 0.12);
+    color: #0b7a6c;
+    border-color: rgba(11, 122, 108, 0.32);
+  }
+
+  [data-theme="light"] .change-badge.fixed {
+    background: rgba(154, 93, 0, 0.12);
+    color: #9a5d00;
+    border-color: rgba(154, 93, 0, 0.32);
+  }
+
   .specs-and-guide-grid {
     display: grid;
     grid-template-columns: 1.15fr 0.85fr;
@@ -1314,12 +1326,57 @@ const SUITE_MODULES = [
 
 const PATCH_NOTES = [
   {
+    version: "v1.1",
+    title: "Themes Overhaul, Grades & Stylist Redesign, Mandatory Terms & Downforce Fixes",
+    date: "Nov 24, 2026",
+    tag: "Major Update",
+    categories: ["feature", "design", "fix"],
+    defaultOpen: true,
+    summary: "A major quality-of-life, visual, and security update across Project 23 and Downforce—introducing new themes, redesigned Grades and Fashion Stylist layouts, faster loading, mandatory Terms & Conditions enforcement, and Downforce anti-exploit and handling upgrades.",
+    groups: [
+      {
+        title: "Project 23",
+        items: [
+          { type: "new", text: "Enforced mandatory Terms & Conditions agreement across accounts." },
+          { type: "new", text: "Added new themes: True Dark, Aurora, and Sunset." },
+          { type: "new", text: "Added a refresh button in Snippet Vault to manually sync snippets." },
+          { type: "new", text: "Added tap-to-autocomplete fields in Finance." },
+          { type: "new", text: "Added sort options for Grades." },
+          { type: "new", text: "Added Conditions & Rules (drop/redistribute weights) for Grades." },
+          { type: "new", text: "Added options to add custom components in Grades." },
+          { type: "design", text: "Improved existing themes, palettes, and gradients." },
+          { type: "design", text: "Improved PICO AI Popup UI for a cleaner, more readable layout." },
+          { type: "design", text: "Redesigned the mobile layout for Grades." },
+          { type: "design", text: "Redesigned layout for Fashion Stylist." },
+          { type: "design", text: "Redesigned Courses layout in Grades into a single slidable row with drag-to-rearrange." },
+          { type: "improved", text: "Better footer and navigation interactions on mobile." },
+          { type: "improved", text: "Faster page and application loading across the site." },
+          { type: "improved", text: "Improved 3D mannequin fit and visuals for Fashion Stylist." },
+          { type: "fixed", text: "Fixed naming issues with mark name labels in Grades." },
+          { type: "fixed", text: "Fixed Calendar arrow misalignments." },
+          { type: "fixed", text: "Fixed default scrollbars for Finance, Goals, and Grades." },
+          { type: "fixed", text: "Fixed formatting issues with Birthday Alerts." },
+          { type: "fixed", text: "Fixed Vinyl Shelf search bar UI on mobile." }
+        ]
+      },
+      {
+        title: "Downforce",
+        items: [
+          { type: "improved", text: "Turning improvements for slightly more natural cornering." },
+          { type: "improved", text: "Optimized overall game performance." },
+          { type: "fixed", text: "Fixed bug where penalty was not triggering when a head start was detected." },
+          { type: "fixed", text: "Patched exploit allowing users to add barriers and increase maximum speed for unfair results." }
+        ]
+      }
+    ]
+  },
+  {
     version: "v1.0.0",
     title: "Project 23 Foundation — Complete 20-Page Suite, Downforce, Between Us & Agent PICO",
     date: "Dec 26, 2026",
     tag: "Initial Launch",
     categories: ["feature", "design"],
-    defaultOpen: true,
+    defaultOpen: false,
     showAllPagesIntro: true,
     summary: "Initial launch of Project 23 (PW0226), uniting 20 specialized web applications, productivity tools, lifestyle catalogs, and multiplayer games into a single adaptive Progressive Web App with real-time Google Firebase synchronization.",
     changes: [
@@ -1446,12 +1503,14 @@ function renderPatchNotes() {
   const listEl = document.getElementById("patchList");
   if (!listEl) return;
   const q = (document.getElementById("patchSearchInput")?.value || "").toLowerCase().trim();
+  const getItems = p => p.groups ? p.groups.flatMap(g => g.items) : (p.changes || []);
 
   const filtered = PATCH_NOTES.filter(p => {
     if (activePatchFilter !== "all" && !p.categories.includes(activePatchFilter)) return false;
     if (!q) return true;
     const pagesText = p.showAllPagesIntro ? SUITE_MODULES.map(m => `${m.name} ${m.category} ${m.desc}`).join(" ") : "";
-    const hay = `${p.version} ${p.title} ${p.tag} ${p.summary} ${p.changes.map(c => c.text).join(" ")} ${pagesText}`.toLowerCase();
+    const groupTitles = p.groups ? p.groups.map(g => g.title).join(" ") : "";
+    const hay = `${p.version} ${p.title} ${p.tag} ${p.summary} ${groupTitles} ${getItems(p).map(c => c.text).join(" ")} ${pagesText}`.toLowerCase();
     return hay.includes(q);
   });
 
@@ -1464,6 +1523,7 @@ function renderPatchNotes() {
     const isOpen = q ? true : !!p.defaultOpen;
     const isLatest = idx === 0 && activePatchFilter === "all" && !q;
     const badgeLabels = { new: "New", design: "Redesign", improved: "Improved", fixed: "Fixed" };
+    const totalCount = getItems(p).length;
 
     const matchingModules = p.showAllPagesIntro
       ? (q
@@ -1491,6 +1551,25 @@ function renderPatchNotes() {
       </div>
     ` : "";
 
+    const renderItemList = items => `
+      <ul class="patch-items">
+        ${items.map(c => `
+          <li class="patch-item">
+            <span class="change-badge ${c.type}">${badgeLabels[c.type] || "Update"}</span>
+            <span>${DB.esc(c.text)}</span>
+          </li>
+        `).join("")}
+      </ul>
+    `;
+
+    const bodyListHtml = p.groups
+      ? p.groups.map(g => {
+          const items = q ? g.items.filter(c => `${g.title} ${c.text}`.toLowerCase().includes(q)) : g.items;
+          if (!items.length) return "";
+          return `<div class="patch-subhead"><span>${DB.esc(g.title)} (${items.length})</span></div>${renderItemList(items)}`;
+        }).join("")
+      : renderItemList(p.changes || []);
+
     return `
       <article class="patch-card ${isOpen ? "open" : ""} ${isLatest ? "latest" : ""}" data-ver="${p.version}">
         <button type="button" class="patch-header-btn" onclick="togglePatchCard('${p.version}')" aria-expanded="${isOpen}">
@@ -1500,7 +1579,7 @@ function renderPatchNotes() {
             <span class="patch-tag-pill">${p.tag}</span>
           </div>
           <div class="patch-header-right">
-            <span class="patch-count-pill">${p.showAllPagesIntro ? "20 pages + " : ""}${p.changes.length} updates</span>
+            <span class="patch-count-pill">${p.showAllPagesIntro ? "20 pages + " : ""}${totalCount} updates</span>
             <span class="patch-date">${p.date}</span>
             <span class="patch-chevron" aria-hidden="true">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -1510,14 +1589,7 @@ function renderPatchNotes() {
         <div class="patch-body">
           <p class="patch-summary-lead">${p.summary}</p>
           ${pagesIntroHtml}
-          <ul class="patch-items">
-            ${p.changes.map(c => `
-              <li class="patch-item">
-                <span class="change-badge ${c.type}">${badgeLabels[c.type] || "Update"}</span>
-                <span>${c.text}</span>
-              </li>
-            `).join("")}
-          </ul>
+          ${bodyListHtml}
         </div>
       </article>
     `;
@@ -1528,7 +1600,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const C = DB.cfg, $ = id => document.getElementById(id);
   $("aboutH").innerHTML = DB.wordmark();
 
-  if ($("heroVersionBadge")) $("heroVersionBadge").textContent = `Release ${C.version || "v1.0"}`;
+  if ($("heroVersionBadge")) $("heroVersionBadge").textContent = `Release ${C.version || "v1.1"}`;
   if ($("heroCodeBadge")) $("heroCodeBadge").textContent = `Code ${C.code || "PW0226"}`;
 
   renderSuiteGrid();
@@ -1536,7 +1608,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const rows = [
     ["Project name", C.name || "Project 23"],
     ["Project code", C.code || "PW0226"],
-    ["Current version", `${C.version || "v1.0"}`],
+    ["Current version", `${C.version || "v1.1"}`],
     ["Integrated pages", "20 Applications & Games"],
     ["Application type", "Progressive Web App (iPhone Home Screen & Desktop ready)"],
     ["Design system", "Adaptive Glassmorphism & Tactical HUD"],
