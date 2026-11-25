@@ -66,11 +66,11 @@ const CLOUD = {
   "p23.flightLog":    { kind:"col", name:"flights" },
   "p23.activeFlight": { kind:"doc", name:"activeFlight" },
   "p23.notes":        { kind:"col", name:"notes" },
-  "p23.countdowns":   { kind:"col", name:"countdowns" },
+  "p23.countdowns":   { kind:"docArray", name:"countdowns" },
   "p23.weather":      { kind:"doc", name:"weather" },
   "p23.home":         { kind:"doc", name:"home" },
   "p23.pico_chats":   { kind:"col", name:"pico_chats" },
-  "p23.watchlist":    { kind:"col", name:"watchlist" },
+  "p23.watchlist":    { kind:"docArray", name:"watchlist" },
   "p23.schedule":     { kind:"col", name:"schedule" },
   "p23.scheduleMeta": { kind:"doc", name:"scheduleMeta" },
   "p23.vault":        { kind:"col", name:"vault" }
@@ -95,7 +95,9 @@ DB.set = (k,v)=>{
     queue(k);
     if(k==="p23.pico_chats") document.dispatchEvent(new CustomEvent("p23pico"));
     if(k==="p23.watchlist") document.dispatchEvent(new CustomEvent("p23watchlist"));
-    if(k==="p23.schedule" || k==="p23.scheduleMeta" || k==="p23.vault") document.dispatchEvent(new CustomEvent("p23schedule"));
+    if(k==="p23.schedule" || k==="p23.scheduleMeta") document.dispatchEvent(new CustomEvent("p23schedule"));
+    if(k==="p23.vault") document.dispatchEvent(new CustomEvent("p23vault"));
+    if(k==="p23.countdowns") document.dispatchEvent(new CustomEvent("p23countdowns"));
     if(k==="p23.events" || k==="p23.todos" || k==="p23.countdowns" || k==="p23.activeFlight" || k==="p23.fired"){
       setTimeout(()=>{ if(typeof syncScheduleToSW === "function") syncScheduleToSW(); }, 60);
     }
@@ -103,7 +105,7 @@ DB.set = (k,v)=>{
   }
   try{ localStorage.setItem(k, JSON.stringify(v)); }catch{}
 };
-DB.del = k=>DB.set(k, CLOUD[k] && CLOUD[k].kind==="col" ? [] : null);
+DB.del = k=>DB.set(k, CLOUD[k] && (CLOUD[k].kind==="col" || CLOUD[k].kind==="docArray") ? [] : null);
 DB.uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 DB.esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -608,6 +610,13 @@ async function push(k){
       if(shadow[k]===j) return;
       if(v) await ref.set(JSON.parse(j)); else await ref.delete();
       shadow[k]=j;
+    } else if(spec.kind==="docArray"){
+      const ref = baseRef.collection("state").doc(spec.name), arr = Array.isArray(mem[k]) ? mem[k] : [];
+      const cleanArr = JSON.parse(JSON.stringify(arr));
+      const j = JSON.stringify(cleanArr);
+      if(shadow[k]===j) return;
+      await ref.set({ items: cleanArr, updatedAt: Date.now() });
+      shadow[k]=j;
     } else {
       const arr = mem[k]||[], prev = shadow[k]||new Map(), next = new Map(), ops = [];
       for(const it of arr){
@@ -881,11 +890,11 @@ async function loadAll(user){
     withTimeout(baseRef.collection("flights").get(), 4000, null),
     withTimeout(baseRef.collection("state").doc("activeFlight").get(), 4000, null),
     withTimeout(baseRef.collection("notes").get(), 4000, null),
-    withTimeout(baseRef.collection("countdowns").get(), 4000, null),
+    withTimeout(baseRef.collection("state").doc("countdowns").get(), 4000, null),
     withTimeout(baseRef.collection("state").doc("weather").get(), 4000, null),
     withTimeout(baseRef.collection("state").doc("home").get(), 4000, null),
     withTimeout(baseRef.collection("pico_chats").get(), 4000, null),
-    withTimeout(baseRef.collection("watchlist").get(), 4000, null),
+    withTimeout(baseRef.collection("state").doc("watchlist").get(), 4000, null),
     withTimeout(baseRef.collection("schedule").get(), 4000, null),
     withTimeout(baseRef.collection("state").doc("scheduleMeta").get(), 4000, null),
     withTimeout(baseRef.collection("vault").get(), 4000, null)
@@ -904,16 +913,36 @@ async function loadAll(user){
       if(!shadow[k]) shadow[k]=new Map();
     }
   };
-  fill("p23.events",ev); fill("p23.todos",td); fill("p23.flightLog",fl); fill("p23.notes",nt); fill("p23.countdowns",cd);
-  if(wl && wl.docs && wl.docs.length){
-    fill("p23.watchlist",wl);
-    mem["p23.watchlist"].sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
+  fill("p23.events",ev); fill("p23.todos",td); fill("p23.flightLog",fl); fill("p23.notes",nt);
+  if(cd && cd.exists && Array.isArray(cd.data()?.items)){
+    const arr = cd.data().items;
+    mem["p23.countdowns"] = arr;
+    shadow["p23.countdowns"] = JSON.stringify(arr);
+    try{ localStorage.setItem("p23.countdowns", JSON.stringify(arr)); }catch{}
+  } else if(cd && !cd.exists){
+    mem["p23.countdowns"] = [];
+    shadow["p23.countdowns"] = "[]";
+    try{ localStorage.setItem("p23.countdowns", "[]"); }catch{}
+  } else {
+    let localCd = [];
+    try{ const lcd = localStorage.getItem("p23.countdowns"); if(lcd) localCd = JSON.parse(lcd) || []; }catch{}
+    mem["p23.countdowns"] = Array.isArray(localCd) ? localCd : [];
+    if(shadow["p23.countdowns"] === undefined) shadow["p23.countdowns"] = JSON.stringify(mem["p23.countdowns"]);
+  }
+  if(wl && wl.exists && Array.isArray(wl.data()?.items)){
+    const arr = wl.data().items.slice().sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
+    mem["p23.watchlist"] = arr;
+    shadow["p23.watchlist"] = JSON.stringify(arr);
+    try{ localStorage.setItem("p23.watchlist", JSON.stringify(arr)); }catch{}
+  } else if(wl && !wl.exists){
+    mem["p23.watchlist"] = [];
+    shadow["p23.watchlist"] = "[]";
+    try{ localStorage.setItem("p23.watchlist", "[]"); }catch{}
   } else {
     let localWl=[];
     try{ const lw=localStorage.getItem("p23.watchlist"); if(lw) localWl=JSON.parse(lw)||[]; }catch{}
     mem["p23.watchlist"]=Array.isArray(localWl)?localWl:[];
-    shadow["p23.watchlist"]=new Map();
-    if(mem["p23.watchlist"].length) queue("p23.watchlist");
+    if(shadow["p23.watchlist"] === undefined) shadow["p23.watchlist"]=JSON.stringify(mem["p23.watchlist"]);
   }
   if(pc && pc.docs && pc.docs.length){
     fill("p23.pico_chats",pc);
@@ -955,15 +984,14 @@ async function loadAll(user){
   }
   one("p23.activeFlight",af); one("p23.weather",wx); one("p23.home",hm);
   if(scm) one("p23.scheduleMeta",scm);
-  if(vt && vt.docs && vt.docs.length){
+  if(vt && vt.docs){
     fill("p23.vault",vt);
     mem["p23.vault"].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   } else {
     let localVt=[];
     try{ const lvt=localStorage.getItem("p23.vault"); if(lvt) localVt=JSON.parse(lvt)||[]; }catch{}
     mem["p23.vault"]=Array.isArray(localVt)?localVt:[];
-    shadow["p23.vault"]=new Map();
-    if(mem["p23.vault"].length) queue("p23.vault");
+    if(!shadow["p23.vault"]) shadow["p23.vault"]=new Map();
   }
   setSync(snap ? "saved" : "off");
   document.dispatchEvent(new CustomEvent("p23pico"));
@@ -1008,13 +1036,15 @@ async function loadAll(user){
       try{ localStorage.setItem("p23.schedule",JSON.stringify(arr)); }catch{}
       document.dispatchEvent(new CustomEvent("p23schedule"));
     }, ()=>{});
-    baseRef.collection("watchlist").onSnapshot(snap=>{
+    baseRef.collection("state").doc("watchlist").onSnapshot(docSnap=>{
       if(pending.has("p23.watchlist") || inflight>0) return;
-      const arr = snap.docs.map(d=>d.data()).sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
-      mem["p23.watchlist"] = arr;
-      shadow["p23.watchlist"] = new Map(arr.map(x=>[String(x.id),JSON.stringify(x)]));
-      try{ localStorage.setItem("p23.watchlist",JSON.stringify(arr)); }catch{}
-      document.dispatchEvent(new CustomEvent("p23watchlist"));
+      if(docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)){
+        const arr = docSnap.data().items.slice().sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
+        mem["p23.watchlist"] = arr;
+        shadow["p23.watchlist"] = JSON.stringify(arr);
+        try{ localStorage.setItem("p23.watchlist",JSON.stringify(arr)); }catch{}
+        document.dispatchEvent(new CustomEvent("p23watchlist"));
+      }
     }, ()=>{});
     baseRef.collection("pico_chats").onSnapshot(snap=>{
       if(pending.has("p23.pico_chats") || inflight>0) return;
@@ -1023,6 +1053,16 @@ async function loadAll(user){
       shadow["p23.pico_chats"] = new Map(arr.map(x=>[String(x.id),JSON.stringify(x)]));
       try{ localStorage.setItem("p23.pico_chats",JSON.stringify(arr)); }catch{}
       document.dispatchEvent(new CustomEvent("p23pico"));
+    }, ()=>{});
+    baseRef.collection("state").doc("countdowns").onSnapshot(docSnap=>{
+      if(pending.has("p23.countdowns") || inflight>0) return;
+      if(docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)){
+        const arr = docSnap.data().items;
+        mem["p23.countdowns"] = arr;
+        shadow["p23.countdowns"] = JSON.stringify(arr);
+        try{ localStorage.setItem("p23.countdowns",JSON.stringify(arr)); }catch{}
+        document.dispatchEvent(new CustomEvent("p23countdowns"));
+      }
     }, ()=>{});
   }
 }
