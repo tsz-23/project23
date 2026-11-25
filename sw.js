@@ -1,4 +1,4 @@
-const CACHE = "project23-v3";
+const CACHE = "project23-v1.1";
 const SHELL = [
   "./",
   "index.html",
@@ -13,6 +13,7 @@ const SHELL = [
   "js/widgets.js",
   "js/world.js",
   "pages/about.html",
+  "pages/terms.html",
   "pages/finance.html",
   "pages/grades.html",
   "pages/stylist.html",
