@@ -2338,8 +2338,37 @@ DB.whenReady(() => {
     }
   }
 
+  let courseShadow = new Map();
+
+  async function syncCoursesSubcollection(userRef, courses) {
+    const db = firebase.firestore();
+    const col = userRef.collection("grades");
+    const nextShadow = new Map();
+    const ops = [];
+    for (let i = 0; i < courses.length; i++) {
+      const clean = JSON.parse(JSON.stringify(courses[i]));
+      clean.id = String(clean.id || `c_${DB.uid()}`);
+      clean.sortOrder = i;
+      const j = JSON.stringify(clean);
+      nextShadow.set(clean.id, j);
+      if (courseShadow.get(clean.id) !== j) ops.push(["set", clean.id, clean]);
+    }
+    courseShadow.forEach((_, id) => {
+      if (!nextShadow.has(id)) ops.push(["del", String(id)]);
+    });
+    for (let i = 0; i < ops.length; i += 400) {
+      const batch = db.batch();
+      ops.slice(i, i + 400).forEach(([op, id, doc]) => {
+        if (op === "set") batch.set(col.doc(id), doc);
+        else batch.delete(col.doc(id));
+      });
+      await batch.commit();
+    }
+    courseShadow = nextShadow;
+  }
+
   async function initDirectFirestoreSync() {
-    const localStored = DB.get(GR_KEY, null) || DB.get("p23.grades.v2", null);
+    const localStored = DB.get(GR_KEY, null);
     if (localStored) normalizeIncoming(localStored);
 
     const userRef = getUserDocRef();
@@ -2347,43 +2376,46 @@ DB.whenReady(() => {
     directFirestoreBound = true;
 
     try {
-      const [gradesSnap, v2Snap, V2Snap, userDocSnap] = await Promise.all([
-        userRef.collection("state").doc("grades").get().catch(() => null),
-        userRef.collection("state").doc("grades_v2").get().catch(() => null),
-        userRef.collection("state").doc("grades_V2").get().catch(() => null),
-        userRef.get().catch(() => null)
-      ]);
-      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
-      const gData = (gradesSnap && gradesSnap.exists) ? gradesSnap.data() : null;
-      const v2Data = (v2Snap && v2Snap.exists) ? v2Snap.data() : ((V2Snap && V2Snap.exists) ? V2Snap.data() : null);
-      const hasCourses = d => d && Array.isArray(d.courses) && d.courses.length > 0;
-      const remote = hasCourses(gData) ? gData : (hasCourses(v2Data) ? v2Data : (hasCourses(userData.gradesDataV2) ? userData.gradesDataV2 : (gData || v2Data || userData.gradesDataV2)));
-      if (remote) normalizeIncoming(remote);
+      const colSnap = await userRef.collection("grades").get().catch(() => null);
+      const colCourses = (colSnap && colSnap.docs)
+        ? colSnap.docs
+            .map(d => {
+              const data = d.data() || {};
+              if (!data.id) data.id = d.id;
+              return data;
+            })
+            .sort((a, b) => (a.sortOrder ?? 99999) - (b.sortOrder ?? 99999))
+        : [];
 
-      const cleanPayload = {
-        courses: cloudData.courses,
-        activeCourseId: state.activeCourseId,
-        updatedAt: Date.now()
-      };
-      DB.set(GR_KEY, cleanPayload);
+      normalizeIncoming({ courses: colCourses, activeCourseId: state.activeCourseId });
+      courseShadow = new Map(
+        cloudData.courses.map((c, idx) => {
+          const clean = JSON.parse(JSON.stringify(c));
+          clean.sortOrder = idx;
+          return [String(clean.id), JSON.stringify(clean)];
+        })
+      );
+      DB.set(GR_KEY, { courses: cloudData.courses, activeCourseId: state.activeCourseId, updatedAt: Date.now() });
 
-      if ((!hasCourses(gData) && hasCourses(remote)) || v2Data || userData.gradesDataV2 !== undefined) {
-        await userRef.collection("state").doc("grades").set(cleanPayload).catch(() => {});
-        if (v2Snap && v2Snap.exists) userRef.collection("state").doc("grades_v2").delete().catch(() => {});
-        if (V2Snap && V2Snap.exists) userRef.collection("state").doc("grades_V2").delete().catch(() => {});
-        if (userData.gradesDataV2 !== undefined) {
-          userRef.update({ gradesDataV2: firebase.firestore.FieldValue.delete() }).catch(() => {});
-        }
-      }
-
-      userRef.collection("state").doc("grades").onSnapshot(docSnap => {
+      userRef.collection("grades").onSnapshot(snap => {
         if (state.syncInFlight) return;
-        if (docSnap && docSnap.exists && docSnap.data()) {
-          const incoming = docSnap.data();
-          if (incoming.updatedAt && incoming.updatedAt === lastLocalSaveTs) return;
-          normalizeIncoming(incoming);
-          renderAll();
-        }
+        const docs = snap.docs
+          .map(d => {
+            const data = d.data() || {};
+            if (!data.id) data.id = d.id;
+            return data;
+          })
+          .sort((a, b) => (a.sortOrder ?? 99999) - (b.sortOrder ?? 99999));
+        normalizeIncoming({ courses: docs, activeCourseId: state.activeCourseId });
+        courseShadow = new Map(
+          cloudData.courses.map((c, idx) => {
+            const clean = JSON.parse(JSON.stringify(c));
+            clean.sortOrder = idx;
+            return [String(clean.id), JSON.stringify(clean)];
+          })
+        );
+        DB.set(GR_KEY, { courses: cloudData.courses, activeCourseId: state.activeCourseId, updatedAt: Date.now() });
+        renderAll();
       }, () => {});
     } catch {}
   }
@@ -2400,18 +2432,17 @@ DB.whenReady(() => {
       persistTimer = null;
       const nowTs = Date.now();
       lastLocalSaveTs = nowTs;
-      const payload = {
+      DB.set(GR_KEY, {
         courses: cloudData.courses,
         activeCourseId: state.activeCourseId,
         updatedAt: nowTs
-      };
-      DB.set(GR_KEY, payload);
+      });
 
       const userRef = getUserDocRef();
       if (userRef) {
         state.syncInFlight = true;
         try {
-          await userRef.collection("state").doc("grades").set(payload).catch(() => {});
+          await syncCoursesSubcollection(userRef, cloudData.courses || []);
         } catch {}
         state.syncInFlight = false;
       }
