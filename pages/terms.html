@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base href="../">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Terms &amp; Conditions | Project 23</title>
+<meta name="theme-color" content="#05030f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Project 23">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Outfit:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="js/site-config.js"></script>
+<script src="js/core.js"></script>
+<style>
+  body[data-page="terms"] {
+    background: var(--bg, #05030f);
+    color: var(--text, #f3eeff);
+    font-family: var(--body, "Outfit", system-ui, -apple-system, sans-serif);
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  html:not([data-theme]) body[data-page="terms"] {
+    --bg: #05030f;
+    --card: rgba(26, 16, 62, 0.72);
+    --card-solid: #1a1040;
+    --card-2: rgba(179, 136, 255, 0.1);
+    --text: #f3eeff;
+    --muted: #b7a9e3;
+    --line: rgba(190, 160, 255, 0.2);
+    --accent: #b388ff;
+    --accent2: #ff7ad9;
+    --accent3: #5ce1ff;
+    --on-accent: #10062b;
+    --good: #6ef0c0;
+    --bad: #ff7a9a;
+    --warn: #ffd36e;
+    --shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+    background-image:
+      radial-gradient(62vmax 62vmax at 8% 8%, rgba(75, 31, 168, 0.44), transparent 62%),
+      radial-gradient(52vmax 52vmax at 92% 18%, rgba(163, 33, 127, 0.3), transparent 62%),
+      radial-gradient(56vmax 56vmax at 50% 96%, rgba(11, 95, 179, 0.3), transparent 64%);
+    background-attachment: fixed;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  main.tc-wrap {
+    max-width: 1080px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 6rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .tc-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.7rem;
+    margin: 0.6rem auto 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .tc-emblem {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 26%, var(--card-solid)), color-mix(in srgb, var(--accent2) 18%, var(--card-solid)));
+    border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--line));
+    box-shadow: 0 12px 30px -10px color-mix(in srgb, var(--accent) 55%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    color: var(--accent3);
+  }
+
+  .tc-emblem svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .tc-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.28rem 0.85rem;
+    border-radius: 999px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent3);
+  }
+
+  .tc-kicker i {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--good);
+    box-shadow: 0 0 8px var(--good);
+  }
+
+  .tc-hero h1 {
+    margin: 0;
+    font-family: var(--display, "Bricolage Grotesque", sans-serif);
+    font-size: clamp(2.15rem, 6vw, 3.55rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.04;
+    background: linear-gradient(135deg, var(--text) 24%, var(--accent) 72%, var(--accent3) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .tc-hero p {
+    margin: 0;
+    max-width: 600px;
+    font-size: 0.96rem;
+    line-height: 1.6;
+    color: var(--muted);
+  }
+
+  .tc-pillars {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tc-pillar {
+    position: relative;
+    overflow: hidden;
+    padding: 1.2rem 1.15rem;
+    border-radius: 22px;
+    background: var(--card);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s;
+  }
+
+  .tc-pillar::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--p-c, var(--bad)), transparent);
+    opacity: 0.9;
+  }
+
+  .tc-pillar:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--p-c, var(--bad)) 55%, var(--line));
+  }
+
+  .tc-pillar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .tc-pillar-ic {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--p-c, var(--bad)) 16%, var(--card-solid));
+    border: 1px solid color-mix(in srgb, var(--p-c, var(--bad)) 38%, var(--line));
+    color: var(--p-c, var(--bad));
+    display: grid;
+    place-items: center;
+  }
+
+  .tc-pillar-ic svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .tc-badge {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--bad) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--bad) 36%, transparent);
+    color: var(--bad);
+  }
+
+  .tc-pillar h2 {
+    margin: 0;
+    font-family: var(--display, "Bricolage Grotesque", sans-serif);
+    font-size: 1.04rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  .tc-pillar p {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.52;
+    color: var(--muted);
+  }
+
+  .tc-layout {
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  .tc-rail {
+    position: sticky;
+    top: 5.5rem;
+    padding: 0.85rem;
+    border-radius: 22px;
+    background: var(--card);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+  }
+
+  .tc-rail-lbl {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.25rem 0.6rem 0.45rem;
+  }
+
+  .tc-rail a {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    transition: background 0.16s, color 0.16s, transform 0.16s;
+  }
+
+  .tc-rail a span {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 0.66rem;
+    opacity: 0.72;
+  }
+
+  .tc-rail a:hover {
+    background: var(--card-2);
+    color: var(--text);
+  }
+
+  .tc-rail a.active {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 24%, transparent), color-mix(in srgb, var(--accent2) 14%, transparent));
+    color: var(--text);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent);
+  }
+
+  .tc-rail a.active span {
+    color: var(--accent3);
+    opacity: 1;
+  }
+
+  .tc-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+  }
+
+  .tc-card {
+    margin: 0 !important;
+    padding: 1.4rem 1.45rem;
+    border-radius: 24px;
+    background: var(--card);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    scroll-margin-top: 5.5rem;
+  }
+
+  .tc-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .tc-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .tc-step {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--card-2);
+    border: 1px solid var(--line);
+    color: var(--accent3);
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 0.74rem;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+
+  .tc-card.is-strict .tc-step {
+    background: color-mix(in srgb, var(--bad) 15%, var(--card-solid));
+    border-color: color-mix(in srgb, var(--bad) 38%, var(--line));
+    color: var(--bad);
+  }
+
+  .tc-card-title h3 {
+    margin: 0;
+    font-family: var(--display, "Bricolage Grotesque", sans-serif);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .tc-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.64;
+    color: var(--muted);
+  }
+
+  .tc-card strong {
+    color: var(--text);
+  }
+
+  .tc-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .tc-row {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 0.7rem;
+    align-items: start;
+    padding: 0.78rem 0.95rem;
+    border-radius: 15px;
+    background: var(--card-2);
+    border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+    font-size: 0.87rem;
+    line-height: 1.54;
+    color: var(--muted);
+  }
+
+  .tc-row svg {
+    width: 17px;
+    height: 17px;
+    margin-top: 2px;
+    color: var(--accent3);
+  }
+
+  .tc-card.is-strict .tc-row svg {
+    color: var(--bad);
+  }
+
+  .tc-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.85rem 1rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent3) 8%, transparent));
+    border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--line));
+    font-size: 0.84rem;
+    line-height: 1.54;
+    color: var(--text);
+  }
+
+  .tc-callout svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--accent3);
+  }
+
+  .tc-foot-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .tc-copy-meta {
+    font-family: "Space Mono", ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .tc-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tc-btn {
+    height: 38px;
+    padding: 0 1.05rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--card-2);
+    color: var(--text);
+    font-family: var(--body, "Outfit", sans-serif);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    transition: transform 0.16s, border-color 0.16s;
+  }
+
+  .tc-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .tc-btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: var(--on-accent, #fff);
+    border-color: transparent;
+  }
+
+  @media (max-width: 900px) {
+    .tc-pillars {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tc-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .tc-rail {
+      position: static;
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 0.55rem;
+      border-radius: 18px;
+      gap: 0.35rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .tc-rail-lbl {
+      display: none;
+    }
+    .tc-rail a {
+      flex: 0 0 auto;
+      padding: 0.44rem 0.75rem;
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 600px) {
+    main.tc-wrap {
+      padding: 1rem 0.75rem 6rem;
+    }
+    .tc-card {
+      padding: 1.1rem;
+      border-radius: 20px;
+    }
+    .tc-row {
+      padding: 0.68rem 0.8rem;
+    }
+  }
+</style>
+</head>
+<body data-page="terms">
+<header id="topbar"></header>
+<main class="tc-wrap">
+  <section class="tc-hero">
+    <h1>Terms &amp; Conditions</h1>
+    <span class="tc-kicker"><i></i> Project 23 · PW0226 · Effective Nov 23, 2026</span>
+  </section>
+
+  <section class="tc-pillars" aria-label="Core Restrictions">
+    <article class="tc-pillar" style="--p-c: var(--bad)">
+      <div class="tc-pillar-top">
+        <span class="tc-pillar-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+        </span>
+        <span class="tc-badge">Not Allowed</span>
+      </div>
+      <h2>No Copying or Cloning</h2>
+      <p>Do not copy, mirror, rehost, scrape, or reuse Project 23's code, UI design, branding, or original assets.</p>
+    </article>
+
+    <article class="tc-pillar" style="--p-c: var(--warn)">
+      <div class="tc-pillar-top">
+        <span class="tc-pillar-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+        </span>
+        <span class="tc-badge">Not Allowed</span>
+      </div>
+      <h2>No Unauthorized Data Access</h2>
+      <p>Do not probe databases, bypass sign-in walls, extract API keys, or access data that does not belong to you.</p>
+    </article>
+
+    <article class="tc-pillar" style="--p-c: var(--accent2)">
+      <div class="tc-pillar-top">
+        <span class="tc-pillar-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="4"/><path d="M6 12h4M8 10v4M15 11h.01M18 13h.01"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+        </span>
+        <span class="tc-badge">Not Allowed</span>
+      </div>
+      <h2>No Game Hacks or Extensions</h2>
+      <p>Do not run extensions, scripts, bots, cheats, or DevTools tampering on Downforce, Between Us, or any game.</p>
+    </article>
+  </section>
+
+  <div class="tc-layout">
+    <nav class="tc-rail" aria-label="Sections">
+      <div class="tc-rail-lbl">Contents</div>
+      <a href="#t-accept" class="active"><span>01</span> Acceptance</a>
+      <a href="#t-copy"><span>02</span> Anti-Copying</a>
+      <a href="#t-data"><span>03</span> Data Security</a>
+      <a href="#t-games"><span>04</span> Anti-Cheat</a>
+      <a href="#t-accounts"><span>05</span> Accounts</a>
+      <a href="#t-enforce"><span>06</span> Enforcement</a>
+      <a href="#t-service"><span>07</span> Availability</a>
+      <a href="#t-updates"><span>08</span> Updates</a>
+    </nav>
+
+    <div class="tc-content">
+      <section class="tc-card" id="t-accept">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">01</span>
+            <h3>Acceptance of Terms</h3>
+          </div>
+        </div>
+        <p>These Terms &amp; Conditions govern your access to <strong>Project 23</strong>, including all web apps, productivity tools, AI features, and associated games such as <strong>Downforce</strong> and <strong>Between Us</strong>. By opening, signing into, or using any part of the site, you agree to these Terms. If you do not agree, stop using the website immediately.</p>
+      </section>
+
+      <section class="tc-card is-strict" id="t-copy">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">02</span>
+            <h3>Intellectual Property &amp; No Copying</h3>
+          </div>
+          <span class="tc-badge">Strictly Prohibited</span>
+        </div>
+        <p>All source code (HTML, CSS, JavaScript), visual designs, animations, custom icons, logos, game logic, and original assets on Project 23 belong to the creator unless otherwise credited.</p>
+        <div class="tc-rows">
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Cloning or Rehosting:</strong> Copying, downloading, mirroring, forking, or re-uploading any page, script, stylesheet, or game to another website or repository without written permission is strictly not allowed.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Scraping or Asset Ripping:</strong> Automated scraping, crawling, or extracting layouts, graphics, audio, or embedded assets for reuse in another project is prohibited.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Rebranded Copies:</strong> Presenting modified or rebranded copies of Project 23's tools or games as your own work is not permitted.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tc-card is-strict" id="t-data">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">03</span>
+            <h3>Prohibited Data Access &amp; Security</h3>
+          </div>
+          <span class="tc-badge">Strictly Prohibited</span>
+        </div>
+        <p>Cloud data, user records, and backend endpoints are strictly for normal, authorized use inside Project 23.</p>
+        <div class="tc-rows">
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Database or API Probing:</strong> Querying, dumping, enumerating, or sending forged requests to Firebase/Firestore collections, auth endpoints, push workers, or config documents is forbidden.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Bypassing Access Gates:</strong> Circumventing sign-in walls, invite passwords, locked pages, or security rules—including via DevTools DOM edits or modified requests—is prohibited.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Accessing Other Users' Data:</strong> Attempting to read, intercept, alter, or delete another user's private content, account info, or saved items is strictly forbidden.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Abuse or Disruption:</strong> Flooding requests, abusing AI or API quotas, injecting malicious code (XSS/CSRF), or attempting denial-of-service attacks is prohibited.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tc-card is-strict" id="t-games">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">04</span>
+            <h3>Fair Play: Games, Extensions &amp; Hacks</h3>
+          </div>
+          <span class="tc-badge">Zero Tolerance</span>
+        </div>
+        <p>All games hosted on or linked from Project 23—including <strong>Downforce</strong>, <strong>Between Us</strong>, and future releases—must be played fairly in an unmodified browser.</p>
+        <div class="tc-rows">
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Extensions, Scripts, or Bots:</strong> Running browser extensions, Tampermonkey/userscripts, overlays, auto-clickers, macros, or bots that interact with or assist gameplay is strictly not allowed.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Hacks or DevTools Tampering:</strong> Using Developer Tools, console commands, debugger breakpoints, memory editors, speed hacks, or modified client code to alter physics, roles, cooldowns, timers, or scores is prohibited.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            <div><strong>No Packet Spoofing or Bug Exploits:</strong> Intercepting or forging multiplayer traffic, faking leaderboard submissions, or intentionally exploiting glitches to disrupt matches is forbidden.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tc-card" id="t-accounts">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">05</span>
+            <h3>Accounts &amp; User Responsibility</h3>
+          </div>
+        </div>
+        <div class="tc-rows">
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            <div><strong>Keep Invite Access Private:</strong> Do not share access passwords, account sessions, or private invite links with unauthorized third parties.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            <div><strong>Your Saved Content:</strong> You are responsible for any notes, snippets, images, or files saved to your account. Do not upload harmful or infringing content.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+            <div><strong>Respectful Conduct:</strong> Harassment, impersonation, or intentional disruption in multiplayer games or shared features is not tolerated.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="tc-card is-strict" id="t-enforce">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">06</span>
+            <h3>Enforcement &amp; Consequences</h3>
+          </div>
+          <span class="tc-badge">Immediate Action</span>
+        </div>
+        <p>Violating these Terms—especially copying the site, probing data, or cheating in games—may result in immediate action without prior notice:</p>
+        <div class="tc-rows">
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div><strong>Permanent Account Ban:</strong> Immediate suspension or permanent revocation of access across all Project 23 apps and games.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div><strong>Score &amp; Record Removal:</strong> Permanent deletion of cheated leaderboard entries, tampered saves, or unauthorized records.</div>
+          </div>
+          <div class="tc-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div><strong>Takedowns &amp; Formal Remedies:</strong> Copyright/DMCA takedown requests against cloned repositories or mirrored sites, plus further action where warranted.</div>
+          </div>
+        </div>
+        <div class="tc-callout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <div>Project 23 may log security events, invalid access attempts, and abnormal gameplay signals strictly to protect platform integrity and enforce these Terms.</div>
+        </div>
+      </section>
+
+      <section class="tc-card" id="t-service">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">07</span>
+            <h3>Service Availability &amp; Disclaimer</h3>
+          </div>
+        </div>
+        <p>Project 23 is provided on an <strong>"as-is"</strong> and <strong>"as-available"</strong> basis as an independent project. While every effort is made to keep tools, cloud sync, and games reliable, uninterrupted uptime or permanent data retention cannot be guaranteed. Project 23 is not responsible for outages caused by third-party providers such as Google Authentication, Firebase, or external APIs.</p>
+      </section>
+
+      <section class="tc-card" id="t-updates">
+        <div class="tc-card-head">
+          <div class="tc-card-title">
+            <span class="tc-step">08</span>
+            <h3>Changes &amp; Contact</h3>
+          </div>
+        </div>
+        <p>These Terms may be updated as Project 23 evolves or as new protections are added. Continued use after an update means you accept the revised Terms. To ask a question, request permission, or report a bug or cheater, reach out via the About page.</p>
+        <div class="tc-foot-bar">
+          <span class="tc-copy-meta">© 2026 Project 23 · Created by Tsz</span>
+          <div class="tc-actions">
+            <a class="tc-btn" href="pages/about.html">About Project 23</a>
+            <a class="tc-btn primary" href="index.html">Back to Home</a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+<script>
+(() => {
+  const links = [...document.querySelectorAll(".tc-rail a[href^='#']")];
+  const sections = links.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+  if (!sections.length || !("IntersectionObserver" in window)) return;
+  const setAct = id => links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + id));
+  const io = new IntersectionObserver(entries => {
+    const vis = entries.filter(e => e.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (vis && vis.target.id) setAct(vis.target.id);
+  }, { rootMargin: "-18% 0px -65% 0px", threshold: [0.1, 0.4, 0.7] });
+  sections.forEach(s => io.observe(s));
+})();
+</script>
+</body>
+</html>
