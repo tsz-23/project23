@@ -13,7 +13,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#05070d;color:#eef1f5;
 canvas{display:block}
 #menu{position:fixed;inset:0;overflow:auto;z-index:5;background:#05070d}
 #menu .bg{position:fixed;inset:0;overflow:hidden;pointer-events:none}
-.orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;animation:drift 16s ease-in-out infinite alternate}
+.orb{position:absolute;border-radius:50%;opacity:.55;animation:none}
 .o1{width:46vw;height:46vw;left:-10vw;top:-12vw;background:#e8452c}.o2{width:40vw;height:40vw;right:-8vw;top:6vh;background:#2f6bdc;animation-delay:-5s}.o3{width:44vw;height:44vw;left:30vw;bottom:-22vw;background:#7b2cbf;animation-delay:-9s}
 @keyframes drift{to{transform:translate3d(6vw,4vh,0) scale(1.15)}}
 .lines{position:absolute;inset:0;background:repeating-linear-gradient(100deg,transparent 0 90px,#ffffff08 90px 92px);animation:slide 6s linear infinite}
@@ -26,7 +26,7 @@ header{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;position:r
 .backsite,header a.back,header #back{position:static!important;left:auto!important;top:auto!important;transform:none;flex-shrink:0;display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:999px;border:1px solid #ffffff24;background:#0d1320cc;color:#eef1f5;text-decoration:none;font:inherit;font-size:13.5px;font-weight:700;letter-spacing:.5px;cursor:pointer;backdrop-filter:blur(8px);transition:transform .2s,border-color .2s,background .2s,box-shadow .2s}
 .backsite:hover,header a.back:hover,header #back:hover{transform:translateY(-2px);border-color:#ff7a3d;background:#161f33ee;box-shadow:0 6px 20px #ff4d2e33;color:#fff}
 .backsite svg{width:16px;height:16px;flex:none}
-.logo{font-size:76px;line-height:.95;font-weight:900;letter-spacing:8px;font-style:italic;background:linear-gradient(100deg,#fff 0,#ffb27a 35%,#ff4d2e 70%,#fff 100%);background-size:220%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 7s linear infinite}
+.logo{font-size:76px;line-height:.95;font-weight:900;letter-spacing:8px;font-style:italic;background:linear-gradient(100deg,#fff 0,#ffb27a 35%,#ff4d2e 70%,#fff 100%);background-size:220%;-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo span{opacity:.92}@keyframes shine{to{background-position:220% 0}}
 .tag{opacity:.55;letter-spacing:3px;text-transform:uppercase;font-size:13px}
 .tabs{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:4px;background:#0d1320cc;border:1px solid #ffffff12;border-radius:16px;margin-bottom:16px;backdrop-filter:blur(8px)}
@@ -240,7 +240,7 @@ html,body{font-family:var(--apple-font);-webkit-font-smoothing:antialiased;-moz-
 .lines{background:radial-gradient(rgba(255,255,255,0.045) 1px,transparent 1px);background-size:28px 28px;animation:none}
 .backsite,header a.back,header #back,.acct{background:rgba(255,255,255,0.075);border:1px solid var(--apple-border);box-shadow:var(--apple-highlight),0 8px 20px rgba(0,0,0,0.28);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);font-weight:600;letter-spacing:.2px}
 .acct:not(.in){background:var(--apple-accent);border:1px solid rgba(255,255,255,0.22);box-shadow:var(--apple-highlight),0 8px 22px rgba(255,59,48,0.38)}
-.card{background:var(--apple-glass);border:1px solid var(--apple-border);border-radius:22px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,0.52),var(--apple-highlight);backdrop-filter:blur(30px) saturate(190%);-webkit-backdrop-filter:blur(30px) saturate(190%)}
+.card{background:var(--apple-glass);border:1px solid var(--apple-border);border-radius:22px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,0.52),var(--apple-highlight);backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%)}
 .sec>label,.sec>.lb2{font-size:11px;font-weight:600;letter-spacing:1.2px;color:rgba(235,235,245,0.6);opacity:1}
 .tabs{background:rgba(118,118,128,0.22);border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:4px;box-shadow:inset 0 1px 2px rgba(0,0,0,0.35);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
 .tabs .ind{border-radius:12px;background:var(--apple-accent);box-shadow:0 4px 16px rgba(255,59,48,0.42),var(--apple-highlight)}
@@ -268,7 +268,7 @@ button.big:active{transform:scale(.98)}
 #stage>canvas{position:absolute;inset:0;width:100%!important;height:100%!important;pointer-events:auto}
 #stage .panel,#stage #sl,#stage #big,#stage #flag,#stage #toast,#stage #pause,#stage #loading,#stage #cd,#stage #results,#stage #mctrl{position:absolute}
 @media (max-width:1024px) and (orientation:portrait){body.in-game #stage{width:100vh;height:100vw;width:100dvh;height:100dvw;top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center center;}}
-.panel{background:rgb(16 19 28 / .72);border:1px solid rgb(255 255 255 / .14);border-radius:18px;box-shadow:0 14px 36px rgb(0 0 0 / .45),var(--apple-highlight);backdrop-filter:blur(26px) saturate(185%);-webkit-backdrop-filter:blur(26px) saturate(185%)}
+.panel{background:rgb(16 19 28 / .80);border:1px solid rgb(255 255 255 / .14);border-radius:18px;box-shadow:0 14px 36px rgb(0 0 0 / .45),var(--apple-highlight);backdrop-filter:blur(10px) saturate(140%);-webkit-backdrop-filter:blur(10px) saturate(140%)}
 #hud{padding:10px 20px 12px;border-radius:22px;bottom:max(14px,env(safe-area-inset-bottom))}
 #speed{font-size:54px;letter-spacing:-1px}
 #gear{font-size:32px;color:#ff9f0a}
@@ -539,6 +539,32 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,#menu::-webkit-scrollbar,.cars::
 #sessionLockModal p{margin:0 0 20px;font-size:13.5px;line-height:1.55;color:rgba(235,235,245,0.75)}
 #sessionLockModal .sl-btn{width:100%;padding:15px 20px;border:0;border-radius:14px;background:linear-gradient(180deg,#ff6240 0%,#ff3b30 100%);color:#fff;font:inherit;font-size:15px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;box-shadow:0 10px 28px rgba(255,59,48,0.42),inset 0 1px 0 rgba(255,255,255,0.25);transition:transform .15s,filter .15s}
 #sessionLockModal .sl-btn:hover{transform:translateY(-2px);filter:brightness(1.08)}
+html.df-terms-locked,html.df-terms-locked body{overflow:hidden!important;touch-action:none!important}
+html.df-terms-locked body>:not(#dfTermsGate){display:none!important;visibility:hidden!important;pointer-events:none!important}
+#dfTermsGate{position:fixed!important;inset:0!important;z-index:2147483647!important;display:grid!important;place-items:center!important;padding:18px!important;background:radial-gradient(circle at 50% 20%,rgba(255,77,46,.16),rgba(4,6,14,.92) 70%)!important;backdrop-filter:blur(22px) saturate(180%)!important;-webkit-backdrop-filter:blur(22px) saturate(180%)!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}
+#dfTermsGate .dtg-card{width:min(500px,96vw);max-height:calc(100dvh - 36px);overflow-y:auto;border-radius:26px;padding:26px 24px 22px;background:linear-gradient(165deg,rgba(22,28,44,.96) 0%,rgba(9,13,22,.98) 100%);border:1px solid rgba(255,255,255,.15);box-shadow:0 32px 84px rgba(0,0,0,.82),0 0 50px rgba(255,77,46,.2),inset 0 1px 0 rgba(255,255,255,.18);display:flex;flex-direction:column;gap:14px;color:#f5f5f7}
+#dfTermsGate .dtg-top{display:flex;align-items:center;gap:14px}
+#dfTermsGate .dtg-ic{width:46px;height:46px;border-radius:14px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,rgba(255,98,64,.26),rgba(255,59,48,.12));border:1px solid rgba(255,98,64,.5);color:#ff8a5b}
+#dfTermsGate .dtg-ic svg{width:23px;height:23px}
+#dfTermsGate h2{margin:0;font-size:23px;font-weight:900;font-style:italic;letter-spacing:.6px;line-height:1.1;color:#fff}
+#dfTermsGate .dtg-sub{margin:3px 0 0;font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#ffb27a;font-weight:700}
+#dfTermsGate .dtg-box{padding:14px 16px;border-radius:16px;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.09);display:flex;flex-direction:column;gap:8px;font-size:13.5px;line-height:1.5;color:rgba(235,235,245,.82)}
+#dfTermsGate .dtg-box b{color:#fff}
+#dfTermsGate .dtg-rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+#dfTermsGate .dtg-link{display:inline-flex;align-items:center;gap:6px;width:fit-content;font-size:13px;font-weight:700;color:#ff9a3d;text-decoration:none;margin-top:2px}
+#dfTermsGate .dtg-link:hover{text-decoration:underline;color:#ffc478}
+#dfTermsGate .dtg-chk{position:relative;display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:14px;background:rgba(255,98,64,.09);border:1.5px solid rgba(255,98,64,.32);cursor:pointer;font-size:13.5px;line-height:1.45;color:#fff;user-select:none;transition:border-color .18s,background .18s}
+#dfTermsGate .dtg-chk:hover{border-color:#ff7a3d;background:rgba(255,98,64,.15)}
+#dfTermsGate .dtg-native{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+#dfTermsGate .dtg-boxchk{width:22px;height:22px;flex:none;margin-top:1px;border-radius:7px;display:grid;place-items:center;background:rgba(8,12,22,.85);border:1.8px solid rgba(255,122,61,.65);color:#fff;transition:background .18s,border-color .18s,transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .18s}
+#dfTermsGate .dtg-boxchk svg{width:13px;height:13px;stroke-width:3.2;opacity:0;transform:scale(.45);transition:opacity .15s,transform .2s cubic-bezier(.34,1.56,.64,1)}
+#dfTermsGate .dtg-native:checked+.dtg-boxchk{background:linear-gradient(135deg,#ff4d2e,#ff9a3d);border-color:transparent;box-shadow:0 4px 16px rgba(255,77,46,.55);transform:scale(1.05)}
+#dfTermsGate .dtg-native:checked+.dtg-boxchk svg{opacity:1;transform:scale(1)}
+#dfTermsGate .dtg-err{font-size:12.5px;color:#ff7b6b;min-height:16px}
+#dfTermsGate .dtg-acts{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#dfTermsGate .dtg-btn{height:44px;padding:0 18px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#eef1f5;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s,opacity .15s,filter .15s}
+#dfTermsGate .dtg-btn.pri{flex:1;background:linear-gradient(135deg,#ff4d2e,#ff9a3d);border:0;color:#fff;letter-spacing:1px;text-transform:uppercase;box-shadow:0 10px 26px rgba(255,77,46,.42)}
+#dfTermsGate .dtg-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 </style>
 </head>
 <body>
@@ -746,7 +772,7 @@ import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
 import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
 const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const QUALITY={pixelRatio:Math.min(devicePixelRatio||1,1.25),adaptive:true,shadowMapSize:1024,post:true};
+const QUALITY={pixelRatio:Math.min(devicePixelRatio||1,1.0),adaptive:true,shadowMapSize:1024,post:true};
 let G={mode:'sprint',map:'abudhabi',tod:'day',wx:'clear',tyre:'soft',botFill:false,laps:3,car:0,pit:true,diff:'medium',name:'Driver',muted:false};
 const TYRES={
   soft:{id:'soft',name:'Soft',short:'S',col:'#ff2d20',hex:0xff2d20,dryGrip:1.06,wetGrip:0.73,wearRate:1.42},
@@ -978,12 +1004,13 @@ function applyPerfTier(tier,skipResize=false){
   document.body.classList.toggle('perf-mode',tier>=2);
   renderer.shadowMap.enabled=true;
   if(tier===0){
-    renderer.shadowMap.autoUpdate=true;
+    renderer.shadowMap.autoUpdate=false;
+    renderer.shadowMap.needsUpdate=true;
     if(!skipResize)setRatio(QUALITY.pixelRatio);
   }else if(tier===1){
     renderer.shadowMap.autoUpdate=false;
     renderer.shadowMap.needsUpdate=true;
-    if(!skipResize)setRatio(Math.min(curRatio,0.85));
+    if(!skipResize)setRatio(Math.min(curRatio,0.82));
   }else{
     renderer.shadowMap.autoUpdate=false;
     if(!skipResize)setRatio(Math.min(curRatio,0.68));
@@ -1010,7 +1037,7 @@ if(navigator.getBattery){
   }).catch(()=>{});
 }
 if(QUALITY.post){
-  composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(Math.max(2,Math.round(initW*curRatio)),Math.max(2,Math.round(initH*curRatio)),{samples:2}));
+  composer=new EffectComposer(renderer,new THREE.WebGLRenderTarget(Math.max(2,Math.round(initW*curRatio)),Math.max(2,Math.round(initH*curRatio)),{samples:0}));
   composer.addPass(new RenderPass(scene,camera));
   gradePass=new ShaderPass({uniforms:{tDiffuse:{value:null},sat:{value:1.28},con:{value:1.12},vig:{value:.3}},
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -1042,7 +1069,7 @@ function applyTOD(t){
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(a,3));const pts=new THREE.Points(g,new THREE.PointsMaterial({color:0xdfe6ff,size,sizeAttenuation:false,fog:false,transparent:true,opacity:op,depthWrite:false}));pts.frustumCulled=false;stars.add(pts);};
     mk(70,2.4,.95);mk(260,1.3,.55);scene.add(stars);}
   stars.visible=NIGHT;
-  lampU.value=T.lamp;fill.color.set(T.fillC);fill.intensity=T.fill;carFill.intensity=T.carL;window.lampI=T.lampI;if(bloomPass)bloomPass.strength=T.bloom;lampL.forEach(l=>{l.intensity=0;l.visible=T.lampI>0;});carFill.visible=T.carL>0;if(window.lampGroup)window.lampGroup.visible=T.lampsOn;
+  lampU.value=T.lamp;fill.color.set(T.fillC);fill.intensity=T.fill;carFill.intensity=T.carL;window.lampI=T.lampI;if(bloomPass){bloomPass.strength=T.bloom;bloomPass.enabled=T.bloom>0.1;}lampL.forEach(l=>{l.intensity=0;l.visible=T.lampI>0;});carFill.visible=T.carL>0;if(window.lampGroup)window.lampGroup.visible=T.lampsOn;
   if(gradePass){gradePass.uniforms.sat.value=T.sat;gradePass.uniforms.con.value=T.con;}
   (window.nightMats||[]).forEach(m=>m.emissiveIntensity=NIGHT?(m.userData.ni??1):0);(window.hotelMats||[]).forEach(m=>m.emissiveIntensity=NIGHT?.9:0);
 }
@@ -1271,6 +1298,7 @@ async function buildWorld(id,tod){
   world.traverse(o=>{if(o.isMesh){o.castShadow=false;if(o.isInstancedMesh){o.frustumCulled=false;}else{o.frustumCulled=true;if(o.geometry&&!o.geometry.boundingSphere)o.geometry.computeBoundingSphere();}}});
   applyTOD(tod);
   window.pendingSceneryTasks=[];
+  AC.lockWorld();
 }
 let matVC,matRoad,matConc;
 function buildMaterials(){
@@ -2800,10 +2828,178 @@ function renderPitPicker(nowMs){
     if(bEl)bEl.style.width=pct.toFixed(1)+'%';
   }
 }
-const GRv=[0,3.0,2.45,2.05,1.75,1.5,1.3,1.13,1.0],FD=5.74,RW=.36,ETA=.92,IDLE=4500,MAXRPM=15000,Gc=9.81,M=800,A=1.98,B=1.62,L=A+B,IZ=1500;
+const GRv=Object.freeze([0,3.0,2.45,2.05,1.75,1.5,1.3,1.13,1.0]),FD=5.74,RW=.36,ETA=.92,IDLE=4500,MAXRPM=15000,Gc=9.81,M=800,A=1.98,B=1.62,L=A+B,IZ=1500;
 const torque=r=>620*Math.max(.3,1-((r-11500)/7500)**2);
-const TUNE={lockBase:.115,lockLow:.34,falloff:18,rate:4.5,slipAllow:.17,yawAssist:8};
+const TUNE=Object.freeze({lockBase:.132,lockLow:.38,falloff:20,rate:4.8,slipAllow:.18,yawAssist:8.5});
 const steerMax=v=>TUNE.lockBase+TUNE.lockLow/(1+(v/TUNE.falloff)**2);
+const AC=(()=>{
+  const _perf=performance.now.bind(performance),_date=Date.now.bind(Date),_hypot=Math.hypot,_abs=Math.abs,_cbrt=Math.cbrt,_floor=Math.floor,_min=Math.min,_max=Math.max;
+  const deepFreeze=o=>{if(!o||typeof o!=='object'||ArrayBuffer.isView(o))return o;try{Object.freeze(o);}catch(e){}for(const k of Object.keys(o))deepFreeze(o[k]);return o;};
+  const fnvMix=(h,v)=>Math.imul(h^(Math.round(v*100)|0),16777619)>>>0;
+  const hashTracks=tr=>{
+    if(!tr||typeof tr!=='object')return 0;
+    let h=2166136261>>>0;
+    for(const id of Object.keys(tr).sort()){
+      const t=tr[id];if(!t||!Array.isArray(t.pts))continue;
+      h=fnvMix(h,t.lapPx||0);h=fnvMix(h,t.pts.length);
+      for(let i=0;i<t.pts.length;i+=2){h=fnvMix(h,t.pts[i][0]);h=fnvMix(h,t.pts[i][1]);}
+    }
+    return h>>>0;
+  };
+  deepFreeze(CARS);deepFreeze(TYRES);deepFreeze(MAPS);
+  const shadowCars=CARS.map(c=>Object.freeze({...c}));
+  const shadowTyres=Object.freeze(Object.fromEntries(Object.entries(TYRES).map(([k,v])=>[k,Object.freeze({...v})])));
+  let tracksHash=0;
+  if(window.TRACKS){
+    deepFreeze(window.TRACKS);
+    tracksHash=hashTracks(window.TRACKS);
+    try{Object.defineProperty(window,'TRACKS',{value:window.TRACKS,writable:false,configurable:false});}catch(e){}
+  }
+  const st={
+    flagged:false,reasons:[],carIdx:0,maxV:104,minLapSec:30,worldHash:0,worldChildCount:0,
+    shX:0,shZ:0,shVx:0,shVy:0,shDist:0,shValid:false,
+    cpMask:1,lapPeakV:0,lapSamples:0,lapWallStart:0,wallGrindT:0,
+    clockLastPerf:0,clockLastDate:0,clockSimDt:0,clockBadStreak:0,lastWorldCheck:0
+  };
+  function computeWorldHash(){
+    if(!C||!C.length||!WO||!wallOn||!world)return 0;
+    let h=2166136261>>>0;
+    h=fnvMix(h,N);h=fnvMix(h,LAP);h=fnvMix(h,W);h=fnvMix(h,OFFW);h=fnvMix(h,world.children.length);
+    const step=Math.max(1,_floor(N/180));
+    for(let i=0;i<N;i+=step){
+      h=fnvMix(h,C[i].x);h=fnvMix(h,C[i].y);h=fnvMix(h,C[i].z);
+      h=fnvMix(h,WO[0][i]);h=fnvMix(h,WO[1][i]);
+      h=fnvMix(h,(wallOn[0][i]?1:0)|(wallOn[1][i]?2:0)|(WN[0][i]?4:0)|(WN[1][i]?8:0));
+    }
+    return h>>>0;
+  }
+  function flag(reason){
+    if(!st.reasons.includes(reason))st.reasons.push(reason);
+    const first=!st.flagged;
+    st.flagged=true;
+    if(race&&race.on)race.lapBad=true;
+    if(first&&typeof flash==='function'){
+      flash('ANTI-CHEAT|Tampering detected — run invalidated',_perf(),'pen');
+    }
+  }
+  function lockWorld(){
+    if(wallOn&&Array.isArray(wallOn[0])){try{Object.freeze(wallOn[0]);Object.freeze(wallOn[1]);Object.freeze(wallOn);}catch(e){}}
+    st.worldChildCount=world?world.children.length:0;
+    st.worldHash=computeWorldHash();
+    let vLap=0;
+    if(vProf&&vProf.length===N){for(let i=0;i<N;i++)vLap+=DS/_max(vProf[i]||40,12);}
+    st.minLapSec=_max(LAP/88,vLap*0.70,22);
+    st.lastWorldCheck=_perf();
+  }
+  function checkWorld(){
+    if(tracksHash&&hashTracks(window.TRACKS)!==tracksHash){flag('TRACK_TAMPER');return false;}
+    if(st.worldHash){
+      if(!world||world.children.length!==st.worldChildCount){flag('BARRIER_INJECT');return false;}
+      if(computeWorldHash()!==st.worldHash){flag('BARRIER_TAMPER');return false;}
+    }
+    return !st.flagged;
+  }
+  function resetRun(carIdx){
+    st.flagged=false;st.reasons=[];
+    st.carIdx=clamp(+carIdx||0,0,shadowCars.length-1);
+    const sp=shadowCars[st.carIdx];
+    st.maxV=(331*_cbrt(sp.power/sp.drag))/3.6+9.0;
+    st.shValid=false;st.cpMask=1;st.lapPeakV=0;st.lapSamples=0;st.wallGrindT=0;
+    st.lapWallStart=_date();st.clockLastPerf=_perf();st.clockLastDate=_date();st.clockSimDt=0;st.clockBadStreak=0;st.lastWorldCheck=_perf();
+  }
+  function onRaceGo(overMs=0){
+    st.lapWallStart=_date()-(overMs||0);
+    st.clockLastPerf=_perf();st.clockLastDate=_date();st.clockSimDt=0;st.clockBadStreak=0;
+    st.cpMask=1;st.lapPeakV=0;st.lapSamples=0;st.wallGrindT=0;
+    syncShadow();
+  }
+  function onPauseShift(ms){
+    if(ms>0)st.lapWallStart+=ms;
+    st.clockLastPerf=_perf();st.clockLastDate=_date();st.clockSimDt=0;st.clockBadStreak=0;
+  }
+  function syncShadow(){
+    st.shX=P.x;st.shZ=P.z;st.shVx=P.vx;st.shVy=P.vy;
+    st.shDist=(race&&race.me)?race.me.dist:0;
+    st.shValid=true;
+  }
+  function checkShadow(){
+    if(!st.shValid||!race.go||race.finished)return;
+    if(_abs(P.x-st.shX)>0.12||_abs(P.z-st.shZ)>0.12||_abs(P.vx-st.shVx)>0.35||_abs(P.vy-st.shVy)>0.35){
+      flag('PHYSICS_TAMPER');
+      P.x=st.shX;P.z=st.shZ;P.vx=st.shVx;P.vy=st.shVy;
+    }
+    if(race.me&&_abs(race.me.dist-st.shDist)>0.6){
+      flag('DIST_TAMPER');
+      race.me.dist=st.shDist;
+    }
+  }
+  function carSpec(){
+    const sp=shadowCars[st.carIdx]||shadowCars[0];
+    if(P.stats&&(_abs((P.stats.power||0)-sp.power)>1e-4||_abs((P.stats.drag||0)-sp.drag)>1e-4||_abs((P.stats.grip||0)-sp.grip)>1e-4)){
+      flag('STAT_TAMPER');
+      P.stats=sp;
+    }
+    return sp;
+  }
+  function tyreSpec(id){return shadowTyres[id]||shadowTyres.soft;}
+  function tickSim(dt){
+    if(!race.go||race.finished)return;
+    st.lapSamples++;
+    st.clockSimDt+=dt;
+    const spd=_hypot(P.vx,P.vy);
+    if(spd>st.lapPeakV)st.lapPeakV=spd;
+    if(P.vx>st.maxV+1.5){flag('SPEED_HACK');P.vx=st.maxV;}
+    else if(P.vx>st.maxV){P.vx=st.maxV;}
+  }
+  function tickClock(){
+    if(!race.go||race.finished||race.paused||race.resuming||document.hidden)return;
+    const pNow=_perf(),dNow=_date();
+    if(_abs(performance.now()-pNow)>120||_abs(Date.now()-dNow)>120){flag('CLOCK_HOOK');}
+    if(pNow-st.lastWorldCheck>1500){st.lastWorldCheck=pNow;checkWorld();}
+    const dDate=dNow-st.clockLastDate;
+    if(dDate>=1500){
+      const dPerf=pNow-st.clockLastPerf;
+      if(dDate<=4500){
+        const rClock=dPerf/dDate,rSim=st.clockSimDt/(dDate/1000);
+        if(rClock>1.18||rClock<0.84||rSim>1.18){
+          st.clockBadStreak++;
+          if(st.clockBadStreak>=2)flag('CLOCK_SPEEDHACK');
+        }else{
+          st.clockBadStreak=0;
+        }
+      }
+      st.clockLastPerf=pNow;st.clockLastDate=dNow;st.clockSimDt=0;
+    }
+  }
+  function markProgress(s,ds){
+    if(!race.go||race.finished||!LAP||ds<-2)return;
+    const idx=clamp(_floor((s/LAP)*12),0,11);
+    st.cpMask|=(1<<idx);
+  }
+  function validateLap(t){
+    let bits=0,m=st.cpMask;
+    while(m){bits+=m&1;m>>>=1;}
+    const wallLap=(_date()-st.lapWallStart)/1000;
+    const okWorld=checkWorld();
+    let ok=okWorld&&!st.flagged;
+    if(bits<11){flag('CHECKPOINT_SKIP');ok=false;}
+    if(t<st.minLapSec){flag('IMPOSSIBLE_TIME');ok=false;}
+    if(st.lapPeakV>st.maxV+1.5){flag('SPEED_HACK');ok=false;}
+    if(st.lapSamples<_max(30,_floor(t*12))){flag('SIM_SKIP');ok=false;}
+    if(_abs(t-wallLap)>_max(0.9,t*0.045)){flag('CLOCK_DRIFT');ok=false;}
+    st.cpMask=1;st.lapPeakV=0;st.lapSamples=0;st.lapWallStart=_date();st.wallGrindT=0;
+    return ok;
+  }
+  return {
+    get flagged(){return st.flagged;},
+    get reasons(){return st.reasons.slice();},
+    get minLapSec(){return st.minLapSec;},
+    get maxV(){return st.maxV;},
+    get wallGrindT(){return st.wallGrindT;},
+    set wallGrindT(v){st.wallGrindT=v;},
+    lockWorld,checkWorld,resetRun,onRaceGo,onPauseShift,syncShadow,checkShadow,carSpec,tyreSpec,tickSim,tickClock,markProgress,validateLap,flag
+  };
+})();
 const P={x:0,z:0,y:0,psi:0,vx:0,vy:0,r:0,steer:0,thr:0,brk:0,rev:0,gear:1,rpm:IDLE,shift:0,mu:2,slip:0,dl:0,d:0,idx:0,wear:0,stats:CARS[0]};
 const keys={};let hint=0;
 let tiltRawDeg=0,tiltZeroDeg=0,tiltSteer=0,tiltActive=false,tiltBasis=null,tiltCalibPending=false;
@@ -2913,12 +3109,20 @@ function sampleTrack(x,z,noHint,customHint){
   return {k,i0,u,y,slope,tPsi:Math.atan2(tx,tz),d,s,s_off:sk};
 }
 function step(dt){
-  const c=P,S=c.stats,v=Math.hypot(c.vx,c.vy);
+  AC.checkShadow();
+  const c=P,S=AC.carSpec(),v=Math.hypot(c.vx,c.vy);
   if(!race.go&&!race.finished){
-    const holdUp=!!(keys.KeyW||keys.ArrowUp);
-    if(!race.jump&&holdUp){race.jt=(race.jt||0)+dt;if(race.jt>.85){race.jump=true;if(race.mode!=='timed'){addPen(5,'Jump start');flash('JUMP START|+5 seconds',performance.now(),'pen');}}}else if(!holdUp)race.jt=0;
+    const holdUp=!!(keys.KeyW||keys.ArrowUp),holdDn=!!(keys.KeyS||keys.ArrowDown),holdMove=holdUp||holdDn;
+    if(!race.jump&&holdMove){
+      race.jt=(race.jt||0)+dt;
+      if(race.jt>.12){
+        race.jump=true;
+        if(race.mode==='timed'){race.lapBad=true;flash('JUMP START|Lap 1 invalidated',performance.now(),'pen');}
+        else{addPen(5,'Jump start');flash('JUMP START|+5 seconds',performance.now(),'pen');}
+      }
+    }else if(!holdMove)race.jt=0;
     c.vx=c.vy=c.r=0;c.brk=c.rev=0;
-    c.thr+=((holdUp?0.75:0)-c.thr)*Math.min(1,dt*14);
+    c.thr+=((holdMove?0.75:0)-c.thr)*Math.min(1,dt*14);
     c.rpm=IDLE+c.thr*5600;
     return;}
   const fin=race.finished,up=!fin&&(keys.KeyW||keys.ArrowUp),rv=!fin&&(keys.KeyS||keys.ArrowDown),bk=!fin&&keys.KeyB,lf=!fin&&(keys.KeyA||keys.ArrowLeft),rt=!fin&&(keys.KeyD||keys.ArrowRight);
@@ -2945,9 +3149,14 @@ function step(dt){
   let autoSteer=0;
   const keySteer=(lf?1:0)-(rt?1:0);
   const rawTgt=(G.steerMode==='tilt'&&keySteer===0)?(-tiltSteer):keySteer;
-  const tgt=fin?autoSteer:rawTgt,rate=(Math.abs(tgt)<0.02||Math.sign(tgt)!==Math.sign(c.steer))?7.5:TUNE.rate/(1+v/150);c.steer+=clamp(tgt-c.steer,-rate*dt,rate*dt);
+  const tgt=fin?autoSteer:rawTgt;
+  const returning=Math.abs(tgt)<0.02||Math.sign(tgt)!==Math.sign(c.steer)||Math.abs(tgt)<Math.abs(c.steer);
+  const sCur=Math.abs(c.steer);
+  const rate=returning?8.2:(TUNE.rate/(1+v/150))*(0.72+1.15*sCur);
+  c.steer+=clamp(tgt-c.steer,-rate*dt,rate*dt);
+  const sAbs=Math.abs(c.steer),steerEff=Math.sign(c.steer)*(0.52*sAbs+0.58*sAbs*sAbs);
   const effMu=Math.max(c.mu||1.2,1.05);
-  const ayMax=effMu*(M*Gc+2.3*S.drag*v*v)/M,dg=L*ayMax/Math.max(v*v,25)+TUNE.slipAllow,dl=c.dl=clamp(c.steer*steerMax(v)*S.steer,-dg,dg);
+  const ayMax=effMu*(M*Gc+2.3*S.drag*v*v)/M,dg=L*ayMax/Math.max(v*v,25)+TUNE.slipAllow,dl=c.dl=clamp(steerEff*steerMax(v)*S.steer,-dg,dg);
   if(Math.abs(c.vx)<9&&c.gear>1){c.gear=1;c.shift=0;}
   const rpmAt=()=>{const wRpm=Math.max(c.vx,0)/RW*GRv[c.gear]*FD*9.5493;const lRpm=(c.gear===1&&c.vx<18&&c.thr>0.02)?(IDLE+c.thr*6200*(1-Math.max(0,c.vx)/20)):IDLE;return Math.max(IDLE,wRpm,lRpm);};let rpm=rpmAt();
   if(c.shift>0)c.shift-=dt;else if(rpm>14300&&c.gear<8){c.gear++;c.shift=.05;}else if(rpm<7800&&c.gear>1){c.gear--;c.shift=.04;}
@@ -2986,6 +3195,8 @@ function step(dt){
     c.x=C[rk]?C[rk].x:0;c.z=C[rk]?C[rk].z:0;c.y=C[rk]?C[rk].y:0;
     c.psi=Tg[rk]?Math.atan2(Tg[rk].x,Tg[rk].z):0;c.vx=0;c.vy=0;c.r=0;
   }
+  AC.tickSim(dt);
+  AC.syncShadow();
 }
 const race={on:false,go:false,t0:0,mode:'sprint',cars:[],laps:3,finished:false,msg:'',penalty:0,pitsDone:0,pitUntil:0,pitCool:0,startAt:0,remote:{}};
 function newCarState(name,team,isPlayer){return {name,team,color:TEAMS[team][0],isPlayer,dist:0,last:0,best:1e9,lapT0:0,laps:0,v:0,fin:0,pitState:0,wear:0,tyre:'medium',pitsDone:0,pitT:0,skill:1,off:0,s:0,x:0,z:0,psi:0,mesh:null,curSec:0,secT0:0,curSecs:[0,0,0],lastSecs:[0,0,0],secCols:['','',''],bestSecs:[1e9,1e9,1e9]};}
@@ -3074,6 +3285,8 @@ function setupRace(opts){
   }
   playerMesh.position.set(P.x,P.y,P.z);playerMesh.rotation.order='YXZ';playerMesh.rotation.y=P.psi;playerMesh.rotation.x=0;
   for(const c of race.cars){c.lapT0=0;c.secT0=0;c.curSec=0;}
+  AC.resetRun(opts.car);
+  AC.syncShadow();
 }
 function posOf(c){return c.isPlayer?{x:P.x,z:P.z,psi:P.psi}:posAt(c.s,c.off);}
 function updateBots(dt){
@@ -3126,7 +3339,7 @@ function updateBots(dt){
     const usePitPl=(b.pitState>0&&pit.plAt&&Math.abs(b.off)>W/2+1.2);
     const p=usePitPl?pit.plAt(b.s,Math.abs(b.off)):posAt(b.s,b.off);
     b.x=p.x;b.z=p.z;b.psi=p.psi;b.mesh.position.set(p.x,p.y,p.z);b.mesh.rotation.order='YXZ';b.mesh.rotation.y=p.psi;b.mesh.rotation.x=p.pitch||0;
-    const dx=P.x-p.x,dz=P.z-p.z,dd=Math.hypot(dx,dz);if(dd<3.2&&dd>0.01){const push=(3.2-dd)*.5;P.x+=dx/dd*push;P.z+=dz/dd*push;P.vx*=.985;P.vy*=.985;b.v*=.99;}
+    const dx=P.x-p.x,dz=P.z-p.z,dd=Math.hypot(dx,dz);if(dd<3.2&&dd>0.01){const push=(3.2-dd)*.5;P.x+=dx/dd*push;P.z+=dz/dd*push;P.vx*=.985;P.vy*=.985;b.v*=.99;AC.syncShadow();}
   }
 }
 let toastT=0;
@@ -3144,7 +3357,9 @@ function violation(now){
 }
 function updateRace(now,dt){
   const me=race.me;if(!me)return;
-  if(race.armed&&(P.vx>.3||keys.KeyW||keys.ArrowUp||keys.KeyS||keys.ArrowDown)){race.armed=false;race.t0=now;for(const c of race.cars)c.lapT0=now;}
+  AC.checkShadow();
+  AC.tickClock();
+  if(race.armed&&(P.vx>.3||keys.KeyW||keys.ArrowUp||keys.KeyS||keys.ArrowDown)){race.armed=false;race.t0=now;for(const c of race.cars)c.lapT0=now;AC.onRaceGo(0);}
   const k=nearest(P.x,P.z);P.idx=k;P.d=(P.x-C[k].x)*Nn[k].x+(P.z-C[k].z)*Nn[k].z;
   const side=P.d>0?1:-1,dpsi=P.psi-Math.atan2(Tg[k].x,Tg[k].z),ext=1.0*Math.abs(Math.cos(dpsi))+2.75*Math.abs(Math.sin(dpsi));
   const s_off0=(P.x-C[k].x)*Tg[k].x+(P.z-C[k].z)*Tg[k].z;
@@ -3167,12 +3382,12 @@ function updateRace(now,dt){
   }
   const wet=race.wetness||0;
   if(matRoad){matRoad.roughness=0.9-wet*0.58;matRoad.metalness=wet*0.32;}
-  const tc=TYRES[P.tyre||'soft']||TYRES.soft;
+  const tc=AC.tyreSpec(P.tyre||'soft');
   const compGrip=tc.dryGrip*(1-wet*0.85)+tc.wetGrip*(wet*0.85);
   const wearGrip=1.04-.32*Math.pow(P.wear,1.28);
   const tireF=compGrip*wearGrip;
   P.pwr=(1.03-.12*P.wear)*(1-wet*0.05);
-  P.mu=Math.max(1.08,(lane?1.8:P.grass?.92:out?1.58:2)*P.stats.grip*tireF);
+  P.mu=Math.max(1.08,(lane?1.8:P.grass?.92:out?1.58:2)*AC.carSpec().grip*tireF);
   const onKerb=isCorner[k]&&Math.abs(laneD-W/2)<1.35&&!lane;
   SFX.tick(race.on&&!race.paused&&!race.resuming&&!introActive,P.rpm,P.thr,P.slip,onKerb,Math.hypot(P.vx,P.vy),P.gear);
   const inTun=!!(window.tunnel&&(((k-window.tunnel.kS)%N+N)%N<=((window.tunnel.kE-window.tunnel.kS)%N+N)%N));
@@ -3181,6 +3396,8 @@ function updateRace(now,dt){
     let da=tAng-P.psi;da=Math.atan2(Math.sin(da),Math.cos(da));
     if(Math.abs(da)<2.3)P.psi+=da*Math.min(1,dt*6.5);
   };
+  let hitBarrier=false;
+  const wallScrub=Math.pow(0.45,Math.min(dt,0.05)*9);
   if(inPitZ&&side===pit.side){
     const outerBar=offOf(pit.side,k)-0.05;
     const inGarZone=relF>=pit.gap&&relF<=pit.len-pit.gap;
@@ -3188,16 +3405,16 @@ function updateRace(now,dt){
     if(pitD+ext>pLim){
       const hit=clamp(pitD+ext-pLim,0,3.5);
       P.x-=nxP*hit;P.z-=nzP*hit;pitD-=hit;
-      if(Math.abs(P.vx)>8)P.vx*=.92;
-      P.vy*=.6;alignToTrack();
+      if(Math.abs(P.vx)>6)P.vx*=wallScrub;
+      P.vy*=.45;alignToTrack();hitBarrier=true;
     }
   }else{
     const lim=inTun?(W/2+1.25):edgeOff(side,k)-.05,wi=side>0?0:1;
     if(laneD+ext>lim&&(wallOn[wi][k]||inTun)){
       const hit=clamp(laneD+ext-lim,0,3.5);
       P.x-=Nn[k].x*side*hit;P.z-=Nn[k].z*side*hit;
-      if(Math.abs(P.vx)>8)P.vx*=.92;
-      P.vy*=.6;alignToTrack();
+      if(Math.abs(P.vx)>6)P.vx*=wallScrub;
+      P.vy*=.45;alignToTrack();hitBarrier=true;
     }
   }
   const wIn=W/2+2.15,wOut=W/2+2.85,wMid=W/2+2.5;
@@ -3206,16 +3423,27 @@ function updateRace(now,dt){
       if(!P.pitWallSide)P.pitWallSide=pitD>=wMid?1:-1;
       if(P.pitWallSide<0&&pitD+ext>wIn){
         const hit=clamp((pitD+ext)-wIn,0,2.5);
-        P.x-=nxP*hit;P.z-=nzP*hit;if(Math.abs(P.vx)>8)P.vx*=.92;P.vy*=.6;alignToTrack();
+        P.x-=nxP*hit;P.z-=nzP*hit;if(Math.abs(P.vx)>6)P.vx*=wallScrub;P.vy*=.45;alignToTrack();hitBarrier=true;
       }else if(P.pitWallSide>0&&pitD-ext<wOut){
         const hit=clamp(wOut-(pitD-ext),0,2.5);
-        P.x+=nxP*hit;P.z+=nzP*hit;if(Math.abs(P.vx)>8)P.vx*=.92;P.vy*=.6;alignToTrack();
+        P.x+=nxP*hit;P.z+=nzP*hit;if(Math.abs(P.vx)>6)P.vx*=wallScrub;P.vy*=.45;alignToTrack();hitBarrier=true;
       }
     }else{
       P.pitWallSide=pitD>=wMid?1:-1;
     }
   }else{
     P.pitWallSide=pitD>=wMid?1:-1;
+  }
+  if(race.go&&!race.finished){
+    if(hitBarrier&&Math.hypot(P.vx,P.vy)>30){
+      AC.wallGrindT+=dt;
+      if(AC.wallGrindT>0.70){
+        P.vx*=0.72;
+        if(race.mode==='timed'&&!race.lapBad){race.lapBad=true;flash('LAP INVALID|Wall-riding detected',now,'pen');}
+      }
+    }else{
+      AC.wallGrindT=Math.max(0,AC.wallGrindT-dt*1.5);
+    }
   }
   const trkSample=sampleTrack(P.x,P.z,true,k);
   P.y=trkSample.y;P.slope=trkSample.slope;P.tPsi=trkSample.tPsi;
@@ -3224,7 +3452,7 @@ function updateRace(now,dt){
     if(outLine){race.tl+=dt;race.back=0;if(race.tl>.45&&race.armed2){race.armed2=false;violation(now);}}
     else{race.tl=0;race.back+=dt;if(race.back>1.5)race.armed2=true;}
   }
-  const s=trkSample.s,prev=me.s;let ds=s-prev;if(ds>LAP/2)ds-=LAP;if(ds<-LAP/2)ds+=LAP;me.dist+=ds;me.s=s;me.v=Math.hypot(P.vx,P.vy);me.off=P.d;
+  const s=trkSample.s,prev=me.s;let ds=s-prev;if(ds>LAP/2)ds-=LAP;if(ds<-LAP/2)ds+=LAP;me.dist+=ds;me.s=s;me.v=Math.hypot(P.vx,P.vy);me.off=P.d;AC.markProgress(s,ds);
   {const fh=Math.cos(dpsi);
    if(race.go&&!race.finished&&fh<-.5&&P.vx>5.6){race.wt+=dt;if(!race.wshow){race.wshow=true;flash('WRONG WAY|Wrong direction, turn around',now,'warn');}
      if(race.wt>4){const sp=Math.hypot(P.vx,P.vy);P.x=C[k].x;P.z=C[k].z;P.y=C[k].y;P.visY=C[k].y;P.psi=Math.atan2(Tg[k].x,Tg[k].z);P.vx=sp;P.vy=0;P.r=0;hint=k;P.idx=k;P.carGradeSm=slopeAt(k);P.camGradeSm=P.carGradeSm;race.wt=0;race.wshow=false;flash('BACK ON TRACK|Reset onto the circuit',now,'info');}}
@@ -3305,9 +3533,10 @@ function updateRace(now,dt){
     const done=Math.floor(me.dist/LAP);
     if(done>me.laps){
       const t=(now-me.lapT0)/1000;
+      const acOk=AC.validateLap(t);
       const st3=Math.max(0.1,t-(me.curSecs[0]||0)-(me.curSecs[1]||0));
       me.curSecs[2]=st3;me.lastSecs=[me.curSecs[0]||t/3,me.curSecs[1]||t/3,st3];
-      const valid=!race.lapBad;
+      const valid=!race.lapBad&&acOk;
       if(valid&&st3<race.overallBestSecs[2]){race.overallBestSecs[2]=st3;me.bestSecs[2]=st3;me.secCols[2]='p';}
       else if(valid&&st3<me.bestSecs[2]){me.bestSecs[2]=st3;me.secCols[2]='g';}
       else me.secCols[2]=valid?'y':'r';
@@ -3315,12 +3544,13 @@ function updateRace(now,dt){
       me.curSecs=[0,0,0];me.curSec=0;me.secT0=now;
       me.last=t;me.lapT0=now;me.laps=done;
       SFX.tone(valid?880:330,0.10,'sine',0.04);
-      if(race.mode==='timed'){const bad=race.lapBad;me.lapList.push({t,valid:!bad,secs:lapSecs,cols:lapCols});if(bad)flash('LAP DELETED|Invalid lap, time deleted',now,'pen');else{me.valid++;me.sum+=t;me.best=Math.min(me.best,t);}race.lapBad=false;
+      if(race.mode==='timed'){const bad=!valid;me.lapList.push({t,valid:!bad,acBad:!acOk,secs:lapSecs,cols:lapCols});if(bad)flash(acOk?'LAP DELETED|Invalid lap, time deleted':'ANTI-CHEAT|Lap invalidated',now,'pen');else{me.valid++;me.sum+=t;me.best=Math.min(me.best,t);}race.lapBad=false;
         if(me.valid>=race.laps){race.finished=true;const pp=(G.pit&&race.pitsDone===0)?30:0;race.penalty=pp;me.fin=me.sum+pp;finishRace();}}
-      else{me.lapList.push({t,valid:true,secs:lapSecs,cols:lapCols});me.best=Math.min(me.best,t);
+      else{me.lapList.push({t,valid:acOk,acBad:!acOk,secs:lapSecs,cols:lapCols});if(acOk)me.best=Math.min(me.best,t);
         if(done>=race.laps){race.finished=true;const pp=(G.pit&&race.pitsDone===0)?30:0;race.penalty=pp;me.fin=(now-race.t0)/1000+pp+race.penaltyS;finishRace();}}}
   }
   for(const b of race.cars){if(b.isPlayer)continue;const done=Math.floor(b.dist/LAP);if(done>b.laps&&race.go){const t=(now-b.lapT0)/1000;b.last=t;b.best=Math.min(b.best,t);for(let si=0;si<3;si++){const bs=t/3*(0.985+((si===1)?0.02:0));if(bs>2&&bs<race.overallBestSecs[si])race.overallBestSecs[si]=bs;}b.lapT0=now;b.laps=done;if(done>=race.laps&&!b.fin)b.fin=(now-race.t0)/1000;}}
+  AC.syncShadow();
 }
 function effCarFin(c){return c.fin||(race.finished&&c.projFin?c.projFin:0);}
 function sortedCars(){const all=[...race.cars];for(const id in race.remote){const r=race.remote[id];if(r.st)all.push(r.st);}
@@ -3338,8 +3568,9 @@ function finishRace(){
       c.projFin=rawNow+rem/spd;
     }
   }
-  if(race.mode==='timed')submitTime(race.me.best);
-  if(race.mode==='friendly'&&room.id&&FB)FB.D.set(rref('results/'+myUid()),{name:G.name,time:race.me.fin,dist:race.me.dist}).catch(()=>{});
+  const acClean=AC.checkWorld()&&!AC.flagged;
+  if(race.mode==='timed'&&acClean)submitTime(race.me.best);
+  if(race.mode==='friendly'&&room.id&&FB)FB.D.set(rref('results/'+myUid()),{name:G.name,time:acClean?race.me.fin:0,dist:acClean?race.me.dist:0,flagged:!acClean}).catch(()=>{});
   syncRacingClass();
   const all=sortedCars(),pos=all.indexOf(race.me)+1;
   const penTot=(race.penalty||0)+(race.penaltyS||0);
@@ -3391,6 +3622,7 @@ function showResults(){
     const pen=race.penaltyS+race.penalty;
     body=`<div class="stats"><div>POSITION<b>P${pos}</b></div><div>TIME<b>${me.fin?lapText(me.fin):'-'}</b></div><div>BEST LAP<b>${lapText(me.best)}</b></div><div>PENALTIES<b>${pen?'+'+pen+'s':'—'}</b>${pen?`<small>${[...(race.penLog||[]).reduce((m,[w,t])=>m.set(w,(m.get(w)||0)+t),new Map())].map(([w,t])=>w+' +'+t+'s').concat(race.penalty?['Pit stop skipped +'+race.penalty+'s']:[]).join('<br>')}</small>`:''}</div></div><table class="rt"><tr><th>#</th><th>DRIVER</th><th>TIME</th><th>GAP</th><th>BEST</th></tr>${rows}</table>`;
   }
+  if(AC.flagged)body=`<div class="prac-bad-pill" style="margin:0 0 12px;padding:9px 12px;font-size:12px;white-space:normal"><span class="chip-dot">!</span> ANTI-CHEAT: Tampering detected — lap times and race stats were not saved.</div>`+body;
   $('rtitle').textContent=race.mode==='timed'?'PRACTICE RESULT':'RACE RESULT';if(race.mode==='friendly')body+='<div id="rpts"><div class="muted2">Counting the points…</div></div>';$('rbody').innerHTML=body;bindResPlbEvents();$('rback').textContent=race.mode==='friendly'?'Back to lobby':'Back to menu';if(race.mode==='friendly')renderRound();AU.user&&saveStats({pos,mode:race.mode,map:G.map,best:me.best<1e8?me.best:0});
   syncRacingClass();for(const id of ['standings','mapwrap','top','hud','help','sl'])$(id).hidden=true;$('cd').hidden=true;
   $('results').hidden=false;
@@ -3807,7 +4039,9 @@ function finishResume(){
   for(const c of race.cars){c.lapT0+=d;if(c.secT0)c.secT0+=d;}
   if(race.pitUntil)race.pitUntil+=d;
   race.pitCool+=d;
-  if(!race.go)race.startAt+=Date.now()-race.pausedDate;
+  const wallPause=Date.now()-race.pausedDate;
+  if(!race.go)race.startAt+=wallPause;
+  AC.onPauseShift(wallPause);
   race.resuming=false;
   race.cdGoShown=false;
   $('cd').hidden=true;
@@ -3879,7 +4113,7 @@ function restartPractice(keepTyre=false){
   race.on=true;race.go=true;race.jump=true;race.armed=true;race.t0=performance.now();for(const c of race.cars){c.lapT0=race.t0;c.secT0=race.t0;}$('sl').hidden=true;
   syncRacingClass();lastSt=0;updateStandings(performance.now());updateHud(performance.now());drawMini();
 }
-function resetCar(){race.armed2=true;race.back=0;const base=(P.idx!==undefined?P.idx:hint)||0,refY=C[base]?C[base].y:(P.y||0);const k=nearest(P.x,P.z,false,false,base,refY);P.idx=k;P.x=C[k].x;P.z=C[k].z;P.y=C[k].y;P.visY=C[k].y;P.psi=Math.atan2(Tg[k].x,Tg[k].z);P.vx=P.vy=P.r=0;P.gear=1;P.carGradeSm=slopeAt(k);P.camGradeSm=P.carGradeSm;}
+function resetCar(){race.armed2=true;race.back=0;const base=(P.idx!==undefined?P.idx:hint)||0,refY=C[base]?C[base].y:(P.y||0);const k=nearest(P.x,P.z,false,false,base,refY);P.idx=k;P.x=C[k].x;P.z=C[k].z;P.y=C[k].y;P.visY=C[k].y;P.psi=Math.atan2(Tg[k].x,Tg[k].z);P.vx=P.vy=P.r=0;P.gear=1;P.carGradeSm=slopeAt(k);P.camGradeSm=P.carGradeSm;AC.syncShadow();}
 addEventListener('resize',syncStageSize);addEventListener('orientationchange',()=>setTimeout(syncStageSize,120));
 const spots=[new THREE.SpotLight(0xfff3d0,0,140,.5,.5,1),new THREE.SpotLight(0xfff3d0,0,140,.5,.5,1)];
 for(const s of spots){scene.add(s,s.target);}
@@ -4089,8 +4323,8 @@ function gate(state,o={}){
   gateEl.classList.remove('hide');gateState=state;gateDismiss=o.dismiss||null;
   const head='<h1>DOWN<em>FORCE</em></h1>',err=o.error?`<div class="gate-err">${esc(o.error)}</div>`:'',x=gateDismiss?'<button class="gate-x" id="gClose" aria-label="Close">✕</button>':'';
   if(state==='loading')gateEl.innerHTML=`<div class="gate-card">${head}<div class="spin"></div><p style="margin:0">${esc(o.text||'Loading…')}</p></div>`;
-  else if(state==='signin')gateEl.innerHTML=`<div class="gate-card">${x}${head}<p>${esc(o.text||'Sign in with Google to continue. Your races, fastest laps and points are saved to your account.')}</p><button class="gbtn" id="gSign">${GOOGLE_G}Continue with Google</button>${err}<p class="gate-alt">New here? <a href="#" id="gNew">Create an account</a></p></div>`;
-  else if(state==='create')gateEl.innerHTML=`<div class="gate-card">${x}${head}<p>Creating an account needs the access password. If you don't have it, ask the person who invited you.</p><label for="gPass" style="text-align:left">Access password</label><input type="password" id="gPass" class="gate-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter the password"><button class="gbtn" id="gGo" style="margin-top:.9rem">${GOOGLE_G}Continue with Google</button>${err}<p class="gate-alt"><a href="#" id="gBack">Back</a></p></div>`;
+  else if(state==='signin')gateEl.innerHTML=`<div class="gate-card">${x}${head}<p>${esc(o.text||'Sign in with Google to continue. Your races, fastest laps and points are saved to your account.')}</p><button class="gbtn" id="gSign">${GOOGLE_G}Continue with Google</button>${err}<p class="gate-alt">New here? <a href="#" id="gNew">Create an account</a></p><p class="gate-alt" style="margin-top:.55rem!important;font-size:.82rem"><a href="../pages/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a></p></div>`;
+  else if(state==='create')gateEl.innerHTML=`<div class="gate-card">${x}${head}<p>Creating an account needs the access password. If you don't have it, ask the person who invited you.</p><label for="gPass" style="text-align:left">Access password</label><input type="password" id="gPass" class="gate-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Enter the password"><button class="gbtn" id="gGo" style="margin-top:.9rem">${GOOGLE_G}Continue with Google</button>${err}<p class="gate-alt" style="font-size:.8rem">By continuing you agree to our <a href="../pages/terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a>.</p><p class="gate-alt"><a href="#" id="gBack">Back</a></p></div>`;
   else if(state==='password')gateEl.innerHTML=`<div class="gate-card">${head}<p>Welcome! To finish creating your account, enter the access password.</p><input type="password" id="gPass" class="gate-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access password">${err}<div class="row" style="justify-content:center;margin-top:1rem"><button class="gb2" id="gCancel">Cancel</button><button class="gb2 primary" id="gOk">Create account</button></div></div>`;
   else gateEl.innerHTML=`<div class="gate-card">${x}${head}<div class="gate-err" style="text-align:center">${esc(o.error||GENERIC_ERR)}</div><p style="margin-top:1rem"><button class="gb2" id="gClose2">Close</button></p></div>`;
   const q=id=>gateEl.querySelector('#'+id),on=(id,fn)=>{const e=q(id);if(e)e.onclick=fn;};
@@ -4123,7 +4357,7 @@ async function startGoogle(code){
   }
 }
 async function createAccount(user,base,ref){
-  const {Fs}=FB,prof={...base,username:user.displayName||(user.email||'driver').split('@')[0],createdAt:Fs.serverTimestamp()};
+  const {Fs}=FB,prof={...base,username:user.displayName||(user.email||'driver').split('@')[0],createdAt:Fs.serverTimestamp(),termsAccepted:false};
   let code=pendingCode,err='',tries=0;pendingCode=null;
   for(;;){
     if(code==null){code=await askPassword(err);if(code===null)throw {code:'cancelled'};}
@@ -4142,11 +4376,146 @@ async function loadProfile(user){
     prof=await createAccount(user,base,ref);
   }else{
     prof=snap.data()||{};
-    const cleanUser={...base,activeRaceSid:Fs.deleteField(),activeRaceStatus:Fs.deleteField(),activeRaceHb:Fs.deleteField(),activeSessionId:Fs.deleteField(),activeSessionOrder:Fs.deleteField(),activeRace:Fs.deleteField()};
+    const hasLegacy=['activeRaceSid','activeRaceStatus','activeRaceHb','activeSessionId','activeSessionOrder','activeRace'].some(k=>prof[k]!==undefined);
+    const cleanUser=hasLegacy?{...base,activeRaceSid:Fs.deleteField(),activeRaceStatus:Fs.deleteField(),activeRaceHb:Fs.deleteField(),activeSessionId:Fs.deleteField(),activeSessionOrder:Fs.deleteField(),activeRace:Fs.deleteField()}:base;
     Fs.setDoc(ref,cleanUser,{merge:true}).catch(()=>{});
   }
+  const accepted=prof.termsAccepted===true;
+  if(snap.exists()&&prof.termsAccepted===undefined){
+    Fs.setDoc(ref,{termsAccepted:false},{merge:true}).catch(()=>{});
+  }
   AU.user=user;
-  AU.prof={username:prof.username||user.displayName||(user.email||'Driver').split('@')[0],photoURL:base.photoURL||prof.photoURL||'',email:base.email||prof.email||''};
+  AU.prof={username:prof.username||user.displayName||(user.email||'Driver').split('@')[0],photoURL:base.photoURL||prof.photoURL||'',email:base.email||prof.email||'',termsAccepted:accepted};
+  syncDfTerms(accepted);
+  startDfTermsWatch(user.uid);
+}
+const DF_TERMS_VER='2026-11-24';
+let dfTermsLocked=false,dfTermsEl=null,dfTermsObs=null,dfTermsTick=null,dfTermsBusy=false,dfTermsUnsub=null;
+const dfTermsVault=[];
+function ensureDfTermsShield(){
+  if($('dfTermsShield'))return;
+  const st=document.createElement('style');st.id='dfTermsShield';
+  st.textContent='html.df-terms-locked,html.df-terms-locked body{overflow:hidden!important;touch-action:none!important}html.df-terms-locked body>:not(#dfTermsGate){display:none!important;visibility:hidden!important;pointer-events:none!important}#dfTermsGate{position:fixed!important;inset:0!important;z-index:2147483647!important;display:grid!important;place-items:center!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important}';
+  (document.head||document.documentElement).appendChild(st);
+}
+function vaultDfForTerms(){
+  if(!dfTermsLocked||!document.body)return;
+  [...document.body.children].forEach(n=>{if(n.id==='dfTermsGate')return;dfTermsVault.push(n);n.remove();});
+}
+function restoreDfFromTerms(){
+  if(!document.body||!dfTermsVault.length)return;
+  while(dfTermsVault.length)document.body.appendChild(dfTermsVault.shift());
+}
+function mountDfTermsGate(){
+  if(!dfTermsLocked||!document.body)return;
+  ensureDfTermsShield();
+  document.documentElement.classList.add('df-terms-locked');
+  vaultDfForTerms();
+  if(dfTermsEl&&document.body.contains(dfTermsEl))return;
+  const ov=document.createElement('div');
+  ov.id='dfTermsGate';ov.setAttribute('role','alertdialog');ov.setAttribute('aria-modal','true');
+  ov.innerHTML=`<div class="dtg-card">
+    <div class="dtg-top">
+      <div class="dtg-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div><h2>RACE FAIR · ACCEPT TERMS</h2><p class="dtg-sub">Downforce · Project 23</p></div>
+    </div>
+    <div class="dtg-box">
+      <b>Before hitting the track, you must agree to the Project 23 Terms &amp; Conditions:</b>
+      <ul class="dtg-rules">
+        <li><b>No hacks, cheats, extensions, or scripts</b> (no speed hacks, bots, or DevTools tampering).</li>
+        <li><b>No unauthorized data or leaderboard tampering</b> or probing backend APIs.</li>
+        <li><b>No copying or cloning</b> Downforce or Project 23's code, tracks, or assets.</li>
+      </ul>
+      <a class="dtg-link" href="../pages/terms.html" target="_blank" rel="noopener">Read full Terms &amp; Conditions ↗</a>
+    </div>
+    <label class="dtg-chk" for="dfTermsChk">
+      <input type="checkbox" id="dfTermsChk" class="dtg-native">
+      <span class="dtg-boxchk" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+      <span>I have read and agree to the Project 23 Terms &amp; Conditions.</span>
+    </label>
+    <div class="dtg-err" id="dfTermsErr"></div>
+    <div class="dtg-acts">
+      <button type="button" class="dtg-btn" id="dfTermsOut">Sign Out</button>
+      <button type="button" class="dtg-btn pri" id="dfTermsAcc" disabled>Accept &amp; Race</button>
+    </div>
+  </div>`;
+  document.body.appendChild(ov);
+  dfTermsEl=ov;
+  const chk=ov.querySelector('#dfTermsChk'),acc=ov.querySelector('#dfTermsAcc'),out=ov.querySelector('#dfTermsOut'),err=ov.querySelector('#dfTermsErr');
+  chk.onchange=()=>{acc.disabled=!chk.checked;err.textContent='';};
+  out.onclick=signOutNow;
+  acc.onclick=async()=>{
+    if(!chk.checked||!AU.user||!FB)return;
+    acc.disabled=true;acc.textContent='Saving…';err.textContent='';
+    try{
+      const {Fs,fs}=FB;
+      await Fs.setDoc(Fs.doc(fs,'users',AU.user.uid),{termsAccepted:true,termsAcceptedAt:Fs.serverTimestamp(),termsVersion:DF_TERMS_VER},{merge:true});
+      if(AU.prof)AU.prof.termsAccepted=true;
+      unlockDfTerms();
+    }catch(e){
+      err.textContent='Could not save your acceptance. Check your connection and try again.';
+      acc.disabled=false;acc.textContent='Accept & Race';
+    }
+  };
+}
+function blockDfTermsKey(e){if(dfTermsLocked&&e.key==='Escape'){e.preventDefault();e.stopPropagation();}}
+function verifyDfTerms(){
+  if(!dfTermsLocked||dfTermsBusy)return;
+  dfTermsBusy=true;
+  try{
+    ensureDfTermsShield();
+    if(!document.documentElement.classList.contains('df-terms-locked'))document.documentElement.classList.add('df-terms-locked');
+    vaultDfForTerms();
+    if(!dfTermsEl||!document.body.contains(dfTermsEl)){dfTermsEl=null;mountDfTermsGate();}
+    else{
+      if(dfTermsEl.hasAttribute('hidden'))dfTermsEl.removeAttribute('hidden');
+      if(dfTermsEl.getAttribute('style'))dfTermsEl.removeAttribute('style');
+      const cs=getComputedStyle(dfTermsEl),card=dfTermsEl.querySelector('.dtg-card'),ccs=card?getComputedStyle(card):null;
+      if(cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)<0.9||cs.pointerEvents==='none'||!card||(ccs&&(ccs.display==='none'||ccs.visibility==='hidden'||parseFloat(ccs.opacity)<0.9))){
+        dfTermsEl.remove();dfTermsEl=null;mountDfTermsGate();
+      }
+    }
+  }finally{setTimeout(()=>{dfTermsBusy=false;},25);}
+}
+function enforceDfTerms(){
+  if(!AU.user)return;
+  dfTermsLocked=true;
+  SFX.tick(false,0,0,0,false,0,1);
+  if(race.on||introActive)quitGame();
+  mountDfTermsGate();
+  if(!dfTermsObs){dfTermsObs=new MutationObserver(verifyDfTerms);dfTermsObs.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','hidden','id']});}
+  if(!dfTermsTick)dfTermsTick=setInterval(verifyDfTerms,500);
+  document.addEventListener('keydown',blockDfTermsKey,true);
+}
+function unlockDfTerms(){
+  dfTermsLocked=false;
+  if(dfTermsObs){dfTermsObs.disconnect();dfTermsObs=null;}
+  if(dfTermsTick){clearInterval(dfTermsTick);dfTermsTick=null;}
+  document.removeEventListener('keydown',blockDfTermsKey,true);
+  document.documentElement.classList.remove('df-terms-locked');
+  if(dfTermsEl){dfTermsEl.remove();dfTermsEl=null;}
+  restoreDfFromTerms();
+}
+function syncDfTerms(accepted){
+  if(!AU.user){if(dfTermsLocked)unlockDfTerms();return;}
+  if(accepted===true){if(dfTermsLocked)unlockDfTerms();}
+  else enforceDfTerms();
+}
+function startDfTermsWatch(uid){
+  if(dfTermsUnsub){try{dfTermsUnsub();}catch(e){}dfTermsUnsub=null;}
+  if(!uid||!FB)return;
+  try{
+    dfTermsUnsub=FB.Fs.onSnapshot(FB.Fs.doc(FB.fs,'users',uid),snap=>{
+      if(!AU.user||AU.user.uid!==uid)return;
+      if(snap.metadata&&(snap.metadata.fromCache||snap.metadata.hasPendingWrites)&&AU.prof&&AU.prof.termsAccepted===true)return;
+      const d=snap.exists()?(snap.data()||{}):null;
+      if(!d&&AU.prof&&AU.prof.termsAccepted===true)return;
+      const acc=!!(d&&d.termsAccepted===true);
+      if(!acc&&AU.prof&&AU.prof.termsAccepted===true&&d&&d.termsAccepted===undefined)return;
+      if(AU.prof)AU.prof.termsAccepted=acc;
+      syncDfTerms(acc);
+    },()=>{});
+  }catch(e){}
 }
 const MY_SESSION_ID='ses_'+Date.now()+'_'+Math.random().toString(36).slice(2,9);
 let sessionLockUnsub=null,sessionStatsUnsub=null,sessionRtdbUnsub=null,sessionLockedOut=false,sessionChan=null,sessionClaimOrder=0;
@@ -4334,7 +4703,7 @@ setInterval(()=>{
   }
 },2500);
 async function handleAuth(user){
-  if(!user){if(sessionLockUnsub){try{sessionLockUnsub();}catch(e){}sessionLockUnsub=null;}if(sessionStatsUnsub){try{sessionStatsUnsub();}catch(e){}sessionStatsUnsub=null;}if(sessionRtdbUnsub){try{sessionRtdbUnsub();}catch(e){}sessionRtdbUnsub=null;}sessionLockedOut=false;const sl=$('sessionLockModal');if(sl)sl.hidden=true;AU.user=null;AU.prof=null;AU.stats=null;authInFlight=null;if(gateState==='loading')closeGate();uiAuth();refreshSettingsModal();return;}
+  if(!user){if(dfTermsUnsub){try{dfTermsUnsub();}catch(e){}dfTermsUnsub=null;}if(dfTermsLocked)unlockDfTerms();if(sessionLockUnsub){try{sessionLockUnsub();}catch(e){}sessionLockUnsub=null;}if(sessionStatsUnsub){try{sessionStatsUnsub();}catch(e){}sessionStatsUnsub=null;}if(sessionRtdbUnsub){try{sessionRtdbUnsub();}catch(e){}sessionRtdbUnsub=null;}sessionLockedOut=false;const sl=$('sessionLockModal');if(sl)sl.hidden=true;AU.user=null;AU.prof=null;AU.stats=null;authInFlight=null;if(gateState==='loading')closeGate();uiAuth();refreshSettingsModal();return;}
   if(authInFlight)return authInFlight;
   authBusy=true;
   if(gateEl&&!gateEl.classList.contains('hide'))gate('loading',{text:'Loading your account…'});
@@ -4486,7 +4855,7 @@ async function loadStats(){
   refreshSettingsModal();
 }
 async function saveStats(o){
-  if(!AU.user||!FB)return;
+  if(!AU.user||!FB||AC.flagged||!AC.checkWorld())return;
   try{const {Fs,fs}=FB,ref=Fs.doc(fs,'users',AU.user.uid,'downforce','stats'),u={races:Fs.increment(1),wins:Fs.increment(o.pos===1?1:0),podiums:Fs.increment(o.pos<=3?1:0),modes:{[o.mode]:Fs.increment(1)},updated:Fs.serverTimestamp()};
     if(o.best>0&&o.best<1e8){const cur=AU.stats&&AU.stats.bestLaps&&AU.stats.bestLaps[o.map];if(!(cur<=o.best))u.bestLaps={[o.map]:o.best};}
     await Fs.setDoc(ref,u,{merge:true});await loadStats();}catch(e){console.warn('stats not saved',e);}
@@ -5083,11 +5452,11 @@ async function loadLb(){
   renderPracticeLb();refreshResPlb();
 }
 async function submitTime(t){
-  if(!AU.user)return;
+  if(!AU.user||AC.flagged||!AC.checkWorld())return;
   const validLaps=(race&&race.me&&Array.isArray(race.me.lapList))
-    ?race.me.lapList.map((l,idx)=>({t:+(l&&l.t),valid:!!(l&&l.valid),idx})).filter(x=>x.valid&&x.t>0&&x.t<1e8)
+    ?race.me.lapList.map((l,idx)=>({t:+(l&&l.t),valid:!!(l&&l.valid&&!l.acBad),idx})).filter(x=>x.valid&&x.t>=AC.minLapSec&&x.t<1e8)
     :[];
-  if(!validLaps.length&&(t>0&&t<1e8))validLaps.push({t:+t,valid:true,idx:0});
+  if(!validLaps.length&&(t>=AC.minLapSec&&t<1e8)&&!(race&&race.me&&Array.isArray(race.me.lapList)&&race.me.lapList.length))validLaps.push({t:+t,valid:true,idx:0});
   if(!validLaps.length)return;
   const mapId=G.map;
   const driverName=(AU.prof&&AU.prof.username)?AU.prof.username:G.name;
@@ -5294,10 +5663,18 @@ async function startRace(){
   runIntroAnimation(()=>startCountdown(Date.now()+6000));
   }finally{race.loading=false;}
 }
-let lastT=performance.now(),acc=0,frames=0,msAcc=0,shTick=0;
+let lastT=performance.now(),lastRenderT=0,acc=0,frames=0,msAcc=0,shTick=0,pauseRendered=false;
 function frame(t){
   requestAnimationFrame(frame);
-  if($('menu').style.display!=='none'||!$('loading').hidden){lastT=t;return;}
+  if(document.hidden||$('menu').style.display!=='none'||!$('loading').hidden){lastT=t;return;}
+  if(t-lastRenderT<15.2)return;
+  lastRenderT=t;
+  if(race.paused&&!race.resuming&&!introActive){
+    if(pauseRendered){lastT=t;return;}
+    pauseRendered=true;
+  }else{
+    pauseRendered=false;
+  }
   const rawDt=Math.max(0,(t-lastT)/1000),dt=Math.min(.05,rawDt);lastT=t;
   frames++;msAcc+=dt*1000;
   if(frames===45){
@@ -5308,9 +5685,9 @@ function frame(t){
     if(!introActive&&race.on&&canAdapt&&(G.gfxMode||'auto')==='auto'){
       if(batteryLow){
         if(perfTier<2)applyPerfTier(2,true);
-      }else if(ms>28.5){
+      }else if(ms>26.0){
         if(perfTier<2)applyPerfTier(2,true);
-      }else if(ms>22.0){
+      }else if(ms>19.5){
         if(perfTier<1)applyPerfTier(1,true);
       }
     }
@@ -5350,7 +5727,7 @@ function frame(t){
         }else{
           const pNow=performance.now();
           const overMs=clamp((elapsed-TOTAL_CD)*1000,0,1200);
-          race.go=true;race.t0=pNow-overMs;for(const c of race.cars)c.lapT0=race.t0;
+          race.go=true;race.t0=pNow-overMs;for(const c of race.cars)c.lapT0=race.t0;AC.onRaceGo(overMs);
           if(keys.KeyW||keys.ArrowUp)P.thr=Math.max(P.thr,0.75);
           lastSt=pNow-120;lastMiniT=t;
           setLights(5,true);
@@ -5366,7 +5743,7 @@ function frame(t){
           const litCount=clamp(Math.floor(elapsed/LIGHT_STEP)+1,1,5);
           setLights(litCount,false);
         }else{
-          race.go=true;race.t0=pNow;for(const c of race.cars)c.lapT0=pNow;
+          race.go=true;race.t0=pNow;for(const c of race.cars)c.lapT0=pNow;AC.onRaceGo(0);
           if(keys.KeyW||keys.ArrowUp)P.thr=Math.max(P.thr,0.75);
           lastSt=pNow-120;lastMiniT=t;
           setLights(5,true);
@@ -5375,7 +5752,7 @@ function frame(t){
       }
     }
     if(race.pitUntil&&P.vx!==0){P.vx=P.vy=P.r=0;}
-    const subN=Math.max(1,Math.min(8,Math.ceil(dt*(perfTier>=1?120:200)))),subDt=dt/subN;
+    const subN=Math.max(1,Math.min(5,Math.ceil(dt*(perfTier>=1?90:120)))),subDt=dt/subN;
     for(let i=0;i<subN;i++)step(subDt);
     updateRace(performance.now(),dt);updateBots(dt);updateRemote(dt);pushState(performance.now());updateVisuals(dt);
     if($('results').hidden){
@@ -5385,7 +5762,7 @@ function frame(t){
     }
   }
   updateLights(t);
-  if(race.go&&perfTier===1&&renderer.shadowMap.enabled&&(++shTick%2===0))renderer.shadowMap.needsUpdate=true;
+  if(race.go&&perfTier<2&&renderer.shadowMap.enabled&&(++shTick%(perfTier===0?2:3)===0))renderer.shadowMap.needsUpdate=true;
   if(usePost&&composer)composer.render();else renderer.render(scene,camera);
 }
 let lampTick=0,lastMiniT=0;
@@ -5419,8 +5796,9 @@ function renderPreview(){
   drawTrack(o,id,W2,H2,36,11,'#ff7a3d','#ff4d2e',true);const t=drawTrack(o,id,W2,H2,36,4,'#fff0e0',null,true);pvS={off,t,W2,H2};
   $('pvinfo').innerHTML=`<b>${m.name}</b>${m.km.toFixed(3)} km · ${THLABEL[m.th]}<br><span style="opacity:.7">${MODEINFO[G.mode]}</span>`;
 }
-function pvLoop(){requestAnimationFrame(pvLoop);if(!pvS||$('menu').style.display==='none')return;const x=$('pv').getContext('2d'),{off,t}=pvS;x.drawImage(off,0,0);
-  const i=Math.floor(((performance.now()/9000)%1)*t.pts.length),p=t.pts[i];x.fillStyle='#fff';x.shadowColor='#ffb27a';x.shadowBlur=18;x.beginPath();x.arc(p[0]*t.sc+t.ox,p[1]*t.sc+t.oy,6,0,7);x.fill();x.shadowBlur=0;}
+let lastPvT=0;
+function pvLoop(now){requestAnimationFrame(pvLoop);if(document.hidden||!pvS||$('menu').style.display==='none')return;if(now-lastPvT<42)return;lastPvT=now;const x=$('pv').getContext('2d'),{off,t}=pvS;x.drawImage(off,0,0);
+  const i=Math.floor(((performance.now()/9000)%1)*t.pts.length),p=t.pts[i];x.fillStyle='#fff';x.shadowColor='#ffb27a';x.shadowBlur=14;x.beginPath();x.arc(p[0]*t.sc+t.ox,p[1]*t.sc+t.oy,6,0,7);x.fill();x.shadowBlur=0;}
 let bootingLobby=true;
 function saveLobbySettings(){
   if(bootingLobby)return;
