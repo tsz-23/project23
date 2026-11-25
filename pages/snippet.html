@@ -250,16 +250,8 @@
     font-size: 0.81rem;
     color: var(--text);
   }
-  #refreshSnippetsBtn,
   #clearSnippetsBtn {
     flex: 0 0 auto;
-  }
-  #refreshSnippetsBtn.spinning svg {
-    animation: snSpin 0.75s linear infinite;
-  }
-  @keyframes snSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
   }
   .sn-search-box input:focus {
     outline: none;
@@ -842,9 +834,8 @@
     .sn-search-box {
       padding: 0 0.65rem;
     }
-    #refreshSnippetsBtn,
     #clearSnippetsBtn {
-      padding: 0 0.68rem;
+      padding: 0 0.72rem;
     }
     .sn-grid {
       grid-template-columns: 1fr;
@@ -863,17 +854,6 @@
     .sn-comp-btns .sn-btn {
       width: 100%;
       justify-content: center;
-    }
-  }
-
-  @media (max-width: 440px) {
-    #refreshSnippetsBtn {
-      width: 38px;
-      padding: 0;
-      justify-content: center;
-    }
-    #refreshSnippetsBtn span {
-      display: none;
     }
   }
 </style>
@@ -910,10 +890,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
             <input type="text" id="snippetSearchInput" placeholder="Search snippets or files…" autocomplete="off">
           </div>
-          <button type="button" class="sn-btn" id="refreshSnippetsBtn" title="Refresh snippets from cloud" aria-label="Refresh snippets">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-            <span>Refresh</span>
-          </button>
           <button type="button" class="sn-btn danger-red" id="clearSnippetsBtn" title="Clear snippets">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
             <span>Clear</span>
@@ -967,34 +943,82 @@
 
 <script>
 DB.whenReady(() => {
-  const VAULT_KEY = "p23.vault";
-  const LEGACY_KEY = "p23.snippet";
   const $ = id => document.getElementById(id);
+  try { localStorage.removeItem("p23.snippet"); } catch {}
 
   const state = {
     selectedKind: "auto",
     filter: "all",
     query: "",
     stagedFiles: [],
-    items: null,
-    syncing: false
+    items: [],
+    loaded: false,
+    saving: false
   };
 
+  let vaultUnsub = null;
+  let syncedUid = null;
+  const pendingDeletes = new Set();
+
   function getVaultCol() {
-    if (DB.isGuest() || !DB.user || !DB.user.uid) return null;
-    if (typeof firebase === "undefined" || typeof firebase.firestore !== "function") return null;
-    try {
-      return firebase.firestore().collection("users").doc(DB.user.uid).collection("vault");
-    } catch {
-      return null;
-    }
+    const id = typeof DB.userId === "function" ? DB.userId() : null;
+    if (!id || !window.firebase || !firebase.firestore) return null;
+    return firebase.firestore().collection("users").doc(id).collection("vault");
   }
 
-  function persistLocalCache(list) {
-    try {
-      localStorage.setItem(VAULT_KEY, JSON.stringify(list));
-      localStorage.removeItem(LEGACY_KEY);
-    } catch {}
+  function sortItems(list) {
+    return list.slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }
+
+  function mirrorLocalCache(list) {
+    try { localStorage.setItem("p23.vault", JSON.stringify(list)); } catch {}
+  }
+
+  function stopLiveVaultSync() {
+    if (vaultUnsub) {
+      try { vaultUnsub(); } catch {}
+      vaultUnsub = null;
+    }
+    syncedUid = null;
+  }
+
+  function startLiveVaultSync(forceRestart = false) {
+    if (DB.isGuest()) {
+      stopLiveVaultSync();
+      state.items = [];
+      state.loaded = true;
+      renderSnippets();
+      return;
+    }
+    const id = typeof DB.userId === "function" ? DB.userId() : null;
+    if (!id) return;
+    if (!forceRestart && syncedUid === id && vaultUnsub) return;
+
+    stopLiveVaultSync();
+    const col = getVaultCol();
+    if (!col) return;
+    syncedUid = id;
+
+    vaultUnsub = col.onSnapshot(
+      snap => {
+        const docs = snap.docs
+          .map(d => {
+            const data = d.data() || {};
+            if (!data.id) data.id = d.id;
+            return data;
+          })
+          .filter(it => !pendingDeletes.has(String(it.id)));
+        state.items = sortItems(docs);
+        state.loaded = true;
+        mirrorLocalCache(state.items);
+        renderSnippets();
+      },
+      err => {
+        console.warn("[Snippet] live sync error:", err);
+        state.loaded = true;
+        renderSnippets();
+      }
+    );
   }
 
   function focusComposerInput() {
@@ -1011,7 +1035,7 @@ DB.whenReady(() => {
     if (!DB.isGuest()) return true;
     const ok = await DB.requireAuth();
     if (ok) {
-      await refreshFromCloud({ manual: false });
+      startLiveVaultSync(true);
       focusComposerInput();
     }
     return Boolean(ok);
@@ -1040,101 +1064,102 @@ DB.whenReady(() => {
 
   function loadSnippets() {
     if (DB.isGuest()) return [];
-    if (Array.isArray(state.items)) return state.items;
-    const v = DB.get(VAULT_KEY, null);
-    if (Array.isArray(v)) return v;
-    const legacy = DB.get(LEGACY_KEY, null);
-    return Array.isArray(legacy) ? legacy : [];
+    return state.items;
   }
 
-  async function syncDiffToCloud(prevList, nextList) {
+  function sanitizeDoc(obj) {
+    return JSON.parse(JSON.stringify(obj));
+  }
+
+  async function writeSnippetDocs(newDocs) {
     const col = getVaultCol();
-    if (!col) return;
-    const prevMap = new Map((prevList || []).map(x => [String(x.id), JSON.stringify(x)]));
-    const nextMap = new Map((nextList || []).map(x => [String(x.id), x]));
-    const ops = [];
-    nextMap.forEach((item, id) => {
-      const clean = JSON.parse(JSON.stringify(item));
-      if (prevMap.get(id) !== JSON.stringify(clean)) {
-        ops.push(["set", id, clean]);
+    if (!col) {
+      DB.toast("Not Signed In", "Please sign in to save snippets to the database.", 3200);
+      return false;
+    }
+    const cleanDocs = newDocs.map(d => {
+      const c = sanitizeDoc(d);
+      c.id = String(c.id || DB.uid());
+      return c;
+    });
+    for (const doc of cleanDocs) {
+      const bytes = new Blob([JSON.stringify(doc)]).size;
+      if (bytes > 960000) {
+        DB.toast("Item Too Large", `"${doc.title || doc.fileName || "Snippet"}" exceeds the cloud size limit.`, 4000);
+        return false;
       }
-    });
-    prevMap.forEach((_, id) => {
-      if (!nextMap.has(id)) ops.push(["del", id]);
-    });
-    if (!ops.length) return;
-    const fdb = firebase.firestore();
-    for (let i = 0; i < ops.length; i += 400) {
-      const batch = fdb.batch();
-      ops.slice(i, i + 400).forEach(([type, id, data]) => {
-        if (type === "set") batch.set(col.doc(id), data);
-        else batch.delete(col.doc(id));
-      });
-      await batch.commit();
     }
-  }
-
-  function saveSnippets(list) {
-    if (DB.isGuest()) {
-      ensureAccountAccess();
-      return;
-    }
-    const prev = loadSnippets().slice();
-    const next = list.map(it => Object.assign({}, it, { id: String(it.id || DB.uid()) }));
-    state.items = next;
-    persistLocalCache(next);
+    const ids = new Set(cleanDocs.map(d => d.id));
+    const prev = state.items.slice();
+    state.items = sortItems([...cleanDocs, ...state.items.filter(x => !ids.has(String(x.id)))]);
+    mirrorLocalCache(state.items);
     renderSnippets();
-    syncDiffToCloud(prev, next).catch(() => {
-      DB.set(VAULT_KEY, next);
-      if (typeof DB.flush === "function") DB.flush();
-    });
+
+    try {
+      await Promise.all(cleanDocs.map(doc => col.doc(doc.id).set(doc)));
+      return true;
+    } catch (err) {
+      console.error("[Snippet] write error:", err);
+      state.items = prev;
+      mirrorLocalCache(state.items);
+      renderSnippets();
+      DB.toast("Couldn't Save Snippet", (err && err.message) ? err.message : "Database write failed. Please try again.", 4200);
+      return false;
+    }
   }
 
-  async function refreshFromCloud(opts = {}) {
-    const manual = Boolean(opts.manual);
-    if (DB.isGuest()) {
-      if (manual) await ensureAccountAccess();
-      return;
-    }
-    if (state.syncing) return;
+  async function updateSnippetDoc(updatedDoc) {
     const col = getVaultCol();
-    const btn = $("refreshSnippetsBtn");
-    state.syncing = true;
-    if (btn) {
-      btn.classList.add("spinning");
-      btn.disabled = true;
-    }
+    if (!col) return false;
+    const clean = sanitizeDoc(updatedDoc);
+    clean.id = String(clean.id);
+    const prev = state.items.slice();
+    state.items = sortItems(state.items.map(x => String(x.id) === clean.id ? clean : x));
+    mirrorLocalCache(state.items);
+    renderSnippets();
+
     try {
-      if (col) {
-        let snap;
-        try {
-          snap = await col.get({ source: "server" });
-        } catch {
-          snap = await col.get();
-        }
-        const fresh = snap.docs
-          .map(d => Object.assign({}, d.data(), { id: d.id }))
-          .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        state.items = fresh;
-        persistLocalCache(fresh);
-      } else {
-        const v = DB.get(VAULT_KEY, []);
-        state.items = Array.isArray(v) ? v : [];
-      }
+      await col.doc(clean.id).set(clean, { merge: true });
+      return true;
+    } catch (err) {
+      console.error("[Snippet] update error:", err);
+      state.items = prev;
+      mirrorLocalCache(state.items);
       renderSnippets();
-      if (manual) {
-        DB.toast("Snippets Synced", `Loaded ${state.items.length} item${state.items.length === 1 ? "" : "s"} from cloud.`, 2000);
+      DB.toast("Couldn't Update Snippet", "Please check your connection and try again.", 3500);
+      return false;
+    }
+  }
+
+  async function deleteSnippetDocs(idsToRemove) {
+    const col = getVaultCol();
+    if (!col || !idsToRemove.length) return false;
+    const idList = idsToRemove.map(x => String(x));
+    const idSet = new Set(idList);
+    idList.forEach(id => pendingDeletes.add(id));
+
+    const prev = state.items.slice();
+    state.items = state.items.filter(x => !idSet.has(String(x.id)));
+    mirrorLocalCache(state.items);
+    renderSnippets();
+
+    try {
+      const db = firebase.firestore();
+      for (let i = 0; i < idList.length; i += 400) {
+        const batch = db.batch();
+        idList.slice(i, i + 400).forEach(id => batch.delete(col.doc(id)));
+        await batch.commit();
       }
-    } catch {
-      if (manual) {
-        DB.toast("Sync Failed", "Couldn't reach the cloud. Check your connection.", 2800);
-      }
+      return true;
+    } catch (err) {
+      console.error("[Snippet] delete error:", err);
+      state.items = prev;
+      mirrorLocalCache(state.items);
+      renderSnippets();
+      DB.toast("Couldn't Delete Snippet", "Please check your connection and try again.", 3500);
+      return false;
     } finally {
-      state.syncing = false;
-      if (btn) {
-        btn.classList.remove("spinning");
-        btn.disabled = false;
-      }
+      idList.forEach(id => pendingDeletes.delete(id));
     }
   }
 
@@ -1189,32 +1214,36 @@ DB.whenReady(() => {
       };
       img.onload = () => {
         URL.revokeObjectURL(objUrl);
-        let w = img.naturalWidth || img.width || 800;
-        let h = img.naturalHeight || img.height || 600;
-        if (w > maxDim || h > maxDim) {
-          if (w >= h) {
-            h = Math.max(1, Math.round((h * maxDim) / w));
-            w = maxDim;
-          } else {
-            w = Math.max(1, Math.round((w * maxDim) / h));
-            h = maxDim;
+        const origW = img.naturalWidth || img.width || 800;
+        const origH = img.naturalHeight || img.height || 600;
+        const attempts = [
+          [maxDim, 0.8],
+          [Math.min(maxDim, 920), 0.68],
+          [760, 0.58],
+          [600, 0.5]
+        ];
+        let best = null;
+        for (const [lim, q] of attempts) {
+          let w = origW, h = origH;
+          if (w > lim || h > lim) {
+            if (w >= h) {
+              h = Math.max(1, Math.round((h * lim) / w));
+              w = lim;
+            } else {
+              w = Math.max(1, Math.round((w * lim) / h));
+              h = lim;
+            }
           }
+          const cv = document.createElement("canvas");
+          cv.width = w;
+          cv.height = h;
+          const ctx = cv.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          const dataUrl = cv.toDataURL("image/jpeg", q);
+          best = { dataUrl, width: w, height: h, size: Math.round(dataUrl.length * 0.75) };
+          if (dataUrl.length <= 680000) break;
         }
-        const cv = document.createElement("canvas");
-        cv.width = w;
-        cv.height = h;
-        const ctx = cv.getContext("2d");
-        ctx.drawImage(img, 0, 0, w, h);
-        let dataUrl = cv.toDataURL("image/jpeg", 0.8);
-        if (dataUrl.length > 720000) {
-          dataUrl = cv.toDataURL("image/jpeg", 0.62);
-        }
-        resolve({
-          dataUrl,
-          width: w,
-          height: h,
-          size: Math.round(dataUrl.length * 0.75)
-        });
+        resolve(best);
       };
       img.src = objUrl;
     });
@@ -1295,8 +1324,8 @@ DB.whenReady(() => {
           DB.toast("Image Error", `Couldn't process ${file.name || "image"}.`, 3000);
         }
       } else {
-        if (file.size > 700 * 1024) {
-          DB.toast("File Too Large", `${file.name} (${fmtBytes(file.size)}) exceeds the 700 KB cloud snippet limit.`, 4000);
+        if (file.size > 650 * 1024) {
+          DB.toast("File Too Large", `${file.name} (${fmtBytes(file.size)}) exceeds the 650 KB cloud snippet limit.`, 4000);
           continue;
         }
         try {
@@ -1323,7 +1352,8 @@ DB.whenReady(() => {
     $("snippetBodyInput").focus();
   }
 
-  function commitComposerSave() {
+  async function commitComposerSave() {
+    if (state.saving) return;
     const rawText = $("snippetBodyInput").value.trim();
     const customTitle = $("snippetTitleInput").value.trim();
 
@@ -1332,15 +1362,15 @@ DB.whenReady(() => {
       return;
     }
 
-    const cur = loadSnippets();
-    let savedCount = 0;
+    const toSave = [];
+    const now = Date.now();
 
     if (state.stagedFiles.length) {
       state.stagedFiles.forEach((att, idx) => {
         const itemTitle = customTitle
           ? (state.stagedFiles.length > 1 ? `${customTitle} (${idx + 1})` : customTitle)
           : att.fileName;
-        cur.unshift({
+        toSave.push({
           id: DB.uid(),
           kind: att.kind,
           title: itemTitle,
@@ -1351,34 +1381,44 @@ DB.whenReady(() => {
           dataUrl: att.dataUrl,
           content: rawText && idx === 0 && !att.content ? rawText : (att.content || ""),
           pinned: false,
-          createdAt: Date.now() + idx
+          createdAt: now + idx
         });
-        savedCount++;
       });
-    }
-
-    if (rawText && !state.stagedFiles.length) {
+    } else if (rawText) {
       const kind = state.selectedKind === "auto" ? detectTextKind(rawText) : state.selectedKind;
       const title = customTitle || autoTitleForText(rawText, kind);
-      cur.unshift({
+      toSave.push({
         id: DB.uid(),
         kind,
         title,
         content: rawText,
         fileSize: new Blob([rawText]).size,
         pinned: false,
-        createdAt: Date.now()
+        createdAt: now
       });
-      savedCount++;
     }
 
-    state.stagedFiles = [];
-    $("snippetTitleInput").value = "";
-    $("snippetBodyInput").value = "";
-    renderStagedAttachments();
-    saveSnippets(cur);
-    DB.toast("Saved to Snippet", `${savedCount} item${savedCount === 1 ? "" : "s"} synced across your devices.`, 2400);
-    focusComposerInput();
+    if (!toSave.length) return;
+    state.saving = true;
+    const saveBtn = $("saveSnippetBtn");
+    const saveLbl = saveBtn ? saveBtn.querySelector("span") : null;
+    if (saveBtn) saveBtn.disabled = true;
+    if (saveLbl) saveLbl.textContent = "Saving…";
+
+    const ok = await writeSnippetDocs(toSave);
+
+    state.saving = false;
+    if (saveBtn) saveBtn.disabled = false;
+    if (saveLbl) saveLbl.textContent = "Save Snippet";
+
+    if (ok) {
+      state.stagedFiles = [];
+      $("snippetTitleInput").value = "";
+      $("snippetBodyInput").value = "";
+      renderStagedAttachments();
+      DB.toast("Saved to Snippet", `${toSave.length} item${toSave.length === 1 ? "" : "s"} synced across your devices.`, 2400);
+      focusComposerInput();
+    }
   }
 
   async function copyImageDataUrlToClipboard(dataUrl) {
@@ -1448,17 +1488,17 @@ DB.whenReady(() => {
     `;
     const close = DB.modal(node);
     node.querySelector("#evCancel").onclick = close;
-    node.querySelector("#evSave").onclick = () => {
-      const list = loadSnippets();
-      const target = list.find(x => x.id === item.id);
+    node.querySelector("#evSave").onclick = async () => {
+      const target = loadSnippets().find(x => String(x.id) === String(item.id));
       if (target) {
-        target.title = node.querySelector("#evTitle").value.trim() || target.title;
+        const updated = { ...target };
+        updated.title = node.querySelector("#evTitle").value.trim() || updated.title;
         const cEl = node.querySelector("#evContent");
         if (cEl) {
-          target.content = cEl.value;
-          target.fileSize = new Blob([cEl.value]).size;
+          updated.content = cEl.value;
+          updated.fileSize = new Blob([cEl.value]).size;
         }
-        saveSnippets(list);
+        await updateSnippetDoc(updated);
       }
       close();
     };
@@ -1501,12 +1541,14 @@ DB.whenReady(() => {
           <div class="sn-empty-ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <h3>${guest ? "Sign In to Access Clipboard Snippet" : (all.length ? "No matching snippets in this category" : "No Snippets Saved Yet")}</h3>
+          <h3>${guest ? "Sign In to Access Clipboard Snippet" : (!state.loaded ? "Syncing Snippets…" : (all.length ? "No matching snippets in this category" : "No Snippets Saved Yet"))}</h3>
           <p>${guest
             ? "Sign in with your Project 23 account to paste text, images, or files and access them across all your devices."
-            : (all.length
-              ? "Switch the category pills above or clear your search filter to see your other saved items."
-              : "Use the input box below to type, paste (⌘V / Ctrl+V), or drop any text, code, link, image, or file.")}</p>
+            : (!state.loaded
+              ? "Connecting to your live cloud vault…"
+              : (all.length
+                ? "Switch the category pills above or clear your search filter to see your other saved items."
+                : "Use the input box below to type, paste (⌘V / Ctrl+V), or drop any text, code, link, image, or file."))}</p>
           ${guest ? `<button type="button" class="sn-btn primary" id="snEmptySignInBtn" style="margin-top:.35rem;">Sign in to continue</button>` : ""}
         </div>
       `;
@@ -1608,7 +1650,7 @@ DB.whenReady(() => {
 
     container.querySelectorAll("[data-copy-txt]").forEach(btn => {
       btn.onclick = async () => {
-        const it = loadSnippets().find(x => x.id === btn.dataset.copyTxt);
+        const it = loadSnippets().find(x => String(x.id) === String(btn.dataset.copyTxt));
         if (!it || !it.content) return;
         try {
           await navigator.clipboard.writeText(it.content);
@@ -1628,7 +1670,7 @@ DB.whenReady(() => {
 
     container.querySelectorAll("[data-copy-img]").forEach(btn => {
       btn.onclick = async () => {
-        const it = loadSnippets().find(x => x.id === btn.dataset.copyImg);
+        const it = loadSnippets().find(x => String(x.id) === String(btn.dataset.copyImg));
         if (!it || !it.dataUrl) return;
         try {
           const ok = await copyImageDataUrlToClipboard(it.dataUrl);
@@ -1652,37 +1694,32 @@ DB.whenReady(() => {
 
     container.querySelectorAll("[data-zoom]").forEach(wrap => {
       wrap.onclick = () => {
-        const it = loadSnippets().find(x => x.id === wrap.dataset.zoom);
+        const it = loadSnippets().find(x => String(x.id) === String(wrap.dataset.zoom));
         if (it) openImageLightbox(it);
       };
     });
 
     container.querySelectorAll("[data-pin]").forEach(btn => {
-      btn.onclick = () => {
-        const list = loadSnippets();
-        const it = list.find(x => x.id === btn.dataset.pin);
+      btn.onclick = async () => {
+        const it = loadSnippets().find(x => String(x.id) === String(btn.dataset.pin));
         if (!it) return;
-        it.pinned = !it.pinned;
-        saveSnippets(list);
+        await updateSnippetDoc({ ...it, pinned: !it.pinned });
       };
     });
 
     container.querySelectorAll("[data-edit]").forEach(btn => {
       btn.onclick = () => {
-        const it = loadSnippets().find(x => x.id === btn.dataset.edit);
+        const it = loadSnippets().find(x => String(x.id) === String(btn.dataset.edit));
         if (it) openEditSnippetModal(it);
       };
     });
 
     container.querySelectorAll("[data-del]").forEach(btn => {
-      btn.onclick = () => {
-        const list = loadSnippets();
-        const idx = list.findIndex(x => x.id === btn.dataset.del);
-        if (idx === -1) return;
-        const removed = list[idx];
-        list.splice(idx, 1);
-        saveSnippets(list);
-        DB.toast("Snippet Deleted", `"${removed.title}" was removed.`, 2200);
+      btn.onclick = async () => {
+        const it = loadSnippets().find(x => String(x.id) === String(btn.dataset.del));
+        if (!it) return;
+        const ok = await deleteSnippetDocs([it.id]);
+        if (ok) DB.toast("Snippet Deleted", `"${it.title}" was removed.`, 2200);
       };
     });
   }
@@ -1698,14 +1735,14 @@ DB.whenReady(() => {
 
   $("saveSnippetBtn").onclick = async () => {
     if (!(await ensureAccountAccess())) return;
-    commitComposerSave();
+    await commitComposerSave();
   };
 
   $("snippetBodyInput").addEventListener("keydown", async e => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
       e.preventDefault();
       if (!(await ensureAccountAccess())) return;
-      commitComposerSave();
+      await commitComposerSave();
     }
   });
 
@@ -1857,42 +1894,34 @@ DB.whenReady(() => {
     node.querySelector("#snCancelClear").onclick = close;
     const unpBtn = node.querySelector("#snClearUnpinned");
     if (unpBtn) {
-      unpBtn.onclick = () => {
-        saveSnippets(cur.filter(x => x.pinned));
+      unpBtn.onclick = async () => {
+        const unpinnedIds = cur.filter(x => !x.pinned).map(x => x.id);
         close();
-        DB.toast("Cleared Unpinned Snippets", `Kept ${pinnedCount} pinned item${pinnedCount === 1 ? "" : "s"}.`, 2400);
+        const ok = await deleteSnippetDocs(unpinnedIds);
+        if (ok) DB.toast("Cleared Unpinned Snippets", `Kept ${pinnedCount} pinned item${pinnedCount === 1 ? "" : "s"}.`, 2400);
       };
     }
-    node.querySelector("#snClearAll").onclick = () => {
-      saveSnippets([]);
+    node.querySelector("#snClearAll").onclick = async () => {
+      const allIds = cur.map(x => x.id);
       close();
-      DB.toast("All Snippets Cleared", "All items have been removed.", 2400);
+      const ok = await deleteSnippetDocs(allIds);
+      if (ok) DB.toast("All Snippets Cleared", "All items have been removed.", 2400);
     };
   };
 
-  $("refreshSnippetsBtn").onclick = () => refreshFromCloud({ manual: true });
-
   if (typeof DB.onLogin === "function") {
     DB.onLogin(() => {
-      refreshFromCloud({ manual: false });
+      startLiveVaultSync(true);
       focusComposerInput();
     });
   }
-  document.addEventListener("p23snippet", () => {
-    if (!state.syncing) refreshFromCloud({ manual: false });
-  });
-  document.addEventListener("p23vault", () => {
-    if (!state.syncing) refreshFromCloud({ manual: false });
-  });
+  document.addEventListener("p23sync", () => startLiveVaultSync(false));
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && !DB.isGuest()) refreshFromCloud({ manual: false });
-  });
-  window.addEventListener("pageshow", () => {
-    if (!DB.isGuest()) refreshFromCloud({ manual: false });
+    if (!document.hidden && !DB.isGuest()) startLiveVaultSync(false);
   });
 
+  startLiveVaultSync(true);
   renderSnippets();
-  refreshFromCloud({ manual: false });
   focusComposerInput();
 });
 </script>
