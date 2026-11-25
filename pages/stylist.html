@@ -3214,6 +3214,49 @@ const __initCloset = () => {
     if (d.stylistTone) state.stylistTone = d.stylistTone;
   }
 
+  let closetItemShadow = new Map();
+
+  function buildClosetMetaPayload(nowTs = Date.now()) {
+    return {
+      cycleBuckets: cloudData.cycleBuckets,
+      savedLooks: cloudData.savedLooks || [],
+      outfit: { ...state.outfit },
+      jacketOpen: Boolean(state.jacketOpen),
+      viewMode: state.viewMode,
+      stylistMood: state.stylistMood,
+      stylistWeather: state.stylistWeather,
+      stylistTone: state.stylistTone,
+      updatedAt: nowTs
+    };
+  }
+
+  async function syncClosetSubcollection(userRef, items) {
+    const db = firebase.firestore();
+    const col = userRef.collection("closet");
+    const nextShadow = new Map();
+    const ops = [];
+    for (let i = 0; i < items.length; i++) {
+      const clean = JSON.parse(JSON.stringify(items[i]));
+      clean.id = String(clean.id || safeDB.uid());
+      clean.sortOrder = i;
+      const j = JSON.stringify(clean);
+      nextShadow.set(clean.id, j);
+      if (closetItemShadow.get(clean.id) !== j) ops.push(["set", clean.id, clean]);
+    }
+    closetItemShadow.forEach((_, id) => {
+      if (!nextShadow.has(id)) ops.push(["del", String(id)]);
+    });
+    for (let i = 0; i < ops.length; i += 400) {
+      const batch = db.batch();
+      ops.slice(i, i + 400).forEach(([op, id, doc]) => {
+        if (op === "set") batch.set(col.doc(id), doc);
+        else batch.delete(col.doc(id));
+      });
+      await batch.commit();
+    }
+    closetItemShadow = nextShadow;
+  }
+
   async function initDirectFirestoreSync() {
     const localStored = safeDB.get(CL_KEY, null);
     if (localStored) normalizeIncoming(localStored);
@@ -3223,35 +3266,55 @@ const __initCloset = () => {
     directFirestoreBound = true;
 
     try {
-      const [stateSnap, userDocSnap] = await Promise.all([
-        userRef.collection("state").doc("closet").get().catch(() => null),
-        userRef.get().catch(() => null)
+      const [colSnap, metaSnap] = await Promise.all([
+        userRef.collection("closet").get().catch(() => null),
+        userRef.collection("state").doc("closetMeta").get().catch(() => null)
       ]);
-      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
-      const hasStateCloset = Boolean(stateSnap && stateSnap.exists && stateSnap.data());
-      const remote = hasStateCloset ? stateSnap.data() : userData.closetData;
-      if (remote) normalizeIncoming(remote);
 
-      const cleanPayload = {
-        ...cloudData,
-        outfit: state.outfit,
-        jacketOpen: state.jacketOpen,
-        viewMode: state.viewMode,
-        stylistMood: state.stylistMood,
-        stylistWeather: state.stylistWeather,
-        stylistTone: state.stylistTone,
-        updatedAt: Date.now()
-      };
-      safeDB.set(CL_KEY, cleanPayload);
+      const colDocs = (colSnap && colSnap.docs)
+        ? colSnap.docs
+            .map(d => {
+              const data = d.data() || {};
+              if (!data.id) data.id = d.id;
+              return data;
+            })
+            .sort((a, b) => (a.sortOrder ?? 99999) - (b.sortOrder ?? 99999))
+        : [];
+      const metaData = (metaSnap && metaSnap.exists) ? metaSnap.data() : null;
 
-      if ((!hasStateCloset && userData.closetData) || userData.closetData !== undefined) {
-        await userRef.collection("state").doc("closet").set(cleanPayload).catch(() => {});
-        if (userData.closetData !== undefined) {
-          userRef.update({ closetData: firebase.firestore.FieldValue.delete() }).catch(() => {});
-        }
+      if (colDocs.length || metaData) {
+        normalizeIncoming({ ...(metaData || {}), ...(colDocs.length ? { items: colDocs } : {}) });
+        closetItemShadow = new Map(
+          cloudData.items.map((it, idx) => {
+            const c = JSON.parse(JSON.stringify(it));
+            c.sortOrder = idx;
+            return [String(c.id), JSON.stringify(c)];
+          })
+        );
       }
 
-      userRef.collection("state").doc("closet").onSnapshot(docSnap => {
+      safeDB.set(CL_KEY, { items: cloudData.items, ...buildClosetMetaPayload() });
+
+      userRef.collection("closet").onSnapshot(snap => {
+        if (state.syncInFlight) return;
+        const docs = snap.docs
+          .map(d => {
+            const data = d.data() || {};
+            if (!data.id) data.id = d.id;
+            return data;
+          })
+          .sort((a, b) => (a.sortOrder ?? 99999) - (b.sortOrder ?? 99999));
+        if (docs.length) {
+          normalizeIncoming({ items: docs });
+          closetItemShadow = new Map(
+            docs.map(d => [String(d.id), JSON.stringify(d)])
+          );
+          safeDB.set(CL_KEY, { items: cloudData.items, ...buildClosetMetaPayload() });
+          renderAll();
+        }
+      }, () => {});
+
+      userRef.collection("state").doc("closetMeta").onSnapshot(docSnap => {
         if (state.syncInFlight) return;
         if (docSnap && docSnap.exists && docSnap.data()) {
           const incoming = docSnap.data();
@@ -3278,25 +3341,17 @@ const __initCloset = () => {
       persistTimer = null;
       const nowTs = Date.now();
       lastLocalSaveTs = nowTs;
-      const payload = {
-        items: cloudData.items,
-        cycleBuckets: cloudData.cycleBuckets,
-        savedLooks: cloudData.savedLooks || [],
-        outfit: { ...state.outfit },
-        jacketOpen: Boolean(state.jacketOpen),
-        viewMode: state.viewMode,
-        stylistMood: state.stylistMood,
-        stylistWeather: state.stylistWeather,
-        stylistTone: state.stylistTone,
-        updatedAt: nowTs
-      };
-      safeDB.set(CL_KEY, payload);
+      const metaPayload = buildClosetMetaPayload(nowTs);
+      safeDB.set(CL_KEY, { items: cloudData.items, ...metaPayload });
 
       const userRef = getUserDocRef();
       if (userRef) {
         state.syncInFlight = true;
         try {
-          await userRef.collection("state").doc("closet").set(payload).catch(() => {});
+          await Promise.all([
+            syncClosetSubcollection(userRef, cloudData.items || []),
+            userRef.collection("state").doc("closetMeta").set(metaPayload).catch(() => {})
+          ]);
         } catch {}
         state.syncInFlight = false;
       }
