@@ -1499,6 +1499,7 @@ DB.whenReady(() => {
   let directFirestoreBound = false;
   let localTxCache = null;
   let localMetaCache = null;
+  let txShadow = new Map();
   state.hasLoadedFromSheet = false;
 
   function getUserDocRef() {
@@ -1508,60 +1509,73 @@ DB.whenReady(() => {
     return firebase.firestore().collection("users").doc(uid);
   }
 
+  async function syncTxSubcollection(userRef, list) {
+    const db = firebase.firestore();
+    const col = userRef.collection("finance");
+    const nextShadow = new Map();
+    const ops = [];
+    for (const rawItem of list) {
+      const clean = JSON.parse(JSON.stringify(rawItem));
+      clean.id = String(clean.id || DB.uid());
+      const j = JSON.stringify(clean);
+      nextShadow.set(clean.id, j);
+      if (txShadow.get(clean.id) !== j) ops.push(["set", clean.id, clean]);
+    }
+    txShadow.forEach((_, id) => {
+      if (!nextShadow.has(id)) ops.push(["del", String(id)]);
+    });
+    for (let i = 0; i < ops.length; i += 400) {
+      const batch = db.batch();
+      ops.slice(i, i + 400).forEach(([op, id, doc]) => {
+        if (op === "set") batch.set(col.doc(id), doc);
+        else batch.delete(col.doc(id));
+      });
+      await batch.commit();
+    }
+    txShadow = nextShadow;
+  }
+
   async function initDirectFirestoreSync() {
     const userRef = getUserDocRef();
     if (!userRef || directFirestoreBound) return;
     directFirestoreBound = true;
 
     try {
-      const [stateTxSnap, metaSnap, colTxSnap, userDocSnap] = await Promise.all([
-        userRef.collection("state").doc("finance").get().catch(() => null),
-        userRef.collection("state").doc("financeMeta").get().catch(() => null),
+      const [colTxSnap, metaSnap] = await Promise.all([
         userRef.collection("finance").get().catch(() => null),
-        userRef.get().catch(() => null)
+        userRef.collection("state").doc("financeMeta").get().catch(() => null)
       ]);
-
-      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
 
       if (metaSnap && metaSnap.exists) {
         localMetaCache = metaSnap.data() || {};
         DB.set(META_KEY, localMetaCache);
-      } else if (userData.financeMeta) {
-        localMetaCache = userData.financeMeta;
-        DB.set(META_KEY, localMetaCache);
       }
 
-      let cloudTx = null;
-      if (stateTxSnap && stateTxSnap.exists && Array.isArray(stateTxSnap.data()?.items) && stateTxSnap.data().items.length) {
-        cloudTx = stateTxSnap.data().items;
-      } else if (colTxSnap && colTxSnap.docs && colTxSnap.docs.length) {
-        cloudTx = colTxSnap.docs.map(d => d.data());
-      } else if (Array.isArray(userData.financeTransactions) && userData.financeTransactions.length) {
-        cloudTx = userData.financeTransactions;
-      }
+      const colItems = (colTxSnap && colTxSnap.docs)
+        ? colTxSnap.docs.map(d => {
+            const data = d.data() || {};
+            if (!data.id) data.id = d.id;
+            return data;
+          })
+        : [];
 
-      if (Array.isArray(cloudTx) && cloudTx.length) {
-        localTxCache = cloudTx;
-        DB.set(TX_KEY, localTxCache);
-      }
-      if (userData.financeTransactions !== undefined || userData.financeTransaction !== undefined || userData.financeMeta !== undefined) {
-        userRef.update({
-          financeTransactions: firebase.firestore.FieldValue.delete(),
-          financeTransaction: firebase.firestore.FieldValue.delete(),
-          financeMeta: firebase.firestore.FieldValue.delete()
-        }).catch(() => {});
-      }
+      localTxCache = sortTransactionsChronologically(colItems);
+      txShadow = new Map(localTxCache.map(x => [String(x.id), JSON.stringify(x)]));
+      DB.set(TX_KEY, localTxCache);
 
-      userRef.collection("state").doc("finance").onSnapshot(docSnap => {
+      userRef.collection("finance").onSnapshot(snap => {
         if (state.syncInFlight) return;
-        if (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)) {
-          const items = docSnap.data().items;
-          if (items.length > 0 || !localTxCache || localTxCache.length === 0) {
-            localTxCache = items;
-            try { localStorage.setItem(TX_KEY, JSON.stringify(items)); } catch {}
-            renderAll();
-          }
-        }
+        const items = sortTransactionsChronologically(
+          snap.docs.map(d => {
+            const data = d.data() || {};
+            if (!data.id) data.id = d.id;
+            return data;
+          })
+        );
+        localTxCache = items;
+        txShadow = new Map(items.map(x => [String(x.id), JSON.stringify(x)]));
+        try { localStorage.setItem(TX_KEY, JSON.stringify(items)); } catch {}
+        renderAll();
       }, () => {});
 
       userRef.collection("state").doc("financeMeta").onSnapshot(docSnap => {
@@ -1600,12 +1614,10 @@ DB.whenReady(() => {
     if (userRef) {
       state.syncInFlight = true;
       try {
-        const cleanList = JSON.parse(JSON.stringify(localTxCache));
-        await userRef.collection("state").doc("finance").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {});
+        await syncTxSubcollection(userRef, localTxCache);
       } catch {}
       state.syncInFlight = false;
     }
-
   }
 
   function loadFinanceMeta() {
