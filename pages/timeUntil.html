@@ -1233,7 +1233,7 @@ DB.whenReady(() => {
     return { d, h: pad(h), m: pad(m), s: pad(s) };
   }
 
-  const save = () => DB.set(KEY, items);
+  const save = () => { DB.set(KEY, items); if (typeof DB.flush === "function") DB.flush(); };
 
   function render() {
     const grid = $("grid");
@@ -1995,6 +1995,10 @@ DB.whenReady(() => {
   });
 
   DB.onLogin(() => {
+    items = DB.get(KEY, []);
+    render();
+  });
+  document.addEventListener("p23countdowns", () => {
     items = DB.get(KEY, []);
     render();
   });
