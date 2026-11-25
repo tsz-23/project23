@@ -1833,37 +1833,18 @@ DB.whenReady(() => {
     directFirestoreBound = true;
 
     try {
-      const [stateSnap, colSnap, userDocSnap] = await Promise.all([
-        userRef.collection("state").doc("birthdays").get().catch(() => null),
-        userRef.collection("birthdays").get().catch(() => null),
-        userRef.get().catch(() => null)
-      ]);
-
-      const userData = (userDocSnap && userDocSnap.exists) ? (userDocSnap.data() || {}) : {};
-      let cloudList = null;
-
-      if (stateSnap && stateSnap.exists && Array.isArray(stateSnap.data()?.items) && stateSnap.data().items.length) {
-        cloudList = stateSnap.data().items;
-      } else if (colSnap && colSnap.docs && colSnap.docs.length) {
-        cloudList = colSnap.docs.map(d => d.data());
-      } else if (Array.isArray(userData.birthdays) && userData.birthdays.length) {
-        cloudList = userData.birthdays;
-      }
-
-      if (Array.isArray(cloudList) && cloudList.length) {
-        localBdCache = cloudList;
+      const stateSnap = await userRef.collection("state").doc("birthdays").get().catch(() => null);
+      if (stateSnap && stateSnap.exists && Array.isArray(stateSnap.data()?.items)) {
+        localBdCache = stateSnap.data().items;
         DB.set(BD_KEY, localBdCache);
       }
 
       userRef.collection("state").doc("birthdays").onSnapshot(docSnap => {
         if (state.syncInFlight) return;
         if (docSnap && docSnap.exists && Array.isArray(docSnap.data()?.items)) {
-          const items = docSnap.data().items;
-          if (items.length > 0 || !localBdCache || localBdCache.length === 0) {
-            localBdCache = items;
-            try { localStorage.setItem(BD_KEY, JSON.stringify(items)); } catch {}
-            renderAll();
-          }
+          localBdCache = docSnap.data().items;
+          try { localStorage.setItem(BD_KEY, JSON.stringify(localBdCache)); } catch {}
+          renderAll();
         }
       }, () => {});
     } catch {}
@@ -1893,10 +1874,7 @@ DB.whenReady(() => {
       state.syncInFlight = true;
       try {
         const cleanList = JSON.parse(JSON.stringify(localBdCache));
-        await Promise.all([
-          userRef.collection("state").doc("birthdays").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {}),
-          userRef.set({ birthdays: cleanList }, { merge: true }).catch(() => {})
-        ]);
+        await userRef.collection("state").doc("birthdays").set({ items: cleanList, updatedAt: Date.now() }).catch(() => {});
       } catch {}
       state.syncInFlight = false;
     }
